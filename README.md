@@ -10,4 +10,4 @@ code name | what the code does
 
 # Contributing
 
-If you make a useful bit of code, put it in a top-level directory with an appropriate name and dedicated README. Also, add it to the index below.
+If you make a useful bit of code, put it in a top-level directory with an appropriate name and dedicated README. Also, add it to the index.
