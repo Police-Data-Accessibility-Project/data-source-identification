@@ -1,0 +1,3 @@
+[submodule "linklabel/submodules/json"]
+	path = linklabel/submodules/json
+	url = https://github.com/nlohmann/json
