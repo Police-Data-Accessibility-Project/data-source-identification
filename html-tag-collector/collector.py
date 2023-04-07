@@ -24,6 +24,10 @@ def process_url(url, d):
     # If the response status code is not in the 200 range, skip adding other properties
     if not response.ok:
         return
+    
+    # Check if the URL ends with .pdf
+    if url.endswith('.pdf'):
+        return
 
     # Parse the HTML content using BeautifulSoup
     soup = BeautifulSoup(response.content, 'html.parser')
