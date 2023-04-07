@@ -9,18 +9,21 @@ with open('urls.json') as f:
 # Define the list of header tags we want to extract
 header_tags = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6']
 
-# Loop over each URL in the data
-for d in data:
-    url = d['url']
-    # Make a GET request to the URL
-    response = requests.get(url)
+# Define a function to process a URL and update the JSON object
+def process_url(url, d):
+    try:
+        response = requests.get(url)
+    except (requests.exceptions.ConnectionError, requests.exceptions.RequestException):
+        print(f"Error: Invalid URL - {url}")
+        print("Invalid URLs removed from output data")
+        return False
 
-     # Add the HTTP response status code as a new property
+    # Add the HTTP response status code as a new property
     d['http_response'] = response.status_code
 
     # If the response status code is not in the 200 range, skip adding other properties
     if not response.ok:
-        continue
+        return
 
     # Parse the HTML content using BeautifulSoup
     soup = BeautifulSoup(response.content, 'html.parser')
@@ -44,6 +47,13 @@ for d in data:
     d['meta_description'] = meta_description
     d['html_headers'] = html_headers
 
+# Loop over each URL in the data
+valid_data = []
+for d in data:
+    url = d['url']
+    if process_url(url, d) != False:
+        valid_data.append(d)
+
 # Write the updated JSON data to a new file
 with open('urls_and_headers.json', 'w') as f:
-    json.dump(data, f, indent=4)
+    json.dump(valid_data, f, indent=4)
