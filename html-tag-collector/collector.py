@@ -15,6 +15,13 @@ for d in data:
     # Make a GET request to the URL
     response = requests.get(url)
 
+     # Add the HTTP response status code as a new property
+    d['http_response'] = response.status_code
+
+    # If the response status code is not in the 200 range, skip adding other properties
+    if not response.ok:
+        continue
+
     # Parse the HTML content using BeautifulSoup
     soup = BeautifulSoup(response.content, 'html.parser')
 
