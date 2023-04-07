@@ -2,7 +2,7 @@
 This is a script which adds `title`, `meta`, and `header` HTML tags, plus `http_response`, as JSON properties to an existing file of URLs.
 
 1. Make sure you have a `urls.json` file in the same directory. It should be populated with URLs and properties as in the example provided.
-2. Optionally, create a virtual environment. This is especially useful if you don't already have `beautifulsoup4` and `requests` installed.
+2. Optionally, create a virtual environment. This is especially useful if you don't already have `beautifulsoup4` and `requests` installed. In your terminal:
 ```
 python -m venv collector-environment
 source collector-environment/bin/activate
