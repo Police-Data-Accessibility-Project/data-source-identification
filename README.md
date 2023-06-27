@@ -7,6 +7,7 @@ This is the issue which spawned the repo: https://github.com/Police-Data-Accessi
 name | description of purpose
 --- | ---
 code name | what the code does
+HTML tag collector | adds meta, header, title, and HTTP response codes to a JSON file of URLs.
 
 # Contributing
 
