@@ -59,7 +59,7 @@ def parse(response):
 
 
 def core():
-    with open('sample_host_sites.txt', 'r') as f:
+    with open('sitemap/sample_host_sites.txt', 'r') as f:
         urls = f.readlines()
     urls = [url.strip() for url in urls]
 
@@ -67,7 +67,8 @@ def core():
     scraped_urls = []
     for sm_url in sitemap_urls:
         try:
-            response = requests.get(sm_url)
+            headers={'User-Agent':'Mozilla/5'}
+            response = requests.get(sm_url, headers=headers)
             scraped_urls.extend(parse(response))
         except:
             continue            
