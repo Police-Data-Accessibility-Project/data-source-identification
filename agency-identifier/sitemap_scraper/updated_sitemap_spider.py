@@ -1,7 +1,6 @@
 import xmltodict
 import requests
 import csv
-from datetime import datetime as dt
 
 
 def nested_dict_values(my_dict, key_substrings=('',)):
@@ -58,29 +57,20 @@ def parse(response):
     return []
 
 
-def core():
-    with open('sitemap/sample_host_sites.txt', 'r') as f:
-        urls = f.readlines()
-    urls = [url.strip() for url in urls]
+def core(url):
+    url = url.strip()
 
-    sitemap_urls = [url.strip('/') + '/sitemap.xml' for url in urls]
+    sitemap_url = url.strip('/') + '/sitemap.xml'
     scraped_urls = []
-    for sm_url in sitemap_urls:
-        try:
-            headers={'User-Agent':'Mozilla/5'}
-            response = requests.get(sm_url, headers=headers)
-            scraped_urls.extend(parse(response))
-        except:
-            continue            
 
-    current_time = dt.now()
-    current_time_str = current_time.strftime("%Y%m%d_%H%M%S")
-    with open(f"{current_time_str}_output.csv", "w", newline="") as f:
-        writer = csv.DictWriter(f, ["url", "last_modified_date"], delimiter=",")
-        writer.writeheader()
-        writer.writerows(scraped_urls)
+    try:
+        headers={'User-Agent':'Mozilla/5'}
+        response = requests.get(sitemap_url, headers=headers)
+        scraped_urls.extend(parse(response))
+    except:
+        pass
 
-    return "Sitemaps scraped successfully!"
+    return scraped_urls
 
 
 if __name__ == '__main__':
