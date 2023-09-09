@@ -2,6 +2,8 @@ import csv
 import re
 import sys
 
+from sitemap_scraper.updated_sitemap_spider import core as sitemap_scraper
+
 
 def get_urls(file=sys.argv[1]):
     with open(file, 'r') as f:
@@ -46,7 +48,9 @@ def main():
 
     matches = match_agencies(agencies, urls)
 
-    print(matches)
+    #print(matches)
+    test = sitemap_scraper("https://police.crystalmn.gov/")
+    print(test)
 
 if __name__ == '__main__':
     main()
