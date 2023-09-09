@@ -1,4 +1,5 @@
 import csv
+import re
 import sys
 
 
@@ -20,12 +21,32 @@ def get_agencies_data():
     return agencies_list
 
 
+def match_agencies(agencies, urls):
+    matches = []
+
+    for url in urls:
+        matched_agency = [agency for agency in agencies if url.startswith(agency["homepage_url"])]
+
+        if not matched_agency:
+            pass
+        
+        if len(matched_agency) > 0:
+            matched_agency = matched_agency[0]
+
+        matches.append({"url": url, "agency": matched_agency})
+
+    return matches 
+
+
 def main():
     urls = get_urls()
     agencies = get_agencies_data()
 
-    print(agencies[0])
+    agencies = [agency for agency in agencies if agency["homepage_url"] and re.search("\.gov/|\.us/", agency["homepage_url"])]
 
+    matches = match_agencies(agencies, urls)
+
+    print(matches)
 
 if __name__ == '__main__':
     main()
