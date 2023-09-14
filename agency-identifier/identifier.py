@@ -39,7 +39,7 @@ def get_agencies_data():
 
 def parse_hostname(url):
     parsed_url = urlparse(url)
-    hostname = parsed_url.netloc
+    hostname = parsed_url.hostname
 
     return hostname
 
@@ -49,21 +49,28 @@ def match_agencies(agencies, agency_hostnames, url):
     url_hostname = parse_hostname(url)
 
     if url_hostname in agency_hostnames:
-        matched_agency = [agencies[agency_hostnames.index(agency_hostname)] for agency_hostname in agency_hostnames if url_hostname == agency_hostname]
+        matched_agency = [agencies[i] for i, agency_hostname in enumerate(agency_hostnames) if url_hostname == agency_hostname]
     else:
         return {"url": url, "agency": []}
 
     if len(matched_agency) > 1:
+        lowest_char_count = 100
+
         for agency in matched_agency:
             if (url.startswith(agency["homepage_url"])):
                 matched_agency[0] = agency
                 break
-    
+            
+            char_count = len(agency["name"])
+            if char_count < lowest_char_count:
+                lowest_char_count = char_count
+                matched_agency[0] = agency
+
     return {"url": url, "agency": matched_agency[0]}
 
 
 def write_csv(matches):
-    fieldnames = ["source_url", "agency_name", "state", "county", "municipality", "agency_type", "jurisdiction_type"]
+    fieldnames = ["source_url", "agency_name", "agency_url", "state", "county", "municipality", "agency_type", "jurisdiction_type"]
 
     with open("results.csv", "w", newline="") as csvfile:
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
@@ -75,6 +82,7 @@ def write_csv(matches):
             
             if match["agency"]:
                 agency_name = match["agency"]["name"]
+                agency_url = match["agency"]["homepage_url"]
                 state = match["agency"]["state_iso"]
                 county = match["agency"]["county_name"]
                 municipality = match["agency"]["municipality"]
@@ -85,6 +93,7 @@ def write_csv(matches):
                     {
                         "source_url": source_url,
                         "agency_name": agency_name,
+                        "agency_url": agency_url,
                         "state": state,
                         "county": county,
                         "municipality": municipality,
