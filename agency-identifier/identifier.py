@@ -65,6 +65,22 @@ def parse_hostname(url):
     return hostname
 
 
+def remove_http(url):
+    """Removes http(s):// from a given url so that different protocols don't throw off the matcher.
+
+    Args:
+        url (str): Url to remove http from.
+
+    Returns:
+        str: The url without http(s)://
+    """    
+    parsed_url = urlparse(url)
+    hostname = parsed_url.hostname
+    path = parsed_url.path
+
+    return hostname + path
+
+
 def match_agencies(agencies, agency_hostnames, url):
     """Attempts to match a url with an agency.
 
@@ -88,10 +104,12 @@ def match_agencies(agencies, agency_hostnames, url):
     # More than one agency was found
     if len(matched_agency) > 1:
         lowest_char_count = 100
+        url_no_http = remove_http(url)
 
         for agency in matched_agency:
+            agency_homepage = remove_http(agency["homepage_url"])
             # It is assumed that if the url begins with the agency's url, then it belongs to that agency
-            if (url.startswith(agency["homepage_url"])):
+            if url_no_http.startswith(agency_homepage):
                 matched_agency[0] = agency
                 break
             
