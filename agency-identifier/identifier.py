@@ -17,11 +17,11 @@ def get_urls(file=sys.argv[1]):
 
     Returns:
         list: List of urls to identify.
-    """    
-    with open(file, 'r') as f:
+    """
+    with open(file, "r") as f:
         urls = f.readlines()
 
-    if file.endswith('.csv'):
+    if file.endswith(".csv"):
         urls.pop(0)
 
     return urls
@@ -32,17 +32,17 @@ def get_agencies_data():
 
     Returns:
         list: List of agency dictionaries.
-    """    
+    """
     # This is here for when the API is able to return all data from the agencies table
     # For now, the script will use PDAP Criminal Legal Agencies.csv
-    #load_dotenv()
-    #api_key = "Bearer " + os.getenv("PDAP_API_KEY")
-    
-    #response = requests.get("https://data-sources-app-bda3z.ondigitalocean.app/agencies", headers={"Authorization": api_key})
-    #if response.status_code != 200:
+    # load_dotenv()
+    # api_key = "Bearer " + os.getenv("PDAP_API_KEY")
+
+    # response = requests.get("https://data-sources-app-bda3z.ondigitalocean.app/agencies", headers={"Authorization": api_key})
+    # if response.status_code != 200:
     #    print("Request to PDAP API failed. Response code:", response.status_code)
     #    exit()
-    #response_json = response.json()
+    # response_json = response.json()
 
     with open("PDAP Criminal Legal Agencies.csv", encoding="utf-8-sig") as agencies:
         agencies_list = list(csv.DictReader(agencies))
@@ -57,13 +57,13 @@ def parse_hostname(url):
         url (str): Url to parse.
 
     Returns:
-        str: The url's hostname. 
+        str: The url's hostname.
     """
     url = url.strip().strip('"')
 
     if not url.startswith("http"):
         url = "http://" + url
-    
+
     parsed_url = urlparse(url)
     hostname = parsed_url.hostname
 
@@ -85,7 +85,6 @@ def remove_http(url):
 
     if not url.startswith("http"):
         url = remove_www(url)
-        
         return url
 
     parsed_url = urlparse(url)
@@ -104,7 +103,7 @@ def remove_http(url):
 
 def remove_www(url):
     """Utility function for remove_http() and parse_hostname().
-    
+
     Removes www. from a url to facilitate better matching for cases where www. is missing.
 
     Args:
@@ -112,7 +111,7 @@ def remove_www(url):
 
     Returns:
         str: The url without www.
-    """    
+    """
     if url.startswith("www."):
         url = url[4:]
 
@@ -135,7 +134,9 @@ def match_agencies(agencies, agency_hostnames, url):
 
     if url_hostname in agency_hostnames:
         # All agencies with the same hostname as the url are found
-        matched_agency = [agencies[i] for i, agency_hostname in enumerate(agency_hostnames) if url_hostname == agency_hostname]
+        matched_agency = [
+            agencies[i] for i, agency_hostname in enumerate(agency_hostnames) if url_hostname == agency_hostname
+        ]
     else:
         return {"url": url, "agency": []}
 
@@ -158,8 +159,17 @@ def write_csv(matches):
 
     Args:
         matches (list): List of url agency matches.
-    """    
-    fieldnames = ["source_url", "agency_name", "agency_url", "state", "county", "municipality", "agency_type", "jurisdiction_type"]
+    """
+    fieldnames = [
+        "source_url",
+        "agency_name",
+        "agency_url",
+        "state",
+        "county",
+        "municipality",
+        "agency_type",
+        "jurisdiction_type",
+    ]
 
     with open("results.csv", "w", newline="") as csvfile:
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
@@ -168,7 +178,7 @@ def write_csv(matches):
 
         for match in matches:
             source_url = match["url"]
-            
+
             if match["agency"]:
                 agency_name = match["agency"]["name"]
                 agency_url = match["agency"]["homepage_url"]
@@ -187,12 +197,12 @@ def write_csv(matches):
                         "county": county,
                         "municipality": municipality,
                         "agency_type": agency_type,
-                        "jurisdiction_type": jurisdiction_type
+                        "jurisdiction_type": jurisdiction_type,
                     }
                 )
             else:
                 writer.writerow({"source_url": source_url})
-            
+
 
 def main():
     urls = get_urls()
@@ -211,11 +221,12 @@ def main():
     num_matches = len([matched_agency["agency"] for matched_agency in matches if matched_agency["agency"]])
     num_urls = len(urls)
     percent = 100 * float(num_matches) / float(num_urls)
-    print(f"{num_matches} / {num_urls} ({percent:0.1f}%) of urls identified")
+    print(f"\n{num_matches} / {num_urls} ({percent:0.1f}%) of urls identified")
 
     write_csv(matches)
 
     print("Results written to results.csv")
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()
