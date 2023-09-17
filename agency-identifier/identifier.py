@@ -51,34 +51,72 @@ def get_agencies_data():
 
 
 def parse_hostname(url):
-    """Retrieves the hostname (www.example.com) from a url string.
+    """Retrieves the hostname (example.com) from a url string.
 
     Args:
         url (str): Url to parse.
 
     Returns:
         str: The url's hostname. 
-    """    
+    """
+    url = url.strip().strip('"')
+
+    if not url.startswith("http"):
+        url = "http://" + url
+    
     parsed_url = urlparse(url)
     hostname = parsed_url.hostname
+
+    hostname = remove_www(hostname)
 
     return hostname
 
 
 def remove_http(url):
-    """Removes http(s):// from a given url so that different protocols don't throw off the matcher.
+    """Removes http(s)://www. from a given url so that different protocols don't throw off the matcher.
 
     Args:
         url (str): Url to remove http from.
 
     Returns:
-        str: The url without http(s)://
-    """    
+        str: The url without http(s)://www.
+    """
+    url = url.strip().strip('"')
+
+    if not url.startswith("http"):
+        url = remove_www(url)
+        
+        return url
+
     parsed_url = urlparse(url)
     hostname = parsed_url.hostname
     path = parsed_url.path
 
-    return hostname + path
+    hostname = remove_www(hostname)
+
+    url = hostname + path
+
+    if url[-1] != "/":
+        url += "/"
+
+    return url
+
+
+def remove_www(url):
+    """Utility function for remove_http() and parse_hostname().
+    
+    Removes www. from a url to facilitate better matching for cases where www. is missing.
+
+    Args:
+        url (str): Url to remove www. from.
+
+    Returns:
+        str: The url without www.
+    """    
+    if url.startswith("www."):
+        url = url[4:]
+
+    return url
 
 
 def match_agencies(agencies, agency_hostnames, url):
@@ -91,7 +129,7 @@ def match_agencies(agencies, agency_hostnames, url):
 
     Returns:
         dict: Dictionary of a match in the form {"url": url, "agency": matched_agency}.
-    """    
+    """
     url = url.strip().strip('"')
     url_hostname = parse_hostname(url)
 
@@ -103,7 +141,6 @@ def match_agencies(agencies, agency_hostnames, url):
 
     # More than one agency was found
     if len(matched_agency) > 1:
-        lowest_char_count = 100
         url_no_http = remove_http(url)
 
         for agency in matched_agency:
@@ -112,14 +149,6 @@ def match_agencies(agencies, agency_hostnames, url):
             if url_no_http.startswith(agency_homepage):
                 matched_agency[0] = agency
                 break
-            
-            # If no agency is matched by the above method, the selected agency defaults to the one with the shortest name
-            # It is assumed the match with the shortest name will be the least specific
-            # i.e. "New York City Police Department - NY" is shorter than "New York Police Department 79th Precinct Station - NY"
-            char_count = len(agency["name"])
-            if char_count < lowest_char_count:
-                lowest_char_count = char_count
-                matched_agency[0] = agency
 
     return {"url": url, "agency": matched_agency[0]}
 
@@ -171,8 +200,8 @@ def main():
 
     # Filter out agencies without a homepage_url set
     agencies = [agency for agency in agencies if agency["homepage_url"]]
-    # Sort by homepage_url, shorter homepages that are similar will hopefully be matched first
-    agencies.sort(key=lambda agency: agency["homepage_url"])
+    # Sort by count_data_sources, agencies with more data sources will be matched first
+    agencies.sort(key=lambda agency: agency["count_data_sources"], reverse=True)
     agency_hostnames = [parse_hostname(agency["homepage_url"]) for agency in agencies]
 
     print("Indentifying agencies...")
