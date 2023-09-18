@@ -138,7 +138,7 @@ def match_agencies(agencies, agency_hostnames, url):
             agencies[i] for i, agency_hostname in enumerate(agency_hostnames) if url_hostname == agency_hostname
         ]
     else:
-        return {"url": url, "agency": []}
+        return {"url": url, "agency": [], "status": "No match found"}
 
     # More than one agency was found
     if len(matched_agency) > 1:
@@ -148,10 +148,12 @@ def match_agencies(agencies, agency_hostnames, url):
             agency_homepage = remove_http(agency["homepage_url"])
             # It is assumed that if the url begins with the agency's url, then it belongs to that agency
             if url_no_http.startswith(agency_homepage):
-                matched_agency[0] = agency
+                return {"url": url, "agency": agency, "status": "Match found"}
                 break
+        
+        return {"url": url, "agency": [], "status": "Contested match"}
 
-    return {"url": url, "agency": matched_agency[0]}
+    return {"url": url, "agency": matched_agency[0], "status": "Match found"}
 
 
 def write_csv(matches):
@@ -162,6 +164,7 @@ def write_csv(matches):
     """
     fieldnames = [
         "source_url",
+        "status",
         "agency_name",
         "agency_url",
         "state",
@@ -178,6 +181,7 @@ def write_csv(matches):
 
         for match in matches:
             source_url = match["url"]
+            status = match["status"]
 
             if match["agency"]:
                 agency_name = match["agency"]["name"]
@@ -191,6 +195,7 @@ def write_csv(matches):
                 writer.writerow(
                     {
                         "source_url": source_url,
+                        "status": status,
                         "agency_name": agency_name,
                         "agency_url": agency_url,
                         "state": state,
@@ -201,7 +206,12 @@ def write_csv(matches):
                     }
                 )
             else:
-                writer.writerow({"source_url": source_url})
+                writer.writerow(
+                    {
+                        "source_url": source_url,
+                        "status": status
+                    }
+                )
 
 
 def main():
