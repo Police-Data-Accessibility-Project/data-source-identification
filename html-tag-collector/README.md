@@ -15,3 +15,6 @@ source collector-environment/bin/activate
 
 # Why does this exist?
 We can use machine learning to predict whether a URL is relevant with some success, but labelers otherwise need to visit a URL in order to determine what is kept there. By adding these properties we can label data without navigating to the URL as often.
+
+# For the future
+Instead of making multiple calls to a web page, we should hit it once and collect everything we need. That may just mean capturing the whole HTML response and sorting through it later.
