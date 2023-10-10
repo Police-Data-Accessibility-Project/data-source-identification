@@ -4,7 +4,7 @@ import sys
 from urllib.parse import urlparse
 import requests
 import polars as pl
-
+import tqdm
 
 def get_agencies_data():
     """Retrives a list of agency dictionaries from file.
@@ -189,14 +189,14 @@ def write_csv(matches):
 
 def main(urls_df):
     agencies = get_agencies_data()
-    print(agencies)
+    agencies_df = pl.DataFrame(agencies)
     # Filter out agencies without a homepage_url set
-    # agencies = [agency for agency in agencies if agency["homepage_url"]]
+    agencies_df = agencies_df.filter(pl.col("homepage_url").is_not_null())
+    agencies_df = agencies_df.select([pl.col("*"), pl.col("homepage_url").map_elements(parse_hostname).alias("hostname")])
+    print(agencies_df.head())
     # # Sort by count_data_sources, agencies with more data sources will be matched first
     # agencies.sort(key=lambda agency: agency["count_data_sources"], reverse=True)
-    # agency_hostnames = [parse_hostname(agency["homepage_url"]) for agency in agencies]
-
-    # print("Indentifying agencies...")
+    print("Indentifying agencies...")
 
     # matches = [match_agencies(agencies, agency_hostnames, url) for url in tqdm(urls)]
 
