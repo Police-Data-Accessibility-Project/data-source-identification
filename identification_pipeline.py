@@ -18,6 +18,6 @@ duplicate_check_df = identify_df.join(data_sources_df, left_on="url", right_on="
 non_duplicates_df = duplicate_check_df.filter(pl.col("id").is_null()).select(pl.col("url","id"))
 
 print(dt.now())
-tagged_df = collector_main(non_duplicates_df.head(100))
+tagged_df = collector_main(non_duplicates_df[:4000])
 print(dt.now())
 print(tagged_df)

@@ -10,7 +10,7 @@ header_tags = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6']
 # Define a function to process a URL and update the JSON object
 def process_url(url):
     try:
-        response = requests.get(url)
+        response = requests.get(url, timeout=10)
     except (requests.exceptions.ConnectionError, requests.exceptions.RequestException):
         print(f"Error: Invalid URL - {url}")
         print("Invalid URLs removed from output data")
@@ -48,12 +48,12 @@ def process_url(url):
 def collector_main(df):
     # Loop over each URL in the data
     df = df.select([pl.col("*"), pl.col("url").apply(process_url).alias("all_fields")])
-    df = df.select([pl.col("*"), pl.col("all_fields").apply(lambda af: af[0]).alias("html_title")])
-    df = df.select([pl.col("*"), pl.col("all_fields").apply(lambda af: af[1]).alias("meta_description")])
+    df = df.with_columns([pl.col("all_fields").apply(lambda af: af[0]).alias("html_title"),
+        pl.col("all_fields").apply(lambda af: af[1]).alias("meta_description")])
     pos = 2
-    for h in header_tags:
-        df = df.select([pl.col("*"), pl.col("all_fields").apply(lambda af: af[pos]).alias(h)])
-        pos += 1
+    # for h in header_tags:
+    #     df = df.with_columns([pl.col("all_fields").apply(lambda af: af[pos]).alias(h)])
+    #     pos += 1
 
     return df
 
