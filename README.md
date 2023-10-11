@@ -28,8 +28,8 @@ B["Check for duplicates in the pipeline's
 training data"]
 C["Make an HTTP request to the URL
 and append some JSON metadata"]
-D["Determine whether the URL is about the
-criminal legal system (police, courts, jails)"]
+D["Determine whether the URL is about one of our
+`agency_types` (police, courts, jails)"]
 E["Determine which `agency` is described"]
 F["Determine if this is an `individual record`.
 We're after parent data sources."]
