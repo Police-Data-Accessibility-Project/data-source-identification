@@ -212,7 +212,8 @@ def identifier_main(urls_df):
     print(agencies_df.filter(pl.col("homepage_url").is_duplicated()).sort("homepage_url"))
 
     print("Indentifying agencies...")
-    matched_agencies_df = urls_df.join(agencies_df, left_on="url", right_on="homepage_url", how='left')
+    urls_df = urls_df.with_columns(pl.col("url").map_elements(parse_hostname).alias("hostname"))
+    matched_agencies_df = urls_df.join(agencies_df, on="hostname", how='left')
     matched_agencies_clean_df = matched_agencies_df.with_columns(pl.all().fill_null(""))
 
     return matched_agencies_clean_df
