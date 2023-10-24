@@ -14,13 +14,27 @@ def get_agencies_data():
     """
     api_key = "Bearer " + os.getenv("PDAP_API_KEY")
 
-    response = requests.get("https://data-sources.pdap.io/agencies/1", headers={"Authorization": api_key})
-    if response.status_code != 200:
-       print("Request to PDAP API failed. Response code:", response.status_code)
-       exit()
-    agencies_list = response.json()["data"]
+    results = {"data": {}}
+    page = 1
+    agencies_df = pl.DataFrame()
+    while results:
+        #print(page)
+        response = requests.get(f"https://data-sources.pdap.io/api/agencies/{page}", headers={"Authorization": api_key})
+        if response.status_code != 200:
+            print("Request to PDAP API failed. Response code:", response.status_code)
+            exit()
+        results = response.json()["data"]
+        fields = ["defunct_year", "data_sources", "airtable_agency_last_modified", "agency_created", "data_sources_last_updated"]
+        for r in results:
+            for f in fields:
+                r[f] = "" if r[f] is None else r[f]
 
-    return agencies_list
+        new_agencies_df = pl.DataFrame(results)
+        if not new_agencies_df.is_empty():
+            agencies_df = pl.concat([agencies_df, new_agencies_df])
+        page += 1   
+
+    return agencies_df
 
 
 def parse_hostname(url):
@@ -129,87 +143,100 @@ def match_agencies(agencies, agency_hostnames, url):
     return {"url": url, "agency": matched_agency[0], "status": "Match found"}
 
 
-def write_csv(matches):
-    """Write matches to a CSV file.
+# def write_csv(matches):
+#     """Write matches to a CSV file.
 
-    Args:
-        matches (list): List of url agency matches.
-    """
-    fieldnames = [
-        "source_url",
-        "status",
-        "agency_name",
-        "agency_url",
-        "state",
-        "county",
-        "municipality",
-        "agency_type",
-        "jurisdiction_type",
-    ]
+#     Args:
+#         matches (list): List of url agency matches.
+#     """
+#     fieldnames = [
+#         "source_url",
+#         "status",
+#         "agency_name",
+#         "agency_url",
+#         "state",
+#         "county",
+#         "municipality",
+#         "agency_type",
+#         "jurisdiction_type",
+#     ]
 
-    with open("results.csv", "w", newline="") as csvfile:
-        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+#     with open("results.csv", "w", newline="") as csvfile:
+#         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
 
-        writer.writeheader()
+#         writer.writeheader()
 
-        for match in matches:
-            source_url = match["url"]
-            status = match["status"]
+#         for match in matches:
+#             source_url = match["url"]
+#             status = match["status"]
 
-            if match["agency"]:
-                agency_name = match["agency"]["name"]
-                agency_url = match["agency"]["homepage_url"]
-                state = match["agency"]["state_iso"]
-                county = match["agency"]["county_name"]
-                municipality = match["agency"]["municipality"]
-                agency_type = match["agency"]["agency_type"]
-                jurisdiction_type = match["agency"]["jurisdiction_type"]
+#             if match["agency"]:
+#                 agency_name = match["agency"]["name"]
+#                 agency_url = match["agency"]["homepage_url"]
+#                 state = match["agency"]["state_iso"]
+#                 county = match["agency"]["county_name"]
+#                 municipality = match["agency"]["municipality"]
+#                 agency_type = match["agency"]["agency_type"]
+#                 jurisdiction_type = match["agency"]["jurisdiction_type"]
 
-                writer.writerow(
-                    {
-                        "source_url": source_url,
-                        "status": status,
-                        "agency_name": agency_name,
-                        "agency_url": agency_url,
-                        "state": state,
-                        "county": county,
-                        "municipality": municipality,
-                        "agency_type": agency_type,
-                        "jurisdiction_type": jurisdiction_type,
-                    }
-                )
-            else:
-                writer.writerow(
-                    {
-                        "source_url": source_url,
-                        "status": status
-                    }
-                )
+#                 writer.writerow(
+#                     {
+#                         "source_url": source_url,
+#                         "status": status,
+#                         "agency_name": agency_name,
+#                         "agency_url": agency_url,
+#                         "state": state,
+#                         "county": county,
+#                         "municipality": municipality,
+#                         "agency_type": agency_type,
+#                         "jurisdiction_type": jurisdiction_type,
+#                     }
+#                 )
+#             else:
+#                 writer.writerow(
+#                     {
+#                         "source_url": source_url,
+#                         "status": status
+#                     }
+#                 )
 
 
-def main(urls_df):
-    agencies = get_agencies_data()
-    agencies_df = pl.DataFrame(agencies)
+def identifier_main(urls_df):
+    agencies_df = get_agencies_data()
     # Filter out agencies without a homepage_url set
     agencies_df = agencies_df.filter(pl.col("homepage_url").is_not_null())
-    agencies_df = agencies_df.select([pl.col("*"), pl.col("homepage_url").map_elements(parse_hostname).alias("hostname")])
-    print(agencies_df.head())
-    # # Sort by count_data_sources, agencies with more data sources will be matched first
-    # agencies.sort(key=lambda agency: agency["count_data_sources"], reverse=True)
+    agencies_df = agencies_df.with_columns(pl.col("homepage_url").map_elements(parse_hostname).alias("hostname"),
+        pl.col("count_data_sources").fill_null(0))
+    agencies_df = agencies_df.with_columns(pl.col("count_data_sources").max().over("hostname").alias("max_data_sources")).filter(pl.col("count_data_sources") == pl.col("max_data_sources"))
+    agencies_df = agencies_df.unique(subset=["homepage_url"])
+    print(agencies_df.filter(pl.col("homepage_url").is_duplicated()).sort("homepage_url"))
+
     print("Indentifying agencies...")
+    matched_agencies_df = urls_df.join(agencies_df, left_on="url", right_on="homepage_url", how='left')
+    matched_agencies_clean_df = matched_agencies_df.with_columns(pl.all().fill_null(""))
 
-    # matches = [match_agencies(agencies, agency_hostnames, url) for url in tqdm(urls)]
-
-    # num_matches = len([matched_agency["agency"] for matched_agency in matches if matched_agency["agency"]])
-    # num_urls = len(urls)
-    # percent = 100 * float(num_matches) / float(num_urls)
-    # print(f"\n{num_matches} / {num_urls} ({percent:0.1f}%) of urls identified")
-
-    # write_csv(matches)
-
-    # print("Results written to results.csv")
+    return matched_agencies_clean_df
 
 
 if __name__ == "__main__":
     urls_df = pl.read_csv(sys.argv[1])
-    main(urls_df)
+    matched_agencies_df = identifier_main(urls_df)
+
+    matches_only = matched_agencies_df.filter(pl.col("hostname").is_not_null())
+
+    num_matches = len(matches_only)
+    num_urls = len(urls_df)
+    percent = 100 * float(num_matches) / float(num_urls)
+    print(f"\n{num_matches} / {num_urls} ({percent:0.1f}%) of urls identified")
+
+    if not matches_only.is_empty():
+        matches_only.select(pl.col("url"),
+            pl.col("name"),
+            pl.col("state_iso"),
+            pl.col("county_name"),
+            pl.col("municipality"),
+            pl.col("agency_type"),
+            pl.col("jurisdiction_type"),
+            pl.col("approved")).write_csv('results.csv')
+
+    print("Results written to results.csv")
