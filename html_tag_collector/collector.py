@@ -9,12 +9,13 @@ import requests
 from tqdm import tqdm
 import bs4
 from bs4 import BeautifulSoup
-
+import sys
+import polars as pl
 
 # Define the list of header tags we want to extract
-header_tags = ["h1", "h2", "h3", "h4", "h5", "h6"]
+header_tags = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6']
 
-
+# Define a function to process a URL and update the JSON object
 def process_urls(urls):
     """Process a list of urls and retrieve their HTML tags.
 
@@ -25,7 +26,7 @@ def process_urls(urls):
         list: List of dicts with HTML tags.
     """
     results = []
-    new_urls = ["https://" + url if not url.startswith("http") else url for url in urls]
+    new_urls = ["https://" + url[0] if not url[0].startswith("http") else url[0] for url in urls]
 
     with ThreadPoolExecutor(max_workers=100) as executor:
         print("Retrieving HTML tags...")
@@ -49,7 +50,7 @@ def process_urls(urls):
 
         tags = {}
         res = row["response"]
-        tags["url"] = row["url"]
+        tags["url"] = row["url"][0]
 
         if res is None:
             tags["http_response"] = "Request failed"
@@ -72,16 +73,16 @@ def process_urls(urls):
         except KeyError:
             tags["meta_description"] = ""
 
-        html_headers = []
         for header_tag in header_tags:
             headers = soup.find_all(header_tag)
             header_content = [header.text for header in headers]
-            html_headers.append({header_tag: header_content})
-        tags["html_headers"] = html_headers
+            tags[header_tag] = json.dumps(header_content)
 
     urls_and_headers.append(tags)
+    header_tags_df = pl.DataFrame(urls_and_headers)
+    clean_header_tags_df = header_tags_df.with_columns(pl.col(["html_title", "meta_description"]).fill_null(""))
 
-    return urls_and_headers
+    return clean_header_tags_df
 
 
 def get_response(url, index):
@@ -158,68 +159,20 @@ def get_legacy_session():
     return session
 
 
-# Define a function to process a URL and update the JSON object
-def process_url(url, d={}):
-    try:
-        response = requests.get(url)
-    except (requests.exceptions.ConnectionError, requests.exceptions.RequestException):
-        print(f"Error: Invalid URL - {url}")
-        print("Invalid URLs removed from output data")
-        return False
+def collector_main(df):
+    header_tags_df = process_urls(df.select(pl.col("url")).rows())
 
-    # Add the HTTP response status code as a new property
-    d["http_response"] = response.status_code
-
-    # If the response status code is not in the 200 range, skip adding other properties
-    if not response.ok:
-        return
-
-    # Check if the URL ends with .pdf
-    if url.endswith(".pdf"):
-        return
-
-    # Parse the HTML content using BeautifulSoup
-    soup = BeautifulSoup(response.content, "html.parser")
-
-    # Extract the title tag and its content
-
-    html_title = soup.title.string
-
-    # Extract the meta description tag and its content
-    meta_tag = soup.find("meta", attrs={"name": "description"})
-    meta_description = meta_tag["content"] if meta_tag is not None else ""
-
-    # Extract the header tags and their content
-    html_headers = []
-    for header_tag in header_tags:
-        headers = soup.find_all(header_tag)
-        header_content = [header.text for header in headers]
-        html_headers.append({header_tag: header_content})
-
-    # Add the new properties to the JSON object
-    d["html_title"] = html_title
-    d["meta_description"] = meta_description
-    d["html_headers"] = html_headers
-
-    return d
+    return header_tags_df
 
 
-def main():
+if __name__ == '__main__':
     # Open the input file and load the JSON data
-    with open("urls.json") as f:
+    with open(sys.argv[1]) as f:
         data = json.load(f)
-
-    # Loop over each URL in the data
-    valid_data = []
-    for d in data:
-        url = d["url"]
-        if process_url(url, d) != False:
-            valid_data.append(d)
+    df = pl.DataFrame(data)
+    
+    header_tags_df = collector_main(df)
 
     # Write the updated JSON data to a new file
-    with open("urls_and_headers.json", "w") as f:
-        json.dump(valid_data, f, indent=4)
+    header_tags_df.write_csv('urls_and_headers.csv', index=False)
 
-
-if __name__ == "__main__":
-    main()
