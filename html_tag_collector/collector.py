@@ -175,3 +175,4 @@ if __name__ == '__main__':
 
     # Write the updated JSON data to a new file
     header_tags_df.write_csv('urls_and_headers.csv', index=False)
+
