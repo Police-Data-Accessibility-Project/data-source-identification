@@ -143,64 +143,6 @@ def match_agencies(agencies, agency_hostnames, url):
     return {"url": url, "agency": matched_agency[0], "status": "Match found"}
 
 
-# def write_csv(matches):
-#     """Write matches to a CSV file.
-
-#     Args:
-#         matches (list): List of url agency matches.
-#     """
-#     fieldnames = [
-#         "source_url",
-#         "status",
-#         "agency_name",
-#         "agency_url",
-#         "state",
-#         "county",
-#         "municipality",
-#         "agency_type",
-#         "jurisdiction_type",
-#     ]
-
-#     with open("results.csv", "w", newline="") as csvfile:
-#         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-
-#         writer.writeheader()
-
-#         for match in matches:
-#             source_url = match["url"]
-#             status = match["status"]
-
-#             if match["agency"]:
-#                 agency_name = match["agency"]["name"]
-#                 agency_url = match["agency"]["homepage_url"]
-#                 state = match["agency"]["state_iso"]
-#                 county = match["agency"]["county_name"]
-#                 municipality = match["agency"]["municipality"]
-#                 agency_type = match["agency"]["agency_type"]
-#                 jurisdiction_type = match["agency"]["jurisdiction_type"]
-
-#                 writer.writerow(
-#                     {
-#                         "source_url": source_url,
-#                         "status": status,
-#                         "agency_name": agency_name,
-#                         "agency_url": agency_url,
-#                         "state": state,
-#                         "county": county,
-#                         "municipality": municipality,
-#                         "agency_type": agency_type,
-#                         "jurisdiction_type": jurisdiction_type,
-#                     }
-#                 )
-#             else:
-#                 writer.writerow(
-#                     {
-#                         "source_url": source_url,
-#                         "status": status
-#                     }
-#                 )
-
-
 def identifier_main(urls_df):
     agencies_df = get_agencies_data()
     # Filter out agencies without a homepage_url set

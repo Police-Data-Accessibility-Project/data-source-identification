@@ -14,6 +14,11 @@ In an effort to build out a fully automated system for identifying and catalogui
 2. Runs non-duplicate sources through the `HTML tag collector` for use in ML training
 3. Checks the hostnames against those of the agencies in the database
 
+## How to use
+1. If running from the command line, create a CSV containing a list of urls to be identified, one per line with at least a "url" column
+2. Run `python3 identifier_pipeline.py [url_file]`
+3. Results will be written in the same directory as results.csv
+4. If importing "identification_pipeline_main" function, it expects a dataframe as an argument and returns a resulting dataframe
 
 # Contributing
 

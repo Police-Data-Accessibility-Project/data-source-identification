@@ -20,10 +20,11 @@ def identification_pipeline_main(df):
     non_duplicates_df = duplicate_check_df.filter(pl.col("id").is_null()).select(pl.col("url","id"))
     tagged_df = collector_main(non_duplicates_df)
     identified_df = identifier_main(tagged_df)
-    print(identified_df)
+
     return identified_df
 
 
 if __name__ == "__main__":
     df = pl.read_csv(sys.argv[1])
     identified_df = identification_pipeline_main(df)
+    identified_df.write_csv('results.csv')
