@@ -12,7 +12,7 @@ def get_agencies_data():
     Returns:
         list: List of agency dictionaries.
     """
-    api_key = "Bearer " + os.getenv("PDAP_API_KEY")
+    api_key = "Bearer " + os.getenv("VUE_APP_PDAP_API_KEY")
 
     results = {"data": {}}
     page = 1
