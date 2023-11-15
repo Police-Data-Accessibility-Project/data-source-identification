@@ -5,14 +5,16 @@ import sys
 from html_tag_collector.collector import collector_main
 from agency_identifier.identifier import identifier_main
 from datetime import datetime as dt
+from dotenv import load_dotenv
 
+load_dotenv()
 
 def identification_pipeline_main(df):
     df.unique()
     df.fill_null("")
     identify_df = df.filter(pl.col("url").is_not_null())
 
-    api_key = "Bearer " + os.getenv("PDAP_API_KEY")
+    api_key = "Bearer " + os.getenv("VUE_APP_PDAP_API_KEY")
     response = requests.get("https://data-sources.pdap.io/api/archives", headers={"Authorization": api_key})
     data = response.json()
     data_sources_df = pl.DataFrame(data)
