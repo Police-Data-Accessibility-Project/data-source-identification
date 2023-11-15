@@ -29,4 +29,4 @@ def identification_pipeline_main(df):
 if __name__ == "__main__":
     df = pl.read_csv(sys.argv[1])
     identified_df = identification_pipeline_main(df)
-    identified_df.write_csv('results.csv')
+    identified_df.write_csv("results.csv")

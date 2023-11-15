@@ -155,7 +155,7 @@ def identifier_main(urls_df):
 
     print("Indentifying agencies...")
     urls_df = urls_df.with_columns(pl.col("url").map_elements(parse_hostname).alias("hostname"))
-    matched_agencies_df = urls_df.join(agencies_df, on="hostname", how='left')
+    matched_agencies_df = urls_df.join(agencies_df, on="hostname", how="left")
     matched_agencies_clean_df = matched_agencies_df.with_columns(pl.all().fill_null(""))
 
     return matched_agencies_clean_df
@@ -180,6 +180,6 @@ if __name__ == "__main__":
             pl.col("municipality"),
             pl.col("agency_type"),
             pl.col("jurisdiction_type"),
-            pl.col("approved")).write_csv('results.csv')
+            pl.col("approved")).write_csv("results.csv")
 
     print("Results written to results.csv")
