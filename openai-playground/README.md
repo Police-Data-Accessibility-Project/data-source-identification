@@ -22,9 +22,11 @@ pip install -r requirements.txt
 
 3. run `python openai-test.py` or `python3 openai-test.py` depending on your install.
 
-4. Set up your API key according to the [instructions here](https://platform.openai.com/docs/quickstart/step-2-setup-your-api-key).
+4. If you run into an error, try running `pip install --upgrade openai`
 
-5. If you make something useful, put it in the index below!
+5. Set up your API key according to the [instructions here](https://platform.openai.com/docs/quickstart/step-2-setup-your-api-key).
+
+6. If you make something useful, put it in the index below!
 
 # Index
 
