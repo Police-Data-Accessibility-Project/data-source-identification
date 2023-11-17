@@ -15,7 +15,7 @@ In an effort to build out a fully automated system for identifying and catalogui
 - Checks the hostnames against those of the agencies in the database
 
 ## How to use
-1. If running from the command line, create a file containing a list of urls to be identified, or modify the existing `urls.csv` file. This requires one URL per line with at least a `url` column.
+1. If running from the command line, create a file containing a list of urls to be identified, or modify the existing `urls.csv` file. This requires one URL per line with at least a `url` column and one other column.
 2. Run `python3 identification_pipeline.py urls.csv`
 3. Results will be written in the same directory as results.csv
 4. If importing "identification_pipeline_main" function, it expects a dataframe as an argument and returns a resulting dataframe
