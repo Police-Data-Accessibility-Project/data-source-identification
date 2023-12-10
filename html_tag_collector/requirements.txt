@@ -1,0 +1,6 @@
+requests
+requests_html
+polars
+tqdm
+pyppeteer
+beautifulsoup4
