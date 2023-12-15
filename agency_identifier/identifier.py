@@ -24,12 +24,12 @@ def get_agencies_data():
             print("Request to PDAP API failed. Response code:", response.status_code)
             exit()
         results = response.json()["data"]
-        fields = ["defunct_year", "data_sources", "airtable_agency_last_modified", "agency_created", "data_sources_last_updated"]
+        clean_results = []
         for r in results:
-            for f in fields:
+            for f in r.keys():
                 r[f] = "" if r[f] is None else r[f]
-
-        new_agencies_df = pl.DataFrame(results)
+            clean_results.append(r)
+        new_agencies_df = pl.DataFrame(clean_results)
         if not new_agencies_df.is_empty():
             agencies_df = pl.concat([agencies_df, new_agencies_df])
         page += 1   
@@ -68,7 +68,9 @@ def remove_http(url):
     Returns:
         str: The url without http(s)://www.
     """
+    print(url)
     url = url.strip().strip('"')
+    print(url)
 
     if not url.startswith("http"):
         url = remove_www(url)
@@ -147,11 +149,11 @@ def identifier_main(urls_df):
     agencies_df = get_agencies_data()
     # Filter out agencies without a homepage_url set
     agencies_df = agencies_df.filter(pl.col("homepage_url").is_not_null())
+    agencies_df = agencies_df.filter(pl.col("homepage_url") != "")
     agencies_df = agencies_df.with_columns(pl.col("homepage_url").map_elements(parse_hostname).alias("hostname"),
         pl.col("count_data_sources").fill_null(0))
     agencies_df = agencies_df.with_columns(pl.col("count_data_sources").max().over("hostname").alias("max_data_sources")).filter(pl.col("count_data_sources") == pl.col("max_data_sources"))
     agencies_df = agencies_df.unique(subset=["homepage_url"])
-    print(agencies_df.filter(pl.col("homepage_url").is_duplicated()).sort("homepage_url"))
 
     print("Indentifying agencies...")
     urls_df = urls_df.with_columns(pl.col("url").map_elements(parse_hostname).alias("hostname"))
