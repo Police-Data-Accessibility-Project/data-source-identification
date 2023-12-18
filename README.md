@@ -9,12 +9,19 @@ HTML tag collector | Collects HTML header, meta, and title tags and appends them
 ML URL Classifier (work in progress) | Classifies a set of URLs given by a CSV file using the KNN and Logistic Regression algorithms. This is a work in progress with one function experiment on a small labeled dataset (~400 observations, 1 feature, 2 classes). Pending progress involves testing the existing workflow in `main.ipynb` against a larger labeled dataset and including more labels in the classification problem.
 openai-playground | Scripts for making data source identification type stuff happen with OpenAI
 
-## Identification pipeline
+# Identification pipeline
 In an effort to build out a fully automated system for identifying and cataloguing new data sources, this pipeline:
-1. Checks potential new data sources against all those already in the database
-2. Runs non-duplicate sources through the `HTML tag collector` for use in ML training
-3. Checks the hostnames against those of the agencies in the database
+- Checks potential new data sources against all those already in the database
+- Runs non-duplicate sources through the `HTML tag collector` for use in ML training
+- Checks the hostnames against those of the agencies in the database
 
+## How to use
+
+1. Create an .env file in this directory with these contents, or set the environment variable another way: `VUE_APP_PDAP_API_KEY=KeyGoesHere`
+2. Create a file in this directory containing a list of urls to be identified, or modify the existing `urls.csv` file. This requires one URL per line with at least a `url` column.
+3. Run `python3 identification_pipeline.py urls.csv`
+4. Results will be written in the same directory as results.csv
+5. If importing "identification_pipeline_main" function, it expects a dataframe as an argument and returns a resulting dataframe
 
 # Contributing
 

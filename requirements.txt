@@ -1,0 +1,5 @@
+requests
+polars
+python-dotenv
+bs4
+tqdm
