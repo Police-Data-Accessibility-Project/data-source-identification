@@ -9,6 +9,7 @@ import evaluate
 
 
 MODEL = "distilbert-base-uncased"
+MAX_STEPS = 500
 
 dataset = load_dataset("PDAP/urls")
 tokenizer = AutoTokenizer.from_pretrained(MODEL)
@@ -24,13 +25,13 @@ tokenized_datasets = dataset.map(tokenize_function, batched=True)
 tokenized_datasets = tokenized_datasets.cast_column("label", labels)
 
 # Shuffles the dataset, a smaller range can be selected to speed up training
-# This may come at the cost of accuracy and may cause errors if some labels end up being excluded from the dataset
+# Selecting a smaller range may come at the cost of accuracy and may cause errors if some labels end up being excluded from the dataset
 train_dataset = tokenized_datasets["train"].shuffle(seed=42)#.select(range(1000))
 eval_dataset = tokenized_datasets["test"].shuffle(seed=42)#.select(range(1000))
 
 classifier = pipeline("text-classification", model=MODEL, framework="pt", tokenizer=tokenizer)
 model = AutoModelForSequenceClassification.from_pretrained(MODEL, num_labels=28)
-training_args = TrainingArguments(output_dir="test_trainer_1.1", evaluation_strategy="epoch", max_steps=500)#, push_to_hub=True)
+training_args = TrainingArguments(output_dir="test_trainer_1.1", evaluation_strategy="epoch", max_steps=MAX_STEPS)#, push_to_hub=True)
 metric = evaluate.load("accuracy")
 
 def compute_metrics(eval_pred):
