@@ -56,11 +56,3 @@ You can run the training script by installing the libraries in `requirements.txt
 You can test the trained model by entering one link at a time in the Inference API GUI box on the model's [homepage](https://huggingface.co/PDAP/url-classifier-test).
 
 You can also consume the trained model programmatically using Hugging Face's Inference API. Learn more about that here: [https://huggingface.co/docs/api-inference/quicktour](https://huggingface.co/docs/api-inference/quicktour)
-
-## TODO
-
-- Add HTML tags into the training data
-- Experiment with identification based on 'relevant' or 'irrelevant' links
-- Experiment with using precision instead of accuracy as an evaluation strategy
-- Expand the dataset with a wider variety of urls and labels
-- Run a model with 3 epochs or more to see how accurate the results can become
