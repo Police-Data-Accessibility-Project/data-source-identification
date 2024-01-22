@@ -18,32 +18,6 @@ $pip install -r requirements.txt
 ```
 
 4. Run `python3 collector.py urls.json`
-Terminal output:
-
-(pdapenv) Jons-MBP:html_tag_collector bonjarlow$ python3 collector.py urls.json
-
-Total samples: 4
-Batch size: 200
-Number of Batches: 1 
-
-
-Batch 1/1
-Retrieving HTML tags...
-100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 4/4 [00:00<00:00, 24.15it/s]
-Parsing responses...
-100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 4/4 [00:00<00:00, 277.55it/s]
-shape: (4, 12)
-┌─────┬─────────────────────────┬───────┬───────────────┬───┬──────┬──────┬──────┬──────┐
-│ id  ┆ url                     ┆ label ┆ http_response ┆ … ┆ h3   ┆ h4   ┆ h5   ┆ h6   │
-│ --- ┆ ---                     ┆ ---   ┆ ---           ┆   ┆ ---  ┆ ---  ┆ ---  ┆ ---  │
-│ i64 ┆ str                     ┆ str   ┆ i64           ┆   ┆ str  ┆ str  ┆ str  ┆ str  │
-╞═════╪═════════════════════════╪═══════╪═══════════════╪═══╪══════╪══════╪══════╪══════╡
-│ 1   ┆ https://pdap.io         ┆ Label ┆ 200           ┆ … ┆ []   ┆ []   ┆ []   ┆ []   │
-│ 2   ┆ https://pdapio.io       ┆ Label ┆ -1            ┆ … ┆ null ┆ null ┆ null ┆ null │
-│ 3   ┆ https://pdap.dev        ┆ Label ┆ 200           ┆ … ┆ []   ┆ []   ┆ []   ┆ []   │
-│ 4   ┆ https://pdap.io/404test ┆ Label ┆ 200           ┆ … ┆ []   ┆ []   ┆ []   ┆ []   │
-└─────┴─────────────────────────┴───────┴───────────────┴───┴──────┴──────┴──────┴──────┘
-
 5. If running from the command line, check the directory: you should now have a `labeled-urls-headers.csv` file. Invalid URLs are removed. Otherewise the function returns a processed polars dataframe.
 
 # Why does this exist?
