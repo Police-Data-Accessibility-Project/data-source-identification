@@ -1,5 +1,5 @@
 # HTML tag collector
-This script adds HTML properties to a JSON file of existing URLs.
+This script adds HTML properties to a JSON file of existing URLs (and their labels optionally)
 *Properties added:* `title`, `meta`, and `header` HTML tags, `http_response`
 
 # How to use
@@ -18,7 +18,7 @@ $pip install -r requirements.txt
 ```
 
 4. Run `python3 collector.py`.
-5. If running from the command line, check the directory: you should now have a `urls_and_headers.csv` file. Invalid URLs are removed. Otherewise the function returns a processed polars dataframe.
+5. If running from the command line, check the directory: you should now have a `labeled-urls-headers.csv` file. Invalid URLs are removed. Otherewise the function returns a processed polars dataframe.
 
 # Why does this exist?
 We can use machine learning to predict whether a URL is relevant with some success, but labelers otherwise need to visit a URL in order to determine what is kept there. By adding these properties we can label data without navigating to the URL as often.
