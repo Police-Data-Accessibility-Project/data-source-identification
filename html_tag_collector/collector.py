@@ -145,7 +145,6 @@ async def get_response(session, url, index):
             print(str(e))
     finally:
         if DEBUG:
-           pass
            print(url, response)
 
         return {"index": index, "response": response}
