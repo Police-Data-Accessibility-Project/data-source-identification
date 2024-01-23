@@ -1,17 +1,17 @@
 [{
 	"id": 1,
 	"url": "https://pdap.io",
-	"label": ["Label1", "Label2"]
+	"label": "Label"
 }, {
 	"id": 2,
 	"url": "https://pdapio.io",
-	"label": ["Label1", "Label2"]
+	"label": "Label"
 }, {
 	"id": 3,
 	"url": "https://pdap.dev",
-	"label": ["Label1", "Label2"]
+	"label": "Label"
 }, {
 	"id": 4,
 	"url": "https://pdap.io/404test",
-	"label": ["Label1", "Label2"]
+	"label": "Label"
 }]
