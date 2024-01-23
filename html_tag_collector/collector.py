@@ -19,18 +19,21 @@ import polars as pl
 # Define the list of header tags we want to extract
 header_tags = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6']
 DEBUG = False # Set to True to enable debug output
+VERBOSE = True # Set to True to print dataframe each batch
 
 # Define a function to process a URL and update the JSON object
-def process_urls(urls, render_javascript=False):
+def process_urls(df, render_javascript=False):
     """Process a list of urls and retrieve their HTML tags.
 
     Args:
-        urls (list): List of urls.
+        df (polars dataframe): contains url column with relevant urls
         render_javascript (bool): Whether or not to render webpage's JavaScript rendered HTML. Default is False.
 
     Returns:
         list: List of dicts with HTML tags.
     """
+
+    urls = df.select(pl.col("url")).rows()
     new_urls = ["https://" + url[0] if not url[0].startswith("http") else url[0] for url in urls]
     
     loop = asyncio.get_event_loop()
@@ -115,14 +118,14 @@ async def get_response(session, url, index):
     url = url.removesuffix(".json")
 
     try:
-        response = await session.get(url, headers=headers, timeout=60)
+        response = await session.get(url, headers=headers, timeout=120)
     except requests.exceptions.SSLError:
         # This error is raised when the website uses a legacy SSL version, which is not supported by requests
         if DEBUG:
             print("SSLError:", url)
 
         # Retry without SSL verification
-        response = await session.get(url, headers=headers, timeout=60, verify=False)
+        response = await session.get(url, headers=headers, timeout=120, verify=False)
     except requests.exceptions.ConnectionError:
         # Sometimes this error is raised because the provided url uses http when it should be https and the website does not handle it properly
         if DEBUG:
@@ -131,7 +134,7 @@ async def get_response(session, url, index):
         if not url[4] == "s":
             url = url[:4] + "s" + url[4:]
             # Retry with https
-            response = await session.get(url, headers=headers, timeout=60)
+            response = await session.get(url, headers=headers, timeout=120)
     except (urllib3.exceptions.LocationParseError, requests.exceptions.ReadTimeout) as e:
         if DEBUG:
             print(f"{type(e).__name__}: {url}")
@@ -142,7 +145,7 @@ async def get_response(session, url, index):
             print(str(e))
     finally:
         if DEBUG:
-            print(url, response)
+           print(url, response)
 
         return {"index": index, "response": response}
 
@@ -201,7 +204,7 @@ def parse_response(url_response):
     tags["url"] = url_response["url"][0]
 
     if res is None:
-        tags["http_response"] = "Request failed"
+        tags["http_response"] = -1
         return tags
 
     tags["http_response"] = res.status_code
@@ -230,18 +233,69 @@ def parse_response(url_response):
 
 
 def collector_main(df, render_javascript=False):
-    header_tags_df = process_urls(df.select(pl.col("url")).rows(), render_javascript=render_javascript)
+    header_tags_df = process_urls(df, render_javascript=render_javascript)
 
     return header_tags_df
+
+def process_in_batches(df, batch_size=200):
+    """ Runs the tag collector on small batches of URLs contained in df
+
+    Args: 
+        df: polars dataframe containing all URLs in a 'url' column
+        batch_size: (int) # of URLs to process at a time (default 200)
+
+    Returns:
+        cumulative_df: polars dataframe containing responses from all batches
+
+    """
+          
+    # Create an empty DataFrame to store the final cumulative result
+    cumulative_df = pl.DataFrame()
+
+    # Calculate the number of batches needed
+    num_batches = (len(df) + batch_size - 1) // batch_size
+
+    print(f"\nTotal samples: {len(df)}")
+    print(f"Batch size: {batch_size}")
+    print(f"Number of Batches: {num_batches} \n")
+
+    # Process the DataFrame in batches
+    for i in range(num_batches):
+        start_idx = i * batch_size
+        end_idx = min((i + 1) * batch_size, len(df))
+        batch_df = df[start_idx:end_idx]
+
+        print(f"\nBatch {i + 1}/{num_batches}")
+
+        # Call the collector_main function on the current batch
+        header_tags_df = collector_main(batch_df)
+
+        # Check if it's the first batch, then directly set result_df
+        # if not then append latest batch on bottom
+        if i == 0:
+            cumulative_df = header_tags_df
+        else:
+            cumulative_df = pl.concat([cumulative_df, header_tags_df], how='vertical')
+
+    return cumulative_df
 
 
 if __name__ == '__main__':
     # Open the input file and load the JSON data
     with open(sys.argv[1]) as f:
         data = json.load(f)
+
     df = pl.DataFrame(data)
     
-    header_tags_df = collector_main(df)
+    #returns cumulative dataframe (contains all batches) of url and headers tags
+    cumulative_df = process_in_batches(df)
+
+    #join the url/header tag df with the original df which contains the labels (order has been preserved)
+    #remove duplicate rows
+    out_df = df.join(cumulative_df, on='url', how='left')
+    out_df = out_df.unique(subset=['id'], maintain_order=True)
+
+    if VERBOSE: print(out_df)
 
     # Write the updated JSON data to a new file
-    header_tags_df.write_csv('urls_and_headers.csv')
+    out_df.write_csv('labeled-urls-headers.csv')
