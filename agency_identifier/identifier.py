@@ -1,10 +1,12 @@
 import os
 import sys
 from urllib.parse import urlparse
+import re
 import polars
 import requests
 import polars as pl
-import tqdm
+
+API_URL = "https://data-sources.pdap.io/api/agencies/"
 
 
 def get_agencies_data() -> polars.DataFrame:
@@ -19,11 +21,9 @@ def get_agencies_data() -> polars.DataFrame:
     page = 1
     agencies_df = pl.DataFrame()
     while results:
-        #print(page)
-        response = requests.get(f"https://data-sources.pdap.io/api/agencies/{page}", headers={"Authorization": api_key})
+        response = requests.get(f"{API_URL}{page}", headers={"Authorization": api_key})
         if response.status_code != 200:
-            print("Request to PDAP API failed. Response code:", response.status_code)
-            exit()
+            raise Exception("Request to PDAP API failed. Response code:", response.status_code)
         results = response.json()["data"]
         clean_results = []
         for r in results:
@@ -33,7 +33,7 @@ def get_agencies_data() -> polars.DataFrame:
         new_agencies_df = pl.DataFrame(clean_results)
         if not new_agencies_df.is_empty():
             agencies_df = pl.concat([agencies_df, new_agencies_df])
-        page += 1   
+        page += 1
 
     return agencies_df
 
