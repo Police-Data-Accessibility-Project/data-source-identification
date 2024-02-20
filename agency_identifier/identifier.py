@@ -55,16 +55,23 @@ def parse_hostname(url: str) -> str:
     Returns:
         str: The url's hostname.
     """
-    url = url.strip().strip('"')
+    try:
+        # Remove leading and trailing whitespaces and quotes
+        url = url.strip().strip('"')
 
-    if not url.startswith("http"):
-        url = "http://" + url
+        # Add "http://" to the url if it's not present
+        if not re.match(r'http(s)?://', url):
+            url = "http://" + url
 
-    parsed_url = urlparse(url)
-    hostname = parsed_url.hostname
+        # Parse the url and retrieve the hostname
+        parsed_url = urlparse(url)
+        hostname = parsed_url.hostname
 
-    hostname = remove_www(hostname)
-
+        # Remove "www." from the hostname
+        hostname = re.sub(r'^www\.', '', hostname)
+    except Exception as e:
+        print(f"An error occurred while parsing the URL: {e}")
+        raise e
     return hostname
 
 
