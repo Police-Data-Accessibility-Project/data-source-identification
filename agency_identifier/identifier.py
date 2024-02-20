@@ -23,6 +23,7 @@ def get_page_data(page: int) -> dict:
         raise Exception("Request to PDAP API failed. Response code:", response.status_code)
     return response.json()["data"]
 
+
 def get_agencies_data() -> polars.DataFrame:
     """Retrives a list of agency dictionaries from file.
 
@@ -93,6 +94,7 @@ def remove_http(url: str) -> str:
         print(f"An error occurred while processing the URL: {e}")
         raise e
     return url
+
 
 def match_agencies(agencies, agency_hostnames, url):
     """Attempts to match a url with an agency.
