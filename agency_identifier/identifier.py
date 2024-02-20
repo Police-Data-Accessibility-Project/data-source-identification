@@ -4,7 +4,6 @@ from urllib.parse import urlparse
 import re
 import polars
 import requests
-import polars as pl
 
 API_URL = "https://data-sources.pdap.io/api/agencies/"
 
@@ -193,10 +192,10 @@ def identifier_main(urls_df: polars.DataFrame) -> polars.DataFrame
 
 
 if __name__ == "__main__":
-    urls_df = pl.read_csv(sys.argv[1])
+    urls_df = polars.read_csv(sys.argv[1])
     matched_agencies_df = identifier_main(urls_df)
 
-    matches_only = matched_agencies_df.filter(pl.col("hostname").is_not_null())
+    matches_only = matched_agencies_df.filter(polars.col("hostname").is_not_null())
 
     num_matches = len(matches_only)
     num_urls = len(urls_df)
@@ -204,13 +203,13 @@ if __name__ == "__main__":
     print(f"\n{num_matches} / {num_urls} ({percent:0.1f}%) of urls identified")
 
     if not matches_only.is_empty():
-        matches_only.select(pl.col("url"),
-            pl.col("name"),
-            pl.col("state_iso"),
-            pl.col("county_name"),
-            pl.col("municipality"),
-            pl.col("agency_type"),
-            pl.col("jurisdiction_type"),
-            pl.col("approved")).write_csv("results.csv")
+        matches_only.select(polars.col("url"),
+                            polars.col("name"),
+                            polars.col("state_iso"),
+                            polars.col("county_name"),
+                            polars.col("municipality"),
+                            polars.col("agency_type"),
+                            polars.col("jurisdiction_type"),
+                            polars.col("approved")).write_csv("results.csv")
 
     print("Results written to results.csv")
