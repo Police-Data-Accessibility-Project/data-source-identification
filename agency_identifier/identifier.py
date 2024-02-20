@@ -154,18 +154,41 @@ def match_agencies(agencies, agency_hostnames, url):
 def identifier_main(urls_df: polars.DataFrame) -> polars.DataFrame
     agencies_df = get_agencies_data()
     # Filter out agencies without a homepage_url set
-    agencies_df = agencies_df.filter(pl.col("homepage_url").is_not_null())
-    agencies_df = agencies_df.filter(pl.col("homepage_url") != "")
-    agencies_df = agencies_df.with_columns(pl.col("homepage_url").map_elements(parse_hostname).alias("hostname"),
-        pl.col("count_data_sources").fill_null(0))
-    agencies_df = agencies_df.with_columns(pl.col("count_data_sources").max().over("hostname").alias("max_data_sources")).filter(pl.col("count_data_sources") == pl.col("max_data_sources"))
-    agencies_df = agencies_df.unique(subset=["homepage_url"])
+    # Define column names as variables for flexibility
+    homepage_url_col = "homepage_url"
+    hostname_col = "hostname"
+    count_data_sources_col = "count_data_sources"
+    max_data_sources_col = "max_data_sources"
 
-    print("Indentifying agencies...")
-    urls_df = urls_df.with_columns(pl.col("url").map_elements(parse_hostname).alias("hostname"))
-    matched_agencies_df = urls_df.join(agencies_df, on="hostname", how="left")
-    matched_agencies_clean_df = matched_agencies_df.with_columns(pl.all().fill_null(""))
+    # Perform operations on DataFrame
+    try:
+        agencies_df = (
+            agencies_df
+            # Filter out rows without a homepage_url
+            .filter(polars.col(homepage_url_col).is_not_null())
+            .filter(polars.col(homepage_url_col) != "")
+            # Add a new column 'hostname' by applying the parse_hostname function to 'homepage_url'
+            .with_columns(polars.col(homepage_url_col).map_elements(parse_hostname).alias(hostname_col),
+                          polars.col(count_data_sources_col).fill_null(0))
+            # Add a new column 'max_data_sources' which is the max of 'count_data_sources' over 'hostname'
+            .with_columns(polars.col(count_data_sources_col).max().over(hostname_col).alias(max_data_sources_col))
+            # Filter rows where 'count_data_sources' equals 'max_data_sources'
+            .filter(polars.col(count_data_sources_col) == polars.col(max_data_sources_col))
+            # Keep only unique rows based on 'homepage_url'
+            .unique(subset=[homepage_url_col])
+        )
+        print("Indentifying agencies...")
+        # Add a new column 'hostname' by applying the parse_hostname function to 'url'
+        urls_df = urls_df.with_columns(polars.col("url").map_elements(parse_hostname).alias("hostname"))
 
+        # Join urls_df with agencies_df on 'hostname'
+        matched_agencies_df = urls_df.join(agencies_df, on="hostname", how="left")
+
+        # Replace all null values with an empty string
+        matched_agencies_clean_df = matched_agencies_df.with_columns(polars.all().fill_null(""))
+    except Exception as e:
+        print(f"An error occurred while processing the data: {e}")
+        raise e
     return matched_agencies_clean_df
 
 
