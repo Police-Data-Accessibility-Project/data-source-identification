@@ -145,7 +145,7 @@ def match_agencies(agencies, agency_hostnames, url):
             if url_no_http.startswith(agency_homepage):
                 return {"url": url, "agency": agency, "status": "Match found"}
                 break
-        
+
         return {"url": url, "agency": [], "status": "Contested match"}
 
     return {"url": url, "agency": matched_agency[0], "status": "Match found"}
