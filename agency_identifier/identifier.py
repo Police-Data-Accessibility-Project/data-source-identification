@@ -134,7 +134,7 @@ def match_agencies(agencies, agency_hostnames, url):
     return {"url": url, "agency": matched_agency[0], "status": "Match found"}
 
 
-def identifier_main(urls_df: polars.DataFrame) -> polars.DataFrame
+def match_urls_to_agencies_and_clean_data(urls_df: polars.DataFrame) -> polars.DataFrame:
     agencies_df = get_agencies_data()
     # Filter out agencies without a homepage_url set
     # Define column names as variables for flexibility
