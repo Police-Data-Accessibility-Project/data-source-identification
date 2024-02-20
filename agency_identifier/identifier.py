@@ -1,11 +1,13 @@
 import os
 import sys
 from urllib.parse import urlparse
+import polars
 import requests
 import polars as pl
 import tqdm
 
-def get_agencies_data():
+
+def get_agencies_data() -> polars.DataFrame:
     """Retrives a list of agency dictionaries from file.
 
     Returns:
@@ -36,7 +38,7 @@ def get_agencies_data():
     return agencies_df
 
 
-def parse_hostname(url):
+def parse_hostname(url: str) -> str:
     """Retrieves the hostname (example.com) from a url string.
 
     Args:
@@ -58,7 +60,7 @@ def parse_hostname(url):
     return hostname
 
 
-def remove_http(url):
+def remove_http(url: str) -> str:
     """Removes http(s)://www. from a given url so that different protocols don't throw off the matcher.
 
     Args:
@@ -89,7 +91,7 @@ def remove_http(url):
     return url
 
 
-def remove_www(url):
+def remove_www(url: str) -> str:
     """Utility function for remove_http() and parse_hostname().
 
     Removes www. from a url to facilitate better matching for cases where www. is missing.
@@ -144,7 +146,7 @@ def match_agencies(agencies, agency_hostnames, url):
     return {"url": url, "agency": matched_agency[0], "status": "Match found"}
 
 
-def identifier_main(urls_df):
+def identifier_main(urls_df: polars.DataFrame) -> polars.DataFrame
     agencies_df = get_agencies_data()
     # Filter out agencies without a homepage_url set
     agencies_df = agencies_df.filter(pl.col("homepage_url").is_not_null())
