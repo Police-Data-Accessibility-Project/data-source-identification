@@ -36,7 +36,7 @@ def get_agencies_data() -> polars.DataFrame:
 
     while results:
         # Use list comprehension to clean results
-        clean_results = [{k: "" if v is None else v for k, v in result.items()} for result in results]
+        clean_results = clean_page_data_results(results)
         new_agencies_df = polars.DataFrame(clean_results)
         if not new_agencies_df.is_empty():
             agencies_df = polars.concat([agencies_df, new_agencies_df])
@@ -44,6 +44,19 @@ def get_agencies_data() -> polars.DataFrame:
         results = get_page_data(page)
 
     return agencies_df
+
+
+def clean_page_data_results(results: list[dict[str, str]]) -> list[dict[str, str]]:
+    clean_results = []
+    for result in results:
+        clean_result = {}
+        for k, v in result.items():
+            if v is None:
+                clean_result[k] = ""
+            else:
+                clean_result[k] = v
+        clean_results.append(clean_result)
+    return clean_results
 
 
 def parse_hostname(url: str) -> str:
