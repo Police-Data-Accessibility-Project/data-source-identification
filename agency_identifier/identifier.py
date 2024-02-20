@@ -84,25 +84,15 @@ def remove_http(url: str) -> str:
     Returns:
         str: The url without http(s)://www.
     """
-    print(url)
-    url = url.strip().strip('"')
-    print(url)
-
-    if not url.startswith("http"):
-        url = remove_www(url)
-        return url
-
-    parsed_url = urlparse(url)
-    hostname = parsed_url.hostname
-    path = parsed_url.path
-
-    hostname = remove_www(hostname)
-
-    url = hostname + path
-
-    if url[-1] != "/":
-        url += "/"
-
+    try:
+        # Remove http(s)://www. and www. prefixes from the url
+        url = re.sub(r'^(http(s)?://)?(www\.)?', '', url)
+        # Ensure the url ends with a /
+        if not url.endswith('/'):
+            url += '/'
+    except Exception as e:
+        print(f"An error occurred while processing the URL: {e}")
+        raise e
     return url
 
 
