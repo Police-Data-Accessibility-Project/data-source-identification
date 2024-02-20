@@ -9,31 +9,39 @@ import polars as pl
 API_URL = "https://data-sources.pdap.io/api/agencies/"
 
 
+def get_page_data(page: int) -> dict:
+    """Fetches a page of data from the API.
+
+    Args:
+        page (int): The page number to fetch.
+
+    Returns:
+        dict: The data for the page.
+    """
+    api_key = "Bearer " + os.getenv("VUE_APP_PDAP_API_KEY")
+    response = requests.get(f"{API_URL}{page}", headers={"Authorization": api_key})
+    if response.status_code != 200:
+        raise Exception("Request to PDAP API failed. Response code:", response.status_code)
+    return response.json()["data"]
+
 def get_agencies_data() -> polars.DataFrame:
     """Retrives a list of agency dictionaries from file.
 
     Returns:
         list: List of agency dictionaries.
     """
-    api_key = "Bearer " + os.getenv("VUE_APP_PDAP_API_KEY")
-
-    results = {"data": {}}
     page = 1
-    agencies_df = pl.DataFrame()
+    agencies_df = polars.DataFrame()
+    results = get_page_data(page)
+
     while results:
-        response = requests.get(f"{API_URL}{page}", headers={"Authorization": api_key})
-        if response.status_code != 200:
-            raise Exception("Request to PDAP API failed. Response code:", response.status_code)
-        results = response.json()["data"]
-        clean_results = []
-        for r in results:
-            for f in r.keys():
-                r[f] = "" if r[f] is None else r[f]
-            clean_results.append(r)
-        new_agencies_df = pl.DataFrame(clean_results)
+        # Use list comprehension to clean results
+        clean_results = [{k: "" if v is None else v for k, v in result.items()} for result in results]
+        new_agencies_df = polars.DataFrame(clean_results)
         if not new_agencies_df.is_empty():
-            agencies_df = pl.concat([agencies_df, new_agencies_df])
+            agencies_df = polars.concat([agencies_df, new_agencies_df])
         page += 1
+        results = get_page_data(page)
 
     return agencies_df
 
