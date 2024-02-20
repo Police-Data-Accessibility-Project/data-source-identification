@@ -94,24 +94,6 @@ def remove_http(url: str) -> str:
         raise e
     return url
 
-
-def remove_www(url: str) -> str:
-    """Utility function for remove_http() and parse_hostname().
-
-    Removes www. from a url to facilitate better matching for cases where www. is missing.
-
-    Args:
-        url (str): Url to remove www. from.
-
-    Returns:
-        str: The url without www.
-    """
-    if url.startswith("www."):
-        url = url[4:]
-
-    return url
-
-
 def match_agencies(agencies, agency_hostnames, url):
     """Attempts to match a url with an agency.
 
