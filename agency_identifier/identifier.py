@@ -175,25 +175,48 @@ def match_urls_to_agencies_and_clean_data(urls_df: polars.DataFrame) -> polars.D
     return matched_agencies_clean_df
 
 
-if __name__ == "__main__":
-    urls_df = polars.read_csv(sys.argv[1])
-    matched_agencies_df = identifier_main(urls_df)
+def read_data(file_path: str) -> polars.DataFrame:
+    try:
+        return polars.read_csv(file_path)
+    except Exception as e:
+        print(f"An error occurred while reading the file: {e}")
+        raise e
 
+
+def write_data(df: polars.DataFrame, file_path: str):
+    try:
+        df.write_csv(file_path)
+        print("Results written to results.csv")
+    except Exception as e:
+        print(f"An error occurred while writing to the file: {e}")
+        raise e
+
+
+def process_data(urls_df: polars.DataFrame) -> polars.DataFrame:
+    matched_agencies_df = match_urls_to_agencies_and_clean_data(urls_df)
+
+    # Filter out rows where the hostname is not null
     matches_only = matched_agencies_df.filter(polars.col("hostname").is_not_null())
-
     num_matches = len(matches_only)
     num_urls = len(urls_df)
-    percent = 100 * float(num_matches) / float(num_urls)
-    print(f"\n{num_matches} / {num_urls} ({percent:0.1f}%) of urls identified")
+    percent_urls_matched = 100 * float(num_matches) / float(num_urls)
 
+    # Print the number and percentage of URLs that were matched
+    print(f"\n{num_matches} / {num_urls} ({percent_urls_matched:0.1f}%) of urls identified")
+
+    # Return the DataFrame containing only the matched URLs
+    return matches_only
+
+
+def process_and_write_data(input_file: str, output_file: str):
+    urls_df = read_data(input_file)
+    matches_only = process_data(urls_df)
     if not matches_only.is_empty():
-        matches_only.select(polars.col("url"),
-                            polars.col("name"),
-                            polars.col("state_iso"),
-                            polars.col("county_name"),
-                            polars.col("municipality"),
-                            polars.col("agency_type"),
-                            polars.col("jurisdiction_type"),
-                            polars.col("approved")).write_csv("results.csv")
+        write_data(matches_only, output_file)
+
+
+if __name__ == "__main__":
+    process_and_write_data(sys.argv[1], "results.csv")
 
     print("Results written to results.csv")
+
