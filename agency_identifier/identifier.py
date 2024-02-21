@@ -230,6 +230,4 @@ def process_and_write_data(input_file: str, output_file: str):
 
 if __name__ == "__main__":
     process_and_write_data(sys.argv[1], "results.csv")
-
     print("Results written to results.csv")
-
