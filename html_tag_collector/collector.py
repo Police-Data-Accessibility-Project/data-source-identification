@@ -308,7 +308,6 @@ def process_in_batches(df, render_javascript=False, batch_size=200):
         cumulative_df: polars dataframe containing responses from all batches
 
     """
-
     # Create an empty DataFrame to store the final cumulative result
     cumulative_df = pl.DataFrame()
 
@@ -348,7 +347,7 @@ if __name__ == "__main__":
             data = json.load(f)
         df = pl.DataFrame(data)
     elif file.endswith(".csv"):
-        df = pl.read_csv("train-urls.csv")
+        df = pl.read_csv(file)
     else:
         print("Unsupported filetype")
         sys.exit(1)
@@ -360,6 +359,8 @@ if __name__ == "__main__":
     # returns cumulative dataframe (contains all batches) of url and headers tags
     cumulative_df = process_in_batches(df, render_javascript=render_javascript)
 
+    # Drop duplicate columns
+    df = df.drop(["http_response", "html_title", "meta_description", *header_tags])
     # join the url/header tag df with the original df which contains the labels (order has been preserved)
     # remove duplicate rows
     out_df = df.join(cumulative_df, on="url", how="left")
