@@ -16,6 +16,8 @@ from bs4 import BeautifulSoup
 import sys
 import polars as pl
 
+from html_tag_collector.RootURLCache import RootURLCache
+
 # Define the list of header tags we want to extract
 header_tags = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6']
 DEBUG = False # Set to True to enable debug output
@@ -188,6 +190,7 @@ async def render_js(urls_responses):
                 if DEBUG:
                     print("Rendering cancelled")
 
+root_url_cache = RootURLCache()
 
 def parse_response(url_response):
     """Parses relevant HTML tags from a Response object into a dictionary.
@@ -197,7 +200,7 @@ def parse_response(url_response):
 
     Returns:
         list[dict]: List of dictionaries containing urls and relevant HTML tags.
-    """    
+    """
     tags = {}
     res = url_response["response"]
     tags["index"] = url_response["index"]
@@ -217,6 +220,7 @@ def parse_response(url_response):
         return tags
 
     tags["html_title"] = soup.title.string if soup.title is not None else ""
+    tags["root_page_title"] = root_url_cache.get_title(tags["url"])
 
     meta_tag = soup.find("meta", attrs={"name": "description"})
     try:
