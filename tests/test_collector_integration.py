@@ -2,6 +2,9 @@ import pytest
 import responses
 import json
 import polars as pl
+from pytest_mock import mocker
+
+from html_tag_collector.RootURLCache import RootURLCache
 from html_tag_collector.collector import process_in_batches  # Adjust this import to your script structure
 
 # Mocking HTTP responses for our test URLs
@@ -33,7 +36,10 @@ def setup_responses():
             rsps.add(responses.GET, test_url["url"], body=test_url["body"], status=test_url["status"], content_type=test_url["headers"]["Content-Type"])
         yield
 
-def test_process_in_batches(setup_responses):
+def test_process_in_batches(setup_responses, mocker):
+    # Patch the save_cache method of the RootURLCache class
+    mocker.patch.object(RootURLCache, 'save_cache', return_value=None)
+
     # Convert test URLs to the required input format
     input_data = [{"url": url["url"]} for url in test_urls]
     df = pl.DataFrame(input_data)
@@ -51,7 +57,10 @@ def test_process_in_batches(setup_responses):
         assert result["meta_description"] == expected["meta_description"]
         assert json.loads(result["h1"]) == json.loads(expected["h1"])
 
-def test_process_in_batches_real_world_data():
+def test_process_in_batches_real_world_data(mocker):
+    # Patch the save_cache method of the RootURLCache class
+    mocker.patch.object(RootURLCache, 'save_cache', return_value=None)
+
     url = 'https://books.toscrape.com/catalogue/i-had-a-nice-time-and-other-lies-how-to-find-love-sht-like-that_814/index.html'
     df = pl.DataFrame([{"url": url}])
     result_df = process_in_batches(df, batch_size=1)
