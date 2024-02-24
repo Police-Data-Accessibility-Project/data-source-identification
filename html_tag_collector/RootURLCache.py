@@ -14,7 +14,13 @@ class RootURLCache:
     def load_cache(self):
         if os.path.exists(self.cache_file):
             with open(self.cache_file, 'r') as f:
-                return json.load(f)
+                # Check if the file is empty
+                content = f.read()
+                if not content:
+                    # Return an empty dictionary if the file is empty
+                    return {}
+                # If the file is not empty, return its JSON content
+                return json.loads(content)
         return {}
 
     def save_cache(self):
