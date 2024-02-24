@@ -1,3 +1,5 @@
+from urllib.parse import urlparse
+
 import requests
 from bs4 import BeautifulSoup
 import json
@@ -20,19 +22,17 @@ class RootURLCache:
             json.dump(self.cache, f, indent=4)
 
     def get_title(self, url):
-        if url not in self.cache:
+        parsed_url = urlparse(url)
+        root_url = f"{parsed_url.scheme}://{parsed_url.netloc}"
+
+        if root_url not in self.cache:
             try:
-                response = requests.get(url)
+                response = requests.get(root_url)
                 soup = BeautifulSoup(response.text, 'html.parser')
                 title = soup.find('title').text
-                self.cache[url] = title
+                self.cache[root_url] = title
                 self.save_cache()
                 return title
             except Exception as e:
                 return f"Error retrieving title: {e}"
-        return self.cache[url]
-
-if __name__ == '__main__':
-    # Example usage:
-    cache = RootURLCache()
-    print(cache.get_title('http://www.example.com'))
+        return self.cache[root_url]
