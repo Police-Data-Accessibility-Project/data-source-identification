@@ -1,9 +1,13 @@
 import csv
 import random
+import sys
 
-with open("labeled_231207.csv", newline="") as csvfile:
+labels = set()
+csv.field_size_limit(sys.maxsize)
+
+with open("labeled-urls-headers_all.csv", newline="") as csvfile:
     reader = csv.DictReader(csvfile)
-    result = sorted(reader, key=lambda d: int(d["id"]))
+    #result = sorted(reader, key=lambda d: int(d["id"]))
     with open("train-urls.csv", "w", newline="") as writefile:
         writer = csv.writer(writefile)
         writer.writerow(["url", "label"])
@@ -11,15 +15,23 @@ with open("labeled_231207.csv", newline="") as csvfile:
         vd_writer = csv.writer(open("test-urls.csv", "w", newline=""))
         vd_writer.writerow(["url", "label"])
 
-        for row in result:
-            if "#" in row["label"]:
+        for row in reader:
+            label = row["label"]
+
+            if "#" in label:
                 continue
 
-            url = row["text"].split(" ,")[0]
+            url = row["url"]
+
+            if not url:
+                continue
 
             rand = random.randint(1, 13)
 
-            if rand != 1:
+            if label not in labels:
+                labels.add(label)
+                writer.writerow([url, row["label"]])
+            elif rand != 1:
                 writer.writerow([url, row["label"]])
             else:
                 vd_writer.writerow([url, row["label"]])
