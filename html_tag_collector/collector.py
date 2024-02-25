@@ -276,6 +276,7 @@ def parse_response(url_response):
         headers = soup.find_all(header_tag)
         header_content = [header.text for header in headers]
         tags[header_tag] = json.dumps(header_content)
+        print(tags[header_tag])
 
     # Prevents most bs4 memory leaks
     if soup.html:
@@ -353,7 +354,7 @@ if __name__ == "__main__":
         sys.exit(1)
 
     render_javascript = False
-    if sys.argv[2] == "--render-javascript":
+    if sys.argv[2] and sys.argv[2] == "--render-javascript":
         render_javascript = True
 
     # returns cumulative dataframe (contains all batches) of url and headers tags
