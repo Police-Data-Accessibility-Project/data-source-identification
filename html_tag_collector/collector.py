@@ -354,7 +354,7 @@ if __name__ == "__main__":
         sys.exit(1)
 
     render_javascript = False
-    if sys.argv[2] and sys.argv[2] == "--render-javascript":
+    if len(sys.argv) > 2 and sys.argv[2] == "--render-javascript":
         render_javascript = True
 
     # returns cumulative dataframe (contains all batches) of url and headers tags
