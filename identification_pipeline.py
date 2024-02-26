@@ -3,7 +3,7 @@ import os
 import polars as pl
 import sys
 from html_tag_collector.collector import collector_main
-from agency_identifier.identifier import identifier_main
+from agency_identifier.identifier import match_urls_to_agencies_and_clean_data
 from datetime import datetime as dt
 from dotenv import load_dotenv
 
@@ -21,7 +21,7 @@ def identification_pipeline_main(df):
     duplicate_check_df = identify_df.join(data_sources_df, left_on="url", right_on="source_url", how="outer")
     non_duplicates_df = duplicate_check_df.filter(pl.col("id").is_null()).select(pl.col("url","id"))
     tagged_df = collector_main(non_duplicates_df)
-    identified_df = identifier_main(tagged_df)
+    identified_df = match_urls_to_agencies_and_clean_data(tagged_df)
 
     return identified_df
 
