@@ -8,7 +8,7 @@ def fetch_html(url):
         return response.text
     except requests.exceptions.RequestException as e:
         logging.error(f"Failed to fetch HTML from {url}: {e}")
-        return str(e)
+        raise e
 
 
 def harvest_html(urls):
