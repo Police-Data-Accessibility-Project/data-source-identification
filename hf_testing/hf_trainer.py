@@ -8,7 +8,6 @@ import numpy as np
 import evaluate
 
 MODEL = "distilbert-base-uncased"
-MAX_STEPS = 500
 
 dataset = load_dataset("PDAP/urls-and-headers")
 tokenizer = AutoTokenizer.from_pretrained(MODEL)
