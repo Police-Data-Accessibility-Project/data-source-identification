@@ -9,7 +9,11 @@ import evaluate
 
 MODEL = "distilbert-base-uncased"
 
-dataset = load_dataset("PDAP/urls-and-headers")
+#explicitly load dataset from local file (hugging face insists on a constant train/test split when loading from hub)
+dataset = load_dataset('csv', data_files="data/labeled-urls-headers_all.csv")
+dataset = dataset.shuffle()
+dataset = dataset['train'].train_test_split(test_size=0.15)
+
 tokenizer = AutoTokenizer.from_pretrained(MODEL)
 labels = ClassLabel(names_file="data/high-freq-labels.txt")
 features = ['url', 'http_response', 'html_title', 'meta_description', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6']
