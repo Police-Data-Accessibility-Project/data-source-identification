@@ -33,49 +33,78 @@ Thank you for your interest in contributing to this project! Please follow these
 
 # Pipeline flow & operations
 
-Each of these steps may be attempted with regex, human identification, or machine learning. Once a property is in the JSON metadata, 
+Each of these steps may be attempted with regex, human identification, or machine learning.
+
+We combine several machine learning (ML) models, each focusing on a specific task or property.
 
 ```mermaid
 %% Here's a guide to mermaid syntax: https://mermaid.js.org/syntax/flowchart.html
 
 flowchart TD
-A["Start with a list of URLs
-in JSON format"]
-B["Check for duplicates in the pipeline's
-training data"]
-C["Make an HTTP request to the URL
-and append some JSON metadata"]
-D["Determine whether the URL is about one of our
-`agency_types` (police, courts, jails)"]
-E["Determine which `agency` is described"]
-F["Determine if this is an `individual record`.
-We're after parent data sources."]
-G["Add `name`, `description`, `record_type`
-based on request content"]
+0["Human-label batches
+using an annotation pipeline
+to train ML models on specific
+tasks or properties"]
+A["Start with a batch of URLs
+in JSON format, from common
+crawl or another source"]
+B["Check for duplicates in the
+pipeline's training data
+/ our database"]
+C["Make an HTTP request to
+each URL in the JSON batch
+and append some metadata"]
+D["Determine whether the URL
+is “relevant”, i.e. a source of
+data about one of our `agency_types`
+(police, courts, jails)"]
+E["Determine if this is an
+`individual record`. We're only
+looking for data sources, of which
+individual records are children."]
+F["Determine which `agency`
+is described"]
+G["Define `name`, `description`,
+`record_type`"]
 H["Identify other metadata
-based on our pipeline"]
-I["Submit Data Sources with `agency`, `name`,
-`description`, and `record_type` to the
-approval queue"]
-J["Use newly approved Data Sources to
-train machine learning algorithms"]
+using on our pipeline"]
+I["Submit Data Sources with `agency`,
+`name`, `description`, and
+`record_type` to the approval queue"]
+J["Manually approve or reject
+data source submissions"]
+K["Retrain models with approved
+submissions, particularly
+adjustments made before
+approval & rejections"]
 reject["Reject the URL"]
 manual["Human-identify and
 resubmit"]
 
-subgraph Happy path
+C --> 0
+
+subgraph Prepare URLs for labeling or identification
 A --> B
 B --> C
+end
+
 C --> D
+D -- not relevant --> reject
+
+subgraph Use ML models to ID data
 D -- yes --> E
 E -- found --> F
 F --> G
 G --> H
-H -- minimum criteria met --> I
-I --> J
 end
 
-D -- no --> reject
-E -- not found --> manual
-H -- incomplete --> manual
+F -- cannot identify --> manual
+G -- cannot identify --> manual
+manual --> H
+H --> I
+
+subgraph approve & submit
+I --> J
+J --> K
+end
 ```
