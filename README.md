@@ -90,10 +90,11 @@ end
 
 C --> D
 D -- not relevant --> reject
+E -- individual record --> reject
 
 subgraph Use ML models to ID data
 D -- yes --> E
-E -- found --> F
+E --> F
 F --> G
 G --> H
 end
