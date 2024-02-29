@@ -94,14 +94,3 @@ if __name__ == "__main__":
     print(keyword_urls)
     # pass
 
-        # # Fetch the page content from the first record
-        # content = fetch_page_from_cc(records)
-        # if content:
-        #     print(f"Successfully fetched content for {target_url}")
-        #     # You can now process the 'content' variable as needed
-    # # Example usage
-    # common_crawl = CommonCrawler()
-    # common_crawl.list_indexes()
-# Specify a WARC file URL to process
-# warc_url = 'https://commoncrawl.s3.amazonaws.com/crawl-data/CC-MAIN-2023-09/segments/1646597590739.45/warc/CC-MAIN-20230304134639-20230304164639-00000.warc.gz'
-# common_crawl.process_warc_file(warc_url)
