@@ -20,8 +20,10 @@ class CommonCrawlerManager:
     It validates crawl ids, manages pagination, and aggregates results.
     """
 
-    def __init__(self):
-        self.cache = CommonCrawlerCacheManager(CacheStorage())
+    def __init__(self, cache_storage: CacheStorage):
+        self.cache = CommonCrawlerCacheManager(
+            storage=cache_storage
+        )
 
     def reset_cache(self):
         # Reset the cache
