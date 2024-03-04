@@ -1,5 +1,6 @@
 import json
-import os
+
+from common_crawler.utils import get_file_path
 
 """
 This module contains classes for managing a cache of Common Crawl search results
@@ -43,15 +44,9 @@ class CommonCrawlerCacheObject:
 
 
 class CacheStorage:
-    def __init__(self, file_name="cache.json", directory=None):
-        self.file_path = self._get_cache_file_path(file_name, directory)
-
-    def _get_cache_file_path(self, file_name, directory):
-        # If a directory is specified, use it; otherwise, get the current script's directory
-        if directory is None:
-            directory = os.path.dirname(os.path.abspath(__file__))
-        # Construct the full path to the file
-        return os.path.join(directory, file_name)
+    def __init__(self, file_name: str = "cache", directory=None):
+        self.file_path = get_file_path(f"{file_name}.json", directory)
+        print(f"Cache file path: {self.file_path}")
 
     def load_cache(self):
         try:
