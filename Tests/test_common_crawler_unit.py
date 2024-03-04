@@ -210,7 +210,9 @@ def test_reset_cache(MockCommonCrawler, MockCommonCrawlerCacheManager):
     """
     Test that the cache is reset when the reset_cache method is called
     """
-    manager = CommonCrawlerManager()
+    manager = CommonCrawlerManager(
+        cache_storage=MagicMock()
+    )
     manager.reset_cache()
     assert manager.cache.cache == {}  # Ensure the cache is reset
 
@@ -220,7 +222,9 @@ def test_crawl_id_validation(mocked_cache_manager):
     Test that the crawl method raises a ValueError when
     an invalid crawl_id is provided
     """
-    manager = CommonCrawlerManager()
+    manager = CommonCrawlerManager(
+        cache_storage=MagicMock()
+    )
     valid_crawl_id = "CC-MAIN-2023-50"
     invalid_crawl_id = "CC-MAIN-202"
 
@@ -243,16 +247,22 @@ def test_crawl(mock_save_cache, mock_get, mock_search_cc_index):
     Test that the crawl method calls the
     expected methods with the expected arguments
     """
-    manager = CommonCrawlerManager()
+    manager = CommonCrawlerManager(
+        cache_storage=MagicMock()
+    )
     crawl_id = "CC-MAIN-2023-50"
     url = "http://example.com"
-    search_term = "example"
+    keyword = "example"
     num_pages = 1
 
-    results = manager.crawl(crawl_id, url, search_term, num_pages)
+    results = manager.crawl(
+        crawl_id=crawl_id,
+        search_term=url,
+        keyword=keyword,
+        num_pages=num_pages)
 
     try:
-        mock_get.assert_called_with(crawl_id, url, search_term)
+        mock_get.assert_called_with(crawl_id, url, keyword)
     except AssertionError:
         actual_args = mock_get.call_args
         raise AssertionError(f"mock_get was not called with the expected arguments. It was called with {actual_args}")
@@ -269,6 +279,11 @@ def test_crawl(mock_save_cache, mock_get, mock_search_cc_index):
         raise AssertionError(f"mock_search_cc_index was not called with the expected arguments. It was called with {actual_args}")
     # Verify results
     assert len(results) == 1, "Expected 1 result"
-    assert results[0] == "http://example.com", "Expected result to be http://example.com"
+    assert results[0].url == "http://example.com"
+    assert results[0].index == crawl_id
+    assert results[0].search_term == url
+    assert results[0].page == 1
+    assert results[0].keyword == keyword
+
 
 # endregion CommonCrawlerManager
