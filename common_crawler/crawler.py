@@ -4,7 +4,7 @@ from urllib.parse import quote_plus
 
 import requests
 
-from common_crawler.utils import URLWithParameters
+from common_crawler.utils import URLWithParameters, UrlResults
 from common_crawler.cache import CommonCrawlerCacheManager, CacheStorage
 
 """
@@ -30,35 +30,44 @@ class CommonCrawlerManager:
         self.cache.cache = {}  # Assuming your cache data is stored in a dictionary attribute called 'cache'
         print("Cache has been reset.")
 
-    def crawl(self, crawl_id, url, search_term, num_pages):
+    def crawl(self, crawl_id, search_term, keyword, num_pages) -> list[UrlResults]:
 
         # Check that crawl_id is valid
         if not re.match(r'CC-MAIN-\d{4}-\d{2}', crawl_id):
             raise ValueError("Invalid crawl_id")
 
-        print(f"Searching for {search_term} on {url} in {crawl_id} for {num_pages} pages")
+        print(f"Searching for {keyword} on {search_term} in {crawl_id} for {num_pages} pages")
 
         # Create Common Crawler
         cc = CommonCrawler(crawl_id)
 
         # Initialize results list
-        results = []
+        results: list[UrlResults] = []
 
         # Loop over the number of pages
         for _ in range(num_pages):
             # Retrieve the cache object
-            cache_object = self.cache.get(crawl_id, url, search_term)
+            cache_object = self.cache.get(crawl_id, search_term, keyword)
 
             # Get the next page to search
             next_page = cache_object.get_next_page()
 
             # Search the Common Crawl index
-            records = cc.search_cc_index(url, next_page)
+            records = cc.search_cc_index(search_term, next_page)
 
             # If records were found, filter them and add to results
-            if records:
-                keyword_urls = cc.get_urls_with_keyword(records, search_term)
-                results.extend(keyword_urls)
+            if not records:
+                continue
+
+            keyword_urls = cc.get_urls_with_keyword(records, keyword)
+            for keyword_url in keyword_urls:
+                results.append(
+                    UrlResults(
+                        index=crawl_id,
+                        url=keyword_url,
+                        search_term=search_term,
+                        page=next_page,
+                        keyword=keyword))
 
         # Save cache
         self.cache.save_cache()
