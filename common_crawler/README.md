@@ -55,3 +55,14 @@ The code is structured as follows:
 - **config.ini**: This file contains the default configuration values.
 - **requirements.txt**: This file contains the necessary dependencies for the module.
 - **README.md**: This file contains the documentation for the module. You're reading it right now. Isn't that nifty!
+
+### Testing
+
+A suite of unit and integration tests were developed for this module.
+
+To run the tests, run the following command from the root directory:
+
+```bash
+pytest tests/test_common_crawler_integration.py
+pytest tests/test_common_crawler_unit.py
+```
