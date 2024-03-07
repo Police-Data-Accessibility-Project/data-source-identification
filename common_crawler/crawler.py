@@ -26,7 +26,6 @@ class CommonCrawlerManager:
         )
 
     def reset_cache(self):
-        # Reset the cache
         self.cache.cache = {}  # Assuming your cache data is stored in a dictionary attribute called 'cache'
         print("Cache has been reset.")
 
@@ -63,10 +62,8 @@ class CommonCrawlerManager:
                         page=next_page,
                         keyword=keyword))
 
-            # Update the last_page in cache_object after each successful crawl
             cache_object.last_page = next_page
 
-        # Save cache
         self.cache.save_cache()
 
         return results
@@ -89,8 +86,6 @@ class CommonCrawler:
          along with an estimate of the total number of records (assuming 15,000 records per page)
         Args:
             url: URL to query off of
-
-
         """
         encoded_url = quote_plus(url)
         search_url = URLWithParameters(self.root_url)
