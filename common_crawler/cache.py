@@ -99,3 +99,7 @@ class CommonCrawlerCacheManager:
 
     def save_cache(self):
         self.storage.save_cache(self.cache)
+
+    def reset_cache(self):
+        self.cache = {}
+        print("Cache has been reset.")

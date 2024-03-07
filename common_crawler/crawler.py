@@ -20,14 +20,9 @@ class CommonCrawlerManager:
     It validates crawl ids, manages pagination, and aggregates results.
     """
 
-    def __init__(self, cache_storage: CacheStorage):
-        self.cache = CommonCrawlerCacheManager(
-            storage=cache_storage
-        )
+    def __init__(self, cache_manager: CommonCrawlerCacheManager):
+        self.cache = cache_manager
 
-    def reset_cache(self):
-        self.cache.cache = {}
-        print("Cache has been reset.")
 
     def crawl(self, crawl_id, search_term, keyword, num_pages) -> list[UrlResults]:
 

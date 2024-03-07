@@ -1,5 +1,5 @@
 from common_crawler.argparser import parse_args
-from common_crawler.cache import CacheStorage
+from common_crawler.cache import CacheStorage, CommonCrawlerCacheManager
 from common_crawler.crawler import CommonCrawlerManager
 from common_crawler.csv_manager import CSVManager
 from common_crawler.utils import UrlResults
@@ -8,31 +8,35 @@ from common_crawler.utils import UrlResults
 This module contains the main function for the Common Crawler script.
 """
 
+
 def main():
     # Parse the arguments
     args = parse_args()
 
-    # Initialize the Cache Storage
-    cache_storage = CacheStorage(
-        file_name=args.cache_filename,
-        directory=args.data_dir
+    # Initialize the Cache
+    cache_manager = CommonCrawlerCacheManager(
+        storage=CacheStorage(
+            file_name=args.cache_filename,
+            directory=args.data_dir
+        )
     )
+
     # Initialize the CSV Manager
     csv_manager = CSVManager(
         file_name=args.output_filename,
         directory=args.data_dir
     )
 
-    # Initialize the CommonCrawlerManager
-    manager = CommonCrawlerManager(
-        cache_storage=cache_storage
-    )
-
     if args.reset_cache:
-        manager.reset_cache()
+        cache_manager.reset_cache()
         csv_manager.initialize_file()
 
     try:
+        # Initialize the CommonCrawlerManager
+        manager = CommonCrawlerManager(
+            cache_manager=cache_manager
+        )
+
         # Use the parsed arguments
         results = manager.crawl(args.common_crawl_id, args.url, args.search_term, args.pages)
 
