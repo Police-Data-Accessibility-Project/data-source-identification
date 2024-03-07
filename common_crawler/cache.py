@@ -23,10 +23,6 @@ class CommonCrawlerCacheObject:
         self.search_term = search_term
         self.last_page = last_page
 
-    def get_next_page(self):
-        self.last_page += 1
-        return self.last_page
-
     def __str__(self):
         return f"Index: {self.index}, URL: {self.url}, Search Term: {self.search_term}, Page Count: {self.last_page}"
 

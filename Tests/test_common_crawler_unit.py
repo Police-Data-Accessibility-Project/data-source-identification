@@ -23,16 +23,7 @@ def test_common_crawler_cache_object_creation(index, url, search_term, page_coun
     assert obj.index == index
     assert obj.url == url
     assert obj.search_term == search_term
-    assert obj.count == page_count
-
-
-def test_get_next_page():
-    """
-    Test that the get_next_page method returns the expected page number
-    """
-    obj = CommonCrawlerCacheObject("CC-MAIN-2020-24", "http://example.com", "example")
-    assert obj.get_next_page() == 1
-    assert obj.get_next_page() == 2
+    assert obj.last_page == page_count
 
 
 def test_to_dict():
@@ -64,7 +55,7 @@ def test_from_dict():
     assert obj.index == input_dict["index"]
     assert obj.url == input_dict["url"]
     assert obj.search_term == input_dict["search_term"]
-    assert obj.count == input_dict["count"]
+    assert obj.last_page == input_dict["count"]
 
 
 # endregion CommonCrawlerCacheObject
@@ -88,7 +79,7 @@ def test_add_and_get():
     assert cached_object.index == index
     assert cached_object.url == url
     assert cached_object.search_term == search_term
-    assert cached_object.count == 0  # Should be initialized to 0
+    assert cached_object.last_page == 0  # Should be initialized to 0
 
 
 
@@ -126,7 +117,7 @@ def test_load_or_create_cache():
 
     assert "example" in cache.cache["CC-MAIN-2020-24"]["http://example.com"]
     cached_object = cache.cache["CC-MAIN-2020-24"]["http://example.com"]["example"]
-    assert cached_object.count == 3
+    assert cached_object.last_page == 3
 
 
 # endregion CommonCrawlerCacheManager
