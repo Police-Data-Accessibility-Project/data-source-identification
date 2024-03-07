@@ -64,6 +64,7 @@ class CommonCrawlerManager:
 
             cache_object.last_page = next_page
 
+        # cache_object is updated in-place; calling save_cache persists these changes.
         self.cache.save_cache()
 
         return results
