@@ -14,28 +14,28 @@ class CommonCrawlerCacheObject:
         index: str - the index of the common crawl
         url: str - the url to search
         search_term: str - the search term to use
-        page_count: int - the last page searched (0 if not searched yet)
+        last_page: int - the last page searched (0 if not searched yet)
     """
 
-    def __init__(self, index: str, url: str, search_term: str, page_count: int = 0):
+    def __init__(self, index: str, url: str, search_term: str, last_page: int = 0):
         self.index = index
         self.url = url
         self.search_term = search_term
-        self.count = page_count
+        self.last_page = last_page
 
     def get_next_page(self):
-        self.count += 1
-        return self.count
+        self.last_page += 1
+        return self.last_page
 
     def __str__(self):
-        return f"Index: {self.index}, URL: {self.url}, Search Term: {self.search_term}, Page Count: {self.count}"
+        return f"Index: {self.index}, URL: {self.url}, Search Term: {self.search_term}, Page Count: {self.last_page}"
 
     def to_dict(self):
         return {
             'index': self.index,
             'url': self.url,
             'search_term': self.search_term,
-            'count': self.count
+            'count': self.last_page
         }
 
     @classmethod
@@ -63,7 +63,7 @@ class CacheStorage:
                 readable_cache[index][url] = {}
                 for search_term, cache_object in url_data.items():
                     readable_cache[index][url][search_term] = {
-                        'last_page_crawled': cache_object.count
+                        'last_page_crawled': cache_object.last_page
                     }
         with open(self.file_path, 'w') as file:
             json.dump(readable_cache, file, indent=4)

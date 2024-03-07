@@ -44,10 +44,11 @@ class CommonCrawlerManager:
         # Initialize results list
         results: list[UrlResults] = []
 
+        # Retrieve the cache object
+        cache_object = self.cache.get(crawl_id, search_term, keyword)
+
         # Loop over the number of pages
         for _ in range(num_pages):
-            # Retrieve the cache object
-            cache_object = self.cache.get(crawl_id, search_term, keyword)
 
             # Get the next page to search
             next_page = cache_object.get_next_page()
