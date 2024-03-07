@@ -26,7 +26,7 @@ class CommonCrawlerManager:
         )
 
     def reset_cache(self):
-        self.cache.cache = {}  # Assuming your cache data is stored in a dictionary attribute called 'cache'
+        self.cache.cache = {}
         print("Cache has been reset.")
 
     def crawl(self, crawl_id, search_term, keyword, num_pages) -> list[UrlResults]:
@@ -118,7 +118,6 @@ class CommonCrawler:
         search_url.add_parameter('output', 'json')
         search_url.add_parameter('page', page)
         response = requests.get(str(search_url))
-        # print("Response from CCI:", response.text)  # Output the response from the server
         if response.status_code == 200:
             records = response.text.strip().split('\n')
             print(f"Found {len(records)} records for {url} on page {page}")
