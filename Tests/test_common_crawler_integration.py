@@ -54,7 +54,7 @@ def test_cache_persistence():
             )
         )
         cache.add("CC-MAIN-2020-24", "http://example.com", "example")
-        cache.cache["CC-MAIN-2020-24"]["http://example.com"]["example"].count = 3
+        cache.cache["CC-MAIN-2020-24"]["http://example.com"]["example"].last_page = 3
 
         # Save the cache to a file
         cache.save_cache()
@@ -68,7 +68,7 @@ def test_cache_persistence():
         )
 
         # Assert that the loaded cache matches the original data
-        assert cache.cache["CC-MAIN-2020-24"]["http://example.com"]["example"].count == 3
+        assert cache.cache["CC-MAIN-2020-24"]["http://example.com"]["example"].last_page == 3
         # assert cache.cache == mock_data, "Loaded cache does not match original data"
 
         # Clean up the test file
