@@ -165,19 +165,6 @@ def test_search_cc_index(mock_get):
     assert result[0]['records'][0]['url'] == "http://example.com"
 
 
-def test_get_urls():
-    """
-    Test that the get_urls method returns the expected URLs
-    """
-    records = [
-        {"url": "http://example.com"},
-        {"url": "http://example.com/page2"}
-    ]
-    urls = CommonCrawler.get_urls(records)
-    assert len(urls) == 2
-    assert "http://example.com" in urls
-
-
 def test_get_urls_with_keyword():
     """
     Test that the get_urls_with_keyword method returns the expected URLs

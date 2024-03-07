@@ -132,17 +132,5 @@ class CommonCrawler:
             return None
 
     @staticmethod
-    def get_urls(records: list[dict]) -> list[str]:
-        """
-        This method is used to extract the URLs from a list of records
-        Args:
-            records:
-
-        Returns: a list of URLs
-
-        """
-        return [record['url'] for record in records]
-
-    @staticmethod
     def get_urls_with_keyword(records: list[dict], keyword) -> list[str]:
         return [record['url'] for record in records if keyword in record['url']]
