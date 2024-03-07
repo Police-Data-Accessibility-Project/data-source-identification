@@ -117,12 +117,17 @@ class CommonCrawler:
         search_url.add_parameter('url', encoded_url)
         search_url.add_parameter('output', 'json')
         search_url.add_parameter('page', page)
+
+        # Perform an HTTP GET request to retrieve records for the encoded URL.
         response = requests.get(str(search_url))
+
+        # If the request is successful, parse each record from the response and return them.
         if response.status_code == 200:
             records = response.text.strip().split('\n')
             print(f"Found {len(records)} records for {url} on page {page}")
             return [json.loads(record) for record in records]
         else:
+            # Return None to indicate that no records were found or an error occurred.
             return None
 
     @staticmethod
