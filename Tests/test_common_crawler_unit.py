@@ -168,7 +168,7 @@ def test_search_cc_index(mock_get):
     mock_get.return_value.text = mock_search_response
 
     crawler = CommonCrawler()
-    result = crawler.search_cc_index("http://example.com")
+    result = crawler.search_common_crawl_index("http://example.com")
 
     assert len(result[0]['records']) == 2  # Assuming the mock response contains 2 records
     assert result[0]['records'][0]['url'] == "http://example.com"
@@ -239,7 +239,7 @@ def test_crawl_id_validation(mocked_cache_manager):
         manager.crawl(invalid_crawl_id, "http://example.com", "example", 1)
 
 
-@patch.object(CommonCrawler, 'search_cc_index', return_value=[{"url": "http://example.com"}])
+@patch.object(CommonCrawler, 'search_common_crawl_index', return_value=[{"url": "http://example.com"}])
 @patch.object(CommonCrawlerCacheManager, 'get', return_value=CommonCrawlerCacheObject("CC-MAIN-2023-50", "http://example.com", "example", 0))
 @patch.object(CommonCrawlerCacheManager, 'save_cache')
 def test_crawl(mock_save_cache, mock_get, mock_search_cc_index):

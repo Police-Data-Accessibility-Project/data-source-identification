@@ -38,23 +38,16 @@ class CommonCrawlerManager:
 
         print(f"Searching for {keyword} on {search_term} in {crawl_id} for {num_pages} pages")
 
-        # Create Common Crawler
         cc = CommonCrawler(crawl_id)
-
-        # Initialize results list
         results: list[UrlResults] = []
 
         # Retrieve the cache object
         cache_object = self.cache.get(crawl_id, search_term, keyword)
+        start_page = cache_object.last_page + 1
+        end_page = start_page + num_pages
 
-        # Loop over the number of pages
-        for _ in range(num_pages):
-
-            # Get the next page to search
-            next_page = cache_object.get_next_page()
-
-            # Search the Common Crawl index
-            records = cc.search_cc_index(search_term, next_page)
+        for next_page in range(start_page, end_page):
+            records = cc.search_common_crawl_index(search_term, next_page)
 
             # If records were found, filter them and add to results
             if not records:
@@ -69,6 +62,9 @@ class CommonCrawlerManager:
                         search_term=search_term,
                         page=next_page,
                         keyword=keyword))
+
+            # Update the last_page in cache_object after each successful crawl
+            cache_object.last_page = next_page
 
         # Save cache
         self.cache.save_cache()
@@ -111,7 +107,7 @@ class CommonCrawler:
         else:
             print(f"Failed to get number of pages for {url}")
 
-    def search_cc_index(self, url: str, page: int = 0) -> list[dict]:
+    def search_common_crawl_index(self, url: str, page: int = 0) -> list[dict]:
         """
         This method is used to search the Common Crawl index for a given URL and page number
         Args:
