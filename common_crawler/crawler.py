@@ -1,5 +1,4 @@
 import json
-import re
 from urllib.parse import quote_plus
 
 import requests
@@ -32,6 +31,7 @@ class CommonCrawlerManager:
 
         # Retrieve the cache object
         cache_object = self.cache.get(crawl_id, search_term, keyword)
+        # Determine the pages to search, based on the last page searched
         start_page = cache_object.last_page + 1
         end_page = start_page + num_pages
 
