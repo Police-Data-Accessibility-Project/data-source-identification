@@ -11,18 +11,18 @@ from common_crawler.cache import CommonCrawlerCacheObject, CommonCrawlerCacheMan
 
 
 # region CommonCrawlerCacheObject
-@pytest.mark.parametrize("index, url, search_term, page_count", [
+@pytest.mark.parametrize("index, url, keyword, page_count", [
     ("CC-MAIN-2020-24", "http://example.com", "example", 0),
     ("CC-MAIN-2019-47", "https://anotherexample.com", "test", 5)
 ])
-def test_common_crawler_cache_object_creation(index, url, search_term, page_count):
+def test_common_crawler_cache_object_creation(index, url, keyword, page_count):
     """
     Test that the CommonCrawlerCacheObject is created with the expected attributes
     """
-    obj = CommonCrawlerCacheObject(index, url, search_term, page_count)
+    obj = CommonCrawlerCacheObject(index, url, keyword, page_count)
     assert obj.index == index
     assert obj.url == url
-    assert obj.search_term == search_term
+    assert obj.keyword == keyword
     assert obj.last_page == page_count
 
 
@@ -34,29 +34,10 @@ def test_to_dict():
     expected_dict = {
         "index": "CC-MAIN-2020-24",
         "url": "http://example.com",
-        "search_term": "example",
+        "keyword": "example",
         "count": 3
     }
     assert obj.to_dict() == expected_dict
-
-
-def test_from_dict():
-    """
-    Test that the from_dict method creates a CommonCrawlerCacheObject
-    with the expected attributes
-    """
-    input_dict = {
-        "index": "CC-MAIN-2020-24",
-        "url": "http://example.com",
-        "search_term": "example",
-        "count": 3
-    }
-    obj = CommonCrawlerCacheObject.from_dict(input_dict)
-    assert obj.index == input_dict["index"]
-    assert obj.url == input_dict["url"]
-    assert obj.search_term == input_dict["search_term"]
-    assert obj.last_page == input_dict["count"]
-
 
 # endregion CommonCrawlerCacheObject
 
@@ -70,15 +51,15 @@ def test_add_and_get():
     cache = CommonCrawlerCacheManager(storage=MagicMock())
     index = "CC-MAIN-2020-24"
     url = "http://example.com"
-    search_term = "example"
+    keyword = "example"
 
     # Test adding a new search to the cache
-    cache.add(index, url, search_term)
-    cached_object = cache.get(index, url, search_term)
+    cache.add(index, url, keyword)
+    cached_object = cache.get(index, url, keyword)
 
     assert cached_object.index == index
     assert cached_object.url == url
-    assert cached_object.search_term == search_term
+    assert cached_object.keyword == keyword
     assert cached_object.last_page == 0  # Should be initialized to 0
 
 

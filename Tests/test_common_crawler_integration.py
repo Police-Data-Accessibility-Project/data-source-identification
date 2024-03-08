@@ -88,7 +88,7 @@ def test_main_with_valid_args(mocker):
     mock_args = mock_parse_args.return_value
     mock_args.common_crawl_id = 'CC-MAIN-9999-99'
     mock_args.url = '*.com'
-    mock_args.search_term = 'keyword'
+    mock_args.keyword = 'keyword'
     mock_args.pages = 2
     mock_args.output_filename = 'test_output'
     mock_args.cache_filename = 'test_cache'
@@ -134,7 +134,7 @@ def test_main_with_valid_args(mocker):
     mock_args.reset_cache = False
     mock_args.common_crawl_id = 'CC-MAIN-0000-00'
     mock_args.url = '*.gov'
-    mock_args.search_term = 'police'
+    mock_args.keyword = 'police'
     mock_args.pages = 3
     # output_filename, cache_filename, and data_dir are unchanged
     common_crawler_results_2 = [
