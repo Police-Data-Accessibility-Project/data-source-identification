@@ -264,7 +264,7 @@ def parse_response(url_response):
     except (bs4.builder.ParserRejectedMarkup, AssertionError, AttributeError):
         return tags
 
-    tags["html_title"] = soup.title.string if soup.title is not None else ""
+    tags["html_title"] = soup.title.string.strip() if soup.title is not None else ""
 
     meta_tag = soup.find("meta", attrs={"name": "description"})
     try:
