@@ -43,9 +43,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument('-p', '--pages', type=int, default=1, help='The number of pages to search (default: 1)')
     parser.add_argument('--reset-cache', action='store_true', default=False,
                         help='Reset the cache before starting the crawl')
-    # Parse the arguments
 
-    # Add config file to args
     args = parser.parse_args()
 
     # Validate the Common Crawl ID format
