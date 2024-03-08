@@ -25,11 +25,6 @@ class CommonCrawlerManager:
 
 
     def crawl(self, crawl_id, search_term, keyword, num_pages) -> list[UrlResults]:
-
-        # Check that crawl_id is valid
-        if not re.match(r'CC-MAIN-\d{4}-\d{2}', crawl_id):
-            raise ValueError("Invalid crawl_id")
-
         print(f"Searching for {keyword} on {search_term} in {crawl_id} for {num_pages} pages")
 
         cc = CommonCrawler(crawl_id)

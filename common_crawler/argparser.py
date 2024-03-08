@@ -1,10 +1,22 @@
 import argparse
 import configparser
+import re
 
 """
 This module contains the argument parser for command line arguments
 for the Common Crawler script.
 """
+
+def valid_common_crawl_id(common_crawl_id: str) -> bool:
+    """
+    Validate the Common Crawl ID format.
+    The Common Crawl ID should be in the format CC-MAIN-YYYY-WW.
+    Args:
+        common_crawl_id: The Common Crawl ID to validate
+    Returns:
+        True if the Common Crawl ID is valid, False otherwise
+    """
+    return re.match(r'CC-MAIN-\d{4}-\d{2}', common_crawl_id) is not None
 
 def parse_args() -> argparse.Namespace:
     """
@@ -31,14 +43,22 @@ def parse_args() -> argparse.Namespace:
     # Optional arguments for the number of pages and the output file, and a flag to reset the cache
     parser.add_argument('-c', '--config', type=str, default='config.ini', help='The configuration file to use')
     parser.add_argument('-p', '--pages', type=int, default=1, help='The number of pages to search (default: 1)')
-    parser.add_argument('--reset-cache', action='store_true', default=False, help='Reset the cache before starting the crawl')
+    parser.add_argument('--reset-cache', action='store_true', default=False,
+                        help='Reset the cache before starting the crawl')
     # Parse the arguments
 
     # Add config file to args
     args = parser.parse_args()
+
+    # Validate the Common Crawl ID format
+    if not valid_common_crawl_id(args.common_crawl_id):
+        parser.error("Invalid Common Crawl ID format. Expected format is CC-MAIN-YYYY-WW.")
+
+    # Read the configuration file
     config = configparser.ConfigParser()
     config.read(args.config)
 
+    # Create a new parser with the configuration file as the parent
     app_parser = argparse.ArgumentParser(parents=[parser], add_help=False)
     app_parser.set_defaults(**config['DEFAULT'])
 

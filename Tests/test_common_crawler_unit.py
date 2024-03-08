@@ -1,6 +1,6 @@
 # Test Cases
 import json
-from unittest.mock import patch, mock_open
+from unittest.mock import patch, PropertyMock
 from urllib.parse import quote_plus
 
 import pytest
@@ -183,51 +183,47 @@ def test_get_urls_with_keyword():
 
 # region CommonCrawlerManager
 @patch('common_crawler.cache.CommonCrawlerCacheManager')
-@patch('common_crawler.crawler.CommonCrawler')
-def test_reset_cache(MockCommonCrawler, MockCommonCrawlerCacheManager):
+def test_reset_cache(MockCommonCrawlerCacheManager):
     """
     Test that the cache is reset when the reset_cache method is called
     """
-    manager = CommonCrawlerManager(
-        cache_storage=MagicMock()
+    manager = CommonCrawlerCacheManager(
+        storage=MagicMock()
     )
     manager.reset_cache()
-    assert manager.cache.cache == {}  # Ensure the cache is reset
+    assert manager.cache == {}  # Ensure the cache is reset
 
-@patch('common_crawler.crawler.CommonCrawlerCacheManager', return_value=MagicMock())
-def test_crawl_id_validation(mocked_cache_manager):
+def test_crawl_id_validation():
     """
-    Test that the crawl method raises a ValueError when
-    an invalid crawl_id is provided
+    Test that the valid_common_crawl_id function properly detects
+    valid and invalid crawl IDs
     """
-    manager = CommonCrawlerManager(
-        cache_storage=MagicMock()
-    )
+    from common_crawler.argparser import valid_common_crawl_id
+
     valid_crawl_id = "CC-MAIN-2023-50"
     invalid_crawl_id = "CC-MAIN-202"
 
-    # Valid crawl_id should not raise an error
-    try:
-        manager.crawl(valid_crawl_id, "http://example.com", "example", 1)
-    except ValueError:
-        pytest.fail("crawl raised ValueError unexpectedly!")
+    assert valid_common_crawl_id(valid_crawl_id)
+    assert not valid_common_crawl_id(invalid_crawl_id)
 
-    # Invalid crawl_id should raise ValueError
-    with pytest.raises(ValueError):
-        manager.crawl(invalid_crawl_id, "http://example.com", "example", 1)
+
+
 
 
 @patch.object(CommonCrawler, 'search_common_crawl_index', return_value=[{"url": "http://example.com"}])
-@patch.object(CommonCrawlerCacheManager, 'get', return_value=CommonCrawlerCacheObject("CC-MAIN-2023-50", "http://example.com", "example", 0))
-@patch.object(CommonCrawlerCacheManager, 'save_cache')
-def test_crawl(mock_save_cache, mock_get, mock_search_cc_index):
+def test_crawl(mock_search_cc_index):
     """
     Test that the crawl method calls the
     expected methods with the expected arguments
     """
+    mock_cache_manager = MagicMock(spec=CommonCrawlerCacheManager)
+    # Have the get method return a new cache object
+    mock_cache_manager.get.return_value = CommonCrawlerCacheObject("CC-MAIN-2023-50", "http://example.com", "example", 0)
     manager = CommonCrawlerManager(
-        cache_storage=MagicMock()
+        cache_manager=mock_cache_manager
     )
+
+
     crawl_id = "CC-MAIN-2023-50"
     url = "http://example.com"
     keyword = "example"
@@ -240,13 +236,13 @@ def test_crawl(mock_save_cache, mock_get, mock_search_cc_index):
         num_pages=num_pages)
 
     try:
-        mock_get.assert_called_with(crawl_id, url, keyword)
+        mock_cache_manager.get.assert_called_with(crawl_id, url, keyword)
     except AssertionError:
-        actual_args = mock_get.call_args
+        actual_args = mock_cache_manager.get.call_args
         raise AssertionError(f"mock_get was not called with the expected arguments. It was called with {actual_args}")
 
     try:
-        mock_save_cache.assert_called_once()
+        mock_cache_manager.save_cache.assert_called_once()
     except AssertionError:
         raise AssertionError("mock_save_cache was not called exactly once")
 
