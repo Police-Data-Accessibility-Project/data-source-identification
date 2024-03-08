@@ -28,10 +28,7 @@ def parse_args() -> argparse.Namespace:
     - The number of pages to search
     - The configuration file (defaults to config.ini)
     - A flag to reset the cache
-
     Returns: The parsed arguments
-
-
     """
 
     parser = argparse.ArgumentParser(
