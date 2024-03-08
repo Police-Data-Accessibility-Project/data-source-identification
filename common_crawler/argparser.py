@@ -20,7 +20,8 @@ def valid_common_crawl_id(common_crawl_id: str) -> bool:
 
 def parse_args() -> argparse.Namespace:
     """
-    Parse the command line arguments for the Common Crawler script.
+    Parse the command line arguments for the Common Crawler script
+    as well as the configuration file.
     Arguments parsed include:
     - The Common Crawl ID
     - The URL to query
@@ -55,7 +56,7 @@ def parse_args() -> argparse.Namespace:
     config = configparser.ConfigParser()
     config.read(args.config)
 
-    # Create a new parser with the configuration file as the parent
+    # Combine parsed arguments with configuration file defaults
     app_parser = argparse.ArgumentParser(parents=[parser], add_help=False)
     app_parser.set_defaults(**config['DEFAULT'])
 
