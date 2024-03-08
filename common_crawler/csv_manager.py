@@ -29,7 +29,15 @@ class CSVManager:
         except Exception as e:
             print(f"An error occurred while trying to write to {self.file_path}: {e}")
 
-    def add_rows(self, results: list[UrlResults]):
+    def add_rows(self, results: list[UrlResults]) -> None:
+        """
+        Appends multiple rows of data to the CSV.
+        Args:
+            results: list[UrlResults] - a list of UrlResults named tuples
+
+        Returns:
+
+        """
         for result in results:
             self.add_row(
                 index=result.index,
