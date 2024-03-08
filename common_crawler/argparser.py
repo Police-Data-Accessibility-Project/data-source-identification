@@ -37,7 +37,7 @@ def parse_args() -> argparse.Namespace:
     # Add the required arguments
     parser.add_argument('common_crawl_id', type=str, help='The Common Crawl ID')
     parser.add_argument('url', type=str, help='The URL to query')
-    parser.add_argument('search_term', type=str, help='The search term')
+    parser.add_argument('keyword', type=str, help='The keyword to search in the url')
     # Optional arguments for the number of pages and the output file, and a flag to reset the cache
     parser.add_argument('-c', '--config', type=str, default='config.ini', help='The configuration file to use')
     parser.add_argument('-p', '--pages', type=int, default=1, help='The number of pages to search (default: 1)')
@@ -63,7 +63,7 @@ def parse_args() -> argparse.Namespace:
     # Print arguments
     print(f"--Common Crawl ID: {app_args.common_crawl_id}")
     print(f"--URL: {app_args.url}")
-    print(f"--Search Term: {app_args.search_term}")
+    print(f"--Keyword: {app_args.keyword}")
     print(f"--Number of Pages: {app_args.pages}")
     print(f"--Configuration File: {app_args.config}")
     print(f"--Reset Cache: {app_args.reset_cache}")

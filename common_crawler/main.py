@@ -38,7 +38,7 @@ def main():
         )
 
         # Use the parsed arguments
-        results = manager.crawl(args.common_crawl_id, args.url, args.search_term, args.pages)
+        results = manager.crawl(args.common_crawl_id, args.url, args.keyword, args.pages)
 
         if results:
             csv_manager.add_rows(results)
