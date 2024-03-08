@@ -10,6 +10,7 @@ UrlResults = namedtuple(
     field_names=['index', 'search_term', 'keyword', 'page', 'url']
 )
 
+
 def create_directories_if_not_exist(file_path: str):
     """
     Create directories if they don't exist
@@ -53,10 +54,6 @@ def get_file_path(file_name: str, directory: str = None):
     create_directories_if_not_exist(full_path)
 
     return full_path
-
-def get_unique_url_roots(urls):
-    return list(set([url.split('/')[2] for url in urls]))
-
 
 class URLWithParameters:
     """
