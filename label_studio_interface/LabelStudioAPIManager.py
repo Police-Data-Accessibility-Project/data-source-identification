@@ -126,7 +126,7 @@ class LabelStudioAPIManager:
 if __name__ == "__main__":
     load_dotenv()
     # Pull authorization token from env
-    authorization_token = os.getenv('LABEL_STUDIO_API_KEY')
+    authorization_token = os.getenv('LABEL_STUDIO_ACCESS_TOKEN')
 
     # Example usage
     api_manager = LabelStudioAPIManager(
