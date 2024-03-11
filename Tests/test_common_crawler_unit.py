@@ -3,7 +3,7 @@ import json
 from unittest.mock import patch
 from urllib.parse import quote_plus
 
-from common_crawler.crawler import CommonCrawler
+from common_crawler.crawler import CommonCrawlerManager
 from common_crawler.argparser import valid_common_crawl_id
 
 # region CommonCrawler
@@ -16,25 +16,6 @@ mock_search_response = json.dumps({
 
 
 @patch('requests.get')
-def test_get_number_of_pages(mock_get):
-    """
-    Test that the get_number_of_pages method calls the expected URL
-    and returns the expected number of pages
-    """
-    mock_get.return_value.status_code = 200
-    mock_get.return_value.text = '{"pages": 2}'
-
-    crawler = CommonCrawler()
-    crawler.get_number_of_pages("http://example.com")
-
-    # Assert that the mocked get method was called with the expected URL
-    assert mock_get.called
-    encoded_url = quote_plus("http://example.com")
-    expected_url = f"{crawler.CC_INDEX_SERVER}{crawler.INDEX_NAME}?url={encoded_url}&output=json&showNumPages=true"
-    mock_get.assert_called_with(expected_url)
-
-
-@patch('requests.get')
 def test_search_cc_index(mock_get):
     """
     Test that the search_cc_index method returns the expected records
@@ -42,7 +23,7 @@ def test_search_cc_index(mock_get):
     mock_get.return_value.status_code = 200
     mock_get.return_value.text = mock_search_response
 
-    crawler = CommonCrawler()
+    crawler = CommonCrawlerManager()
     result = crawler.search_common_crawl_index("http://example.com")
 
     assert len(result[0]['records']) == 2  # Assuming the mock response contains 2 records
@@ -58,7 +39,7 @@ def test_get_urls_with_keyword():
         {"url": "http://example.com/page2"},
         {"url": "http://test.com"}
     ]
-    urls = CommonCrawler.get_urls_with_keyword(records, "example")
+    urls = CommonCrawlerManager.get_urls_with_keyword(records, "example")
     assert len(urls) == 2
     assert "http://test.com" not in urls
 

@@ -102,7 +102,7 @@ def test_main_with_valid_args(mocker):
             'url': 'http://not-in-results.com'
         }]
     ]
-    mock_search_cc_index = mocker.patch('common_crawler.crawler.CommonCrawler.search_common_crawl_index')
+    mock_search_cc_index = mocker.patch('common_crawler.crawler.CommonCrawlerManager.search_common_crawl_index')
     mock_search_cc_index.side_effect = common_crawler_results
 
     # Call main with test arguments
