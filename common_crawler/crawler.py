@@ -4,7 +4,7 @@ from urllib.parse import quote_plus
 import requests
 
 from common_crawler.utils import URLWithParameters, UrlResults
-from common_crawler.cache import CommonCrawlerCacheManager, CacheStorage
+from common_crawler.cache import CommonCrawlerCacheManager
 
 """
 This module contains classes for managing a cache of Common Crawl search results
@@ -22,17 +22,16 @@ class CommonCrawlerManager:
     def __init__(self, cache_manager: CommonCrawlerCacheManager):
         self.cache = cache_manager
 
-
     def crawl(self, crawl_id, search_term, keyword, num_pages) -> list[UrlResults]:
         print(f"Searching for {keyword} on {search_term} in {crawl_id} for {num_pages} pages")
 
         cc = CommonCrawler(crawl_id)
         results: list[UrlResults] = []
 
-        # Retrieve the cache object
-        cache_object = self.cache.get(crawl_id, search_term, keyword)
+        # Retrieve the last page from the cache, or 0 if it does not exist
+        last_page = self.cache.get(crawl_id, search_term, keyword)
         # Determine the pages to search, based on the last page searched
-        start_page = cache_object.last_page + 1
+        start_page = last_page + 1
         end_page = start_page + num_pages
 
         for next_page in range(start_page, end_page):
@@ -52,9 +51,9 @@ class CommonCrawlerManager:
                         page=next_page,
                         keyword=keyword))
 
-            cache_object.last_page = next_page
+            last_page = next_page
 
-        # cache_object is updated in-place; calling save_cache persists these changes.
+        self.cache.upsert(crawl_id, search_term, keyword, last_page)
         self.cache.save_cache()
 
         return results

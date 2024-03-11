@@ -3,13 +3,10 @@ import json
 import os
 import shutil
 import tempfile
-from unittest.mock import mock_open, patch
 
-import pytest
 
 from common_crawler.main import main
-from common_crawler.cache import CacheStorage, CommonCrawlerCacheManager
-from common_crawler.utils import UrlResults
+from common_crawler.cache import CommonCrawlerCacheManager
 
 
 def validate_csv(file_path, expected_values):
@@ -48,28 +45,27 @@ def test_cache_persistence():
     with tempfile.TemporaryDirectory() as tmp_dir:
         # Create a cache and add data to it
         cache = CommonCrawlerCacheManager(
-            storage=CacheStorage(
-                file_name="test_cache.json",
-                directory=tmp_dir,
-            )
+            file_name="test_cache.json",
+            directory=tmp_dir,
         )
-        cache.add("CC-MAIN-2020-24", "http://example.com", "example")
-        cache.cache["CC-MAIN-2020-24"]["http://example.com"]["example"].last_page = 3
+        cache.upsert("CC-MAIN-2020-24", "http://example.com", "example", 3)
 
         # Save the cache to a file
         cache.save_cache()
 
         # Recreate the cache and load the data from the file
         cache = CommonCrawlerCacheManager(
-            storage=CacheStorage(
-                file_name="test_cache.json",
-                directory=tmp_dir,
-            )
+            file_name="test_cache.json",
+            directory=tmp_dir,
         )
 
         # Assert that the loaded cache matches the original data
-        assert cache.cache["CC-MAIN-2020-24"]["http://example.com"]["example"].last_page == 3
+        assert cache.cache["CC-MAIN-2020-24"]["http://example.com"]["example"] == 3
         # assert cache.cache == mock_data, "Loaded cache does not match original data"
+
+        # Reset cache and verify that it is is empty
+        cache.reset_cache()
+        assert cache.cache == {}
 
         # Clean up the test file
 
@@ -128,7 +124,7 @@ def test_main_with_valid_args(mocker):
         assert 'CC-MAIN-9999-99' in cache
         assert '*.com' in cache['CC-MAIN-9999-99']
         assert 'keyword' in cache['CC-MAIN-9999-99']['*.com']
-        assert cache['CC-MAIN-9999-99']['*.com']['keyword']['last_page_crawled'] == 2
+        assert cache['CC-MAIN-9999-99']['*.com']['keyword'] == 2
 
     # Run main again with different arguments and no reset_cache enabled, to test persistence of cache and output files
     mock_args.reset_cache = False
@@ -188,12 +184,12 @@ def test_main_with_valid_args(mocker):
         assert 'CC-MAIN-9999-99' in cache
         assert '*.com' in cache['CC-MAIN-9999-99']
         assert 'keyword' in cache['CC-MAIN-9999-99']['*.com']
-        assert cache['CC-MAIN-9999-99']['*.com']['keyword']['last_page_crawled'] == 2
+        assert cache['CC-MAIN-9999-99']['*.com']['keyword'] == 2
         # Check the new data exists as well
         assert 'CC-MAIN-0000-00' in cache
         assert '*.gov' in cache['CC-MAIN-0000-00']
         assert 'police' in cache['CC-MAIN-0000-00']['*.gov']
-        assert cache['CC-MAIN-0000-00']['*.gov']['police']['last_page_crawled'] == 3
+        assert cache['CC-MAIN-0000-00']['*.gov']['police'] == 3
 
     # Clean up the test files
     if os.path.exists('test_data'):
