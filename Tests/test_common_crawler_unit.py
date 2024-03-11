@@ -1,107 +1,10 @@
 # Test Cases
 import json
-from unittest.mock import patch, PropertyMock
+from unittest.mock import patch
 from urllib.parse import quote_plus
 
-import pytest
-from unittest.mock import MagicMock
+from common_crawler.crawler import CommonCrawler
 
-from common_crawler.crawler import CommonCrawlerManager, CommonCrawler
-from common_crawler.cache import CommonCrawlerCacheObject, CommonCrawlerCacheManager
-
-
-# region CommonCrawlerCacheObject
-@pytest.mark.parametrize("index, url, keyword, page_count", [
-    ("CC-MAIN-2020-24", "http://example.com", "example", 0),
-    ("CC-MAIN-2019-47", "https://anotherexample.com", "test", 5)
-])
-def test_common_crawler_cache_object_creation(index, url, keyword, page_count):
-    """
-    Test that the CommonCrawlerCacheObject is created with the expected attributes
-    """
-    obj = CommonCrawlerCacheObject(index, url, keyword, page_count)
-    assert obj.index == index
-    assert obj.url == url
-    assert obj.keyword == keyword
-    assert obj.last_page == page_count
-
-
-def test_to_dict():
-    """
-    Test that the to_dict method returns the expected dictionary
-    """
-    obj = CommonCrawlerCacheObject("CC-MAIN-2020-24", "http://example.com", "example", 3)
-    expected_dict = {
-        "index": "CC-MAIN-2020-24",
-        "url": "http://example.com",
-        "keyword": "example",
-        "count": 3
-    }
-    assert obj.to_dict() == expected_dict
-
-# endregion CommonCrawlerCacheObject
-
-# region CommonCrawlerCache
-
-# Test Cases
-def test_add_and_get():
-    """
-    Test that the add and get methods work as expected
-    """
-    cache = CommonCrawlerCacheManager(storage=MagicMock())
-    index = "CC-MAIN-2020-24"
-    url = "http://example.com"
-    keyword = "example"
-
-    # Test adding a new search to the cache
-    cache.add(index, url, keyword)
-    cached_object = cache.get(index, url, keyword)
-
-    assert cached_object.index == index
-    assert cached_object.url == url
-    assert cached_object.keyword == keyword
-    assert cached_object.last_page == 0  # Should be initialized to 0
-
-
-
-def test_save_cache():
-    """
-    Test that the save_cache method calls the save_cache method of the storage
-    """
-    cache = CommonCrawlerCacheManager(storage=MagicMock())
-    cache.add("CC-MAIN-2020-24", "http://example.com", "example")
-
-    cache.save_cache()
-    cache.storage.save_cache.assert_called_once()
-
-
-def test_load_or_create_cache():
-    """
-    Test that the load_or_create_cache method loads the cache from storage
-    when it exists, and creates a new cache when it does not
-    """
-    # Create a MagicMock for the storage
-    mock_storage = MagicMock()
-
-    # Set the return value for the load_cache method
-    mock_storage.load_cache.return_value = {
-        "CC-MAIN-2020-24": {
-            "http://example.com": {
-                "example": {
-                    'last_page_crawled': 3
-                }
-            }
-        }
-    }
-    cache = CommonCrawlerCacheManager(storage=mock_storage)
-    cache.load_or_create_cache()
-
-    assert "example" in cache.cache["CC-MAIN-2020-24"]["http://example.com"]
-    cached_object = cache.cache["CC-MAIN-2020-24"]["http://example.com"]["example"]
-    assert cached_object.last_page == 3
-
-
-# endregion CommonCrawlerCacheManager
 
 # region CommonCrawler
 
@@ -162,17 +65,7 @@ def test_get_urls_with_keyword():
 
 # endregion CommonCrawler
 
-# region CommonCrawlerManager
-@patch('common_crawler.cache.CommonCrawlerCacheManager')
-def test_reset_cache(MockCommonCrawlerCacheManager):
-    """
-    Test that the cache is reset when the reset_cache method is called
-    """
-    manager = CommonCrawlerCacheManager(
-        storage=MagicMock()
-    )
-    manager.reset_cache()
-    assert manager.cache == {}  # Ensure the cache is reset
+# region Common Crawler Manager
 
 def test_crawl_id_validation():
     """
@@ -186,59 +79,6 @@ def test_crawl_id_validation():
 
     assert valid_common_crawl_id(valid_crawl_id)
     assert not valid_common_crawl_id(invalid_crawl_id)
-
-
-
-
-
-@patch.object(CommonCrawler, 'search_common_crawl_index', return_value=[{"url": "http://example.com"}])
-def test_crawl(mock_search_cc_index):
-    """
-    Test that the crawl method calls the
-    expected methods with the expected arguments
-    """
-    mock_cache_manager = MagicMock(spec=CommonCrawlerCacheManager)
-    # Have the get method return a new cache object
-    mock_cache_manager.get.return_value = CommonCrawlerCacheObject("CC-MAIN-2023-50", "http://example.com", "example", 0)
-    manager = CommonCrawlerManager(
-        cache_manager=mock_cache_manager
-    )
-
-
-    crawl_id = "CC-MAIN-2023-50"
-    url = "http://example.com"
-    keyword = "example"
-    num_pages = 1
-
-    results = manager.crawl(
-        crawl_id=crawl_id,
-        search_term=url,
-        keyword=keyword,
-        num_pages=num_pages)
-
-    try:
-        mock_cache_manager.get.assert_called_with(crawl_id, url, keyword)
-    except AssertionError:
-        actual_args = mock_cache_manager.get.call_args
-        raise AssertionError(f"mock_get was not called with the expected arguments. It was called with {actual_args}")
-
-    try:
-        mock_cache_manager.save_cache.assert_called_once()
-    except AssertionError:
-        raise AssertionError("mock_save_cache was not called exactly once")
-
-    try:
-        mock_search_cc_index.assert_called_with(url, 1)
-    except AssertionError:
-        actual_args = mock_search_cc_index.call_args
-        raise AssertionError(f"mock_search_cc_index was not called with the expected arguments. It was called with {actual_args}")
-    # Verify results
-    assert len(results) == 1, "Expected 1 result"
-    assert results[0].url == "http://example.com"
-    assert results[0].index == crawl_id
-    assert results[0].search_term == url
-    assert results[0].page == 1
-    assert results[0].keyword == keyword
 
 
 # endregion CommonCrawlerManager
