@@ -4,7 +4,7 @@
             "police": 0
         },
         "*.gov": {
-            "police": 10
+            "police": 11
         }
     }
 }
