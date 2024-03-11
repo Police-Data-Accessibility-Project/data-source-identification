@@ -8,7 +8,7 @@ These classes include:
     - CommonCrawlerCache: a class for managing the cache logic of Common Crawl search results
 """
 
-class CommonCrawlerCache:
+class CommonCrawlerCacheManager:
     """
     A class for managing the cache of Common Crawl search results.
     This class is responsible for adding, retrieving, and saving cache data.

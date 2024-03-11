@@ -6,7 +6,7 @@ import tempfile
 
 
 from common_crawler.main import main
-from common_crawler.cache import CommonCrawlerCache
+from common_crawler.cache import CommonCrawlerCacheManager
 
 
 def validate_csv(file_path, expected_values):
@@ -44,7 +44,7 @@ def test_cache_persistence():
 
     with tempfile.TemporaryDirectory() as tmp_dir:
         # Create a cache and add data to it
-        cache = CommonCrawlerCache(
+        cache = CommonCrawlerCacheManager(
             file_name="test_cache.json",
             directory=tmp_dir,
         )
@@ -54,7 +54,7 @@ def test_cache_persistence():
         cache.save_cache()
 
         # Recreate the cache and load the data from the file
-        cache = CommonCrawlerCache(
+        cache = CommonCrawlerCacheManager(
             file_name="test_cache.json",
             directory=tmp_dir,
         )

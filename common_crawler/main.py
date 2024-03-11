@@ -6,7 +6,7 @@ import os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from common_crawler.argparser import parse_args
-from common_crawler.cache import CommonCrawlerCache
+from common_crawler.cache import CommonCrawlerCacheManager
 from common_crawler.crawler import CommonCrawlerManager, CommonCrawlResult
 from common_crawler.csv_manager import CSVManager
 
@@ -20,7 +20,7 @@ def main():
     args = parse_args()
 
     # Initialize the Cache
-    cache_manager = CommonCrawlerCache(
+    cache_manager = CommonCrawlerCacheManager(
         file_name=args.cache_filename,
         directory=args.data_dir
     )
@@ -37,7 +37,7 @@ def main():
 
     try:
         # Initialize the CommonCrawlerManager
-        manager = CommonCrawlerManager(
+        crawler_manager = CommonCrawlerManager(
             args.common_crawl_id
         )
         # Retrieve the last page from the cache, or 0 if it does not exist
@@ -46,7 +46,7 @@ def main():
         start_page = last_page + 1
 
         # Use the parsed arguments
-        common_crawl_result: CommonCrawlResult = manager.crawl(
+        common_crawl_result: CommonCrawlResult = crawler_manager.crawl(
             search_term=args.url,
             keyword=args.keyword,
             num_pages=args.pages,
