@@ -1,3 +1,4 @@
+import copy
 import json
 import os
 import random
@@ -5,7 +6,22 @@ import string
 
 import requests
 from dotenv import load_dotenv
+from enum import Enum
 
+from label_studio_interface.LabelStudioConfig import LabelStudioConfig
+
+
+class Role(Enum):
+    """
+    This class represents the roles that a user can have in an organization.
+    """
+    OWNER = "OW"
+    ADMINISTRATOR = "AD"
+    MANAGER = "MA"
+    REVIEWER = "RE"
+    ANNOTATOR = "AN"
+    DEACTIVATED = "DI"
+    NONE = "NO"
 
 def generate_random_word(length):
     letters = string.ascii_lowercase
@@ -43,46 +59,90 @@ class LabelStudioAPIURLConstructor:
     This class is responsible for constructing the URL for the Label Studio API.
     """
 
-    def __init__(self, project_id: str = '58475'):
-        self.label_studio_api_root_url = f'https://app.heartex.com/api/projects/{project_id}'
+    def __init__(self, project_id: str = '58475', organization_id: str = '1'):
+        self.base_url_constructor = URLConstructor(
+            domain='app.heartex.com',
+            scheme='https'
+        ).add_path_segment('api')
+        self.project_id = project_id
+        self.organization_id = organization_id
+        # self.label_studio_api_root_url = 'https://app.heartex.com/api'
+        # self.label_studio_api_root_url = f'https://app.heartex.com/api/projects/{project_id}'
 
     def get_import_url(self) -> str:
         """
         This method returns the URL for importing data into Label Studio.
         Returns: str
         """
-        return f'{self.label_studio_api_root_url}/import'
+        new_constructor = copy.deepcopy(self.base_url_constructor)
+        return (new_constructor
+                .add_path_segment('projects')
+                .add_path_segment(self.project_id)
+                .add_path_segment('import')
+                .build()
+                )
 
     def get_project_url(self) -> str:
         """
         This method returns the URL for the project.
         Returns: str
         """
-        return f'{self.label_studio_api_root_url}'
+        new_constructor = copy.deepcopy(self.base_url_constructor)
+        return (new_constructor
+                .add_path_segment('projects')
+                .add_path_segment(self.project_id)
+                .build()
+                )
 
     def get_easy_export_url(self, all_tasks: bool) -> str:
         """
         This method returns the URL for the easy export.
         Returns: str
         """
-        url = f'{self.label_studio_api_root_url}/export?exportType=JSON'
-        if all_tasks:
-            url += '&download_all_tasks=true'
-        return url
+        new_constructor = copy.deepcopy(self.base_url_constructor)
+        return (new_constructor
+                .add_path_segment('projects')
+                .add_path_segment(self.project_id)
+                .add_path_segment('export')
+                .add_query_param('exportType', 'JSON')
+                .add_query_param('download_all_tasks', str(all_tasks).lower())
+                .build()
+                )
+
+    def get_organization_membership_url(self) -> str:
+        """
+        This method returns the URL for organization membership
+        Used for querying the members in the organization as well as updating the role of a member.
+        Returns: str
+        """
+        new_constructor = copy.deepcopy(self.base_url_constructor)
+        return (new_constructor
+                .add_path_segment('organizations')
+                .add_path_segment(self.organization_id)
+                .add_path_segment('memberships')
+                .build()
+                )
+
 
 class LabelStudioAPIManager:
 
     def __init__(
             self,
-            project_id: str = '58475',
-            authorization_token: str = 'abc123'
+            config: LabelStudioConfig,
     ):
+        """
+        This class is responsible for managing the API requests to Label Studio.
+        Args:
+            config: The user's authorization token for the Label Studio API.
+        """
+        self.config = config
         self.api_url_constructor = LabelStudioAPIURLConstructor(
-            project_id=project_id
+            project_id=self.config.project_id,
+            organization_id=self.config.organization_id
         )
-        self.authorization_token = f'Token {authorization_token}'
 
-    def import_data(self, data: list[dict]) -> requests.Response:
+    # region Task Import/Export
+    def import_tasks_into_project(self, data: list[dict]) -> requests.Response:
         """
         This method imports task input data into Label Studio.
         Args:
@@ -98,26 +158,12 @@ class LabelStudioAPIManager:
             # TODO: Consider extracting header construction
             headers={
                 'Content-Type': 'application/json',
-                'Authorization': self.authorization_token
+                'Authorization': self.config.authorization_token
             }
         )
         return response
 
-    def get_project_info(self) -> requests.Response:
-        """
-        This method retrieves information about the project.
-        Returns: requests.Response
-        """
-        project_url = self.api_url_constructor.get_project_url()
-        response = requests.get(
-            url=project_url,
-            headers={
-                'Authorization': self.authorization_token
-            }
-        )
-        return response
-
-    def get_project_tasks(self, all_tasks: bool = False) -> requests.Response:
+    def export_tasks_from_project(self, all_tasks: bool = False) -> requests.Response:
         """
         This method exports the data from the project.
         Args:
@@ -129,7 +175,24 @@ class LabelStudioAPIManager:
         response = requests.get(
             url=export_url,
             headers={
-                'Authorization': self.authorization_token
+                'Authorization': self.config.authorization_token
+            }
+        )
+        return response
+
+    # endregion
+
+    # region Project Information
+    def get_project_info(self) -> requests.Response:
+        """
+        This method retrieves information about the project.
+        Returns: requests.Response
+        """
+        project_url = self.api_url_constructor.get_project_url()
+        response = requests.get(
+            url=project_url,
+            headers={
+                'Authorization': self.config.authorization_token
             }
         )
         return response
@@ -143,22 +206,58 @@ class LabelStudioAPIManager:
         response = requests.get(
             url=project_url,
             headers={
-                'Authorization': self.authorization_token
+                'Authorization': self.config.authorization_token
             }
         )
         return response.status_code == 200
 
+    # endregion
+
+    # region User Management
+    def get_members_in_organization(self) -> requests.Response:
+        """
+        This method retrieves the members in the organization.
+        https://app.heartex.com/docs/api#tag/Organizations/operation/api_organizations_memberships_list
+        Returns: requests.Response
+        """
+        membership_url = self.api_url_constructor.get_organization_membership_url()
+        response = requests.get(
+            url=membership_url,
+            headers={
+                'Authorization': self.config.authorization_token
+            }
+        )
+        return response
+
+    def update_member_role(self, user_id: int, role: Role) -> requests.Response:
+        """
+        This method updates the role of a member in the organization.
+        Args:
+            user_id: str - The ID of the user to update the role for.
+            role: Role - The role to update the user to.
+        Returns: requests.Response
+        """
+        membership_url = self.api_url_constructor.get_organization_membership_url()
+        response = requests.patch(
+            url=membership_url,
+            headers={
+                'Authorization': self.config.authorization_token,
+                'Content-Type': 'application/json'
+            },
+            json={
+                "user_id": user_id,
+                "role": role.value
+            }
+        )
+        return response
+
+    # endregion
+
 
 if __name__ == "__main__":
-    load_dotenv()
-    # Pull authorization token from env
-    authorization_token = os.getenv('LABEL_STUDIO_ACCESS_TOKEN')
 
     # Example usage
-    api_manager = LabelStudioAPIManager(
-        project_id='58475',
-        authorization_token=authorization_token
-    )
+    api_manager = LabelStudioAPIManager(config=LabelStudioConfig())
     project_accessible = api_manager.ping_project()
     if project_accessible:
         print("Project is accessible")
@@ -171,7 +270,6 @@ if __name__ == "__main__":
     # print(response.json())
 
     # Test export
-    response = api_manager.get_project_tasks()
+    response = api_manager.export_tasks_from_project()
     print(response.status_code)
     print(response.json())
-
