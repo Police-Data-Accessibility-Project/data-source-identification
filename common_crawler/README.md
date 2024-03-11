@@ -29,12 +29,12 @@ This csv file contains both the url and the parameters used to query it.
 
 ### Parameters
 
-- **common_crawl_id**: This is a required argument. It specifies the Common Crawl ID.
-- **url**: This is a required argument. It specifies the URL to query.
-- **search_term**: This is a required argument. It specifies the search term.
-- **-c or --config**: This is an optional argument. It specifies the configuration file to use. The default value is config.ini.
-- **-p or --pages**: This is an optional argument. It specifies the number of pages to search. The default value is 1.
-- **--reset-cache**: This is an optional argument. If set, it resets the cache before starting the crawl.
+- **common_crawl_id**: Required. Specifies the Common Crawl Index to perform the search on.
+- **url**: Required. Specifies the domain URL to query. Wildcard characters such as * can be used to expand the search.
+- **search_term**: Required. Specifies keyword within the url to search for.
+- **-c or --config**: Optional. Specifies the configuration file to use. The default value is config.ini.
+- **-p or --pages**: Optional. Specifies the number of pages to search. The default value is 1.
+- **--reset-cache**: Optional. If set, it resets the cache before starting the crawl.
 
 ### Configuration
 
@@ -53,16 +53,15 @@ The code is structured as follows:
 - **csv_manager.py**: This file contains the logic to write the output csv file.
 - **utils.py**: This file contains utility functions.
 - **config.ini**: This file contains the default configuration values.
-- **requirements.txt**: This file contains the necessary dependencies for the module.
 - **README.md**: This file contains the documentation for the module. You're reading it right now. Isn't that nifty!
 
 ### Testing
 
 A suite of unit and integration tests were developed for this module.
 
-To run the tests, run the following command from the root directory:
+To run the tests, run the following command from this directory:
 
 ```bash
-pytest tests/test_common_crawler_integration.py
-pytest tests/test_common_crawler_unit.py
+pytest ../tests/test_common_crawler_integration.py
+pytest ../tests/test_common_crawler_unit.py
 ```
