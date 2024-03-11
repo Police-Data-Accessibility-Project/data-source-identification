@@ -44,7 +44,7 @@ def test_cache_persistence():
 
     with tempfile.TemporaryDirectory() as tmp_dir:
         # Create a cache and add data to it
-        cache = CommonCrawlerCacheManager(
+        cache = CommonCrawlerCache(
             file_name="test_cache.json",
             directory=tmp_dir,
         )
@@ -54,7 +54,7 @@ def test_cache_persistence():
         cache.save_cache()
 
         # Recreate the cache and load the data from the file
-        cache = CommonCrawlerCacheManager(
+        cache = CommonCrawlerCache(
             file_name="test_cache.json",
             directory=tmp_dir,
         )

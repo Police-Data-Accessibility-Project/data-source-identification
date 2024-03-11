@@ -5,9 +5,26 @@ import requests
 
 from .utils import URLWithParameters
 from .cache import CommonCrawlerCache
+from dataclasses import dataclass
+from collections import namedtuple
 """
 This module contains classes for managing a cache of Common Crawl search results
 """
+
+# TODO: What happens when no results are found? How does the CommonCrawlerManager handle this?
+
+# A named tuple for results
+UrlResults = namedtuple(
+    typename='UrlResults',
+    field_names=['index', 'search_term', 'keyword', 'page', 'url']
+)
+
+
+@dataclass
+class CommonCrawlResult:
+    last_page_search: int
+    url_results: list[UrlResults]
+
 
 
 class CommonCrawlerManager:
@@ -21,11 +38,11 @@ class CommonCrawlerManager:
     def __init__(self, cache_manager: CommonCrawlerCache):
         self.cache = cache_manager
 
-    def crawl(self, crawl_id, search_term, keyword, num_pages) -> list[UrlResults]:
+    def crawl(self, crawl_id, search_term, keyword, num_pages) -> CommonCrawlResult:
         print(f"Searching for {keyword} on {search_term} in {crawl_id} for {num_pages} pages")
 
         cc = CommonCrawler(crawl_id)
-        results: list[UrlResults] = []
+        url_results: list[UrlResults] = []
 
         # Retrieve the last page from the cache, or 0 if it does not exist
         last_page = self.cache.get(crawl_id, search_term, keyword)
@@ -42,7 +59,7 @@ class CommonCrawlerManager:
 
             keyword_urls = cc.get_urls_with_keyword(records, keyword)
             for keyword_url in keyword_urls:
-                results.append(
+                url_results.append(
                     UrlResults(
                         index=crawl_id,
                         url=keyword_url,
@@ -52,10 +69,7 @@ class CommonCrawlerManager:
 
             last_page = next_page
 
-        self.cache.upsert(crawl_id, search_term, keyword, last_page)
-        self.cache.save_cache()
-
-        return results
+        return CommonCrawlResult(last_page, url_results)
 
 
 class CommonCrawler:

@@ -2,13 +2,8 @@
 This module contains utility functions for the common_crawler package
 """
 import os
-from collections import namedtuple
 
-# A named tuple for results
-UrlResults = namedtuple(
-    typename='UrlResults',
-    field_names=['index', 'search_term', 'keyword', 'page', 'url']
-)
+
 
 
 def create_directories_if_not_exist(file_path: str):

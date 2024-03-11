@@ -35,10 +35,16 @@ def main():
         )
 
         # Use the parsed arguments
-        results = manager.crawl(args.common_crawl_id, args.url, args.keyword, args.pages)
+        common_crawl_result: CommonCrawlResult = manager.crawl(args.common_crawl_id, args.url, args.keyword, args.pages)
 
-        if results:
-            csv_manager.add_rows(results)
+        if common_crawl_result:
+            csv_manager.add_rows(common_crawl_result.url_results)
+            cache_manager.upsert(
+                index=args.common_crawl_id,
+                url=args.url,
+                keyword=args.keyword,
+                last_page=common_crawl_result.last_page_search)
+            cache_manager.save_cache()
         else:
             print("No results found.")
 
