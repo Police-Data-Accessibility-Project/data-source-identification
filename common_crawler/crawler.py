@@ -39,9 +39,9 @@ class CommonCrawlerManager:
 
     def __init__(self, crawl_id='CC-MAIN-2023-50'):
         self.crawl_id = crawl_id
-        self.CC_INDEX_SERVER = 'http://index.commoncrawl.org/'
-        self.INDEX_NAME = f'{self.crawl_id}-index'
-        self.root_url = f'{self.CC_INDEX_SERVER}{self.INDEX_NAME}'
+        CC_INDEX_SERVER = 'http://index.commoncrawl.org/'
+        INDEX_NAME = f'{self.crawl_id}-index'
+        self.root_url = f'{CC_INDEX_SERVER}{INDEX_NAME}'
 
     def crawl(self, search_term, keyword, start_page, num_pages) -> CommonCrawlResult:
         print(
