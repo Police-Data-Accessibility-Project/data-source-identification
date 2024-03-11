@@ -1,7 +1,14 @@
-from .argparser import parse_args
-from .cache import CommonCrawlerCache
-from .crawler import CommonCrawlerManager, CommonCrawlResult
-from .csv_manager import CSVManager
+import sys
+import os
+
+# The below code sets the working directory to be the root of the entire repository
+# This is done to solve otherwise quite annoying import issues.
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+from common_crawler.argparser import parse_args
+from common_crawler.cache import CommonCrawlerCache
+from common_crawler.crawler import CommonCrawlerManager, CommonCrawlResult
+from common_crawler.csv_manager import CSVManager
 
 """
 This module contains the main function for the Common Crawler script.

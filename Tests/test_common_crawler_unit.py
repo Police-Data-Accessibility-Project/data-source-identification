@@ -4,7 +4,7 @@ from unittest.mock import patch
 from urllib.parse import quote_plus
 
 from common_crawler.crawler import CommonCrawler
-
+from common_crawler.argparser import valid_common_crawl_id
 
 # region CommonCrawler
 
@@ -72,7 +72,6 @@ def test_crawl_id_validation():
     Test that the valid_common_crawl_id function properly detects
     valid and invalid crawl IDs
     """
-    from common_crawler.argparser import valid_common_crawl_id
 
     valid_crawl_id = "CC-MAIN-2023-50"
     invalid_crawl_id = "CC-MAIN-202"
