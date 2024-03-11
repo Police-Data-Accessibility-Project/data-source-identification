@@ -38,11 +38,20 @@ def main():
     try:
         # Initialize the CommonCrawlerManager
         manager = CommonCrawlerManager(
-            cache_manager=cache_manager
+            args.common_crawl_id
         )
+        # Retrieve the last page from the cache, or 0 if it does not exist
+        last_page = cache_manager.get(args.common_crawl_id, args.url, args.keyword)
+        # Determine the pages to search, based on the last page searched
+        start_page = last_page + 1
 
         # Use the parsed arguments
-        common_crawl_result: CommonCrawlResult = manager.crawl(args.common_crawl_id, args.url, args.keyword, args.pages)
+        common_crawl_result: CommonCrawlResult = manager.crawl(
+            search_term=args.url,
+            keyword=args.keyword,
+            num_pages=args.pages,
+            start_page=start_page
+        )
 
         if common_crawl_result.url_results:
             csv_manager.add_rows(common_crawl_result.url_results)
