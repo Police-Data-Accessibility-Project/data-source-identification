@@ -1,5 +1,5 @@
 from common_crawler.argparser import parse_args
-from common_crawler.cache import CommonCrawlerCacheManager
+from common_crawler.cache import CommonCrawlerCache
 from common_crawler.crawler import CommonCrawlerManager
 from common_crawler.csv_manager import CSVManager
 
@@ -13,7 +13,7 @@ def main():
     args = parse_args()
 
     # Initialize the Cache
-    cache_manager = CommonCrawlerCacheManager(
+    cache_manager = CommonCrawlerCache(
         file_name=args.cache_filename,
         directory=args.data_dir
     )

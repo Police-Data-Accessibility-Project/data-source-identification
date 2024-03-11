@@ -4,7 +4,7 @@ from urllib.parse import quote_plus
 import requests
 
 from common_crawler.utils import URLWithParameters, UrlResults
-from common_crawler.cache import CommonCrawlerCacheManager
+from common_crawler.cache import CommonCrawlerCache
 
 """
 This module contains classes for managing a cache of Common Crawl search results
@@ -19,7 +19,7 @@ class CommonCrawlerManager:
     It validates crawl ids, manages pagination, and aggregates results.
     """
 
-    def __init__(self, cache_manager: CommonCrawlerCacheManager):
+    def __init__(self, cache_manager: CommonCrawlerCache):
         self.cache = cache_manager
 
     def crawl(self, crawl_id, search_term, keyword, num_pages) -> list[UrlResults]:

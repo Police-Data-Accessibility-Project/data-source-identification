@@ -5,10 +5,10 @@ from common_crawler.utils import get_file_path
 """
 This module contains classes for managing a cache of Common Crawl search results
 These classes include:
-    - CommonCrawlerCacheManager: a class for managing the cache logic of Common Crawl search results
+    - CommonCrawlerCache: a class for managing the cache logic of Common Crawl search results
 """
 
-class CommonCrawlerCacheManager:
+class CommonCrawlerCache:
     """
     A class for managing the cache of Common Crawl search results.
     This class is responsible for adding, retrieving, and saving cache data.
