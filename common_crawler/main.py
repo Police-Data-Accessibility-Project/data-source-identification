@@ -53,14 +53,17 @@ def main():
             start_page=start_page
         )
 
-        if common_crawl_result.url_results:
-            csv_manager.add_rows(common_crawl_result.url_results)
-            cache_manager.upsert(
-                index=args.common_crawl_id,
-                url=args.url,
-                keyword=args.keyword,
-                last_page=common_crawl_result.last_page_search)
-            cache_manager.save_cache()
+        # Logic should conclude here if no results are found
+        if not common_crawl_result.url_results:
+            return
+
+        csv_manager.add_rows(common_crawl_result.url_results)
+        cache_manager.upsert(
+            index=args.common_crawl_id,
+            url=args.url,
+            keyword=args.keyword,
+            last_page=common_crawl_result.last_page_search)
+        cache_manager.save_cache()
 
 
     except ValueError as e:
