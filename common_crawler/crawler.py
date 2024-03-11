@@ -129,7 +129,11 @@ class CommonCrawler:
             records = response.text.strip().split('\n')
             print(f"Found {len(records)} records for {url} on page {page}")
             return [json.loads(record) for record in records]
+        elif 'First Page is 0, Last Page is 0' in response.text:
+            print("No records exist in index matching the url search term")
+            return None
         else:
+            print(f"Failed to get records for {url} on page {page}")
             # Return None to indicate that no records were found or an error occurred.
             return None
 
