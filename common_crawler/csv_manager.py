@@ -1,7 +1,8 @@
 import csv
 import os
 
-from common_crawler.utils import UrlResults, get_file_path
+from .utils import get_file_path
+from .crawler import UrlResults
 
 
 class CSVManager:

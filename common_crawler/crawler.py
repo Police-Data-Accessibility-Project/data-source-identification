@@ -3,9 +3,8 @@ from urllib.parse import quote_plus
 
 import requests
 
-from common_crawler.utils import URLWithParameters, UrlResults
-from common_crawler.cache import CommonCrawlerCache
-
+from .utils import URLWithParameters
+from .cache import CommonCrawlerCache
 """
 This module contains classes for managing a cache of Common Crawl search results
 """

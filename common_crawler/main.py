@@ -1,7 +1,7 @@
-from common_crawler.argparser import parse_args
-from common_crawler.cache import CommonCrawlerCache
-from common_crawler.crawler import CommonCrawlerManager
-from common_crawler.csv_manager import CSVManager
+from .argparser import parse_args
+from .cache import CommonCrawlerCache
+from .crawler import CommonCrawlerManager, CommonCrawlResult
+from .csv_manager import CSVManager
 
 """
 This module contains the main function for the Common Crawler script.

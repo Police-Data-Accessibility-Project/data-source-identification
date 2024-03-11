@@ -6,7 +6,7 @@ import tempfile
 
 
 from common_crawler.main import main
-from common_crawler.cache import CommonCrawlerCacheManager
+from common_crawler.cache import CommonCrawlerCache
 
 
 def validate_csv(file_path, expected_values):
