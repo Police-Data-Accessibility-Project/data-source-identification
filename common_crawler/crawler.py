@@ -26,9 +26,6 @@ class CommonCrawlResult:
     url_results: list[UrlResults]
 
 
-
-
-
 class CommonCrawlerManager:
     """
     This class orchestrates the crawling process, leveraging CommonCrawler for
@@ -109,4 +106,3 @@ class CommonCrawlerManager:
     @staticmethod
     def get_urls_with_keyword(records: list[dict], keyword) -> list[str]:
         return [record['url'] for record in records if keyword in record['url']]
-
