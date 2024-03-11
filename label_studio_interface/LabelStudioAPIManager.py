@@ -12,6 +12,32 @@ def generate_random_word(length):
     return ''.join(random.choice(letters) for _ in range(length))
 
 
+class URLConstructor:
+    def __init__(self, scheme="http", domain=None):
+        self.scheme = scheme
+        self.domain = domain
+        self.path_segments = []
+        self.query_params = {}
+
+    def add_path_segment(self, segment):
+        self.path_segments.append(segment)
+        return self
+
+    def add_query_param(self, key, value):
+        self.query_params[key] = value
+        return self
+
+    def build(self):
+        path = "/".join(self.path_segments)
+        query_string = "&".join([f"{key}={value}" for key, value in self.query_params.items()])
+        url = f"{self.scheme}://{self.domain}"
+        if path:
+            url += f"/{path}"
+        if query_string:
+            url += f"?{query_string}"
+        return url
+
+
 class LabelStudioAPIURLConstructor:
     """
     This class is responsible for constructing the URL for the Label Studio API.
