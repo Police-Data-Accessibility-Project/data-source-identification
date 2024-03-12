@@ -4,3 +4,4 @@ polars
 tqdm
 pyppeteer
 beautifulsoup4
+lxml
