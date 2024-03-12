@@ -1,43 +1,65 @@
-import csv
 import os
 import sys
 from urllib.parse import urlparse
+import re
+import polars
 import requests
-import polars as pl
-import tqdm
 
-def get_agencies_data():
+API_URL = "https://data-sources.pdap.io/api/agencies/"
+
+
+def get_page_data(page: int) -> dict:
+    """Fetches a page of data from the API.
+
+    Args:
+        page (int): The page number to fetch.
+
+    Returns:
+        dict: The data for the page.
+    """
+    api_key = "Bearer " + os.getenv("VUE_APP_PDAP_API_KEY")
+    response = requests.get(f"{API_URL}{page}", headers={"Authorization": api_key})
+    if response.status_code != 200:
+        raise Exception("Request to PDAP API failed. Response code:", response.status_code)
+    return response.json()["data"]
+
+
+def get_agencies_data() -> polars.DataFrame:
     """Retrives a list of agency dictionaries from file.
 
     Returns:
         list: List of agency dictionaries.
     """
-    api_key = "Bearer " + os.getenv("VUE_APP_PDAP_API_KEY")
-
-    results = {"data": {}}
     page = 1
-    agencies_df = pl.DataFrame()
+    agencies_df = polars.DataFrame()
+    results = get_page_data(page)
+
     while results:
-        #print(page)
-        response = requests.get(f"https://data-sources.pdap.io/api/agencies/{page}", headers={"Authorization": api_key})
-        if response.status_code != 200:
-            print("Request to PDAP API failed. Response code:", response.status_code)
-            exit()
-        results = response.json()["data"]
-        clean_results = []
-        for r in results:
-            for f in r.keys():
-                r[f] = "" if r[f] is None else r[f]
-            clean_results.append(r)
-        new_agencies_df = pl.DataFrame(clean_results)
+        # Use list comprehension to clean results
+        clean_results = clean_page_data_results(results)
+        new_agencies_df = polars.DataFrame(clean_results)
         if not new_agencies_df.is_empty():
-            agencies_df = pl.concat([agencies_df, new_agencies_df])
-        page += 1   
+            agencies_df = polars.concat([agencies_df, new_agencies_df])
+        page += 1
+        results = get_page_data(page)
 
     return agencies_df
 
 
-def parse_hostname(url):
+def clean_page_data_results(results: list[dict[str, str]]) -> list[dict[str, str]]:
+    clean_results = []
+    for result in results:
+        clean_result = {}
+        for k, v in result.items():
+            if v is None:
+                clean_result[k] = ""
+            else:
+                clean_result[k] = v
+        clean_results.append(clean_result)
+    return clean_results
+
+
+def parse_hostname(url: str) -> str:
     """Retrieves the hostname (example.com) from a url string.
 
     Args:
@@ -46,20 +68,27 @@ def parse_hostname(url):
     Returns:
         str: The url's hostname.
     """
-    url = url.strip().strip('"')
+    try:
+        # Remove leading and trailing whitespaces and quotes
+        url = url.strip().strip('"')
 
-    if not url.startswith("http"):
-        url = "http://" + url
+        # Add "http://" to the url if it's not present
+        if not re.match(r'http(s)?://', url):
+            url = "http://" + url
 
-    parsed_url = urlparse(url)
-    hostname = parsed_url.hostname
+        # Parse the url and retrieve the hostname
+        parsed_url = urlparse(url)
+        hostname = parsed_url.hostname
 
-    hostname = remove_www(hostname)
-
+        # Remove "www." from the hostname
+        hostname = re.sub(r'^www\.', '', hostname)
+    except Exception as e:
+        print(f"An error occurred while parsing the URL: {e}")
+        raise e
     return hostname
 
 
-def remove_http(url):
+def remove_http(url: str) -> str:
     """Removes http(s)://www. from a given url so that different protocols don't throw off the matcher.
 
     Args:
@@ -68,42 +97,15 @@ def remove_http(url):
     Returns:
         str: The url without http(s)://www.
     """
-    print(url)
-    url = url.strip().strip('"')
-    print(url)
-
-    if not url.startswith("http"):
-        url = remove_www(url)
-        return url
-
-    parsed_url = urlparse(url)
-    hostname = parsed_url.hostname
-    path = parsed_url.path
-
-    hostname = remove_www(hostname)
-
-    url = hostname + path
-
-    if url[-1] != "/":
-        url += "/"
-
-    return url
-
-
-def remove_www(url):
-    """Utility function for remove_http() and parse_hostname().
-
-    Removes www. from a url to facilitate better matching for cases where www. is missing.
-
-    Args:
-        url (str): Url to remove www. from.
-
-    Returns:
-        str: The url without www.
-    """
-    if url.startswith("www."):
-        url = url[4:]
-
+    try:
+        # Remove http(s)://www. and www. prefixes from the url
+        url = re.sub(r'^(http(s)?://)?(www\.)?', '', url)
+        # Ensure the url ends with a /
+        if not url.endswith('/'):
+            url += '/'
+    except Exception as e:
+        print(f"An error occurred while processing the URL: {e}")
+        raise e
     return url
 
 
@@ -139,49 +141,93 @@ def match_agencies(agencies, agency_hostnames, url):
             if url_no_http.startswith(agency_homepage):
                 return {"url": url, "agency": agency, "status": "Match found"}
                 break
-        
+
         return {"url": url, "agency": [], "status": "Contested match"}
 
     return {"url": url, "agency": matched_agency[0], "status": "Match found"}
 
 
-def identifier_main(urls_df):
+def match_urls_to_agencies_and_clean_data(urls_df: polars.DataFrame) -> polars.DataFrame:
     agencies_df = get_agencies_data()
     # Filter out agencies without a homepage_url set
-    agencies_df = agencies_df.filter(pl.col("homepage_url").is_not_null())
-    agencies_df = agencies_df.filter(pl.col("homepage_url") != "")
-    agencies_df = agencies_df.with_columns(pl.col("homepage_url").map_elements(parse_hostname).alias("hostname"),
-        pl.col("count_data_sources").fill_null(0))
-    agencies_df = agencies_df.with_columns(pl.col("count_data_sources").max().over("hostname").alias("max_data_sources")).filter(pl.col("count_data_sources") == pl.col("max_data_sources"))
-    agencies_df = agencies_df.unique(subset=["homepage_url"])
+    # Define column names as variables for flexibility
+    homepage_url_col = "homepage_url"
+    hostname_col = "hostname"
+    count_data_sources_col = "count_data_sources"
+    max_data_sources_col = "max_data_sources"
 
-    print("Indentifying agencies...")
-    urls_df = urls_df.with_columns(pl.col("url").map_elements(parse_hostname).alias("hostname"))
-    matched_agencies_df = urls_df.join(agencies_df, on="hostname", how="left")
-    matched_agencies_clean_df = matched_agencies_df.with_columns(pl.all().fill_null(""))
+    # Perform operations on DataFrame
+    try:
+        agencies_df = (
+            agencies_df
+            # Filter out rows without a homepage_url
+            .filter(polars.col(homepage_url_col).is_not_null())
+            .filter(polars.col(homepage_url_col) != "")
+            # Add a new column 'hostname' by applying the parse_hostname function to 'homepage_url'
+            .with_columns(polars.col(homepage_url_col).map_elements(parse_hostname).alias(hostname_col),
+                          polars.col(count_data_sources_col).fill_null(0))
+            # Add a new column 'max_data_sources' which is the max of 'count_data_sources' over 'hostname'
+            .with_columns(polars.col(count_data_sources_col).max().over(hostname_col).alias(max_data_sources_col))
+            # Filter rows where 'count_data_sources' equals 'max_data_sources'
+            .filter(polars.col(count_data_sources_col) == polars.col(max_data_sources_col))
+            # Keep only unique rows based on 'homepage_url'
+            .unique(subset=[homepage_url_col])
+        )
+        print("Indentifying agencies...")
+        # Add a new column 'hostname' by applying the parse_hostname function to 'url'
+        urls_df = urls_df.with_columns(polars.col("url").map_elements(parse_hostname).alias("hostname"))
 
+        # Join urls_df with agencies_df on 'hostname'
+        matched_agencies_df = urls_df.join(agencies_df, on="hostname", how="left")
+
+        # Replace all null values with an empty string
+        matched_agencies_clean_df = matched_agencies_df.with_columns(polars.all().fill_null(""))
+    except Exception as e:
+        print(f"An error occurred while processing the data: {e}")
+        raise e
     return matched_agencies_clean_df
 
 
-if __name__ == "__main__":
-    urls_df = pl.read_csv(sys.argv[1])
-    matched_agencies_df = identifier_main(urls_df)
+def read_data(file_path: str) -> polars.DataFrame:
+    try:
+        return polars.read_csv(file_path)
+    except Exception as e:
+        print(f"An error occurred while reading the file: {e}")
+        raise e
 
-    matches_only = matched_agencies_df.filter(pl.col("hostname").is_not_null())
 
+def write_data(df: polars.DataFrame, file_path: str):
+    try:
+        df.write_csv(file_path)
+        print("Results written to results.csv")
+    except Exception as e:
+        print(f"An error occurred while writing to the file: {e}")
+        raise e
+
+
+def process_data(urls_df: polars.DataFrame) -> polars.DataFrame:
+    matched_agencies_df = match_urls_to_agencies_and_clean_data(urls_df)
+
+    # Filter out rows where the hostname is not null
+    matches_only = matched_agencies_df.filter(polars.col("hostname").is_not_null())
     num_matches = len(matches_only)
     num_urls = len(urls_df)
-    percent = 100 * float(num_matches) / float(num_urls)
-    print(f"\n{num_matches} / {num_urls} ({percent:0.1f}%) of urls identified")
+    percent_urls_matched = 100 * float(num_matches) / float(num_urls)
 
+    # Print the number and percentage of URLs that were matched
+    print(f"\n{num_matches} / {num_urls} ({percent_urls_matched:0.1f}%) of urls identified")
+
+    # Return the DataFrame containing only the matched URLs
+    return matches_only
+
+
+def process_and_write_data(input_file: str, output_file: str):
+    urls_df = read_data(input_file)
+    matches_only = process_data(urls_df)
     if not matches_only.is_empty():
-        matches_only.select(pl.col("url"),
-            pl.col("name"),
-            pl.col("state_iso"),
-            pl.col("county_name"),
-            pl.col("municipality"),
-            pl.col("agency_type"),
-            pl.col("jurisdiction_type"),
-            pl.col("approved")).write_csv("results.csv")
+        write_data(matches_only, output_file)
 
+
+if __name__ == "__main__":
+    process_and_write_data(sys.argv[1], "results.csv")
     print("Results written to results.csv")
