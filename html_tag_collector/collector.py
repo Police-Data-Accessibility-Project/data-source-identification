@@ -36,7 +36,12 @@ def process_urls(manager_list, render_javascript):
     """
     df = manager_list[0]
     urls = df.select(pl.col("url")).rows()
-    new_urls = ["https://" + url[0] if (url[0] is not None and not url[0].startswith("http")) else url[0] for url in urls]
+    new_urls = []
+    for url in urls:
+        if url[0] is not None and not url[0].startswith("http"):
+            new_urls.append("https://" + url[0])
+        else:
+            new_urls.append(url[0])
 
     loop = asyncio.get_event_loop()
     loop.set_exception_handler(exception_handler)
@@ -265,11 +270,8 @@ def parse_response(url_response):
     except (bs4.builder.ParserRejectedMarkup, AssertionError, AttributeError):
         return tags
 
-    if soup.title is not None:
-        if soup.title.string is not None:
-            tags["html_title"] = soup.title.string.strip()
-        else:
-            tags["html_title"] = ""
+    if soup.title is not None and soup.title.string is not None:
+        tags["html_title"] = soup.title.string.strip()
     else:
         tags["html_title"] = ""
 
