@@ -17,7 +17,7 @@ import bs4
 from bs4 import BeautifulSoup
 import polars as pl
 
-from html_tag_collector.RootURLCache import RootURLCache
+from RootURLCache import RootURLCache
 
 # Define the list of header tags we want to extract
 header_tags = ["h1", "h2", "h3", "h4", "h5", "h6"]
