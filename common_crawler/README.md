@@ -4,7 +4,7 @@ This module interfaces with the Common Crawl dataset to extract urls.
 
 ### Installation
 
-To install all necessary dependencies, run the following command:
+To install all necessary dependencies, run the following command from the root directory:
 
 ```bash
 pip install -r requirements.txt
