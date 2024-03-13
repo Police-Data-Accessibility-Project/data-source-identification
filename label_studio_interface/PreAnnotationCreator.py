@@ -27,6 +27,23 @@ class TaxonomyResult:
         self.base_info = base_info
         self.taxonomy_data = taxonomy_data
 
+    def to_dict(self) -> dict:
+        """
+        Converts the taxonomy data to a dictionary
+        Returns:
+
+        """
+        return {
+            "type": self.base_info.result_type,
+            "value": {
+                "taxonomy": self.taxonomy_data
+            },
+            "origin": self.base_info.origin,
+            "to_name": self.base_info.to_name,
+            "from_name": self.base_info.from_name
+        }
+
+
 
 
 class PreAnnotationCreator:
