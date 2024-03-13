@@ -23,6 +23,7 @@ from RootURLCache import RootURLCache
 header_tags = ["h1", "h2", "h3", "h4", "h5", "h6"]
 DEBUG = False  # Set to True to enable debug output
 VERBOSE = False  # Set to True to print dataframe each batch
+root_url_cache = RootURLCache()
 
 
 def process_urls(manager_list, render_javascript):
@@ -229,7 +230,6 @@ async def render_js(urls_responses):
             if DEBUG:
                 print("Rendering cancelled")
 
-root_url_cache = RootURLCache()
 
 def parse_response(url_response):
     """Parses relevant HTML tags from a Response object into a dictionary.
