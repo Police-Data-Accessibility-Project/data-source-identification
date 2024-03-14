@@ -17,11 +17,13 @@ import bs4
 from bs4 import BeautifulSoup
 import polars as pl
 
+from RootURLCache import RootURLCache
 
 # Define the list of header tags we want to extract
 header_tags = ["h1", "h2", "h3", "h4", "h5", "h6"]
 DEBUG = False  # Set to True to enable debug output
 VERBOSE = False  # Set to True to print dataframe each batch
+root_url_cache = RootURLCache()
 
 
 def process_urls(manager_list, render_javascript):
@@ -36,7 +38,12 @@ def process_urls(manager_list, render_javascript):
     """
     df = manager_list[0]
     urls = df.select(pl.col("url")).rows()
-    new_urls = ["https://" + url[0] if not url[0].startswith("http") else url[0] for url in urls]
+    new_urls = []
+    for url in urls:
+        if url[0] is not None and not url[0].startswith("http"):
+            new_urls.append("https://" + url[0])
+        else:
+            new_urls.append(url[0])
 
     loop = asyncio.get_event_loop()
     loop.set_exception_handler(exception_handler)
@@ -120,7 +127,8 @@ async def get_response(session, url, index):
         "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
     }
     response = None
-    url = url.removesuffix(".json")
+    if url is not None:
+        url = url.removesuffix(".json")
 
     try:
         response = await session.get(url, headers=headers, timeout=120)
@@ -264,7 +272,11 @@ def parse_response(url_response):
     except (bs4.builder.ParserRejectedMarkup, AssertionError, AttributeError):
         return tags
 
-    tags["html_title"] = soup.title.string.strip() if soup.title is not None and soup.title.string is not None else ""
+    if soup.title is not None and soup.title.string is not None:
+        tags["html_title"] = soup.title.string.strip()
+    else:
+        tags["html_title"] = ""
+    tags["root_page_title"] = root_url_cache.get_title(tags["url"])
 
     meta_tag = soup.find("meta", attrs={"name": "description"})
     try:
