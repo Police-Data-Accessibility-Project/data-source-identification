@@ -17,7 +17,7 @@ For proper functioning of application, the following environment variables must 
   be obtained by logging into Label Studio and navigating to the [Organization section](https://app.heartex.com/organization?page=1), where the organization ID can be copied.
 
 # To run basic demonstration
-1. Set the environment variables as described above
+1. Set the environment variables as described above; in dev.env, all but LABEL_STUDIO_ACCESS_TOKEN are pre-set.
 2. Install the required python libraries by running the following command (from the working directory):
 ```bash
 pip install -r requirements.txt
