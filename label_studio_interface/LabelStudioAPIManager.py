@@ -8,7 +8,7 @@ import requests
 from dotenv import load_dotenv
 from enum import Enum
 
-from label_studio_interface.LabelStudioConfig import LabelStudioConfig
+from LabelStudioConfig import LabelStudioConfig
 
 """
 This script contains code which interfaces with the Label Studio API.

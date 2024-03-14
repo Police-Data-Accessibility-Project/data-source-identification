@@ -15,8 +15,8 @@ However, the access token in the file is not valid and will need to be replaced 
 All actions will be performed on the 'Simple URL Labeler" project viewable at https://app.heartex.com/projects/58903/
 """
 
-from label_studio_interface.LabelStudioConfig import LabelStudioConfig
-from label_studio_interface.LabelStudioAPIManager import LabelStudioAPIManager
+from LabelStudioConfig import LabelStudioConfig
+from LabelStudioAPIManager import LabelStudioAPIManager
 
 # Simple URL Labeler project URL
 project_url = "https://app.heartex.com/projects/58903/"
