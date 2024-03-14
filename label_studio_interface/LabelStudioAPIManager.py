@@ -10,6 +10,11 @@ from enum import Enum
 
 from label_studio_interface.LabelStudioConfig import LabelStudioConfig
 
+"""
+This script contains code which interfaces with the Label Studio API.
+To view the documentation for the Label Studio API, visit https://app.heartex.com/docs/api
+"""
+
 
 class Role(Enum):
     """
@@ -91,6 +96,19 @@ class LabelStudioAPIURLConstructor:
         return (new_constructor
                 .add_path_segment('projects')
                 .add_path_segment(self.project_id)
+                .build()
+                )
+
+    def delete_project_tasks_url(self) -> str:
+        """
+        This method returns the URL for deleting all tasks in the project.
+        Returns: str
+        """
+        new_constructor = copy.deepcopy(self.base_url_constructor)
+        return (new_constructor
+                .add_path_segment('projects')
+                .add_path_segment(self.project_id)
+                .add_path_segment('ground-truth-tasks')
                 .build()
                 )
 
@@ -247,6 +265,20 @@ class LabelStudioAPIManager:
             json={
                 "user_id": user_id,
                 "role": role.value
+            }
+        )
+        return response
+
+    def delete_project_tasks(self) -> requests.Response:
+        """
+        This method deletes all tasks from the project.
+        Returns: requests.Response
+        """
+        delete_url = self.api_url_constructor.delete_project_tasks_url()
+        response = requests.delete(
+            url=delete_url,
+            headers={
+                'Authorization': self.config.authorization_token
             }
         )
         return response
