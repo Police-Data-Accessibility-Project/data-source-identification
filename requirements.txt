@@ -1,5 +1,5 @@
 requests
 polars
-python-dotenv
+python-dotenv~=1.0.1
 bs4
 tqdm
