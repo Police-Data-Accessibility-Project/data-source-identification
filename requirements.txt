@@ -1,5 +1,8 @@
-requests
-polars
-python-dotenv
-bs4
-tqdm
+requests~=2.31.0
+polars~=0.20.10
+python-dotenv~=1.0.1
+bs4~=0.0.2
+tqdm~=4.66.2
+pytest~=8.0.1
+pytest-mock==3.12.0
+urllib3~=1.26.18
