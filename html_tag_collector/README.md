@@ -1,7 +1,7 @@
 # HTML tag collector
 
 This script adds HTML properties to a JSON or CSV file of existing URLs (and their labels optionally)
-*Properties added:* `title`, `meta`, and `header` HTML tags, `http_response`
+*Properties added:* `title`, `meta`, `root_page_title` and `header` HTML tags, `http_response`
 
 ## How to use
 
