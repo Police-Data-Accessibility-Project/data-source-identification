@@ -16,13 +16,14 @@ class GoogleSearcher:
 
         self.service = build("customsearch", "v1", developerKey=self.api_key)
 
-    def search(self, query: str) -> list[dict]:
+    def search(self, query: str) -> Union[list[dict], None]:
         try:
             res = self.service.cse().list(q=query, cx=self.cse_id).execute()
             return res['items']
             # Process your results
         except HttpError as e:
             if e.resp.status == 403:
-                raise RuntimeError(f"Quota exceeded for the day. Original Error: {e}")
+                print("Quota exceeded for the day")
+                return None
             else:
                 raise RuntimeError(f"An error occurred: {e}")
