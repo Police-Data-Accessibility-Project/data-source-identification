@@ -20,7 +20,7 @@ class DBManager:
     def __del__(self):
         self.conn.close()
 
-    def execute(self, query, params=None):
+    def execute(self, query, params=None) -> list:
         self.cursor.execute(query, params)
         self.conn.commit()
         return self.cursor.fetchall()
