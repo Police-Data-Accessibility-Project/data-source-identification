@@ -1,18 +1,22 @@
+from typing import Union
+
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 from dotenv import load_dotenv
 import os
 
-
 class GoogleSearcher:
 
-    def __init__(self):
+    def __init__(
+            self,
+            api_key: str,
+            cse_id: str
+    ):
         load_dotenv()
-        self.api_key = os.getenv("CUSTOM_SEARCH_API_KEY")
-        self.cse_id = os.getenv("CUSTOM_SEARCH_ENGINE_ID")
-        # Check if api key and cse id are set
-        if self.api_key is None or self.cse_id is None:
-            raise RuntimeError("Custom search API key and CSE ID must be set in .env file")
+        if api_key is None or cse_id is None:
+            raise RuntimeError("Custom search API key and CSE ID required")
+        self.api_key = api_key
+        self.cse_id = cse_id
 
         self.service = build("customsearch", "v1", developerKey=self.api_key)
 
