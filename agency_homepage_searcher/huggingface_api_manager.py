@@ -21,5 +21,6 @@ class HuggingFaceAPIManager:
         self.api.upload_file(
             path_or_fileobj=local_file_path,
             path_in_repo=repo_file_path,
-            repo_id=self.repo_id
+            repo_id=self.repo_id,
+            repo_type="dataset"
         )
