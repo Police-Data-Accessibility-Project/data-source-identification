@@ -4,6 +4,7 @@ import os
 from dotenv import load_dotenv
 
 from util.huggingface_api_manager import HuggingFaceAPIManager
+from util.miscellaneous_functions import get_filename_friendly_timestamp
 
 # The below code sets the working directory to be the root of the entire repository
 # This is done to solve otherwise quite annoying import issues.
@@ -29,12 +30,6 @@ def main():
         directory=args.data_dir
     )
 
-    # Initialize the CSV Manager
-    csv_manager = CSVManager(
-        file_name=args.output_filename,
-        directory=args.data_dir
-    )
-
     load_dotenv()
     # Initialize the HuggingFace API Manager
     huggingface_api_manager = HuggingFaceAPIManager(
@@ -44,7 +39,6 @@ def main():
 
     if args.reset_cache:
         cache_manager.reset_cache()
-        csv_manager.initialize_file()
 
     try:
         # Initialize the CommonCrawlerManager
@@ -68,7 +62,19 @@ def main():
         if not common_crawl_result.url_results:
             return
 
+        # Initialize the CSV Manager
+        csv_manager = CSVManager(
+            file_name=f"{args.output_filename}_{get_filename_friendly_timestamp()}",
+            directory=args.data_dir
+        )
         csv_manager.add_rows(common_crawl_result.url_results)
+        huggingface_api_manager.upload_file(
+            local_file_path=csv_manager.file_path,
+            repo_file_path=f"{args.output_filename}/{csv_manager.file_path.name}"
+        )
+        print(f"Uploaded file to Hugging Face repo {huggingface_api_manager.repo_id} at {args.output_filename}/{csv_manager.file_path.name}")
+        csv_manager.delete_file()
+
         cache_manager.upsert(
             index=args.common_crawl_id,
             url=args.url,
