@@ -1,7 +1,7 @@
 import csv
 import os
 
-from .utils import get_file_path
+from util.miscellaneous_functions import get_file_path
 from .crawler import UrlResults
 
 
