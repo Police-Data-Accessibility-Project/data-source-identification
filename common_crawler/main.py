@@ -1,6 +1,10 @@
 import sys
 import os
 
+from dotenv import load_dotenv
+
+from util.huggingface_api_manager import HuggingFaceAPIManager
+
 # The below code sets the working directory to be the root of the entire repository
 # This is done to solve otherwise quite annoying import issues.
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -29,6 +33,13 @@ def main():
     csv_manager = CSVManager(
         file_name=args.output_filename,
         directory=args.data_dir
+    )
+
+    load_dotenv()
+    # Initialize the HuggingFace API Manager
+    huggingface_api_manager = HuggingFaceAPIManager(
+        access_token=os.getenv("HUGGINGFACE_ACCESS_TOKEN"),
+        repo_id=args.huggingface_repo_id
     )
 
     if args.reset_cache:
