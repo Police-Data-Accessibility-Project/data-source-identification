@@ -28,6 +28,9 @@ class RootURLCache:
             json.dump(self.cache, f, indent=4)
 
     def get_title(self, url):
+        if not url.startswith('http'):
+            url = "https://" + url
+
         parsed_url = urlparse(url)
         root_url = f"{parsed_url.scheme}://{parsed_url.netloc}"
         headers = {
