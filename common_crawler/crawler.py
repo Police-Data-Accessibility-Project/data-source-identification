@@ -1,4 +1,5 @@
 import json
+import time
 from urllib.parse import quote_plus
 
 import requests
@@ -69,6 +70,9 @@ class CommonCrawlerManager:
 
             last_page = next_page
 
+            # Wait 5 seconds before making the next request, to avoid overloading the server
+            time.sleep(5)
+
         return CommonCrawlResult(last_page, url_results)
 
     def search_common_crawl_index(self, url: str, page: int = 0) -> list[dict]:
@@ -99,7 +103,7 @@ class CommonCrawlerManager:
             print("No records exist in index matching the url search term")
             return None
         else:
-            print(f"Failed to get records for {url} on page {page}")
+            print(f"Failed to get records for {url} on page {page}: {response.text}")
             # Return None to indicate that no records were found or an error occurred.
             return None
 
