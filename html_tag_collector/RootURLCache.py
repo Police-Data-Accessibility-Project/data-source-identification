@@ -30,10 +30,15 @@ class RootURLCache:
     def get_title(self, url):
         parsed_url = urlparse(url)
         root_url = f"{parsed_url.scheme}://{parsed_url.netloc}"
+        headers = {
+            # Some websites refuse the connection of automated requests, setting the User-Agent will circumvent that
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36",
+        }
 
         if root_url not in self.cache:
             try:
-                response = requests.get(root_url)
+                print(root_url)
+                response = requests.get(root_url, headers=headers)
                 soup = BeautifulSoup(response.text, 'html.parser')
                 title = soup.find('title').text
                 self.cache[root_url] = title
