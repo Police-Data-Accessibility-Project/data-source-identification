@@ -267,15 +267,17 @@ def parse_response(url_response):
     except (bs4.builder.ParserRejectedMarkup, AssertionError, AttributeError):
         return tags
 
+    remove_whitespace = lambda s: " ".join(s.split()).strip()
+
     if soup.title is not None and soup.title.string is not None:
-        tags["html_title"] = soup.title.string.strip()
+        tags["html_title"] = remove_whitespace(soup.title.string)
     else:
         tags["html_title"] = ""
-    tags["root_page_title"] = root_url_cache.get_title(tags["url"])
+    tags["root_page_title"] = remove_whitespace(root_url_cache.get_title(tags["url"]))
 
     meta_tag = soup.find("meta", attrs={"name": "description"})
     try:
-        tags["meta_description"] = meta_tag["content"] if meta_tag is not None else ""
+        tags["meta_description"] = remove_whitespace(meta_tag["content"]) if meta_tag is not None else ""
     except KeyError:
         tags["meta_description"] = ""
 
