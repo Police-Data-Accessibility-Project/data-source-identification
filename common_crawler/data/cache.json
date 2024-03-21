@@ -1,7 +1,7 @@
 {
     "CC-MAIN-2023-50": {
         "*.gov": {
-            "police": 30
+            "police": 10
         }
     }
 }
