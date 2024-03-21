@@ -2,8 +2,7 @@
 This module contains utility functions for the common_crawler package
 """
 import os
-
-
+from pathlib import Path
 
 
 def create_directories_if_not_exist(file_path: str):
@@ -21,7 +20,7 @@ def create_directories_if_not_exist(file_path: str):
         os.makedirs(directory)
 
 
-def get_file_path(file_name: str, directory: str = None):
+def get_file_path(file_name: str, directory: str = None) -> Path:
     """
     Get the full path to a file
     Args:
@@ -48,7 +47,7 @@ def get_file_path(file_name: str, directory: str = None):
     # Create directories if they don't exist
     create_directories_if_not_exist(full_path)
 
-    return full_path
+    return Path(full_path)
 
 class URLWithParameters:
     """
