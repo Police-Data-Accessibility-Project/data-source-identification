@@ -194,7 +194,15 @@ class HomepageSearcher:
             temp_file_path = Path(tmpfile.name)
         return temp_file_path
 
-    def search_and_upload(self, max_searches: int = 100):
+    def search_and_upload(self, max_searches: int = 100) -> None:
+        """
+        Searches for possible homepage URLs for agencies without homepage URLs and uploads the results to HuggingFace.
+        Args:
+            max_searches: the maximum number of searches to perform
+
+        Returns:
+
+        """
         agencies = self.get_agencies_without_homepage_urls()
         search_results = self.search_until_quota_exceeded(
             agency_info_list=agencies,
