@@ -59,3 +59,10 @@ class CSVManager:
             writer = csv.writer(file)
             writer.writerow(['Index', 'Search Term', 'Keyword', 'Page', 'URL'])
         print(f"CSV file initialized at {self.file_path}")
+
+    def delete_file(self):
+        """
+        Deletes the CSV file.
+        """
+        os.remove(self.file_path)
+        print(f"CSV file deleted at {self.file_path}")
