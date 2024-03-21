@@ -8,7 +8,7 @@ from typing import List, Union
 
 from agency_homepage_searcher.agency_info import AgencyInfo
 from agency_homepage_searcher.google_searcher import GoogleSearcher
-from agency_homepage_searcher.huggingface_api_manager import HuggingFaceAPIManager
+from util.huggingface_api_manager import HuggingFaceAPIManager
 from util.db_manager import DBManager
 
 STATE_ISO_TO_NAME_DICT = {
