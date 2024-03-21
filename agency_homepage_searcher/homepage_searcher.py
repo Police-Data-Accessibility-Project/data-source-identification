@@ -2,7 +2,6 @@ import csv
 import os
 import tempfile
 from dataclasses import dataclass
-from datetime import datetime
 from pathlib import Path
 from typing import List, Union
 
@@ -10,6 +9,7 @@ from agency_homepage_searcher.agency_info import AgencyInfo
 from agency_homepage_searcher.google_searcher import GoogleSearcher
 from util.huggingface_api_manager import HuggingFaceAPIManager
 from util.db_manager import DBManager
+from util.miscellaneous_functions import get_filename_friendly_timestamp
 
 STATE_ISO_TO_NAME_DICT = {
     "AL": "Alabama",
@@ -95,14 +95,6 @@ class PossibleHomepageURL:
 class SearchResults:
     agency_id: str
     search_results: List[PossibleHomepageURL]
-
-
-def get_filename_friendly_timestamp() -> str:
-    # Get the current datetime
-    now = datetime.now()
-    # Format the datetime in a filename-friendly format
-    # Example: "2024-03-20_15-30-45"
-    return now.strftime("%Y-%m-%d_%H-%M-%S")
 
 
 class HomepageSearcher:
