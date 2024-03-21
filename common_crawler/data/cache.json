@@ -1,10 +1,7 @@
 {
     "CC-MAIN-2023-50": {
-        "*.gfdfov": {
-            "police": 0
-        },
         "*.gov": {
-            "police": 11
+            "police": 30
         }
     }
 }

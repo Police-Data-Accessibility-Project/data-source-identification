@@ -1,7 +1,7 @@
 import csv
 import os
 
-from .utils import get_file_path
+from util.miscellaneous_functions import get_file_path
 from .crawler import UrlResults
 
 
@@ -13,7 +13,6 @@ class CSVManager:
 
     def __init__(self, file_name: str = 'urls', directory=None):
         self.file_path = get_file_path(f"{file_name}.csv", directory)
-        print(f"CSV file path: {self.file_path}")
         if not os.path.exists(self.file_path):
             self.initialize_file()
 
@@ -59,3 +58,10 @@ class CSVManager:
             writer = csv.writer(file)
             writer.writerow(['Index', 'Search Term', 'Keyword', 'Page', 'URL'])
         print(f"CSV file initialized at {self.file_path}")
+
+    def delete_file(self):
+        """
+        Deletes the CSV file.
+        """
+        os.remove(self.file_path)
+        print(f"CSV file deleted at {self.file_path}")
