@@ -17,7 +17,7 @@ class HuggingFaceAPIManager:
         self.api = huggingface_hub.HfApi()
         self.repo_id = repo_id
 
-    def upload_file(self, local_file_path: Path, repo_file_path):
+    def upload_file(self, local_file_path: Path, repo_file_path: str):
         self.api.upload_file(
             path_or_fileobj=local_file_path,
             path_in_repo=repo_file_path,
