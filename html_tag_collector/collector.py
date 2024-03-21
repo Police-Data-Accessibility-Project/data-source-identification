@@ -61,16 +61,11 @@ def process_urls(manager_list, render_javascript):
         loop.run_until_complete(future)
         results = future.result()
 
-    parsed_data = []
-    with ThreadPoolExecutor(max_workers=100) as executor:
-        print("Parsing responses...")
-        future_to_tags = [executor.submit(parse_response, url_response) for url_response in urls_and_responses]
+    urls_and_headers = []
+    print("Parsing responses...")
+    for url_response in tqdm(urls_and_responses):
+        urls_and_headers.append(parse_response(url_response))
 
-        for future in tqdm(as_completed(future_to_tags), total=len(future_to_tags)):
-            data = future.result()
-            parsed_data.append(data)
-
-    urls_and_headers = sorted(parsed_data, key=lambda d: d["index"])
     [url_headers.pop("index") for url_headers in urls_and_headers]
     header_tags_df = pl.DataFrame(urls_and_headers)
     clean_header_tags_df = header_tags_df.with_columns(pl.all().fill_null(""))
