@@ -13,7 +13,6 @@ class CSVManager:
 
     def __init__(self, file_name: str = 'urls', directory=None):
         self.file_path = get_file_path(f"{file_name}.csv", directory)
-        print(f"CSV file path: {self.file_path}")
         if not os.path.exists(self.file_path):
             self.initialize_file()
 
