@@ -42,6 +42,7 @@ Several attributes are currently defined in `config.ini`:
 - **cache_filename**: This is the name of the cache file. The default value is `cache`. The file will be saved with a `.json` extension.
 - **output_filename**: This is the name of the output file. The default value is `urls`. The file will be saved with a `.csv` extension.
 - **data_dir**: This is the directory where the cache and output files will be saved. The default value is `data`.
+- **huggingface_repo_id**: This is the repository ID for the hugging face dataset which urls will be uploaded to
 
 ### Code Structure 
 
