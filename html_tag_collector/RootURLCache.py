@@ -4,6 +4,7 @@ import requests
 from bs4 import BeautifulSoup
 import json
 import os
+import ssl
 
 
 class RootURLCache:
@@ -42,11 +43,22 @@ class RootURLCache:
             try:
                 print(root_url)
                 response = requests.get(root_url, headers=headers)
-                soup = BeautifulSoup(response.text, 'html.parser')
-                title = soup.find('title').text
-                self.cache[root_url] = title
-                self.save_cache()
-                return title
+            except (requests.exceptions.SSLError, ssl.SSLError):
+                # This error is raised when the website uses a legacy SSL version, which is not supported by requests
+                # Retry without SSL verification
+                response = requests.get(url, headers=headers, verify=False)
             except Exception as e:
                 return f"Error retrieving title: {e}"
+
+            soup = BeautifulSoup(response.text, 'html.parser')
+            title = soup.find('title').text
+            self.cache[root_url] = title
+            self.save_cache()
+
+            # Prevents most bs4 memory leaks
+            if soup.html:
+                soup.html.decompose()
+                
+            return title
+
         return self.cache[root_url]
