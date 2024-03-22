@@ -41,7 +41,6 @@ class RootURLCache:
 
         if root_url not in self.cache:
             try:
-                print(root_url)
                 response = requests.get(root_url, headers=headers)
             except (requests.exceptions.SSLError, ssl.SSLError):
                 # This error is raised when the website uses a legacy SSL version, which is not supported by requests
