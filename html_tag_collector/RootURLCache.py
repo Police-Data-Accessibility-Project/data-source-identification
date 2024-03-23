@@ -45,12 +45,19 @@ class RootURLCache:
             except (requests.exceptions.SSLError, ssl.SSLError):
                 # This error is raised when the website uses a legacy SSL version, which is not supported by requests
                 # Retry without SSL verification
-                response = requests.get(url, headers=headers, verify=False)
+                try:
+                    response = requests.get(url, headers=headers, verify=False)
+                except Exception as e:
+                    return f"Error retrieving title: {e}"
             except Exception as e:
                 return f"Error retrieving title: {e}"
 
             soup = BeautifulSoup(response.text, 'html.parser')
-            title = soup.find('title').text
+            try:
+                title = soup.find('title').text
+            except AttributeError:
+                title = ""
+            
             self.cache[root_url] = title
             self.save_cache()
 
