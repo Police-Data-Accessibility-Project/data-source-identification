@@ -369,7 +369,7 @@ if __name__ == "__main__":
     cumulative_df = process_in_batches(df, render_javascript=render_javascript)
 
     # Drop duplicate columns
-    df = df.drop(["http_response", "html_title", "meta_description", *header_tags])
+    df = df.drop(["http_response", "html_title", "meta_description", "root_page_title", *header_tags])
     # join the url/header tag df with the original df which contains the labels (order has been preserved)
     # remove duplicate rows
     out_df = df.join(cumulative_df, on="url", how="left")

@@ -41,12 +41,12 @@ class RootURLCache:
 
         if root_url not in self.cache:
             try:
-                response = requests.get(root_url, headers=headers)
+                response = requests.get(root_url, headers=headers, timeout=120)
             except (requests.exceptions.SSLError, ssl.SSLError):
                 # This error is raised when the website uses a legacy SSL version, which is not supported by requests
                 # Retry without SSL verification
                 try:
-                    response = requests.get(url, headers=headers, verify=False)
+                    response = requests.get(root_url, headers=headers, timeout=120, verify=False)
                 except Exception as e:
                     return f"Error retrieving title: {e}"
             except Exception as e:
