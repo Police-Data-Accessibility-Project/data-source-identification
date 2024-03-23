@@ -91,7 +91,8 @@ async def run_get_response(urls):
     """
     tasks = []
     urllib3.disable_warnings()
-    session = AsyncHTMLSession(workers=100)
+    user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36"
+    session = AsyncHTMLSession(workers=100, browser_args=["--no-sandbox", f"--user-agent={user_agent}"])
 
     print("Retrieving HTML tags...")
     for i, url in enumerate(urls):
