@@ -50,7 +50,7 @@ class RootURLCache:
                 except Exception as e:
                     return f"Error retrieving title: {e}"
             except Exception as e:
-                return f"Error retrieving title: {e}"
+                return ""
 
             soup = BeautifulSoup(response.text, 'html.parser')
             try:
