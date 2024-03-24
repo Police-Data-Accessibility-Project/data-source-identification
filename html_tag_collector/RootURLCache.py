@@ -71,7 +71,7 @@ class RootURLCache:
 
         return self.cache[root_url]
 
-    def handle_exception(e):
+    def handle_exception(self, e):
         if DEBUG:
             return f"Error retrieving title: {e}"
         else:
