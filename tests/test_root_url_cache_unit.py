@@ -3,7 +3,7 @@ import tempfile
 import os
 import pytest
 from unittest.mock import mock_open, patch
-from html_tag_collector.RootURLCache import RootURLCache  # Adjust import according to your package structure
+from source_text_collector.RootURLCache import RootURLCache  # Adjust import according to your package structure
 
 
 @pytest.fixture
