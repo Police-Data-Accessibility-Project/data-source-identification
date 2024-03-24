@@ -8,6 +8,8 @@ import ssl
 
 from common import get_user_agent
 
+DEBUG = False
+
 class RootURLCache:
     def __init__(self, cache_file='url_cache.json'):
         self.cache_file = cache_file
@@ -48,9 +50,9 @@ class RootURLCache:
                 try:
                     response = requests.get(root_url, headers=headers, timeout=120, verify=False)
                 except Exception as e:
-                    return f"Error retrieving title: {e}"
+                    return handle_exception(e)
             except Exception as e:
-                return ""
+                return handle_exception(e)
 
             soup = BeautifulSoup(response.text, 'html.parser')
             try:
@@ -68,3 +70,9 @@ class RootURLCache:
             return title
 
         return self.cache[root_url]
+
+        def handle_exception(e):
+            if DEBUG:
+                return f"Error retrieving title: {e}"
+            else:
+                return ""
