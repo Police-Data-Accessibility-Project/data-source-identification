@@ -236,7 +236,7 @@ def parse_response(url_response):
     Returns:
         list[dict]: List of dictionaries containing urls and relevant HTML tags.
     """
-    remove_whitespace = lambda s: " ".join(s.split()).strip()
+    remove_excess_whitespace = lambda s: " ".join(s.split()).strip()
     
     tags = {}
     res = url_response["response"]
@@ -244,7 +244,7 @@ def parse_response(url_response):
     tags["url"] = url_response["url"][0]
     tags["html_title"] = ""
     tags["meta_description"] = ""
-    tags["root_page_title"] = remove_whitespace(root_url_cache.get_title(tags["url"]))
+    tags["root_page_title"] = remove_excess_whitespace(root_url_cache.get_title(tags["url"]))
 
     if res is None:
         tags["http_response"] = -1
@@ -272,13 +272,13 @@ def parse_response(url_response):
         return tags
 
     if soup.title is not None and soup.title.string is not None:
-        tags["html_title"] = remove_whitespace(soup.title.string)
+        tags["html_title"] = remove_excess_whitespace(soup.title.string)
     else:
         tags["html_title"] = ""
 
     meta_tag = soup.find("meta", attrs={"name": "description"})
     try:
-        tags["meta_description"] = remove_whitespace(meta_tag["content"]) if meta_tag is not None else ""
+        tags["meta_description"] = remove_excess_whitespace(meta_tag["content"]) if meta_tag is not None else ""
     except KeyError:
         tags["meta_description"] = ""
 
