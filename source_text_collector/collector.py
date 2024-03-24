@@ -18,12 +18,14 @@ from bs4 import BeautifulSoup
 import polars as pl
 
 from RootURLCache import RootURLCache
+from keyword_extractor import KeywordExtractor
 
 # Define the list of header tags we want to extract
 header_tags = ["h1", "h2", "h3", "h4", "h5", "h6"]
 DEBUG = False  # Set to True to enable debug output
 VERBOSE = False  # Set to True to print dataframe each batch
 root_url_cache = RootURLCache()
+keyword_extractor = KeywordExtractor()
 
 
 def process_urls(manager_list, render_javascript):
@@ -277,6 +279,11 @@ def parse_response(url_response):
     else:
         tags["html_title"] = ""
     tags["root_page_title"] = root_url_cache.get_title(tags["url"])
+
+    tags["keywords"] = str(keyword_extractor.extract_keywords(
+        text=soup.get_text(separator=' ', strip=True),
+        n=10
+    ))
 
     meta_tag = soup.find("meta", attrs={"name": "description"})
     try:
