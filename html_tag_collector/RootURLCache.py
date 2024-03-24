@@ -50,9 +50,9 @@ class RootURLCache:
                 try:
                     response = requests.get(root_url, headers=headers, timeout=120, verify=False)
                 except Exception as e:
-                    return handle_exception(e)
+                    return self.handle_exception(e)
             except Exception as e:
-                return handle_exception(e)
+                return self.handle_exception(e)
 
             soup = BeautifulSoup(response.text, 'html.parser')
             try:
