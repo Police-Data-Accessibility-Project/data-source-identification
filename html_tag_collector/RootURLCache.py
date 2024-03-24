@@ -6,6 +6,7 @@ import json
 import os
 import ssl
 
+from common import get_user_agent
 
 class RootURLCache:
     def __init__(self, cache_file='url_cache.json'):
@@ -35,8 +36,7 @@ class RootURLCache:
         parsed_url = urlparse(url)
         root_url = f"{parsed_url.scheme}://{parsed_url.netloc}"
         headers = {
-            # Some websites refuse the connection of automated requests, setting the User-Agent will circumvent that
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36",
+            "User-Agent": get_user_agent(),
         }
 
         if root_url not in self.cache:

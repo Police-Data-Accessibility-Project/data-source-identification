@@ -18,6 +18,7 @@ from bs4 import BeautifulSoup
 import polars as pl
 
 from RootURLCache import RootURLCache
+from common import get_user_agent
 
 # Define the list of header tags we want to extract
 header_tags = ["h1", "h2", "h3", "h4", "h5", "h6"]
@@ -91,8 +92,7 @@ async def run_get_response(urls):
     """
     tasks = []
     urllib3.disable_warnings()
-    user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36"
-    session = AsyncHTMLSession(workers=100, browser_args=["--no-sandbox", f"--user-agent={user_agent}"])
+    session = AsyncHTMLSession(workers=100, browser_args=["--no-sandbox", f"--user-agent={get_user_agent()}"])
 
     print("Retrieving HTML tags...")
     for i, url in enumerate(urls):
@@ -117,8 +117,7 @@ async def get_response(session, url, index):
         dict(int, Response): Dictionary of the url's index value and Response object, None if an error occurred.
     """
     headers = {
-        # Some websites refuse the connection of automated requests, setting the User-Agent will circumvent that
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36",
+        "User-Agent": get_user_agent(),
         # Make sure there's no pre-mature closing of responses before a redirect completes
         "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
     }
