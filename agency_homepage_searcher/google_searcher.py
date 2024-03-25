@@ -26,7 +26,7 @@ class GoogleSearcher:
             return res['items']
             # Process your results
         except HttpError as e:
-            if e.resp.status == 403:
+            if "Quota exceeded" in str(e):
                 print("Quota exceeded for the day")
                 return None
             else:
