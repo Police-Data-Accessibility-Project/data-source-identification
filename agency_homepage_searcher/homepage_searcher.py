@@ -251,7 +251,6 @@ class HomepageSearcher:
 
 if __name__ == "__main__":
     # Load the custom search API key and CSE ID from the .env file
-    from dotenv import load_dotenv
     load_dotenv()
     google_searcher = GoogleSearcher(
         api_key=os.getenv("CUSTOM_SEARCH_API_KEY"),
