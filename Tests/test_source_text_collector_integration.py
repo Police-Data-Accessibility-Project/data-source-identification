@@ -1,7 +1,7 @@
 import polars as pl
 import pytest
 
-from html_tag_collector.collector import process_in_batches
+from source_text_collector.collector import process_in_batches
 
 sample_json_data = [{
     "id": 1,
