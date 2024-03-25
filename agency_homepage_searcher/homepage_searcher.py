@@ -208,7 +208,7 @@ class HomepageSearcher:
         Returns: Path - the path to the temporary file
         """
         with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.csv') as tmpfile:
-            writer = csv.writer(tmpfile)
+            writer = csv.writer(tmpfile, lineterminator='\n')
             # Write the header
             writer.writerow(["agency_id", "url", "snippet"])
             for search_result in data:
