@@ -237,6 +237,7 @@ class HomepageSearcher:
         Returns: None
         """
         agencies = self.get_agencies_without_homepage_urls()
+        print("Searching for homepage URLs...")
         search_results = self.search_until_quota_exceeded(
             agency_info_list=agencies,
             max_searches=max_searches
@@ -247,6 +248,7 @@ class HomepageSearcher:
             local_file_path=temp_file_path,
             repo_file_path=f"/data/search_results_{timestamp}.csv"
         )
+        print(f"Uploaded {len(search_results)} search results to HuggingFace: {temp_file_path}")
         temp_file_path.unlink()  # Clean up the temporary file
         # Get the id of all agencies that were searched
         agency_ids = [search_result.agency_id for search_result in search_results]
