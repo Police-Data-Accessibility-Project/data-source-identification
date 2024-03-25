@@ -28,7 +28,10 @@ class DBManager:
     def executemany(self, query, params=None) -> list:
         self.cursor.executemany(query, params)
         self.conn.commit()
-        return self.cursor.fetchall()
+        try:
+            return self.cursor.fetchall()
+        except psycopg2.ProgrammingError:
+            return []
 
     def fetchall(self):
         return self.cursor.fetchall()
