@@ -193,7 +193,12 @@ class HomepageSearcher:
         for search_count, agency_info in enumerate(agency_info_list):
             if search_count >= max_searches:
                 break
-            search_result = self.search(agency_info)
+            try:
+                search_result = self.search(agency_info)
+            except Exception as e:
+                print(f"An error occurred while searching for {agency_info}: {e}")
+                print("Returning existing search results")
+                return search_results
             if search_result is None:  # Quota exceeded
                 break
             search_results.append(search_result)
