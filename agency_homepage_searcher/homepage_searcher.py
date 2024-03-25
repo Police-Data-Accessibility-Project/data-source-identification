@@ -278,5 +278,5 @@ if __name__ == "__main__":
         huggingface_api_manager=huggingface_api_manager
     )
     homepage_searcher.search_and_upload(
-        max_searches=1
+        max_searches=100
     )
