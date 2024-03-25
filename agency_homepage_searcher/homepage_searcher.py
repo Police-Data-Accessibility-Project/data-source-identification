@@ -79,15 +79,19 @@ SQL_GET_AGENCIES_WITHOUT_HOMEPAGE_URLS = """
     FROM
         PUBLIC.AGENCIES
     WHERE 
-    approved = true
-    and homepage_url is null
+        approved = true
+        AND homepage_url is null
+        AND NOT EXISTS (
+            SELECT 1 FROM PUBLIC.AGENCY_URL_SEARCH_CACHE
+            WHERE PUBLIC.AGENCIES.AIRTABLE_UID = PUBLIC.AGENCY_URL_SEARCH_CACHE.agency_airtable_uid
+        )
     ORDER BY COUNT_DATA_SOURCES DESC
     LIMIT 100 -- Limiting to 100 in acknowledgment of the search engine quota
 """
 
 SQL_UPDATE_CACHE = """
     INSERT INTO PUBLIC.AGENCY_URL_SEARCH_CACHE
-    (agency_airtable_id)
+    (agency_airtable_uid)
     VALUES (%s)    
 """
 
