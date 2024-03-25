@@ -4,6 +4,7 @@ import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 from typing import List, Union
+from dotenv import load_dotenv
 
 from agency_homepage_searcher.agency_info import AgencyInfo
 from agency_homepage_searcher.google_searcher import GoogleSearcher
@@ -82,6 +83,12 @@ SQL_GET_AGENCIES_WITHOUT_HOMEPAGE_URLS = """
     and homepage_url is null
     ORDER BY COUNT_DATA_SOURCES DESC
     LIMIT 100 -- Limiting to 100 in acknowledgment of the search engine quota
+"""
+
+SQL_UPDATE_CACHE = """
+    INSERT INTO PUBLIC.AGENCY_URL_SEARCH_CACHE
+    (agency_airtable_id)
+    VALUES (%s)    
 """
 
 
@@ -207,6 +214,17 @@ class HomepageSearcher:
             temp_file_path = Path(tmpfile.name)
         return temp_file_path
 
+    def update_search_cache(self, agency_ids: list[str]) -> None:
+        """
+        Updates the search cache for the given agency IDs.
+        Args:
+            agency_ids: list[str] - the agency IDs to update
+        """
+        self.database_manager.executemany(
+            SQL_UPDATE_CACHE,
+            [(agency_id,) for agency_id in agency_ids]
+        )
+
     def search_and_upload(self, max_searches: int = 100) -> None:
         """
         Searches for possible homepage URLs for agencies without homepage URLs and uploads the results to HuggingFace.
@@ -226,6 +244,10 @@ class HomepageSearcher:
             repo_file_path=f"/data/search_results_{timestamp}.csv"
         )
         temp_file_path.unlink()  # Clean up the temporary file
+        # Get the id of all agencies that were searched
+        agency_ids = [search_result.agency_id for search_result in search_results]
+        self.update_search_cache(agency_ids)
+
 
 if __name__ == "__main__":
     # Load the custom search API key and CSE ID from the .env file
