@@ -25,6 +25,11 @@ class DBManager:
         self.conn.commit()
         return self.cursor.fetchall()
 
+    def executemany(self, query, params=None) -> list:
+        self.cursor.executemany(query, params)
+        self.conn.commit()
+        return self.cursor.fetchall()
+
     def fetchall(self):
         return self.cursor.fetchall()
 
