@@ -1,3 +1,0 @@
-pandas
-nltk
-scikit-learn
