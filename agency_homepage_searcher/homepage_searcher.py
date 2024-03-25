@@ -109,7 +109,10 @@ class HomepageSearcher:
         self.huggingface_api_manager = huggingface_api_manager
 
     def get_agencies_without_homepage_urls(self) -> list[AgencyInfo]:
-        # This is a placeholder for the actual functionality
+        """
+        Retrieves a list of agencies without homepage URLs.
+        Returns: list[AgencyInfo]
+        """
         agency_rows = self.database_manager.execute(SQL_GET_AGENCIES_WITHOUT_HOMEPAGE_URLS)
         results = []
 
@@ -146,7 +149,12 @@ class HomepageSearcher:
         return search_string
 
     def search(self, agency_info: AgencyInfo) -> Union[SearchResults, None]:
-        # This is a placeholder for the actual search functionality
+        """
+        Searches for possible homepage URLs for a single agency.
+        Args:
+            agency_info: information about the agency
+        Returns: either the search results or None if the quota is exceeded
+        """
         search_string = self.build_search_string(agency_info)
         search_results = self.search_engine.search(search_string)
         if search_results is None:  # Quota exceeded
@@ -163,7 +171,13 @@ class HomepageSearcher:
             agency_info_list: list[AgencyInfo],
             max_searches: int = 100
     ) -> list[SearchResults]:
-        # This is a placeholder for the actual search functionality
+        """
+        Searches for possible homepage URLs for agencies until the quota is exceeded.
+        Args:
+            agency_info_list: list[AgencyInfo] - the list of agencies to search
+            max_searches: int - the maximum number of searches to perform
+        Returns: list[SearchResults] - the search results
+        """
         search_results = []
         for search_count, agency_info in enumerate(agency_info_list):
             if search_count >= max_searches:
@@ -175,6 +189,13 @@ class HomepageSearcher:
         return search_results
 
     def write_to_temporary_csv(self, data: List[SearchResults]) -> Path:
+        """
+        Writes the search results to a temporary CSV file
+        which will be uploaded to HuggingFace.
+        Args:
+            data: List[SearchResults] - the search results
+        Returns: Path - the path to the temporary file
+        """
         with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.csv') as tmpfile:
             writer = csv.writer(tmpfile)
             # Write the header
@@ -191,9 +212,7 @@ class HomepageSearcher:
         Searches for possible homepage URLs for agencies without homepage URLs and uploads the results to HuggingFace.
         Args:
             max_searches: the maximum number of searches to perform
-
-        Returns:
-
+        Returns: None
         """
         agencies = self.get_agencies_without_homepage_urls()
         search_results = self.search_until_quota_exceeded(
