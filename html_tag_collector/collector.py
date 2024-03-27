@@ -289,6 +289,21 @@ def parse_response(url_response):
         header_content = [header.get_text(" ", strip=True) for header in headers]
         tags[header_tag] = json.dumps(header_content, ensure_ascii=False)
 
+    # Extract max 500 words of text from HTML <div>'s
+    div_text = ""
+    MAX_WORDS = 500
+    for div in soup.find_all("div"):
+        text = div.get_text(" ", strip=True)
+        if text:
+            # Check if adding the current text exceeds the word limit
+            if len(div_text.split()) + len(text.split()) <= MAX_WORDS:
+                div_text += text + " "
+            else:
+                break  # Stop adding text if word limit is reached
+
+    # truncate to 5000 characters in case of run-on 'words'
+    tags["div_text"] = div_text[:MAX_WORDS * 10]
+
     # Prevents most bs4 memory leaks
     if soup.html:
         soup.html.decompose()
@@ -382,4 +397,4 @@ if __name__ == "__main__":
         print(out_df)
 
     # Write the updated JSON data to a new file
-    out_df.write_csv("labeled-urls-headers.csv")
+    out_df.write_csv("labeled-source-text.csv")
