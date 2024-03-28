@@ -31,11 +31,9 @@ Thank you for your interest in contributing to this project! Please follow these
 - If you want to work on something, create an issue first so the broader community can discuss it.
 - If you make a utility, script, app, or other useful bit of code: put it in a top-level directory with an appropriate name and dedicated README and add it to the index.
 
-# Pipeline flow & operations
+# Overall identification flow
 
-Each of these steps may be attempted with regex, human identification, or machine learning.
-
-We combine several machine learning (ML) models, each focusing on a specific task or property.
+Each of these steps may be attempted with regex, human identification, or machine learning. We combine several machine learning (ML) models, each focusing on a specific task or property.
 
 ```mermaid
 %% Here's a guide to mermaid syntax: https://mermaid.js.org/syntax/flowchart.html
@@ -108,4 +106,48 @@ subgraph Approve & submit
 I --> J
 J --> K
 end
+```
+
+## Collecting new URLs to label
+
+```mermaid
+%% Here's a guide to mermaid syntax: https://mermaid.js.org/syntax/flowchart.html
+
+sequenceDiagram
+
+participant Hugging Face
+participant GitHub
+participant Label Studio
+participant PDAP API
+
+loop create batches of URLs for human labeling
+  GitHub ->> GitHub: Crawl for <br/> a new batch of URLs from <br/> Common Crawl or elsewhere
+  GitHub ->> GitHub: Add additional <br/> metadata to the batch
+  GitHub ->> Hugging Face: Add the batch <br/> of URLs to a dataset
+  Hugging Face -->> GitHub: Confirm batch created
+  GitHub ->> Label Studio: Create labeling tasks <br/> from the batch
+  Label Studio -->> GitHub: Confirm tasks created
+  GitHub ->> GitHub: log batches to CSV in repo
+end
+
+loop update training data with new annotations
+  GitHub ->> Label Studio: Check for completed annotation tasks
+  Label Studio -->> GitHub: Confirm new annotations since last check
+  GitHub ->> Hugging Face: Write new annotations to <br/> training dataset
+  GitHub ->> GitHub: log batch status to CSV
+end
+
+Note left of Hugging Face: The batch ID should be <br/> retained in the dataset <br/> for tracking over time
+
+loop check PDAP database for new sources
+  GitHub ->> PDAP API: Trigger action to check <br/> for new data sources
+  PDAP API -->> GitHub: confirm sources available <br/> since last check
+  GitHub ->> GitHub: Collect additional metadata
+  GitHub ->> Hugging Face: Write sources to training dataset
+end
+
+loop model training
+  Hugging Face ->> Hugging Face: retrain ML models with updated data
+end
+
 ```
