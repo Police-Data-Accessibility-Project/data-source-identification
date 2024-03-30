@@ -59,6 +59,7 @@ def main():
 
         # Logic should conclude here if no results are found
         if not common_crawl_result.url_results:
+            print("No url results found. Ceasing main execution.")
             return
 
         # Initialize the CSV Manager
