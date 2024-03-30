@@ -43,7 +43,7 @@ def main():
     try:
         # Retrieve the last page from the cache, or 0 if it does not exist
         last_page = cache_manager.get(args.common_crawl_id, args.url, args.keyword)
-        common_crawl_result = crawl_and_upload(args, last_page, huggingface_api_manager)
+        common_crawl_result = process_crawl_and_upload(args, last_page, huggingface_api_manager)
     except ValueError as e:
         print(f"Error during crawling: {e}")
         return
@@ -59,11 +59,36 @@ def main():
         print(f"Error while saving cache manager: {e}")
 
 
-def crawl_and_upload(
+def handle_csv_and_upload(
+        common_crawl_result: CommonCrawlResult,
+        huggingface_api_manager: HuggingFaceAPIManager,
+        args: argparse.Namespace):
+    """
+    Handles the CSV file and uploads it to Hugging Face repository.
+    Args:
+        common_crawl_result: The result from Common Crawl.
+        huggingface_api_manager: The Hugging Face API manager.
+        args: The command-line arguments.
+
+    """
+    csv_manager = CSVManager(
+        file_name=f"{args.output_filename}_{get_filename_friendly_timestamp()}",
+        directory=args.data_dir
+    )
+    csv_manager.add_rows(common_crawl_result.url_results)
+    huggingface_api_manager.upload_file(
+        local_file_path=csv_manager.file_path,
+        repo_file_path=f"{args.output_filename}/{csv_manager.file_path.name}"
+    )
+    print(
+        f"Uploaded file to Hugging Face repo {huggingface_api_manager.repo_id} at {args.output_filename}/{csv_manager.file_path.name}")
+    csv_manager.delete_file()
+
+
+def process_crawl_and_upload(
         args: argparse.Namespace,
         last_page: int,
-        huggingface_api_manager: HuggingFaceAPIManager
-) -> CommonCrawlResult:
+        huggingface_api_manager: HuggingFaceAPIManager) -> CommonCrawlResult:
     # Initialize the CommonCrawlerManager
     crawler_manager = CommonCrawlerManager(
         args.common_crawl_id
@@ -81,19 +106,7 @@ def crawl_and_upload(
     if not common_crawl_result.url_results:
         print("No url results found. Ceasing main execution.")
         return common_crawl_result
-    # Initialize the CSV Manager
-    csv_manager = CSVManager(
-        file_name=f"{args.output_filename}_{get_filename_friendly_timestamp()}",
-        directory=args.data_dir
-    )
-    csv_manager.add_rows(common_crawl_result.url_results)
-    huggingface_api_manager.upload_file(
-        local_file_path=csv_manager.file_path,
-        repo_file_path=f"{args.output_filename}/{csv_manager.file_path.name}"
-    )
-    print(
-        f"Uploaded file to Hugging Face repo {huggingface_api_manager.repo_id} at {args.output_filename}/{csv_manager.file_path.name}")
-    csv_manager.delete_file()
+    handle_csv_and_upload(common_crawl_result, huggingface_api_manager, args)
     return common_crawl_result
 
 
