@@ -12,8 +12,9 @@ pip install -r requirements.txt
 
 ### Usage Example
 
+Run the following script from the root directory
 ```bash
-python main.py CC-MAIN-2023-50 *.gov police
+python common_crawler/main.py CC-MAIN-2023-50 *.gov police --config common_crawler/config.ini
 ```
 
 This example will crawl a single page (typically 15000 records) of the Common Crawl dataset with ID `CC-MAIN-2023-50` 
