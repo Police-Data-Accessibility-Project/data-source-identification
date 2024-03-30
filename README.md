@@ -63,9 +63,9 @@ E["Determine if this is an
 looking for data sources, of which
 individual records are children."]
 F["Determine which `agency`
-is described"]
-G["Define `name`, `description`,
-`record_type`"]
+or geographic area is described"]
+G["Define `record_type`,
+`name`, and `description`"]
 H["Identify other metadata
 using on our pipeline"]
 I["Submit Data Sources with `agency`,
@@ -93,7 +93,7 @@ D -- not relevant --> reject
 E -- individual record --> reject
 
 subgraph Use ML models to ID data
-D -- yes --> E
+D -- relevant --> E
 E --> F
 F --> G
 G --> H
@@ -104,7 +104,7 @@ G -- cannot identify --> manual
 manual --> H
 H --> I
 
-subgraph approve & submit
+subgraph Approve & submit
 I --> J
 J --> K
 end
