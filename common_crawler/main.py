@@ -74,17 +74,22 @@ def main():
         )
         print(f"Uploaded file to Hugging Face repo {huggingface_api_manager.repo_id} at {args.output_filename}/{csv_manager.file_path.name}")
         csv_manager.delete_file()
+    except ValueError as e:
+        print(f"Error during crawling: {e}")
+        return
 
+    try:
         cache_manager.upsert(
             index=args.common_crawl_id,
             url=args.url,
             keyword=args.keyword,
             last_page=common_crawl_result.last_page_search)
         cache_manager.save_cache()
-
-
     except ValueError as e:
-        print(f"Error during crawling: {e}")
+        print(f"Error while saving cache manager: {e}")
+
+
+
 
 
 if __name__ == "__main__":
