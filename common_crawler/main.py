@@ -3,13 +3,12 @@ import os
 
 from dotenv import load_dotenv
 
-from util.huggingface_api_manager import HuggingFaceAPIManager
-from util.miscellaneous_functions import get_filename_friendly_timestamp
-
 # The below code sets the working directory to be the root of the entire repository
 # This is done to solve otherwise quite annoying import issues.
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
+from util.huggingface_api_manager import HuggingFaceAPIManager
+from util.miscellaneous_functions import get_filename_friendly_timestamp
 from common_crawler.argparser import parse_args
 from common_crawler.cache import CommonCrawlerCacheManager
 from common_crawler.crawler import CommonCrawlerManager, CommonCrawlResult
@@ -85,9 +84,6 @@ def main():
 
     except ValueError as e:
         print(f"Error during crawling: {e}")
-    except Exception as e:
-        # Catch-all for any other errors
-        print(f"An unexpected error occurred: {e}")
 
 
 if __name__ == "__main__":
