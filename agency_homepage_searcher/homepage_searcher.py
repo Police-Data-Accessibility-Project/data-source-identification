@@ -208,17 +208,21 @@ class HomepageSearcher:
         """
         Writes the search results to a temporary CSV file
         which will be uploaded to HuggingFace.
+
         Args:
             data: List[SearchResults] - the search results
         Returns: Path - the path to the temporary file
         """
-        with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.csv') as tmpfile:
+        with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.csv', encoding='utf-8') as tmpfile:
             writer = csv.writer(tmpfile, lineterminator='\n')
             # Write the header
             writer.writerow(["agency_id", "url", "snippet"])
             for search_result in data:
-                for possible_homepage_url in search_result.search_results:
-                    writer.writerow([search_result.agency_id, possible_homepage_url.url, possible_homepage_url.snippet])
+                try:
+                    for possible_homepage_url in search_result.search_results:
+                        writer.writerow([search_result.agency_id, possible_homepage_url.url, possible_homepage_url.snippet])
+                except Exception as e:
+                    raise(f"An unexpected error occurred while writing search results for {search_result.agency_id}: {e}")
             # Remember the file name for later access
             temp_file_path = Path(tmpfile.name)
         return temp_file_path
@@ -247,6 +251,7 @@ class HomepageSearcher:
             agency_info_list=agencies,
             max_searches=max_searches
         )
+        print(f"Obtained {len(search_results)} search results")
         temp_file_path = self.write_to_temporary_csv(search_results)
         timestamp = get_filename_friendly_timestamp()
         self.huggingface_api_manager.upload_file(
