@@ -302,7 +302,8 @@ class HomepageSearcher:
             local_file_path=temp_file_path,
             repo_file_path=f"/data/search_results_{timestamp}.csv"
         )
-        print(f"Uploaded {len(search_results)} search results to HuggingFace: {temp_file_path}")
+        print(f"Uploaded {len(search_results)} search results to HuggingFace: "
+              f"huggingface.co/datasets/{self.huggingface_api_manager.repo_id}")
         temp_file_path.unlink()  # Clean up the temporary file
         agency_ids = [search_result.agency_id for search_result in search_results]
         self.update_search_cache(agency_ids)
