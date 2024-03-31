@@ -34,7 +34,7 @@ class GoogleSearcher:
             cse_id: str
     ):
         if api_key is None or cse_id is None:
-            raise RuntimeError("Custom search API key and CSE ID required")
+            raise RuntimeError("Custom search API key and CSE ID cannot be None.")
         self.api_key = api_key
         self.cse_id = cse_id
 
