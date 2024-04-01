@@ -127,7 +127,7 @@ loop create batches of URLs for human labeling
   Hugging Face -->> GitHub: Confirm batch created
   GitHub ->> Label Studio: Create labeling tasks <br/> from the batch
   Label Studio -->> GitHub: Confirm tasks created
-  GitHub ->> GitHub: log batches to CSV in repo
+  GitHub ->> GitHub: add batches to a log file in this repo
 end
 
 loop update training data with new annotations
