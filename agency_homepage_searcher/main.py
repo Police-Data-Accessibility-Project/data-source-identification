@@ -1,6 +1,11 @@
+import sys
 import os
 
 from dotenv import load_dotenv
+
+# The below code sets the working directory to be the root of the entire repository
+# This is done to solve otherwise quite annoying import issues.
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from agency_homepage_searcher.google_searcher import GoogleSearcher
 from agency_homepage_searcher.homepage_searcher import HomepageSearcher
