@@ -1,31 +1,18 @@
 import os
-import tempfile
-from typing import io
-
-import pytest
-from agency_homepage_searcher.google_searcher import GoogleSearcher, QuotaExceededError
 from googleapiclient.errors import HttpError
 from unittest.mock import Mock
-# Assuming every class or constant being used in HomepageSearcher is imported
-from agency_homepage_searcher import homepage_searcher
 import csv
 import pytest
 from pathlib import Path
 from unittest.mock import MagicMock
 
-# Assuming every class or constant being used in HomepageSearcher is imported
-from agency_homepage_searcher.homepage_searcher import HomepageSearcher, AgencyInfo, GoogleSearcher, DBManager, \
-    HuggingFaceAPIManager, PossibleHomepageURL
+from agency_homepage_searcher.homepage_searcher import HomepageSearcher, AgencyInfo, GoogleSearcher, \
+    PossibleHomepageURL
 
-# Following PEP 8, file's appropriate path is added before import.
 from agency_homepage_searcher.homepage_searcher import (
-    STATE_ISO_TO_NAME_DICT,
-    SQL_GET_AGENCIES_WITHOUT_HOMEPAGE_URLS,
-    MAX_SEARCHES,
     SQL_UPDATE_CACHE,
     SearchResults,
     QuotaExceededError,
-    get_filename_friendly_timestamp
 )
 
 
