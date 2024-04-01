@@ -219,7 +219,7 @@ class HomepageSearcher:
         Returns:
             list[SearchResults]: The existing search results.
         """
-        print(f"An error occurred while searching: {error}")
+        print(f"An error occurred while searching. Error type: {type(error).__name__}, Error message: {error}")
         print("Returning existing search results")
         return search_results
 
