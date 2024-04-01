@@ -261,7 +261,7 @@ class HomepageSearcher:
             for possible_homepage_url in search_result.search_results:
                 writer.writerow([search_result.agency_id, possible_homepage_url.url, possible_homepage_url.snippet])
         except Exception as e:
-            raise f"An unexpected error occurred while writing search results for {search_result.agency_id}: {e}"
+            raise Exception(f"An unexpected error occurred while writing search results for {search_result.agency_id}: {e}")
 
     def update_search_cache(self, agency_ids: list[str]) -> None:
         """
@@ -292,10 +292,22 @@ class HomepageSearcher:
             max_searches: the maximum number of searches to perform
         Returns: None
         """
-        agencies = self.get_agencies_without_homepage_urls()
+        agency_info_list = self.get_agencies_without_homepage_urls()
         print(f"Searching for homepage URLs for first {max_searches} agencies...")
-        search_results = self.search_until_limit_reached(agency_info_list=agencies, max_searches=max_searches)
+        search_results = self.search_until_limit_reached(agency_info_list=agency_info_list, max_searches=max_searches)
         print(f"Obtained {len(search_results)} search results")
+        self.upload_to_huggingface(search_results)
+        agency_ids = [search_result.agency_id for search_result in search_results]
+        self.update_search_cache(agency_ids)
+
+    def upload_to_huggingface(self, search_results: List[SearchResults]) -> None:
+        """
+        Uploads search results to HuggingFace.
+        Args:
+            search_results (List): List of search results to upload.
+        Returns:
+            None
+        """
         temp_file_path = self.write_to_temporary_csv(search_results)
         timestamp = get_filename_friendly_timestamp()
         self.huggingface_api_manager.upload_file(
@@ -305,5 +317,3 @@ class HomepageSearcher:
         print(f"Uploaded {len(search_results)} search results to HuggingFace: "
               f"huggingface.co/datasets/{self.huggingface_api_manager.repo_id}")
         temp_file_path.unlink()  # Clean up the temporary file
-        agency_ids = [search_result.agency_id for search_result in search_results]
-        self.update_search_cache(agency_ids)
