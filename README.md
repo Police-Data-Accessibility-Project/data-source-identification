@@ -32,123 +32,82 @@ Thank you for your interest in contributing to this project! Please follow these
 - If you want to work on something, create an issue first so the broader community can discuss it.
 - If you make a utility, script, app, or other useful bit of code: put it in a top-level directory with an appropriate name and dedicated README and add it to the index.
 
-# Overall identification flow
 
-Each of these steps may be attempted with regex, human identification, or machine learning. We combine several machine learning (ML) models, each focusing on a specific task or property.
-
-```mermaid
-%% Here's a guide to mermaid syntax: https://mermaid.js.org/syntax/flowchart.html
-
-flowchart TD
-0["Human-label batches
-using an annotation pipeline
-to train ML models on specific
-tasks or properties"]
-A["Start with a batch of URLs
-in JSON format, from common
-crawl or another source"]
-B["Check for duplicates in the
-pipeline's training data
-/ our database"]
-C["Make an HTTP request to
-each URL in the JSON batch
-and append some metadata"]
-D["Determine whether the URL
-is “relevant”, i.e. a source of
-data about one of our `agency_types`
-(police, courts, jails)"]
-E["Determine if this is an
-`individual record`. We're only
-looking for data sources, of which
-individual records are children."]
-F["Determine which `agency`
-or geographic area is described"]
-G["Define `record_type`,
-`name`, and `description`"]
-H["Identify other metadata
-using on our pipeline"]
-I["Submit Data Sources with `agency`,
-`name`, `description`, and
-`record_type` to the approval queue"]
-J["Manually approve or reject
-data source submissions"]
-K["Retrain models with approved
-submissions, particularly
-adjustments made before
-approval & rejections"]
-reject["Reject the URL"]
-manual["Human-identify and
-resubmit"]
-
-C --> 0
-
-subgraph Prepare URLs for labeling or identification
-A --> B
-B --> C
-end
-
-C --> D
-D -- not relevant --> reject
-E -- individual record --> reject
-
-subgraph Use ML models to ID data
-D -- relevant --> E
-E --> F
-F --> G
-G --> H
-end
-
-F -- cannot identify --> manual
-G -- cannot identify --> manual
-manual --> H
-H --> I
-
-subgraph Approve & submit
-I --> J
-J --> K
-end
-```
-
-## Collecting new URLs to label
+## Training models by batching and annotating URLs
 
 ```mermaid
 %% Here's a guide to mermaid syntax: https://mermaid.js.org/syntax/flowchart.html
 
 sequenceDiagram
 
-participant Hugging Face
-participant GitHub
-participant Label Studio
-participant PDAP API
+participant HF as Hugging Face
+participant GH as GitHub
+participant LS as Label Studio
+participant PDAP as PDAP API
 
-loop create batches of URLs for human labeling
-  GitHub ->> GitHub: Crawl for <br/> a new batch of URLs from <br/> Common Crawl or elsewhere
-  GitHub ->> GitHub: Add additional <br/> metadata to the batch
-  GitHub ->> Hugging Face: Add the batch <br/> of URLs to a dataset
-  Hugging Face -->> GitHub: Confirm batch created
-  GitHub ->> Label Studio: Create labeling tasks <br/> from the batch
-  Label Studio -->> GitHub: Confirm tasks created
-  GitHub ->> GitHub: add batches to a log file in this repo
+loop create batches of URLs <br/>for human labeling
+  GH ->> GH: Crawl for a new batch<br/> of URLs with common_crawler<br/> or other methods
+  GH ->> GH: Add metadata to each batch<br/> with source_tag_collector
+  GH ->> HF: Add the batch <br/> of URLs to a dataset
+  HF -->> GH: Confirm batch created
+  GH ->> LS: Create labeling tasks <br/> from the batch
+  LS -->> GH: Confirm tasks created
+  GH ->> GH: add batches to a log file <br/> in this repo with URL<br/> and batch IDs
 end
 
-loop update training data with new annotations
-  GitHub ->> Label Studio: Check for completed annotation tasks
-  Label Studio -->> GitHub: Confirm new annotations since last check
-  GitHub ->> Hugging Face: Write new annotations to <br/> training dataset
-  GitHub ->> GitHub: log batch status to CSV
+loop annotate URLs
+  LS ->> LS: Users annotate using<br/>Label Studio interface
 end
 
-Note left of Hugging Face: The batch ID should be <br/> retained in the dataset <br/> for tracking over time
+loop update training data <br/> with new annotations
+  GH ->> LS: Check for completed <br/> annotation tasks
+  LS -->> GH: Confirm new annotations <br/> since last check
+  GH ->> HF: Write new annotations to <br/> training dataset
+  GH ->> GH: log batch status to file
+end
 
-loop check PDAP database for new sources
-  GitHub ->> PDAP API: Trigger action to check <br/> for new data sources
-  PDAP API -->> GitHub: confirm sources available <br/> since last check
-  GitHub ->> GitHub: Collect additional metadata
-  GitHub ->> Hugging Face: Write sources to training dataset
+loop check PDAP database <br/>for new sources
+  GH ->> PDAP: Trigger action to check <br/> for new data sources
+  PDAP -->> GH: confirm sources available <br/> since last check
+  GH ->> GH: Collect additional metadata
+  GH ->> HF: Write sources to <br/> training dataset
 end
 
 loop model training
-  Hugging Face ->> Hugging Face: retrain ML models with updated data
+  GH ->> HF: retrain ML models with <br/>updated data using <br/>trainer in hugging_face
 end
 
+```
+
+## Using trained models to identify URLs
+
+Each of these steps may be attempted with regex, human identification, or machine learning. We combine several machine learning (ML) models, each focusing on a specific task or property.
+
+```mermaid
+%% Here's a guide to mermaid syntax: https://mermaid.js.org/syntax/flowchart.html
+
+sequenceDiagram
+
+participant HF as Hugging Face
+participant GH as GitHub
+participant PDAP as PDAP API
+
+GH ->> GH: Start with a batch of URLs from <br/> common_crawler or another source <br/> with a batch log file
+GH ->> PDAP: Check for duplicate URLs
+PDAP ->> GH: Report back duplicates to remove
+GH ->> HF: Create batch for identification
+HF -->> GH: Confirm batch created
+
+loop trigger Hugging Face models to add <br/>labels to the same dataset
+  GH ->> HF: Check URLs for relevance <br/> to police, courts, or jails
+  HF -->> GH: complete
+  GH ->> HF: Check relevant URLs for <br/> "individual records"
+  HF -->> GH: complete
+  note over HF,GH: Ignore irrelevant and <br/> individual record sources <br/> for following steps
+  GH ->> HF: Identify an agency or <br/> geographic area
+  GH ->> HF: Identify record_type, <br/> name, and description
+  HF -->> GH: Confirm batch complete
+end
+
+GH ->> PDAP: Submit URLs for manual approval
 ```
