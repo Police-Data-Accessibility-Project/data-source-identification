@@ -1,5 +1,5 @@
 
-import psycopg2
+import psycopg
 
 
 class DBManager:
@@ -8,7 +8,7 @@ class DBManager:
     """
 
     def __init__(self, db_name, user, password, host, port):
-        self.conn = psycopg2.connect(
+        self.conn = psycopg.connect(
             dbname=db_name,
             user=user,
             password=password,
@@ -30,7 +30,7 @@ class DBManager:
         self.conn.commit()
         try:
             return self.cursor.fetchall()
-        except psycopg2.ProgrammingError:
+        except psycopg.ProgrammingError:
             return []
 
     def fetchall(self):
