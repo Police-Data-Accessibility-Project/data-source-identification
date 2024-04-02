@@ -6,6 +6,7 @@ on:
     - cron:  '0 1 * * *'
 
 env:
+  # The access token enabling write access to the Huggingface Database
   HUGGINGFACE_ACCESS_TOKEN: ${{ secrets.HUGGINGFACE_ACCESS_TOKEN }}
 
 jobs:
