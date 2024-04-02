@@ -175,7 +175,6 @@ class TestHomepageSearcher:
 
         HomepageSearcher._write_search_result_to_csv(search_result, writer_mock)
 
-
         assert writer_mock.writerow.call_count == 2
 
     def test_write_search_result_to_csv_failure(self, test_homepage_searcher):
@@ -224,7 +223,6 @@ class TestHomepageSearcher:
                 row_count += 1
             assert row_count == 3
 
-
     @pytest.fixture
     def mock_agencies(self):
         return [MagicMock(spec=AgencyInfo) for _ in range(10)]
@@ -260,7 +258,8 @@ class TestHomepageSearcher:
         return mock_agency_info
 
     def test_search_with_results(self, test_homepage_searcher, mock_agency_info):
-        test_homepage_searcher.search_engine.search = MagicMock(return_value=[{'link': 'http://test.com', 'snippet': 'test snippet'}])
+        test_homepage_searcher.search_engine.search = MagicMock(
+            return_value=[{'link': 'http://test.com', 'snippet': 'test snippet'}])
 
         result = test_homepage_searcher.search(mock_agency_info)
 
@@ -311,3 +310,26 @@ class TestHomepageSearcher:
     def test_create_agency_info_with_invalid_agency_row(self, sample_invalid_agency_row):
         with pytest.raises(ValueError):
             HomepageSearcher.create_agency_info(sample_invalid_agency_row)
+
+
+def test_agency_info_get_search_string_character_strip():
+    """
+    Test that the get_search_string_character strip does not include disallowed characters
+    """
+    disallowed_characters = ['[', ']', '\'', '\"', ')', '(']
+    agency_info = AgencyInfo(
+        agency_name='Agency',
+        city='San Francisco',
+        state='California',
+        county='Alameda',
+        zip_code='94105',
+        website=None,
+        agency_type='Federal',
+        agency_id='5141'
+    )
+    for character in disallowed_characters:
+        agency_info.agency_name += character
+    search_string = agency_info.get_search_string()
+    for character in disallowed_characters:
+        assert character not in search_string, f'The character {character} is erroneously included in the search string {search_string}'
+
