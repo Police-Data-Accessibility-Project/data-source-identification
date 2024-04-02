@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import List, Union
 from dotenv import load_dotenv
+from enum import Enum
 
 from agency_homepage_searcher.agency_info import AgencyInfo
 from agency_homepage_searcher.google_searcher import GoogleSearcher, QuotaExceededError
@@ -13,6 +14,13 @@ from util.db_manager import DBManager
 from util.miscellaneous_functions import get_filename_friendly_timestamp
 
 MAX_SEARCHES = 100  # Maximum searches to perform at a time when searching for results
+
+class SearchResultEnum(Enum):
+    """
+    This enum corresponds to an enum column in AGENCY_URL_SEARCH_CACHE
+    """
+    FOUND_RESULTS = "found_results"
+    NO_RESULTS_FOUND = "no_results_found"
 
 STATE_ISO_TO_NAME_DICT = {
     "AL": "Alabama",
@@ -92,9 +100,9 @@ SQL_GET_AGENCIES_WITHOUT_HOMEPAGE_URLS = """
 """
 
 SQL_UPDATE_CACHE = """
-    INSERT INTO PUBLIC.AGENCY_URL_SEARCH_CACHE
-    (agency_airtable_uid)
-    VALUES (%s)    
+    INSERT INTO public.agency_url_search_cache
+    (agency_airtable_uid, search_result)
+    VALUES (%s, %s)
 """
 
 
