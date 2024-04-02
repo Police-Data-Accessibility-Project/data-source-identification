@@ -32,8 +32,15 @@ def main():
 
     load_dotenv()
     # Initialize the HuggingFace API Manager
+    hf_access_token = os.getenv("HUGGINGFACE_ACCESS_TOKEN")
+    if not hf_access_token:
+        raise ValueError(
+            "HUGGINGFACE_ACCESS_TOKEN not accessible in .env file in root directory. "
+            "Please obtain access token from your personal account at "
+            "https://huggingface.co/settings/tokens and ensure you have write access to "
+            "https://huggingface.co/PDAP. Then include in .env file in root directory.")
     huggingface_api_manager = HuggingFaceAPIManager(
-        access_token=os.getenv("HUGGINGFACE_ACCESS_TOKEN"),
+        access_token=hf_access_token,
         repo_id=args.huggingface_repo_id
     )
 
