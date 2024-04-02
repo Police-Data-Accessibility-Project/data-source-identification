@@ -1,5 +1,0 @@
-{
-  "title": "pdap_annotations_schema",
-  "description": "JSON schema for PDAP annotations datasets when stored in JSON format",
-  "type": "object"
-}
