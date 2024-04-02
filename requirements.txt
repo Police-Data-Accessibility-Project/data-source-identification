@@ -20,7 +20,3 @@ requests_html>=0.10.0
 lxml>=5.1.0
 pyppeteer>=2.0.0
 beautifulsoup4>=4.12.3
-# ml-url-classifier only
-pandas>=2.2.0
-scikit-learn>=1.4.1.post1
-nltk>=3.6.7
