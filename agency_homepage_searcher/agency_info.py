@@ -1,7 +1,7 @@
 """
 A dataclass containing all information relevant for searching for an agency's homepage.
 """
-
+import re
 from dataclasses import dataclass
 from typing import Union
 
@@ -28,5 +28,7 @@ class AgencyInfo:
         Constructs the search string to be used in search engines.
         """
         search_string = (f"{self.agency_name} {self.city} {self.state} {self.county} "
-                         f"{self.zip_code} {self.website} {self.agency_type}")
-        return search_string
+                         f"{self.zip_code} {self.agency_type}")
+        # Strip brackets, parentheses, and quotes from search strings
+        pattern = r'[\[\]\"\'\(\)]'
+        return re.sub(pattern, "", search_string)
