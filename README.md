@@ -19,6 +19,8 @@ In an effort to build out a fully automated system for identifying and catalogui
 2. uses our machine learning models to label them
 3. helps us and human-label them for training the models
 
+For more detail, see the diagrams below.
+
 ## How to use
 
 1. Create an .env file in this directory with these contents, or set the environment variable another way: `VUE_APP_PDAP_API_KEY=KeyGoesHere`
@@ -34,6 +36,8 @@ Thank you for your interest in contributing to this project! Please follow these
 - If you want to work on something, create an issue first so the broader community can discuss it.
 - If you make a utility, script, app, or other useful bit of code: put it in a top-level directory with an appropriate name and dedicated README and add it to the index.
 
+
+# Diagrams
 
 ## Training models by batching and annotating URLs
 
