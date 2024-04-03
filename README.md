@@ -4,18 +4,20 @@ This is a multi-language repo containing scripts or tools for identifying Data S
 
 name | description of purpose
 --- | ---
-Identification Pipeline | The core python script of a modular pipeline. More details below.
+.github/workflows | Scheduling and automation
 agency_identifier | Matches URLs with an agency from the PDAP database
-common_crawler | interfaces with the Common Crawl dataset to extract urls, creating batches to identify or annotate
-hugging_face | Utilities for interacting with our machine learning space at [Hugging Face](https://huggingface.co/PDAP)
+common_crawler | Interfaces with the Common Crawl dataset to extract urls, creating batches to identify or annotate
 html_tag_collector | Collects HTML header, meta, and title tags and appends them to a JSON file. The idea is to make a richer dataset for algorithm training and data labeling.
+hugging_face | Utilities for interacting with our machine learning space at [Hugging Face](https://huggingface.co/PDAP)
+identification_pipeline.py | The core python script uniting this modular pipeline. More details below.
 openai-playground | Scripts for accessing the openai API on PDAP's shared account
 
 # Identification pipeline
-In an effort to build out a fully automated system for identifying and cataloguing new data sources, this pipeline:
-- Checks potential new data sources against all those already in the database
-- Runs non-duplicate sources through the `HTML tag collector` for use in ML training
-- Checks the hostnames against those of the agencies in the database
+In an effort to build out a fully automated system for identifying and cataloguing new data sources, this pipeline: 
+
+1. collects batches of URLs which may contain useful data
+2. uses our machine learning models to label them
+3. helps us and human-label them for training the models
 
 ## How to use
 
