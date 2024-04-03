@@ -2,7 +2,7 @@
 
 This module interfaces with the Common Crawl dataset to extract urls.
 
-### Installation
+## Installation
 
 To install all necessary dependencies, run the following command from the root directory:
 
@@ -10,10 +10,22 @@ To install all necessary dependencies, run the following command from the root d
 pip install -r requirements.txt
 ```
 
-### Usage Example
 
+## Usage Example
+
+### Environment Requirements
+
+Please ensure you have a `.env` file located in the root directory (not the `common_crawler` directory) 
+which contains the following environment variable:
+* HUGGINGFACE_ACCESS_TOKEN = The access token to enable writing to the associated PDAP dataset.
+To obtain your access token, consult user settings at https://huggingface.co/settings/tokens 
+and ensure you have write access to https://huggingface.co/PDAP .
+
+### Instructions
+
+Run the following script from the root directory
 ```bash
-python main.py CC-MAIN-2023-50 *.gov police
+python common_crawler/main.py CC-MAIN-2023-50 *.gov police --config common_crawler/config.ini --pages 2
 ```
 
 This example will crawl a single page (typically 15000 records) of the Common Crawl dataset with ID `CC-MAIN-2023-50` 
@@ -42,8 +54,9 @@ Several attributes are currently defined in `config.ini`:
 - **cache_filename**: This is the name of the cache file. The default value is `cache`. The file will be saved with a `.json` extension.
 - **output_filename**: This is the name of the output file. The default value is `urls`. The file will be saved with a `.csv` extension.
 - **data_dir**: This is the directory where the cache and output files will be saved. The default value is `data`.
+- **huggingface_repo_id**: This is the repository ID for the hugging face dataset which urls will be uploaded to
 
-### Code Structure 
+## Code Structure 
 
 The code is structured as follows:
 - **main.py**: This is the main file that is used to run the module. It contains the logic to parse the command line arguments and call the necessary functions.
@@ -55,7 +68,7 @@ The code is structured as follows:
 - **config.ini**: This file contains the default configuration values.
 - **README.md**: This file contains the documentation for the module. You're reading it right now. Isn't that nifty!
 
-### Testing
+## Testing
 
 A suite of unit and integration tests were developed for this module.
 
