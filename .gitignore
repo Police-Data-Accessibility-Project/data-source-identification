@@ -1,7 +1,7 @@
 .DS_Store
 .idea/
 __pycache__/
-.env
+*.env
 venv/
 checkpoint-500/
 model_tf/
