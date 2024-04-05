@@ -80,6 +80,7 @@ def handle_csv_and_upload(
     """
     csv_manager = CSVManager(
         file_name=f"{args.output_filename}_{get_filename_friendly_timestamp()}",
+        headers=['url'],
         directory=args.data_dir
     )
     csv_manager.add_rows(common_crawl_result.url_results)
