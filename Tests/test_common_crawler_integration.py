@@ -5,9 +5,22 @@ import shutil
 import tempfile
 from unittest.mock import patch
 
+import pytest
+
+from common_crawler.csv_manager import CSVManager
 from common_crawler.main import main
 from common_crawler.cache import CommonCrawlerCacheManager
 
+class CSVData:
+
+    def __init__(self, file_path: str):
+        with open(file_path, 'r') as f:
+            reader = csv.reader(f)
+            self.headers = next(reader)
+            self.rows = []
+            for row in reader:
+                row_dict = dict(zip(self.headers, row))  # Convert the row to a dictionary
+                self.rows.append(row_dict)
 
 def validate_csv(directory, expected_values):
     """
@@ -19,26 +32,28 @@ def validate_csv(directory, expected_values):
     Returns:
 
     """
-    # Create a dictionary mirroring the expected values, with the column names as keys, and all values initialized to false
+    # Create a dictionary mirroring the expected values,
+    # with the column names as keys, and all values initialized to false
     found_dict = {column: False for column in expected_values.keys()}
 
+    csv_file = get_csv_in_directory(directory)
+    path = f"{directory}/{csv_file}"
+    csv_data = CSVData(path)
+
+    for row in csv_data.rows:
+        for column, expected_value in expected_values.items():
+            if row[column] == expected_value:
+                found_dict[column] = True
+
+    return all(found_dict.values())
+
+
+def get_csv_in_directory(directory):
     # Find csv in directory and confirm there is only one
     csv_files = [file for file in os.listdir(directory) if file.endswith('.csv')]
     assert len(csv_files) == 1, "Multiple CSV files found in directory"
     csv_file = csv_files[0]
-
-    with open(f"{directory}/{csv_file}", 'r') as file:
-        reader = csv.reader(file)
-        headers = next(reader)  # Get the header row
-
-        for row in reader:
-            row_dict = dict(zip(headers, row))  # Convert the row to a dictionary
-
-            for column, expected_value in expected_values.items():
-                if row_dict[column] == expected_value:
-                    found_dict[column] = True
-
-    return all(found_dict.values())
+    return csv_file
 
 
 def test_cache_persistence():
@@ -196,3 +211,41 @@ def test_main_with_valid_args(mock_upload_file, mocker):
     if os.path.exists('test_data'):
         # Remove the directory and all its contents
         shutil.rmtree('test_data')
+
+@pytest.fixture
+def temp_file():
+    # Create a temporary file which is deleted at the end of the test
+    yield 'temp_file'
+
+    os.remove('temp_file.csv')
+
+@pytest.fixture
+def temp_dir():
+    dirpath = tempfile.mkdtemp()
+    try:
+        yield dirpath
+    finally:
+        shutil.rmtree(dirpath)
+
+
+def test_csv_manager(temp_file, temp_dir):
+    """
+    Confirm functionality of CSV manager, including:
+        That headers are properly defined
+        That rows are properly added
+        That CSV Manager properly either creates a file or appends to a file if it already exists
+    Returns:
+    """
+    csv_manager = CSVManager(
+        file_name=temp_file,
+        headers=['header1', 'header2', 'header3'],
+        directory=temp_dir
+    )
+    # Add 2 rows of data
+    rows = [
+        ['data1', 'data2', 'data3'],
+        ['data4', 'data5', 'data6']
+    ]
+    csv_manager.add_rows(rows)
+
+    # Check file has two rows not including header
