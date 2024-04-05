@@ -19,7 +19,7 @@ This module contains classes for managing a cache of Common Crawl search results
 @dataclass
 class CommonCrawlResult:
     last_page_search: int
-    url_results: list
+    url_results: list[str]
 
 
 class CommonCrawlerManager:
