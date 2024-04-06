@@ -21,7 +21,7 @@ class CSVManager:
         if not os.path.exists(self.file_path):
             self.initialize_file()
 
-    def add_row(self, row_values: list[str]):
+    def add_row(self, row_values: list[str] | tuple[str]):
         """
         Appends a new row of data to the CSV.
         Args:
@@ -54,11 +54,20 @@ class CSVManager:
         """
         Initializes the CSV file.
         If the file doesn't exist, it creates it with the header row.
-        If the file does exist, it empties it, leaving only the header row.
         """
-        with open(self.file_path, mode='a', newline='', encoding='utf-8') as file:
-            writer = csv.writer(file)
-            writer.writerow(self.headers)
+        # check if file exists
+        file_exists = os.path.isfile(self.file_path)
+
+        if not file_exists:
+            with open(self.file_path, mode='a', newline='', encoding='utf-8') as file:
+                writer = csv.writer(file)
+                writer.writerow(self.headers)
+        else:
+            # Open and check that headers match
+            with open(self.file_path, mode='r', encoding='utf-8') as file:
+                header_row = next(csv.reader(file))
+                if header_row != self.headers:
+                    raise ValueError(f"Header row in {self.file_path} does not match expected headers")
         print(f"CSV file initialized at {self.file_path}")
 
     def delete_file(self):
