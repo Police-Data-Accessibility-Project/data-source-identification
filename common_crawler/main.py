@@ -83,7 +83,7 @@ def main():
             source="Common Crawl",
             count=str(len(common_crawl_result.url_results)),
             keywords=f"{args.url} - {args.keyword}",
-            notes=f"{args.common_crawl_id}, {args.pages} pages"
+            notes=f"{args.common_crawl_id}, {args.pages} pages, starting at {last_page + 1}"
         )
         add_batch_info_to_csv(batch_info, args.data_dir)
     except ValueError as e:
