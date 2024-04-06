@@ -3,12 +3,13 @@ import json
 import os
 import shutil
 import tempfile
+import datetime
 from unittest.mock import patch
 
 import pytest
 
 from common_crawler.csv_manager import CSVManager
-from common_crawler.main import main
+from common_crawler.main import main, BATCH_HEADERS
 from common_crawler.cache import CommonCrawlerCacheManager
 
 class CSVData:
@@ -22,22 +23,26 @@ class CSVData:
                 row_dict = dict(zip(self.headers, row))  # Convert the row to a dictionary
                 self.rows.append(row_dict)
 
-def validate_csv(directory, expected_values):
+def validate_csv(file_path, expected_values):
     """
     Validate that the CSV file contains the expected values
     Args:
-        directory:
+        file_path:
         expected_values:
 
     Returns:
 
     """
+    # Extract directory path from local_file_path
+    directory = os.path.dirname(file_path)
+    # Extract file name from local_file_path
+    file_name = os.path.basename(file_path)
+
     # Create a dictionary mirroring the expected values,
     # with the column names as keys, and all values initialized to false
     found_dict = {column: False for column in expected_values.keys()}
 
-    csv_file = get_csv_in_directory(directory)
-    path = f"{directory}/{csv_file}"
+    path = f"{directory}/{file_name}"
     csv_data = CSVData(path)
 
     for row in csv_data.rows:
@@ -46,15 +51,6 @@ def validate_csv(directory, expected_values):
                 found_dict[column] = True
 
     return all(found_dict.values())
-
-
-def get_csv_in_directory(directory):
-    # Find csv in directory and confirm there is only one
-    csv_files = [file for file in os.listdir(directory) if file.endswith('.csv')]
-    assert len(csv_files) == 1, "Multiple CSV files found in directory"
-    csv_file = csv_files[0]
-    return csv_file
-
 
 def test_cache_persistence():
     """
@@ -90,39 +86,39 @@ def test_cache_persistence():
 
 def validate_csvs(local_file_path, repo_file_path):
     # Check that the output file was created, and contains the expected data
-    assert validate_csv('test_data', {
+
+    assert validate_csv(local_file_path, {
         'url': 'http://police.com'
     }), "Output csv file does not contain expected data"
-    assert validate_csv('test_data', {
+    assert validate_csv(local_file_path, {
         'url': 'http://police.com/page2'
     }), "Output csv file does not contain expected data"
     # Additionally validate that the previous output file does not exist
-    assert not validate_csv('test_data', {
+    assert not validate_csv(local_file_path, {
         'url': 'http://keyword.com'
     }), "Output csv file does not contain expected data"
 
 def validate_csv_reset_cache(local_file_path, repo_file_path):
     # Check that the output file was created, and contains the expected data
-    assert validate_csv('test_data', {
+    assert validate_csv(local_file_path, {
         'url': 'http://keyword.com'
     }), "Output csv file does not contain expected data"
 
 
 
 @patch('util.huggingface_api_manager.HuggingFaceAPIManager.upload_file')
-def test_main_with_valid_args(mock_upload_file, mocker):
+def test_main_with_valid_args(mock_upload_file, mocker, temp_dir):
     """
     Test the main function with valid arguments
     """
 
-    # Check if the directory exists
-    if os.path.exists('test_data'):
-        # Remove the directory and all its contents
-        shutil.rmtree('test_data')
-
     # Replace the huggingface_api_manager upload_file function with one that
     # performs the validate_csvs function
     mock_upload_file.side_effect = validate_csv_reset_cache
+
+    # Main uses datetime.now(): patch this to provide a single datetime
+    mock_now = str(datetime.datetime(2022, 12, 12, 12, 0, 0))
+    mocker.patch("common_crawler.main.get_current_time", return_value=mock_now)
 
     mock_parse_args = mocker.patch('common_crawler.main.parse_args')
     mock_args = mock_parse_args.return_value
@@ -132,7 +128,7 @@ def test_main_with_valid_args(mock_upload_file, mocker):
     mock_args.pages = 2
     mock_args.output_filename = 'test_output'
     mock_args.cache_filename = 'test_cache'
-    mock_args.data_dir = 'test_data'
+    mock_args.data_dir = temp_dir
     mock_args.reset_cache = True
 
     # Mock the CommonCrawler to avoid actual web requests
@@ -158,12 +154,26 @@ def test_main_with_valid_args(mock_upload_file, mocker):
 
 
     # Check that the cache file was created, and contains the expected data
-    with open('test_data/test_cache.json', 'r') as file:
+    with open(f'{temp_dir}/test_cache.json', 'r') as file:
         cache = json.load(file)
         assert 'CC-MAIN-9999-99' in cache
         assert '*.com' in cache['CC-MAIN-9999-99']
         assert 'keyword' in cache['CC-MAIN-9999-99']['*.com']
         assert cache['CC-MAIN-9999-99']['*.com']['keyword'] == 2
+
+    # Check that batch file exists
+    batch_csv_data = CSVData(
+        f"{temp_dir}/batch_info.csv"
+    )
+    # Check headers
+    assert batch_csv_data.headers == BATCH_HEADERS
+    # Check first row
+    row_dict = batch_csv_data.rows[0]
+    assert row_dict['Count'] == '1'
+    assert row_dict['Datetime'] == '2022-12-12 12:00:00'
+    assert row_dict['Keywords'] == '*.com - keyword'
+    assert batch_csv_data.rows[0]['Source'] == 'Common Crawl'
+    assert batch_csv_data.rows[0]['Notes'] == 'CC-MAIN-9999-99'
 
     # Run main again with different arguments and no reset_cache enabled, to test persistence of cache and output files
     mock_upload_file.side_effect = validate_csvs
@@ -194,7 +204,7 @@ def test_main_with_valid_args(mock_upload_file, mocker):
     main()
 
     # Check that the cache file was created, and contains the expected data
-    with open('test_data/test_cache.json', 'r') as file:
+    with open(f'{temp_dir}/test_cache.json', 'r') as file:
         cache = json.load(file)
         # Check the original data persists
         assert 'CC-MAIN-9999-99' in cache
@@ -207,17 +217,19 @@ def test_main_with_valid_args(mock_upload_file, mocker):
         assert 'police' in cache['CC-MAIN-0000-00']['*.gov']
         assert cache['CC-MAIN-0000-00']['*.gov']['police'] == 3
 
-    # Clean up the test files
-    if os.path.exists('test_data'):
-        # Remove the directory and all its contents
-        shutil.rmtree('test_data')
-
-@pytest.fixture
-def temp_file():
-    # Create a temporary file which is deleted at the end of the test
-    yield 'temp_file'
-
-    os.remove('temp_file.csv')
+    # Check that batch file exists
+    batch_csv_data = CSVData(
+        f"{temp_dir}/batch_info.csv"
+    )
+    # Check headers
+    assert batch_csv_data.headers == BATCH_HEADERS
+    # Check second row
+    row_dict = batch_csv_data.rows[1]
+    assert row_dict['Count'] == '2'
+    assert row_dict['Datetime'] == '2022-12-12 12:00:00'
+    assert row_dict['Keywords'] == '*.gov - police'
+    assert row_dict['Source'] == 'Common Crawl'
+    assert row_dict['Notes'] == 'CC-MAIN-0000-00'
 
 @pytest.fixture
 def temp_dir():
@@ -228,7 +240,7 @@ def temp_dir():
         shutil.rmtree(dirpath)
 
 
-def test_csv_manager(temp_file, temp_dir):
+def test_csv_manager(temp_dir):
     """
     Confirm functionality of CSV manager, including:
         That headers are properly defined
@@ -236,9 +248,11 @@ def test_csv_manager(temp_file, temp_dir):
         That CSV Manager properly either creates a file or appends to a file if it already exists
     Returns:
     """
+    temp_file = 'temp_file'
+    headers = ['header1', 'header2', 'header3']
     csv_manager = CSVManager(
         file_name=temp_file,
-        headers=['header1', 'header2', 'header3'],
+        headers=headers,
         directory=temp_dir
     )
     # Add 2 rows of data
@@ -249,3 +263,19 @@ def test_csv_manager(temp_file, temp_dir):
     csv_manager.add_rows(rows)
 
     # Check file has two rows not including header
+    temp_file_path = csv_manager.file_path
+    csv_data = CSVData(temp_file_path)
+    assert csv_data.headers == headers, "CSV file does not contain the expected headers"
+    assert len(csv_data.rows) == 2, "CSV file does not contain the expected number of rows"
+
+    # Re-initialize CSVManager, add an additional row, and check that there are now three rows
+    csv_manager = CSVManager(
+        file_name=temp_file,
+        headers=headers,
+        directory=temp_dir
+    )
+    csv_manager.add_rows([['data7', 'data8', 'data9']])
+    # Check file has three rows not including header
+    csv_data = CSVData(temp_file_path)
+    assert csv_data.headers == headers, "CSV file does not contain the expected headers"
+    assert len(csv_data.rows) == 3, "CSV file does not contain the expected number of rows"
