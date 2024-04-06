@@ -173,7 +173,7 @@ def test_main_with_valid_args(mock_upload_file, mocker, temp_dir):
     assert row_dict['Datetime'] == '2022-12-12 12:00:00'
     assert row_dict['Keywords'] == '*.com - keyword'
     assert batch_csv_data.rows[0]['Source'] == 'Common Crawl'
-    assert batch_csv_data.rows[0]['Notes'] == 'CC-MAIN-9999-99'
+    assert batch_csv_data.rows[0]['Notes'] == 'CC-MAIN-9999-99, 2 pages'
 
     # Run main again with different arguments and no reset_cache enabled, to test persistence of cache and output files
     mock_upload_file.side_effect = validate_csvs
@@ -229,7 +229,7 @@ def test_main_with_valid_args(mock_upload_file, mocker, temp_dir):
     assert row_dict['Datetime'] == '2022-12-12 12:00:00'
     assert row_dict['Keywords'] == '*.gov - police'
     assert row_dict['Source'] == 'Common Crawl'
-    assert row_dict['Notes'] == 'CC-MAIN-0000-00'
+    assert row_dict['Notes'] == 'CC-MAIN-0000-00, 3 pages'
 
 @pytest.fixture
 def temp_dir():
