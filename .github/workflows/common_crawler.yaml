@@ -25,14 +25,16 @@ jobs:
       - name: Install dependencies
         run: pip install -r common_crawler/requirements_common_crawler_action.txt
       - name: Run script
-        run: python common_crawler/main.py CC-MAIN-2023-50 *.gov police --config common_crawler/config.ini --pages 20
+        run: python common_crawler/main.py CC-MAIN-2024-10 *.gov police --config common_crawler/config.ini --pages 20
       - name: Configure Git
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-      - name: Add common_crawler cache
-        run: git add common_crawler/data/cache.json
+      - name: Add common_crawler cache and common_crawler batch_info
+        run: |
+          git add common_crawler/data/cache.json 
+          git add common_crawler/data/batch_info.csv
       - name: Commit changes
-        run: git commit -m "Update common_crawler cache"
+        run: git commit -m "Update common_crawler cache and batch_info"
       - name: Push changes
         run: git push
