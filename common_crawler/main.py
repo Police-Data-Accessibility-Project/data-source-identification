@@ -1,6 +1,8 @@
 import argparse
+import dataclasses
 import sys
 import os
+from datetime import datetime
 
 from dotenv import load_dotenv
 
@@ -18,6 +20,31 @@ from common_crawler.csv_manager import CSVManager
 """
 This module contains the main function for the Common Crawler script.
 """
+
+
+@dataclasses.dataclass
+class BatchInfo:
+    datetime: str
+    source: str
+    count: str
+    keywords: str
+    notes: str
+
+
+BATCH_HEADERS = ['Datetime', 'Source', 'Count', 'Keywords', 'Notes']
+
+
+def get_current_time():
+    return str(datetime.now())
+
+
+def add_batch_info_to_csv(batch_info: BatchInfo, data_dir: str):
+    batch_info_csv_manager = CSVManager(
+        file_name='batch_info',
+        directory=data_dir,
+        headers=BATCH_HEADERS
+    )
+    batch_info_csv_manager.add_row(dataclasses.astuple(batch_info))
 
 
 def main():
@@ -51,6 +78,14 @@ def main():
         # Retrieve the last page from the cache, or 0 if it does not exist
         last_page = cache_manager.get(args.common_crawl_id, args.url, args.keyword)
         common_crawl_result = process_crawl_and_upload(args, last_page, huggingface_api_manager)
+        batch_info = BatchInfo(
+            datetime=get_current_time(),
+            source="Common Crawl",
+            count=str(len(common_crawl_result.url_results)),
+            keywords=f"{args.url} - {args.keyword}",
+            notes=args.common_crawl_id
+        )
+        add_batch_info_to_csv(batch_info, args.data_dir)
     except ValueError as e:
         print(f"Error during crawling: {e}")
         return
