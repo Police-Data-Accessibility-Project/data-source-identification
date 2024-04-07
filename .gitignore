@@ -8,3 +8,6 @@ model_tf/
 runs/
 model.safetensors
 training_args.bin
+# Excluded to prevent an outdated version of the schema from being committed
+# and cause confusion
+*prod-schema.sql
