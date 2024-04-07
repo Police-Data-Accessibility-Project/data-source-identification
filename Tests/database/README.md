@@ -16,7 +16,7 @@ Note that `your_username` and `your_password` are placeholders to be replaced wi
 
 Run the following command:
 ```shell
-psql -h localhost -p 5432 -U myuser -d postgres
+psql -h localhost -p 5432 -U myuser
 ```
 
 Followed by your password for the dev environment (which by default is `mypassword`).

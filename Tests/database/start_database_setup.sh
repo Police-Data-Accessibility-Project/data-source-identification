@@ -1,7 +1,7 @@
-# Stop the container if it is running
+echo "Stopping test-postgres containing if running"
 docker stop test-postgres
 
-# Remove the container
+echo "Removing test-progres container if it exists"
 docker rm test-postgres
 
 # docker command to build a new image
