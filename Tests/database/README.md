@@ -20,6 +20,7 @@ Note that `your_username` and `your_password` are placeholders to be replaced wi
 * DIGITAL_OCEAN_DB_HOST=db-postgresql-nyc3-38355-do-user-8463429-0.c.db.ondigitalocean.com
 * DIGITAL_OCEAN_DB_PORT=25060
 * DIGITAL_OCEAN_DB_NAME=defaultdb
+* TEST_DATABASE_HOST=localhost (or whatever host the test database is on, such as `host.docker.internal`)
 
 ## Testing database is online
 
@@ -34,3 +35,24 @@ Followed by your password for the dev environment (which by default is `mypasswo
 
 In order to properly export the schema to the test database, the user will need specific permissions assigned to them in the database:
 * FILL IN WHAT THESE ARE, MAX
+
+## Troubleshooting
+
+This is a more-complicated-than-usual system, so bugs are to be expected. Here are some of the more common errors:
+
+### pgdump not up to date
+
+If the pgdump is not up to date (as of this writing, to Postgres-15), this may not work. In Linux, the solution to this is the following series of commands:
+```shell
+sudo apt install -y postgresql-common
+sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh
+sudo apt update
+sudo apt install postgresql-15
+```
+
+### Check connecting host
+
+While the port, user, and password should remain generally static, the host can vary depending on the container the postgres database is hosted on.
+In `test_dev_database.py`, the `host` parameter is set to `localhost` by default. 
+
+However, in some contexts, this host parameter may differ, and will need to be modified. To do so, modify the `TEST_DATABASE_HOST` environmental variable in your `setup.env` file.
