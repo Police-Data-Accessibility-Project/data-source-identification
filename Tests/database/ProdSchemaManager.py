@@ -55,7 +55,7 @@ class ProdSchemaManager:
         # prod-schema.sql should be in the same directory of this class.
         # If it is not found, must retrieve it
         file_path = self.get_absolute_path_of_file_in_same_directory('prod-schema.sql')
-        if file_exists_and_is_not_empty(file_path):
+        if not file_exists_and_is_not_empty(file_path):
             print("prod-schema.sql file not found: Attempting to download...")
             self.download_production_schema(file_path)
             print(f"Schema file downloaded: {file_path}")
