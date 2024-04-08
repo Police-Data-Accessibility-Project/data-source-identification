@@ -11,6 +11,8 @@ In order to properly export the schema to the test database, the user will need 
 
 ### Requirements
 
+[Docker Desktop](https://www.docker.com/products/docker-desktop/) must be setup on the computer running the associated scripts.
+
 Install requirements located in `database_test_requirements.txt` via the command
 
 ```shell
