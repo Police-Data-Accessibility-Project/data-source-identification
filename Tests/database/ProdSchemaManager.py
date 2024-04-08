@@ -104,3 +104,7 @@ class ProdSchemaManager:
             raise IOError(f'Error occurred: {stderr}')
         else:
             print('Command executed successfully')
+
+if __name__ == "__main__":
+    manager = ProdSchemaManager()
+    print(f"production schema is located at {manager.schema_path}")
