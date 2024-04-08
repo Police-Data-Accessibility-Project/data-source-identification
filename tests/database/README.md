@@ -47,7 +47,9 @@ Note that `localhost`, as in the `setup.env` file above, should be modified as n
 ## Permissions
 
 In order to properly export the schema to the test database, the user will need specific permissions assigned to them in the database:
-* FILL IN WHAT THESE ARE, MAX
+* CONNECT permission to database
+* USAGE permission for `public` schema
+* SELECT permission for all tables in public schema to be exported
 
 ## Troubleshooting
 
