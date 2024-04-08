@@ -21,7 +21,7 @@ postgresql_in_docker = factories.postgresql_noproc(
     port="5432",
     user="myuser",
     password="mypassword",
-    host=host,
+    host="host.docker.internal",
     load=[prod_schema_manager.schema_path]
 )
 postgresql = factories.postgresql("postgresql_in_docker")
