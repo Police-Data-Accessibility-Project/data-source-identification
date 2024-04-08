@@ -11,23 +11,19 @@ The setup should mirror what is in start_database_setup.sh
 """
 
 
-def create_postgresql_factory():
-    load_dotenv()
+load_dotenv()
 
-    host = os.getenv("TEST_DATABASE_HOST")
-    if host is None:
-        raise ValueError("TEST_DATABASE_HOST environment variable is not set.")
-    prod_schema_manager = ProdSchemaManager()
-    return factories.postgresql_noproc(
-        port="5432",
-        user="myuser",
-        password="mypassword",
-        host=host,
-        load=[prod_schema_manager.schema_path]
-    )
-
-
-postgresql_in_docker = create_postgresql_factory()
+host = os.getenv("TEST_DATABASE_HOST")
+if host is None:
+    raise ValueError("TEST_DATABASE_HOST environment variable is not set.")
+prod_schema_manager = ProdSchemaManager()
+postgresql_in_docker = factories.postgresql_noproc(
+    port="5432",
+    user="myuser",
+    password="mypassword",
+    host=host,
+    load=[prod_schema_manager.schema_path]
+)
 postgresql = factories.postgresql("postgresql_in_docker")
 
 
