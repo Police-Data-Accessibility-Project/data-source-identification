@@ -4,7 +4,7 @@ import pytest
 from pytest_postgresql import factories
 from pytest_postgresql.janitor import DatabaseJanitor
 
-from tests.test_database_setup.ProdSchemaManager import ProdSchemaManager
+from tests.database.ProdSchemaManager import ProdSchemaManager
 
 """
 This requires a postgresql docker container set up and listening on port 5432"
