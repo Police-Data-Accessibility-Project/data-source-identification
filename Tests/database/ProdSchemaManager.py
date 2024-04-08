@@ -9,10 +9,10 @@ import subprocess
 from pathlib import Path
 from dotenv import load_dotenv
 
-def is_file_empty(file_path):
+def file_exists_and_is_not_empty(file_path):
     """Check if file is empty by confirming if its size is 0 bytes"""
     # Check if file exist and it is empty
-    return os.path.exists(file_path) and os.stat(file_path).st_size == 0
+    return os.path.exists(file_path) and os.stat(file_path).st_size != 0
 
 
 class ProdSchemaManager:
@@ -55,12 +55,12 @@ class ProdSchemaManager:
         # prod-schema.sql should be in the same directory of this class.
         # If it is not found, must retrieve it
         file_path = self.get_absolute_path_of_file_in_same_directory('prod-schema.sql')
-        if is_file_empty(file_path):
+        if file_exists_and_is_not_empty(file_path):
             print("prod-schema.sql file not found: Attempting to download...")
             self.download_production_schema(file_path)
             print(f"Schema file downloaded: {file_path}")
 
-        assert not is_file_empty(file_path)
+        assert file_exists_and_is_not_empty(file_path)
         return file_path
 
     def download_production_schema(self, file_path: Path):
