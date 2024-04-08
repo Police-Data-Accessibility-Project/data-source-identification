@@ -1,5 +1,14 @@
 
+## Setup
 
+Install requirements located in `database_test_requirements.txt` via the command
+
+```shell
+pip install -r database_test_requirements.txt
+```
+
+Additionally, you will need to install [PostgreSQL](https://www.postgresql.org/download/) for your operating system.
+This is necessary in order to run the `pg_dump` command which pulls the production database schema for development.
 
 ## Environment Variable
 
