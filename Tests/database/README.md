@@ -1,6 +1,8 @@
 
 ## Setup
 
+### Requirements
+
 Install requirements located in `database_test_requirements.txt` via the command
 
 ```shell
@@ -10,9 +12,9 @@ pip install -r database_test_requirements.txt
 Additionally, you will need to install [PostgreSQL](https://www.postgresql.org/download/) for your operating system.
 This is necessary in order to run the `pg_dump` command which pulls the production database schema for development.
 
-## Environment Variable
+### Create Environment Variable
 
-Create a file named `setup.env` and fill it with the following values. 
+Create a file named `setup.env` inside the `database` folder and fill it with the following values. 
 Note that `your_username` and `your_password` are placeholders to be replaced with your own values.
 
 * DIGITAL_OCEAN_DB_USERNAME=your_username
@@ -22,14 +24,25 @@ Note that `your_username` and `your_password` are placeholders to be replaced wi
 * DIGITAL_OCEAN_DB_NAME=defaultdb
 * TEST_DATABASE_HOST=localhost (or whatever host the test database is on, such as `host.docker.internal`)
 
+### Run start_database_setup script
+
+Within the `database` folder itself, run 
+```shell
+./start_database_setup.sh
+```
+
+## Environment Variable
+
+
 ## Testing database is online
 
 Run the following command:
 ```shell
 psql -h localhost -p 5432 -U myuser
 ```
-
 Followed by your password for the dev environment (which by default is `mypassword`).
+
+Note that `localhost`, as in the `setup.env` file above, should be modified as necessary.
 
 ## Permissions
 
