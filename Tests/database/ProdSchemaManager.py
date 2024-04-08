@@ -55,7 +55,7 @@ class ProdSchemaManager:
         # prod-schema.sql should be in the same directory of this class.
         # If it is not found, must retrieve it
         file_path = self.get_absolute_path_of_file_in_same_directory('prod-schema.sql')
-        if not os.path.exists(file_path):
+        if is_file_empty(file_path):
             print("prod-schema.sql file not found: Attempting to download...")
             self.download_production_schema(file_path)
             print(f"Schema file downloaded: {file_path}")
@@ -101,6 +101,6 @@ class ProdSchemaManager:
 
         if pg_dump_process.returncode != 0:
             # Handle error
-            print(f'Error occurred: {stderr}')
+            raise IOError(f'Error occurred: {stderr}')
         else:
             print('Command executed successfully')
