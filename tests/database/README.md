@@ -1,6 +1,14 @@
 
 ## Setup
 
+### Permissions
+
+In order to properly export the schema to the test database, the user will need specific permissions assigned to them in the database:
+* CONNECT permission to database
+* USAGE permission for `public` schema
+* SELECT permission for all tables in public schema to be exported
+
+
 ### Requirements
 
 Install requirements located in `database_test_requirements.txt` via the command
@@ -31,10 +39,7 @@ Within the `database` folder itself, run
 ./start_database_setup.sh
 ```
 
-## Environment Variable
-
-
-## Testing database is online
+### Testing database is online
 
 Run the following command:
 ```shell
@@ -44,12 +49,14 @@ Followed by your password for the dev environment (which by default is `mypasswo
 
 Note that `localhost`, as in the `setup.env` file above, should be modified as necessary.
 
-## Permissions
+### Run pytest
 
-In order to properly export the schema to the test database, the user will need specific permissions assigned to them in the database:
-* CONNECT permission to database
-* USAGE permission for `public` schema
-* SELECT permission for all tables in public schema to be exported
+From within the `tests` directory, run the following command
+```shell
+pytest test_dev_database.py -s
+```
+
+And manually inspect the output. If tables from the production database are visible, the test is successful.
 
 ## Troubleshooting
 
