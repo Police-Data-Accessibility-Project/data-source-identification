@@ -65,10 +65,10 @@ def validate_search_query(query_string):
         assert item in query_string, f"Item {item} not found in query string {query_string}"
 
 
-def validate_agency(agency_ids: list[str]):
+def validate_update_search_cache(search_results: list[SearchResults]):
     agency_id = get_fake_agency_info().agency_id
-    assert len(agency_ids) == 1
-    assert agency_id == agency_ids[0], f"Agency ID {agency_id} not in expected argument ({agency_ids})"
+    assert len(search_results) == 1
+    assert agency_id == search_results[0].agency_id, f"Agency ID {agency_id} not in expected argument ({search_results[0].agency_id})"
 
 
 def mock_database_query(query_string):
@@ -136,25 +136,9 @@ def test_agency_homepage_searcher_integration(monkeypatch, google_searcher):
     #   update_search_cache - verifies proper IDs
     #   get_agencies_without_homepage_urls - return list of fake agency info
     #   upload_to_huggingface - verifies proper search results
-    homepage_searcher.update_search_cache = validate_agency
+    homepage_searcher.update_search_cache = validate_update_search_cache
     homepage_searcher.get_agencies_without_homepage_urls = lambda: [get_fake_agency_info()]
     homepage_searcher.upload_to_huggingface = validate_upload_to_huggingface
 
     homepage_searcher.search_and_upload(1)
 
-
-"""
-This requires a postgresql docker container set up and listening on port 5432 with the password "mysecretpassword"
-If you don't already have it installed in docker, run `docker pull postgres`
-Then, run the following command:
-docker run -p 5432:5432 --name some-postgres -e POSTGRES_PASSWORD=mysecretpassword -d postgres
-With that up and running, the below code should work
-TODO: Move this to a README, Max
-"""
-#
-postgresql_in_docker = factories.postgresql_noproc(port="5432", password="mysecretpassword")
-postgresql = factories.postgresql("postgresql_in_docker", dbname="test")
-
-def test_get_agencies_without_homepage_urls(postgresql):
-    cur = postgresql.cursor()
-    cur.execute("CREATE TABLE test (id serial PRIMARY KEY, num integer, data varchar);")
