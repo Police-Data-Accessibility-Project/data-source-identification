@@ -1,4 +1,4 @@
 python-dotenv~=1.0.1
 google-api-python-client~=2.119.0
-psycopg2-binary~=2.9.6
+psycopg[binary]~=2.9.6
 huggingface-hub~=0.20.3
