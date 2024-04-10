@@ -15,12 +15,10 @@ jobs:
     - name: Install Dependencies
       run: |
         python -m pip install --upgrade pip
-        cd agency_homepage_searcher
-        pip install -r requirements_agency_homepage_searcher_action.txt
+        pip install -r agency_homepage_searcher/requirements_agency_homepage_searcher_action.txt
     - name: Run Agency Homepage Searcher
       run: |
-        cd agency_homepage_searcher    
-        python main.py
+        python agency_homepage_searcher/main.py
       env:
         CUSTOM_SEARCH_API_KEY: ${{ secrets.CUSTOM_SEARCH_API_KEY }}
         CUSTOM_SEARCH_ENGINE_ID: ${{ secrets.CUSTOM_SEARCH_ENGINE_ID }}
