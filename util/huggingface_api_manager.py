@@ -17,6 +17,9 @@ class HuggingFaceAPIManager:
             access_token: the HuggingFace access token
             repo_id: the repository ID
         """
+        if access_token is None or len(access_token) == 0:
+            raise ValueError("Access token cannot be empty.")
+
         huggingface_hub.login(
             token=access_token
         )

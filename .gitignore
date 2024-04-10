@@ -8,3 +8,4 @@ model_tf/
 runs/
 model.safetensors
 training_args.bin
+/temp/

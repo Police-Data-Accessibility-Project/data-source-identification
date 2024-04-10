@@ -1,6 +1,6 @@
 import json
 
-from .utils import get_file_path
+from util.miscellaneous_functions import get_file_path
 
 """
 This module contains classes for managing a cache of Common Crawl search results

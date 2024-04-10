@@ -3,17 +3,17 @@ import json
 import os
 import shutil
 import tempfile
-
+from unittest.mock import patch
 
 from common_crawler.main import main
 from common_crawler.cache import CommonCrawlerCacheManager
 
 
-def validate_csv(file_path, expected_values):
+def validate_csv(directory, expected_values):
     """
     Validate that the CSV file contains the expected values
     Args:
-        file_path:
+        directory:
         expected_values:
 
     Returns:
@@ -22,8 +22,12 @@ def validate_csv(file_path, expected_values):
     # Create a dictionary mirroring the expected values, with the column names as keys, and all values initialized to false
     found_dict = {column: False for column in expected_values.keys()}
 
+    # Find csv in directory and confirm there is only one
+    csv_files = [file for file in os.listdir(directory) if file.endswith('.csv')]
+    assert len(csv_files) == 1, "Multiple CSV files found in directory"
+    csv_file = csv_files[0]
 
-    with open(file_path, 'r') as file:
+    with open(f"{directory}/{csv_file}", 'r') as file:
         reader = csv.reader(file)
         headers = next(reader)  # Get the header row
 
@@ -69,8 +73,29 @@ def test_cache_persistence():
 
         # Clean up the test file
 
+def validate_csvs(local_file_path, repo_file_path):
+    # Check that the output file was created, and contains the expected data
+    assert validate_csv('test_data', {
+        'url': 'http://police.com'
+    }), "Output csv file does not contain expected data"
+    assert validate_csv('test_data', {
+        'url': 'http://police.com/page2'
+    }), "Output csv file does not contain expected data"
+    # Additionally validate that the previous output file does not exist
+    assert not validate_csv('test_data', {
+        'url': 'http://keyword.com'
+    }), "Output csv file does not contain expected data"
 
-def test_main_with_valid_args(mocker):
+def validate_csv_reset_cache(local_file_path, repo_file_path):
+    # Check that the output file was created, and contains the expected data
+    assert validate_csv('test_data', {
+        'url': 'http://keyword.com'
+    }), "Output csv file does not contain expected data"
+
+
+
+@patch('util.huggingface_api_manager.HuggingFaceAPIManager.upload_file')
+def test_main_with_valid_args(mock_upload_file, mocker):
     """
     Test the main function with valid arguments
     """
@@ -79,6 +104,10 @@ def test_main_with_valid_args(mocker):
     if os.path.exists('test_data'):
         # Remove the directory and all its contents
         shutil.rmtree('test_data')
+
+    # Replace the huggingface_api_manager upload_file function with one that
+    # performs the validate_csvs function
+    mock_upload_file.side_effect = validate_csv_reset_cache
 
     mock_parse_args = mocker.patch('common_crawler.main.parse_args')
     mock_args = mock_parse_args.return_value
@@ -105,17 +134,12 @@ def test_main_with_valid_args(mocker):
     mock_search_cc_index = mocker.patch('common_crawler.crawler.CommonCrawlerManager.search_common_crawl_index')
     mock_search_cc_index.side_effect = common_crawler_results
 
+    # Common crawler sleeps for five seconds during execution -- this avoids that.
+    mock_sleep = mocker.patch('time.sleep')
+    mock_sleep.side_effect = lambda _: None
+
     # Call main with test arguments
     main()
-
-    # Check that the output file was created, and contains the expected data
-    assert validate_csv('test_data/test_output.csv', {
-        'Index': 'CC-MAIN-9999-99',
-        'Search Term': '*.com',
-        'Keyword': 'keyword',
-        'Page': '1',
-        'URL': 'http://keyword.com'
-    }), "Output csv file does not contain expected data"
 
 
     # Check that the cache file was created, and contains the expected data
@@ -127,6 +151,7 @@ def test_main_with_valid_args(mocker):
         assert cache['CC-MAIN-9999-99']['*.com']['keyword'] == 2
 
     # Run main again with different arguments and no reset_cache enabled, to test persistence of cache and output files
+    mock_upload_file.side_effect = validate_csvs
     mock_args.reset_cache = False
     mock_args.common_crawl_id = 'CC-MAIN-0000-00'
     mock_args.url = '*.gov'
@@ -152,30 +177,6 @@ def test_main_with_valid_args(mocker):
 
     # Call main with test arguments
     main()
-
-    # Check that the output file was created, and contains the expected data
-    assert validate_csv('test_data/test_output.csv', {
-        'Index': 'CC-MAIN-0000-00',
-        'Search Term': '*.gov',
-        'Keyword': 'police',
-        'Page': '1',
-        'URL': 'http://police.com'
-    }), "Output csv file does not contain expected data"
-    assert validate_csv('test_data/test_output.csv', {
-        'Index': 'CC-MAIN-0000-00',
-        'Search Term': '*.gov',
-        'Keyword': 'police',
-        'Page': '3',
-        'URL': 'http://police.com/page2'
-    }), "Output csv file does not contain expected data"
-    # Additionally validate that the previous output file was not overwritten
-    assert validate_csv('test_data/test_output.csv', {
-        'Index': 'CC-MAIN-9999-99',
-        'Search Term': '*.com',
-        'Keyword': 'keyword',
-        'Page': '1',
-        'URL': 'http://keyword.com'
-    }), "Output csv file does not contain expected data"
 
     # Check that the cache file was created, and contains the expected data
     with open('test_data/test_cache.json', 'r') as file:

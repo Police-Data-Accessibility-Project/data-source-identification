@@ -1,4 +1,5 @@
 import json
+import time
 from urllib.parse import quote_plus
 
 import requests
@@ -13,17 +14,12 @@ This module contains classes for managing a cache of Common Crawl search results
 
 # TODO: What happens when no results are found? How does the CommonCrawlerManager handle this?
 
-# A named tuple for results
-UrlResults = namedtuple(
-    typename='UrlResults',
-    field_names=['index', 'search_term', 'keyword', 'page', 'url']
-)
 
 
 @dataclass
 class CommonCrawlResult:
     last_page_search: int
-    url_results: list[UrlResults]
+    url_results: list
 
 
 class CommonCrawlerManager:
@@ -45,7 +41,7 @@ class CommonCrawlerManager:
             f"Searching for {keyword} on {search_term} in {self.crawl_id} for {num_pages} pages,"
             f" starting at page {start_page}")
 
-        url_results: list[UrlResults] = []
+        url_results = []
 
         end_page = start_page + num_pages
         last_page = start_page
@@ -58,16 +54,12 @@ class CommonCrawlerManager:
                 continue
 
             keyword_urls = self.get_urls_with_keyword(records, keyword)
-            for keyword_url in keyword_urls:
-                url_results.append(
-                    UrlResults(
-                        index=self.crawl_id,
-                        url=keyword_url,
-                        search_term=search_term,
-                        page=next_page,
-                        keyword=keyword))
+            url_results.extend(keyword_urls)
 
             last_page = next_page
+
+            # Wait 5 seconds before making the next request, to avoid overloading the server
+            time.sleep(5)
 
         return CommonCrawlResult(last_page, url_results)
 
@@ -99,7 +91,7 @@ class CommonCrawlerManager:
             print("No records exist in index matching the url search term")
             return None
         else:
-            print(f"Failed to get records for {url} on page {page}")
+            print(f"Failed to get records for {url} on page {page}: {response.text}")
             # Return None to indicate that no records were found or an error occurred.
             return None
 
