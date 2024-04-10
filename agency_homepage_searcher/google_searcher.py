@@ -54,6 +54,8 @@ class GoogleSearcher:
         """
         try:
             res = self.service.cse().list(q=query, cx=self.cse_id).execute()
+            if "items" not in res:
+                return None
             return res['items']
             # Process your results
         except HttpError as e:
