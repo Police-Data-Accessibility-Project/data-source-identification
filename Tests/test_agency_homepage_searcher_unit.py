@@ -7,7 +7,7 @@ from pathlib import Path
 from unittest.mock import MagicMock
 
 from agency_homepage_searcher.homepage_searcher import HomepageSearcher, AgencyInfo, GoogleSearcher, \
-    PossibleHomepageURL
+    PossibleHomepageURL, SearchResultEnum
 
 from agency_homepage_searcher.homepage_searcher import (
     SQL_UPDATE_CACHE,
@@ -207,7 +207,7 @@ class TestHomepageSearcher:
             MagicMock(agency_id=test_agency_id, url="https://test.com", snippet="A test website."),
             MagicMock(agency_id=test_agency_id, url="https://python.com", snippet="Python's official website."),
         ]
-        search_results = [SearchResults(test_agency_id, mock_search_results)]
+        search_results = [SearchResults(test_agency_id, mock_search_results, SearchResultEnum.FOUND_RESULTS)]
 
         tmp_filepath = test_homepage_searcher.write_to_temporary_csv(search_results)
         assert isinstance(tmp_filepath, Path)
