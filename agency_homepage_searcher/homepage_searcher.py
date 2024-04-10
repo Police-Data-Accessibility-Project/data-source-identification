@@ -198,7 +198,16 @@ class HomepageSearcher:
         Returns:
         - List[PossibleHomepageURL]: list containing first ten or less elements.
         """
-        return [PossibleHomepageURL(url=result['link'], snippet=result['snippet']) for result in results[:10]]
+        if results is None:
+            return []
+        first_ten_results = []
+        for result in results[:10]:
+            possible_homepage_url = PossibleHomepageURL(
+                url=result['link'],
+                snippet=result['snippet'] if 'snippet' in result else ''
+            )
+            first_ten_results.append(possible_homepage_url)
+        return first_ten_results
 
     def search_until_limit_reached(
             self,
@@ -288,7 +297,7 @@ class HomepageSearcher:
         """
         parameters = []
         for search_result in search_results:
-            parameter = (search_result.agency_id, search_result.search_result_status)
+            parameter = (search_result.agency_id, search_result.search_result_status.value)
             parameters.append(parameter)
         self.database_manager.executemany(SQL_UPDATE_CACHE, parameters)
 
