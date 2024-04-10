@@ -116,6 +116,7 @@ class PossibleHomepageURL:
 class SearchResults:
     agency_id: str
     search_results: List[PossibleHomepageURL]
+    search_result_status: SearchResultEnum
 
 
 class HomepageSearcher:
@@ -173,7 +174,15 @@ class HomepageSearcher:
                 query=agency_info.get_search_string()
             )
             first_ten_results = self._get_first_ten_results(search_results)
-            return SearchResults(agency_id=agency_info.agency_id, search_results=first_ten_results)
+            if len(first_ten_results) > 0:
+                search_result_status = SearchResultEnum.FOUND_RESULTS
+            else:
+                search_result_status = SearchResultEnum.NO_RESULTS_FOUND
+            return SearchResults(
+                agency_id=agency_info.agency_id,
+                search_results=first_ten_results,
+                search_result_status=search_result_status
+            )
         except QuotaExceededError:
             print("Quota exceeded")
             return None
@@ -271,13 +280,16 @@ class HomepageSearcher:
         except Exception as e:
             raise Exception(f"An unexpected error occurred while writing search results for {search_result.agency_id}: {e}")
 
-    def update_search_cache(self, agency_ids: list[str]) -> None:
+    def update_search_cache(self, search_results: list[SearchResults]) -> None:
         """
         Updates the search cache for the given agency IDs.
         Args:
-            agency_ids: list[str] - the agency IDs to update
+            search_results:
         """
-        parameters = [(agency_id,) for agency_id in agency_ids]
+        parameters = []
+        for search_result in search_results:
+            parameter = (search_result.agency_id, search_result.search_result_status)
+            parameters.append(parameter)
         self.database_manager.executemany(SQL_UPDATE_CACHE, parameters)
 
     def _try_search_agency_info(self, agency_info: AgencyInfo) -> Union[SearchResults, List]:
@@ -305,8 +317,7 @@ class HomepageSearcher:
         search_results = self.search_until_limit_reached(agency_info_list=agency_info_list, max_searches=max_searches)
         print(f"Obtained {len(search_results)} search results")
         self.upload_to_huggingface(search_results)
-        agency_ids = [search_result.agency_id for search_result in search_results]
-        self.update_search_cache(agency_ids)
+        self.update_search_cache(search_results)
 
     def upload_to_huggingface(self, search_results: List[SearchResults]) -> None:
         """
