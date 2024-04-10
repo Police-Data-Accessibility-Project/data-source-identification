@@ -1,0 +1,32 @@
+name: Run Script Daily
+on:
+  schedule:
+    - cron: '0 0 * * *' # Run daily at 00:00
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.11.3'
+    - name: Install Dependencies
+      run: |
+        python -m pip install --upgrade pip
+        cd agency_homepage_searcher
+        pip install -r requirements_agency_homepage_searcher_action.txt
+    - name: Run Agency Homepage Searcher
+      run: |
+        cd agency_homepage_searcher    
+        python main.py
+      env:
+        CUSTOM_SEARCH_API_KEY: ${{ secrets.CUSTOM_SEARCH_API_KEY }}
+        CUSTOM_SEARCH_ENGINE_ID: ${{ secrets.CUSTOM_SEARCH_ENGINE_ID }}
+        DIGITAL_OCEAN_DB_USERNAME: ${{ secrets.DIGITAL_OCEAN_DB_USERNAME }}
+        DIGITAL_OCEAN_DB_PASSWORD: ${{ secrets.DIGITAL_OCEAN_DB_PASSWORD }}
+        DIGITAL_OCEAN_DB_HOST: ${{ secrets.DIGITAL_OCEAN_DB_HOST }}
+        DIGITAL_OCEAN_DB_PORT: ${{ secrets.DIGITAL_OCEAN_DB_PORT }}
+        DIGITAL_OCEAN_DB_NAME: ${{ secrets.DIGITAL_OCEAN_DB_NAME }}
+        HUGGINGFACE_ACCESS_TOKEN: ${{ secrets.HUGGINGFACE_ACCESS_TOKEN }}
