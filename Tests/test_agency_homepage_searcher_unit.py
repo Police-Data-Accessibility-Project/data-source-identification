@@ -74,12 +74,10 @@ class TestHomepageSearcher:
 
         # Provide fake array of Search Results for "search_until_limit_reached" method
         mock_search_results = []
-        mock_agency_ids = []
         for i in range(3):
             mock_search_result = MagicMock(spec=SearchResults)
             mock_search_result.agency_id = i
             mock_search_results.append(mock_search_result)
-            mock_agency_ids.append(i)
         mock_search_until_limit_reached = mocker.Mock(return_value=mock_search_results)
         test_homepage_searcher.search_until_limit_reached = mock_search_until_limit_reached
 
@@ -97,7 +95,7 @@ class TestHomepageSearcher:
         mock_get_agencies_without_homepage_urls.assert_called_once()
         mock_search_until_limit_reached.assert_called_once_with(agency_info_list=mock_agency_info_list, max_searches=10)
         mock_upload_to_huggingface.assert_called_once()
-        mock_update_search_cache.assert_called_once_with(mock_agency_ids)
+        mock_update_search_cache.assert_called_once_with(mock_search_results)
 
     def test_upload_to_huggingface(self, mocker, test_homepage_searcher, monkeypatch):
         test_homepage_searcher.huggingface_api_manager.repo_id = "TestOrg/TestDataset"
@@ -152,17 +150,25 @@ class TestHomepageSearcher:
     def test_update_search_cache(self, test_homepage_searcher):
         # Create test parameter
         test_agency_ids = ["test1", "test2", "test3"]
+        all_search_results = [
+            SearchResults(
+                agency_id=agency_id,
+                search_results=[],
+                search_result_status=SearchResultEnum.FOUND_RESULTS
+            ) for agency_id in test_agency_ids
+        ]
 
         # Configure the Mock DB manager to ensure update SQL is called
         test_homepage_searcher.database_manager.executemany = MagicMock()
 
         # Call the function with our test data
-        test_homepage_searcher.update_search_cache(test_agency_ids)
+        test_homepage_searcher.update_search_cache(all_search_results)
 
         # Check that executemany was called with the expected arguments
-        test_homepage_searcher.database_manager.executemany.assert_called_once_with(SQL_UPDATE_CACHE,
-                                                                                    [(agency_id,) for agency_id in
-                                                                                     test_agency_ids])
+        test_homepage_searcher.database_manager.executemany.assert_called_once_with(
+            SQL_UPDATE_CACHE,
+            [(agency_id,SearchResultEnum.FOUND_RESULTS.value) for agency_id in test_agency_ids]
+        )
 
     def test_write_search_result_to_csv_success(self, test_homepage_searcher):
         search_results = [PossibleHomepageURL("http://example.com", "example snippet"),
