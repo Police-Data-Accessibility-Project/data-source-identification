@@ -17,8 +17,8 @@ This module is designed to do the following:
 
 This script requires a number of environment variables to be provided in an associated `.env` file in the root directory in order to function correctly:
 
-* CUSTOM_SEARCH_API_KEY - The API key required for accessing the [Google Custom Search Engine](https://developers.google.com/custom-search/v1/overview.)
-* CUSTOM_SEARCH_ENGINE_ID - The CSE (Custom Search Engine) ID required for identifying the specific search engine to use.
+* CUSTOM_SEARCH_API_KEY - The API key required for accessing the [Google Custom Search Engine](https://developers.google.com/custom-search/v1/overview). Obtainable by clicking the "Get a Key" button in the linked overview, and associating it with an existing custom search engine or one that you create.
+* CUSTOM_SEARCH_ENGINE_ID - The CSE (Custom Search Engine) ID required for identifying the specific search engine to use. Accessible by clicking on the search engine in the [Programmable Search Engine control panel](https://programmablesearchengine.google.com/controlpanel/all).
 * DIGITAL_OCEAN_DB_USERNAME - The username to be used for logging into the PostgreSQL database
 * DIGITAL_OCEAN_DB_PASSWORD - The password to be used for logging into the PostgreSQL database
 * DIGITAL_OCEAN_DB_HOST - The host to be used for logging into the PostgreSQL database
