@@ -1,10 +1,29 @@
+from dataclasses import dataclass
 from typing import Union
 
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 
+
 class QuotaExceededError(Exception):
     pass
+
+
+"""
+TODO: Update this so that it returns:
+    url
+    Title
+    Snippet (if available)
+Create Dataclass to contain all this stuff if necessary. 
+"""
+
+
+@dataclass
+class GoogleSearchResult:
+    url: str
+    title: str
+    snippet: str
+
 
 class GoogleSearcher:
     """
@@ -42,7 +61,7 @@ class GoogleSearcher:
                              self.GOOGLE_SERVICE_VERSION,
                              developerKey=self.api_key)
 
-    def search(self, query: str) -> Union[list[dict], None]:
+    def search(self, query: str) -> Union[list[GoogleSearchResult], None]:
         """
         Searches for results using the specified query.
 
@@ -56,7 +75,15 @@ class GoogleSearcher:
             res = self.service.cse().list(q=query, cx=self.cse_id).execute()
             if "items" not in res:
                 return None
-            return res['items']
+            search_results = []
+            for item in res['items']:
+                search_result = GoogleSearchResult(
+                    url=item['link'],
+                    title=item['title'],
+                    snippet=item.get('snippet', '')
+                )
+                search_results.append(search_result)
+            return search_results
             # Process your results
         except HttpError as e:
             if "Quota exceeded" in str(e):
