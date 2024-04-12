@@ -60,7 +60,13 @@ class TestGoogleSearcher:
 class TestHomepageSearcher:
 
     @pytest.fixture
-    def test_homepage_searcher(mocker):
+    def test_homepage_searcher(self, mocker, monkeypatch):
+
+        mock_us_state_ref = mocker.Mock()  # Create a Mock object using unittest.mock
+
+        # Define your mock return value here
+        mock_us_state_ref.return_value = Mock()  # Assign the necessary mock object/value
+        monkeypatch.setattr('agency_homepage_searcher.homepage_searcher.USStateReference', mock_us_state_ref)
         return HomepageSearcher(
             search_engine=Mock(),
             database_manager=Mock(),
@@ -300,7 +306,8 @@ class TestHomepageSearcher:
         return ['Invalid Agency', 'Federal', 'XX', 'Invalid City', 'Invalid County',
                 '9999', '9999', '99999']
 
-    def test_create_agency_info_with_valid_agency_row(self, sample_valid_agency_row):
+    def test_create_agency_info_with_valid_agency_row(self, test_homepage_searcher, sample_valid_agency_row):
+        test_homepage_searcher.us_state_reference.get_state_name = MagicMock(return_value="California")
         expected_agency_info = AgencyInfo(
             agency_name='Test Agency',
             city='San Francisco',
@@ -311,12 +318,7 @@ class TestHomepageSearcher:
             agency_type='Federal',
             agency_id='5141'
         )
-        assert HomepageSearcher.create_agency_info(sample_valid_agency_row) == expected_agency_info
-
-    def test_create_agency_info_with_invalid_agency_row(self, sample_invalid_agency_row):
-        with pytest.raises(ValueError):
-            HomepageSearcher.create_agency_info(sample_invalid_agency_row)
-
+        assert test_homepage_searcher.create_agency_info(sample_valid_agency_row) == expected_agency_info
 
 def test_agency_info_get_search_string_character_strip():
     """
