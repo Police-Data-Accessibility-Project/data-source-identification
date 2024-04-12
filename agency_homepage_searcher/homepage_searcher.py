@@ -1,10 +1,8 @@
 import csv
-import os
 import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 from typing import List, Union
-from dotenv import load_dotenv
 from enum import Enum
 
 from agency_homepage_searcher.agency_info import AgencyInfo
@@ -15,6 +13,7 @@ from util.miscellaneous_functions import get_filename_friendly_timestamp
 
 MAX_SEARCHES = 100  # Maximum searches to perform at a time when searching for results
 
+
 class SearchResultEnum(Enum):
     """
     This enum corresponds to an enum column in AGENCY_URL_SEARCH_CACHE
@@ -22,58 +21,23 @@ class SearchResultEnum(Enum):
     FOUND_RESULTS = "found_results"
     NO_RESULTS_FOUND = "no_results_found"
 
-STATE_ISO_TO_NAME_DICT = {
-    "AL": "Alabama",
-    "AK": "Alaska",
-    "AZ": "Arizona",
-    "AR": "Arkansas",
-    "CA": "California",
-    "CO": "Colorado",
-    "CT": "Connecticut",
-    "DE": "Delaware",
-    "FL": "Florida",
-    "GA": "Georgia",
-    "HI": "Hawaii",
-    "ID": "Idaho",
-    "IL": "Illinois",
-    "IN": "Indiana",
-    "IA": "Iowa",
-    "KS": "Kansas",
-    "KY": "Kentucky",
-    "LA": "Louisiana",
-    "ME": "Maine",
-    "MD": "Maryland",
-    "MA": "Massachusetts",
-    "MI": "Michigan",
-    "MN": "Minnesota",
-    "MS": "Mississippi",
-    "MO": "Missouri",
-    "MT": "Montana",
-    "NE": "Nebraska",
-    "NV": "Nevada",
-    "NH": "New Hampshire",
-    "NJ": "New Jersey",
-    "NM": "New Mexico",
-    "NY": "New York",
-    "NC": "North Carolina",
-    "ND": "North Dakota",
-    "OH": "Ohio",
-    "OK": "Oklahoma",
-    "OR": "Oregon",
-    "PA": "Pennsylvania",
-    "RI": "Rhode Island",
-    "SC": "South Carolina",
-    "SD": "South Dakota",
-    "TN": "Tennessee",
-    "TX": "Texas",
-    "UT": "Utah",
-    "VT": "Vermont",
-    "VA": "Virginia",
-    "WA": "Washington",
-    "WV": "West Virginia",
-    "WI": "Wisconsin",
-    "WY": "Wyoming"
-}
+
+class USStateReference:
+
+    def __init__(self, database_manager: DBManager):
+        rows = database_manager.execute("SELECT state_iso, state_name FROM public.state_names;")
+        self.dict = {}
+        for row in rows:
+            iso = row["state_iso"]
+            name = row["state_name"]
+            self.dict[iso] = name
+
+    def get_state_name(self, state_iso: str) -> str:
+        try:
+            return self.dict[state_iso]
+        except KeyError:
+            raise ValueError(f"Invalide State Isocode: {state_iso}")
+
 
 SQL_GET_AGENCIES_WITHOUT_HOMEPAGE_URLS = """
     SELECT
@@ -129,9 +93,9 @@ class HomepageSearcher:
         self.search_engine = search_engine
         self.database_manager = database_manager
         self.huggingface_api_manager = huggingface_api_manager
+        self.us_state_reference = USStateReference(database_manager)
 
-    @staticmethod
-    def create_agency_info(agency_row: list) -> AgencyInfo:
+    def create_agency_info(self, agency_row: list) -> AgencyInfo:
         """
         Creates an AgencyInfo object using the provided agency data.
         Args:
@@ -140,7 +104,7 @@ class HomepageSearcher:
             An AgencyInfo object.
         """
         try:
-            state_name = STATE_ISO_TO_NAME_DICT[agency_row[2]]
+            state_name = self.us_state_reference.get_state_name(agency_row[2])
         except KeyError:
             raise ValueError(f"Invalid state ISO code: {agency_row[2]}")
         return AgencyInfo(
@@ -287,7 +251,8 @@ class HomepageSearcher:
             for possible_homepage_url in search_result.search_results:
                 writer.writerow([search_result.agency_id, possible_homepage_url.url, possible_homepage_url.snippet])
         except Exception as e:
-            raise Exception(f"An unexpected error occurred while writing search results for {search_result.agency_id}: {e}")
+            raise Exception(
+                f"An unexpected error occurred while writing search results for {search_result.agency_id}: {e}")
 
     def update_search_cache(self, search_results: list[SearchResults]) -> None:
         """
