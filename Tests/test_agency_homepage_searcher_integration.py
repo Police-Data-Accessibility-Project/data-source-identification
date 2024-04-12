@@ -1,12 +1,10 @@
-import csv
 from typing import List
 from unittest.mock import MagicMock
 
 import pytest
-from pytest_postgresql import factories
 
 from agency_homepage_searcher.agency_info import AgencyInfo
-from agency_homepage_searcher.google_searcher import GoogleSearcher
+from google_searcher.google_searcher import GoogleSearcher
 from agency_homepage_searcher.homepage_searcher import HomepageSearcher, SearchResults
 from util.db_manager import DBManager
 from util.huggingface_api_manager import HuggingFaceAPIManager
