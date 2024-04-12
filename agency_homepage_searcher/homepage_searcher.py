@@ -28,8 +28,8 @@ class USStateReference:
         rows = database_manager.execute("SELECT state_iso, state_name FROM public.state_names;")
         self.dict = {}
         for row in rows:
-            iso = row["state_iso"]
-            name = row["state_name"]
+            iso = row[0]
+            name = row[1]
             self.dict[iso] = name
 
     def get_state_name(self, state_iso: str) -> str:
