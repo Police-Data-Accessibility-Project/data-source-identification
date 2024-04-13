@@ -61,6 +61,18 @@ class GoogleSearcher:
                              self.GOOGLE_SERVICE_VERSION,
                              developerKey=self.api_key)
 
+    def call_google_search(self, query: str) -> dict:
+        """
+        Directly calls the Google Custom Search API with the provided query string
+        Args:
+            query: The search query that will be sent to Google.
+
+        Returns:
+            dict: The result of the Google search in dictionary format.
+
+        """
+        return self.service.cse().list(q=query, cx=self.cse_id).execute()
+
     def search(self, query: str) -> Union[list[GoogleSearchResult], None]:
         """
         Searches for results using the specified query.
@@ -72,7 +84,7 @@ class GoogleSearcher:
             If the daily quota is exceeded, None is returned.
         """
         try:
-            res = self.service.cse().list(q=query, cx=self.cse_id).execute()
+            res = self.call_google_search(query)
             if "items" not in res:
                 return None
             search_results = []
