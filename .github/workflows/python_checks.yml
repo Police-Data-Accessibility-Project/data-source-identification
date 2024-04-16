@@ -26,7 +26,7 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install mypy pydocstyle requests types-requests
+        pip install mypy pydocstyle
 
     - name: Find modified Python files
       run: |
@@ -37,19 +37,10 @@ jobs:
     - name: Run mypy and save output
       if: env.MODIFIED_FILES != ''
       run: |
-        echo "${{ env.MODIFIED_FILES }}" | xargs mypy --ignore-missing-imports --disallow-untyped-defs > mypy_output.txt 2>&1
-      continue-on-error: true
+        echo "${{ env.MODIFIED_FILES }}" | xargs mypy --ignore-missing-imports --disallow-untyped-defs 
 
     - name: Run pydocstyle and save output
       if: env.MODIFIED_FILES != ''
       run: |
-        echo "${{ env.MODIFIED_FILES }}" | xargs pydocstyle > pydocstyle_output.txt 2>&1
-      continue-on-error: true
+        echo "${{ env.MODIFIED_FILES }}" | xargs pydocstyle 
 
-    - name: Set script permissions
-      run: chmod +x .github/scripts/comment_pr.py
-
-    - name: Comment PR
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: python .github/scripts/comment_pr.py
