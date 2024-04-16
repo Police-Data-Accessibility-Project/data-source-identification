@@ -8,9 +8,11 @@ Types of queries to run:
 import dotenv
 
 from data_request.florida_data_request.constants import DATABASE_NAME
-from data_request.florida_data_request.query_constructor import build_misconduct_query
+
+from data_request.florida_data_request.request_dataclasses import QueryInfo
 from data_request.florida_data_request.request_db_manager import database_exists, create_database_and_tables, \
-    upload_search_results, get_next_agency_without_misconduct_query, update_misconduct_state
+    upload_search_results, table_exists, \
+    create_search_queries_table, create_queries, get_next_query, update_query_search_status
 from util.google_searcher import GoogleSearcher, GoogleSearchResult, QuotaExceededError
 from util.miscellaneous_functions import get_project_root
 
@@ -108,24 +110,18 @@ def main():
         )
     else:
         print("Database already exists")
-
-    for i in range(20):
-        query_info = get_next_agency_without_misconduct_query()
-        if query_info is None:
-            print("All agencies queried for misconduct")
-            return
-        query = build_misconduct_query(query_info)
-        try:
-            results = run_google_search(query)
-        except QuotaExceededError:
-            print("Quota Exceeded for the day")
-            return
-
-        upload_search_results(results, "misconduct", query_info.agency_id)
-        # If search is completed, even if no results, mark appropriate value in agencies table
-        update_misconduct_state(query_info.agency_id)
-
-
+    if not table_exists("search_queries"):
+        create_search_queries_table()
+        create_queries()
+    query: QueryInfo = get_next_query()
+    try:
+        results = run_google_search(query.query_text)
+    except QuotaExceededError:
+        print("Quota Exceeded for the day")
+        return
+    upload_search_results(results, query.query_type.value, query.agency_id)
+    # If search is completed, even if no results, mark appropriate value in agencies table
+    update_query_search_status(query.agency_id, query.query_type)
 
 
 if __name__ == "__main__":
