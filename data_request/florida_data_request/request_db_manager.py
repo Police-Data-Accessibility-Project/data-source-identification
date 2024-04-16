@@ -2,7 +2,8 @@ import os
 import sqlite3
 
 from data_request.florida_data_request.constants import DATABASE_NAME
-from data_request.florida_data_request.query_constructor import QueryInfo
+from data_request.florida_data_request.request_dataclasses import QueryInfo
+from data_request.florida_data_request.request_enums import QueryType
 from util.google_searcher import GoogleSearchResult
 
 
@@ -15,6 +16,99 @@ def database_exists(db_name):
 
     # Check if the database file exists
     return os.path.exists(db_path)
+
+
+class SQLiteCursorContext:
+    def __init__(self, db_path=DATABASE_NAME):
+        self.db_path = db_path
+        self.conn = None
+        self.cursor = None
+
+    def __enter__(self):
+        # Connect to the database
+        self.conn = sqlite3.connect(self.db_path)
+        # Create a cursor object
+        self.cursor = self.conn.cursor()
+        # Return the cursor to be used within the with block
+        return self.cursor
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        # Close the cursor
+        self.cursor.close()
+        # Commit any changes and close the connection
+        if exc_type is None:
+            self.conn.commit()
+        else:
+            self.conn.rollback()
+        self.conn.close()
+
+
+def upload_query(agency_id: str, query_type: QueryType, query: str):
+    insert_query = '''
+        INSERT INTO search_queries (agency_id, search_type, query_text)
+        VALUES (?, ?, ?);
+    '''
+
+    with SQLiteCursorContext() as cur:
+        try:
+            cur.execute(insert_query, (agency_id, query_type.value, query))
+            row_id = cur.lastrowid
+        except sqlite3.Error as error:
+            print("Error while inserting into search_queries:", error)
+    print(f"Query inserted into search_queries: {row_id}")
+
+
+def create_queries():
+    sql_script = """
+    Insert into search_queries(agency_id, query_text, search_type)
+    SELECT 
+        agency_id,
+        agency_name || ' ' || state || ' ' || zip || ' Misconduct Reports' as QUERY,
+        'misconduct' as QUERY_TYPE
+    FROM agencies a
+    UNION
+    SELECT 
+        agency_id,
+        agency_name || ' ' || state || ' ' || zip || ' Liability Insurance' as QUERY,
+        'insurance' as QUERY_TYPE
+    FROM agencies a
+    """
+    with SQLiteCursorContext() as cur:
+        cur.execute(sql_script)
+    print("Queries inserted into search_queries")
+
+
+def table_exists(table_name: str) -> bool:
+    """
+    Checks if the given table exists in the database
+    Args:
+        table_name: str, name of the table to check the existence of
+    Returns: True if table exists, False otherwise
+    """
+    with SQLiteCursorContext() as cur:
+        sql_script = "SELECT name FROM sqlite_master WHERE type='table' AND name=?"
+        cur.execute(sql_script, (table_name,))
+        result = cur.fetchone()
+        return result is not None
+
+
+def create_search_queries_table():
+    create_table_query = """
+    CREATE TABLE IF NOT EXISTS search_queries (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        agency_id INTEGER,
+        search_type TEXT CHECK(search_type IN ('misconduct', 'insurance')),
+        query_text TEXT UNIQUE,
+        FOREIGN KEY (agency_id) REFERENCES agencies(id)
+    );
+    """
+
+    with SQLiteCursorContext() as cur:
+        try:
+            cur.execute(create_table_query)
+        except sqlite3.Error as error:
+            print("Error occurred:", error)
+    print("Table 'search_queries' created successfully.")
 
 
 def create_database_and_tables(db_name):
@@ -88,68 +182,62 @@ def upload_search_results(results: list[GoogleSearchResult], search_type: str, a
     conn.close()
 
 
-def get_next_agency_without_misconduct_query():
-    # Connect to SQLite database
-    conn = sqlite3.connect(DATABASE_NAME)
-    cursor = conn.cursor()
-
-    # SQL query to find the next row where search_misconduct is not 1
-    query = '''
+def get_next_query() -> QueryInfo:
+    sql_text = """
     SELECT 
-        AGENCY_ID,
-        AGENCY_NAME,
-        STATE,
-        ZIP 
-    FROM agencies
-    WHERE search_misconduct = 0
-    ORDER BY agency_id ASC
-    LIMIT 1;
-    '''
-
-    # Execute the query
-    cursor.execute(query)
-
-    # Fetch one result
-    result = cursor.fetchone()
-
-    # Close the connection
-    conn.close()
-
-    # Check if a result was found
-    if result:
-        print("Next agency found:", result)
+	a.AGENCY_ID, 
+	s.query_text,
+	s.search_type
+    from 
+        agencies a,
+        search_queries s
+    where s.agency_id = a.agency_id
+    and a.search_misconduct = 0
+    and s.search_type = 'misconduct'
+    UNION
+    SELECT 
+        a.agency_id,
+        s.query_text,
+        s.search_type
+    from 
+        agencies a,
+        search_queries s
+    where s.agency_id = a.agency_id
+    and a.search_insurance = 0
+    and s.search_type = 'insurance'
+    LIMIT 1
+    """
+    with SQLiteCursorContext() as cur:
+        cur.execute(sql_text)
+        row = cur.fetchone()
+        if row[2] == "misconduct":
+            query_type = QueryType.MISCONDUCT
+        elif row[2] == "insurance":
+            query_type = QueryType.INSURANCE
+        else:
+            raise ValueError("Invalid query type")
         return QueryInfo(
-            agency_id=result[0],
-            agency_name=result[1],
-            state=result[2],
-            zip=result[3]
+            agency_id=row[0],
+            query_text=row[1],
+            query_type=query_type
         )
+
+
+def update_query_search_status(agency_id, query_type: QueryType):
+    if query_type == QueryType.INSURANCE:
+        set_column = "search_insurance"
+    elif query_type == QueryType.MISCONDUCT:
+        set_column = "search_misconduct"
     else:
-        print("No agency found with search_misconduct not set to 1.")
-        return None
-
-
-def update_misconduct_state(agency_id: str):
-    # Connect to SQLite database
-    conn = sqlite3.connect(DATABASE_NAME)
-    cursor = conn.cursor()
-
-    # SQL query to update search_misconduct for a specific agency
-    update_query = '''
-    UPDATE agencies
-    SET search_misconduct = 1
-    WHERE agency_id = ?;
-    '''
-
-    try:
-        # Execute the query with the agency_id parameter
-        cursor.execute(update_query, (agency_id,))
-
-        # Commit the changes
-        conn.commit()
-        print("Updated agency_id:", agency_id, ". Rows affected:", cursor.rowcount)
-    except sqlite3.Error as error:
-        print("Error while updating search_misconduct for agency_id:", agency_id, error)
-    finally:
-        # Close the connection
-        conn.close()
+        raise ValueError(f"Invalid query type: {query_type}")
+    update_query = f"""
+        UPDATE agencies
+        SET {set_column} = 1
+        WHERE agency_id = ?
+    """
+    with SQLiteCursorContext() as cur:
+        try:
+            cur.execute(update_query, (agency_id,))
+            print("Updated agency_id:", agency_id, ". Rows affected:", cur.rowcount)
+        except sqlite3.Error as error:
+            print("Error while updating search_misconduct for agency_id:", agency_id, error)
