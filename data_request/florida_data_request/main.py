@@ -5,8 +5,14 @@ Types of queries to run:
 1. Police department misconduct
 2. Police department insurance coverage
 """
+import dotenv
 
-DATABASE_NAME = "florida_data_request.db"
+from data_request.florida_data_request.constants import DATABASE_NAME
+from data_request.florida_data_request.query_constructor import build_misconduct_query
+from data_request.florida_data_request.request_db_manager import database_exists, create_database_and_tables, \
+    upload_search_results, get_next_agency_without_misconduct_query, update_misconduct_state
+from util.google_searcher import GoogleSearcher, GoogleSearchResult, QuotaExceededError
+from util.miscellaneous_functions import get_project_root
 
 """
 Create SQLite database to store results. 
@@ -37,72 +43,6 @@ Columns:
 import os
 import sqlite3
 import csv
-from dataclasses import dataclass
-
-@dataclass
-class QueryInfo:
-    agency_id: str
-    agency_name: str
-    state: str
-    zip: str
-
-
-
-def database_exists(db_name):
-    # Get the current script's directory
-    script_directory = os.path.abspath(os.path.dirname(__file__))
-
-    # Construct the full path to the database file
-    db_path = os.path.join(script_directory, db_name)
-
-    # Check if the database file exists
-    return os.path.exists(db_path)
-
-def create_database_and_tables(db_name):
-    # Connect to SQLite database (or create it if it doesn't exist)
-    conn = sqlite3.connect(db_name)
-
-    # Create a cursor object using the cursor() method
-    cursor = conn.cursor()
-
-    create_table_agencies = """
-    CREATE TABLE IF NOT EXISTS agencies (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        agency_name TEXT NOT NULL,
-        agency_id INTEGER NOT NULL,
-        city TEXT,
-        state TEXT,
-        zip TEXT,
-        county TEXT,
-        search_misconduct BOOLEAN,
-        search_insurance BOOLEAN
-    );
-    """
-
-    # SQL to create 'search_results' table
-    create_table_search_results = """
-    CREATE TABLE IF NOT EXISTS search_results (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        agency_id INTEGER NOT NULL,
-        search_type TEXT NOT NULL,
-        title TEXT NOT NULL,
-        url TEXT NOT NULL,
-        snippet TEXT,
-        FOREIGN KEY (agency_id) REFERENCES agencies (id)
-    );
-    """
-
-    # Execute the SQL commands to create the tables
-    cursor.execute(create_table_agencies)
-    cursor.execute(create_table_search_results)
-
-    # Commit the changes
-    conn.commit()
-
-    # Close the connection
-    conn.close()
-
-    print("Database created and tables added successfully.")
 
 
 def load_data_from_csv(csv_filename, db_name):
@@ -144,48 +84,18 @@ def load_data_from_csv(csv_filename, db_name):
     conn.close()
     print("Data loaded successfully into the agencies table.")
 
-def get_next_agency_without_misconduct_query()
-    # Connect to SQLite database
-    conn = sqlite3.connect('example.db')
-    cursor = conn.cursor()
 
-    # SQL query to find the next row where search_misconduct is not 1
-    query = '''
-    SELECT 
-        AGENCY_ID,
-        AGENCY_NAME,
-        STATE,
-        ZIP 
-    FROM agencies
-    WHERE search_misconduct = 0
-    ORDER BY agency_id ASC
-    LIMIT 1;
-    '''
+def run_google_search(query) -> list[GoogleSearchResult]:
+    root_directory = get_project_root()
+    env_path = root_directory / ".env"
+    assert env_path.exists(), f"Environment file at {env_path} does not exist"
+    dotenv.load_dotenv(env_path)
+    google_searcher = GoogleSearcher(
+        os.getenv("CUSTOM_SEARCH_API_KEY"),
+        os.getenv("CUSTOM_SEARCH_ENGINE_ID")
+    )
+    return google_searcher.search(query)
 
-    # Execute the query
-    cursor.execute(query)
-
-    # Fetch one result
-    result = cursor.fetchone()
-
-    # Close the connection
-    conn.close()
-
-    # Check if a result was found
-    if result:
-        print("Next agency found:", result)
-        return QueryInfo(
-            agency_id=result[0],
-            agency_name=result[1],
-            state=result[2],
-            zip=result[3]
-        )
-    else:
-        print("No agency found with search_misconduct not set to 1.")
-        return None
-
-def build_misconduct_query(query_info: QueryInfo) -> str:
-    return f"{query_info.agency_name} {query_info.state} {query_info.zip} Misconduct Reports"
 
 def main():
     # Run this loop only once at a time, for testing.
@@ -199,12 +109,22 @@ def main():
     else:
         print("Database already exists")
 
-    # Get all searches in order of agency id (start with misconduct, move to insurance)
-    query_info = get_next_agency_without_misconduct_query()
-    # For all whose status is not yet searched, run search
+    for i in range(20):
+        query_info = get_next_agency_without_misconduct_query()
+        if query_info is None:
+            print("All agencies queried for misconduct")
+            return
+        query = build_misconduct_query(query_info)
+        try:
+            results = run_google_search(query)
+        except QuotaExceededError:
+            print("Quota Exceeded for the day")
+            return
 
+        upload_search_results(results, "misconduct", query_info.agency_id)
+        # If search is completed, even if no results, mark appropriate value in agencies table
+        update_misconduct_state(query_info.agency_id)
 
-    # If search is completed, even if no results, mark appropriate value in agencies table
 
 
 
