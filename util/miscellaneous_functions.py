@@ -26,6 +26,30 @@ def create_directories_if_not_exist(file_path: str):
         os.makedirs(directory)
 
 
+def get_project_root() -> Path:
+    """
+    Returns the path to the project root as a Path object by searching for a marker.
+    Returns:
+
+    """
+    # Define the root markers that signify the root directory of the project
+    root_markers = ['.git']  # Add more markers as needed
+    # Start from the current file's directory
+    current_dir = Path(__file__).resolve().parent
+    while current_dir != current_dir.parent:  # Check if we've reached the root of the filesystem
+        if any((current_dir / marker).exists() for marker in root_markers):
+            # If a root marker is found, return this directory as a Path object
+            return current_dir
+        # Move up one directory level
+        current_dir = current_dir.parent
+    raise FileNotFoundError("Project root not found.")
+
+
+def get_script_dir():
+    """Returns the directory of the script that calls this function as a Path object."""
+    return Path(__file__).resolve().parent
+
+
 def get_file_path(file_name: str, directory: str = None) -> Path:
     """
     Get the full path to a file
