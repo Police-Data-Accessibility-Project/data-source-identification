@@ -37,12 +37,14 @@ jobs:
       run: |
         echo "${{ env.MODIFIED_FILES }}" | xargs mypy --ignore-missing-imports --disallow-untyped-defs 
         echo "mypy_exit_code=$?" >> $GITHUB_ENV
+      continue-on-error: true
 
     - name: Run pydocstyle
       if: env.MODIFIED_FILES != ''
       run: |
         echo "${{ env.MODIFIED_FILES }}" | xargs pydocstyle
         echo "pydocstyle_exit_code=$?" >> $GITHUB_ENV
+      continue-on-error: true
 
     - name: Check errors
       run: |
