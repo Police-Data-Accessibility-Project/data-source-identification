@@ -19,11 +19,7 @@ if __name__ == "__main__":
         api_key=os.getenv("CUSTOM_SEARCH_API_KEY"),
         cse_id=os.getenv("CUSTOM_SEARCH_ENGINE_ID"))
     db_manager = DBManager(
-        user=os.getenv("DIGITAL_OCEAN_DB_USERNAME"),
-        password=os.getenv("DIGITAL_OCEAN_DB_PASSWORD"),
-        host=os.getenv("DIGITAL_OCEAN_DB_HOST"),
-        port=os.getenv("DIGITAL_OCEAN_DB_PORT"),
-        db_name=os.getenv("DIGITAL_OCEAN_DB_NAME")
+        database_url=os.getenv("DO_DATABASE_URL")
     )
     huggingface_api_manager = HuggingFaceAPIManager(
         access_token=os.getenv("HUGGINGFACE_ACCESS_TOKEN"),

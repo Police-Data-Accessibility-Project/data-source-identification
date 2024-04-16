@@ -7,14 +7,8 @@ class DBManager:
     Manages access to PostgreSQL database.
     """
 
-    def __init__(self, db_name, user, password, host, port):
-        self.conn = psycopg.connect(
-            dbname=db_name,
-            user=user,
-            password=password,
-            host=host,
-            port=port
-        )
+    def __init__(self, database_url: str):
+        self.conn = psycopg.connect(database_url)
         self.cursor = self.conn.cursor()
 
     def __del__(self):
