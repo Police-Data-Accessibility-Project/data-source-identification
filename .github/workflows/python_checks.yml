@@ -30,9 +30,7 @@ jobs:
 
     - name: Find modified Python files
       run: |
-        echo "MODIFIED_FILES<<EOF" >> $GITHUB_ENV
-        git diff --name-only refs/remotes/origin/${{ github.base_ref }} $(git merge-base refs/remotes/origin/${{ github.base_ref }} refs/remotes/origin/${{ github.head_ref }}) | grep '\.py$' >> $GITHUB_ENV
-        echo "EOF" >> $GITHUB_ENV
+        echo "MODIFIED_FILES=$(git diff --name-only refs/remotes/origin/${{ github.base_ref }} $(git merge-base refs/remotes/origin/${{ github.base_ref }} refs/remotes/origin/${{ github.head_ref }}) | grep '\.py$')" >> $GITHUB_ENV
 
     - name: Run mypy and save output
       if: env.MODIFIED_FILES != ''
