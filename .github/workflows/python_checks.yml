@@ -32,13 +32,21 @@ jobs:
       run: |
         echo "MODIFIED_FILES=$(git diff --name-only refs/remotes/origin/${{ github.base_ref }} $(git merge-base refs/remotes/origin/${{ github.base_ref }} refs/remotes/origin/${{ github.head_ref }}) | grep '\.py$')" >> $GITHUB_ENV
 
-    - name: Run mypy and save output
+    - name: Run mypy
       if: env.MODIFIED_FILES != ''
       run: |
         echo "${{ env.MODIFIED_FILES }}" | xargs mypy --ignore-missing-imports --disallow-untyped-defs 
+        echo "mypy_exit_code=$?" >> $GITHUB_ENV
 
-    - name: Run pydocstyle and save output
+    - name: Run pydocstyle
       if: env.MODIFIED_FILES != ''
       run: |
-        echo "${{ env.MODIFIED_FILES }}" | xargs pydocstyle 
+        echo "${{ env.MODIFIED_FILES }}" | xargs pydocstyle
+        echo "pydocstyle_exit_code=$?" >> $GITHUB_ENV
 
+    - name: Check errors
+      run: |
+        if [ "$mypy_exit_code" != "0" ] || [ "$pydocstyle_exit_code" != "0" ]; then
+          echo "Errors detected in mypy or pydocstyle"
+          exit 1
+        fi
