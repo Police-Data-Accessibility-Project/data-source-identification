@@ -4,6 +4,8 @@ This module interfaces with the Common Crawl dataset to extract urls.
 
 ## Installation
 
+Python Version Required: 3.11
+
 To install all necessary dependencies, run the following command from the root directory:
 
 ```bash
@@ -25,7 +27,7 @@ and ensure you have write access to https://huggingface.co/PDAP .
 
 Run the following script from the root directory
 ```bash
-python common_crawler/main.py CC-MAIN-2023-50 *.gov police --config common_crawler/config.ini --pages 2
+python common_crawler/main.py CC-MAIN-2023-50 '*.gov' police --config common_crawler/config.ini --pages 2
 ```
 
 This example will crawl a single page (typically 15000 records) of the Common Crawl dataset with ID `CC-MAIN-2023-50` 
@@ -42,7 +44,7 @@ This csv file contains both the url and the parameters used to query it.
 ### Parameters
 
 - **common_crawl_id**: Required. Specifies the Common Crawl Index to perform the search on.
-- **url**: Required. Specifies the domain URL to query. Wildcard characters such as * can be used to expand the search.
+- **url**: Required. Specifies the domain URL to query. Wildcard characters such as * can be used to expand the search. Note that the query must be contained within quotes (as in '*.gov') to prevent misinterpretation of wildcards
 - **search_term**: Required. Specifies keyword within the url to search for.
 - **-c or --config**: Optional. Specifies the configuration file to use. The default value is config.ini.
 - **-p or --pages**: Optional. Specifies the number of pages to search. The default value is 1.
