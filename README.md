@@ -117,3 +117,13 @@ end
 
 GH ->> PDAP: Submit URLs for manual approval
 ```
+
+# Docstring and Type Checking
+
+Docstrings and Type Checking are checked using the [pydocstyle](https://www.pydocstyle.org/en/stable/) and [mypy](https://mypy-lang.org/)
+modules, respectively. When making a pull request, a Github Action (`python_checks.yml`) will run and, 
+if it detects any missing docstrings or type hints in files that you have modified, post them in the Pull Request.
+
+These will *not* block any Pull request, but exist primarily as advisory comments to encourage good coding standards.
+
+Note that `python_checks.yml` will only function on pull requests made from within the repo, not from a forked repo.

@@ -1,0 +1,55 @@
+name: Python Checks
+
+on: [pull_request]
+
+permissions:
+  issues: write
+  pull-requests: write
+
+jobs:
+  type_and_docstring_check:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+    - name: Fetch base and head branches
+      run: |
+        git fetch --no-tags --depth=1 origin +${{ github.base_ref }}:refs/remotes/origin/${{ github.base_ref }}
+        git fetch --no-tags --depth=1 origin +${{ github.head_ref }}:refs/remotes/origin/${{ github.head_ref }}
+
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install mypy pydocstyle
+
+    - name: Find modified Python files
+      run: |
+        echo "MODIFIED_FILES=$(git diff --name-only refs/remotes/origin/${{ github.base_ref }} $(git merge-base refs/remotes/origin/${{ github.base_ref }} refs/remotes/origin/${{ github.head_ref }}) | grep '\.py$')" >> $GITHUB_ENV
+
+    - name: Run mypy
+      if: env.MODIFIED_FILES != ''
+      run: |
+        echo "${{ env.MODIFIED_FILES }}" | xargs mypy --ignore-missing-imports --disallow-untyped-defs 
+        echo "mypy_exit_code=$?" >> $GITHUB_ENV
+      continue-on-error: true
+
+    - name: Run pydocstyle
+      if: env.MODIFIED_FILES != ''
+      run: |
+        echo "${{ env.MODIFIED_FILES }}" | xargs pydocstyle
+        echo "pydocstyle_exit_code=$?" >> $GITHUB_ENV
+      continue-on-error: true
+
+    - name: Check errors
+      if: env.MODIFIED_FILES != ''
+      run: |
+        if [ "$mypy_exit_code" != "0" ] || [ "$pydocstyle_exit_code" != "0" ]; then
+          echo "Errors detected in mypy or pydocstyle"
+          exit 1
+        fi
