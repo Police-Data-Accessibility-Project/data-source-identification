@@ -272,6 +272,7 @@ def parse_response(url_response):
 
     if soup.title is not None and soup.title.string is not None:
         tags["html_title"] = remove_excess_whitespace(soup.title.string)
+        print(soup.title.string)
     else:
         tags["html_title"] = ""
 
@@ -283,7 +284,7 @@ def parse_response(url_response):
 
     for header_tag in header_tags:
         headers = soup.find_all(header_tag)
-        header_content = [header.get_text(" ", strip=True) for header in headers]
+        header_content = [header.get_text(" ", strip=True) for header in headers if not header.a]
         tags[header_tag] = json.dumps(header_content, ensure_ascii=False)
 
     # Extract max 500 words of text from HTML <div>'s
