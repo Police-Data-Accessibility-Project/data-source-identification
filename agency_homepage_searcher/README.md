@@ -19,17 +19,22 @@ This script requires a number of environment variables to be provided in an asso
 
 * CUSTOM_SEARCH_API_KEY - The API key required for accessing the [Google Custom Search Engine](https://developers.google.com/custom-search/v1/overview). Obtainable by clicking the "Get a Key" button in the linked overview, and associating it with an existing custom search engine or one that you create.
 * CUSTOM_SEARCH_ENGINE_ID - The CSE (Custom Search Engine) ID required for identifying the specific search engine to use. Accessible by clicking on the search engine in the [Programmable Search Engine control panel](https://programmablesearchengine.google.com/controlpanel/all).
-* DIGITAL_OCEAN_DB_USERNAME - The username to be used for logging into the PostgreSQL database
-* DIGITAL_OCEAN_DB_PASSWORD - The password to be used for logging into the PostgreSQL database
-* DIGITAL_OCEAN_DB_HOST - The host to be used for logging into the PostgreSQL database
-* DIGITAL_OCEAN_DB_PORT - The port to be used for logging into the PostgreSQL database
-* DIGITAL_OCEAN_DB_NAME - The database name to be used for logging into the PostgreSQL database
+* DO_DATABASE_URL - The database url for logging into the PostgreSQL database
 * HUGGINGFACE_ACCESS_TOKEN - An access token for a user with permissions to upload data to the [PDAP/possible_homepage_urls](https://huggingface.co/datasets/PDAP/possible_homepage_urls) dataset
 
 ## Running script
 
+To run the script, simply run from within this directory:
 
+```shell
+python main.py
+```
 
 ## Running tests
 
-TODO: Include notes on running integration test with database
+From the project root directory, run the following commands:
+
+```shell
+pytest tests/test_agency_homepage_searcher_integration.py
+pytest tests/test_agency_homepage_searcher_unit.py
+```
