@@ -47,6 +47,7 @@ jobs:
       continue-on-error: true
 
     - name: Check errors
+      if: env.MODIFIED_FILES != ''
       run: |
         if [ "$mypy_exit_code" != "0" ] || [ "$pydocstyle_exit_code" != "0" ]; then
           echo "Errors detected in mypy or pydocstyle"
