@@ -42,6 +42,8 @@ def run_command(command: str) -> str:
     except subprocess.CalledProcessError as e:
         print(f"Command failed with error {e.returncode}")
         print(f"Error output: {e.stderr}")
+        if e.stdout:  # Check if there is any standard output despite the error
+            print(f"Standard Output: {e.stdout}")
         return ""
 
 def find_modified_python_files() -> list[str]:
