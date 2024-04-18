@@ -36,15 +36,9 @@ PYDOCSTYLE_COMMAND = 'pydocstyle ' + find_pydocstyle_config()
 
 def run_command(command: str) -> str:
     """Executes a shell command and returns the standard output."""
-    try:
-        result = subprocess.run(command, shell=True, text=True, capture_output=True, check=True)
-        return result.stdout
-    except subprocess.CalledProcessError as e:
-        print(f"Command failed with error {e.returncode}")
-        print(f"Error output: {e.stderr}")
-        if e.stdout:  # Check if there is any standard output despite the error
-            print(f"Standard Output: {e.stdout}")
-        return ""
+    result = subprocess.run(command, shell=True, text=True, capture_output=True, check=True)
+    return result.stdout
+
 
 def find_modified_python_files() -> list[str]:
     """Find modified Python files between the base and head branches with enhanced debugging."""
