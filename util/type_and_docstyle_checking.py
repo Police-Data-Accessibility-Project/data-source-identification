@@ -30,67 +30,88 @@ PYDOCSTYLE_COMMAND = 'pydocstyle ' + find_pydocstyle_config()
 
 
 def run_command(command: str) -> str:
-    """Utility function to run a shell command and capture the output."""
-    command_result = subprocess.run(command, text=True, shell=True, capture_output=True)
-    print_errors(command_result)
-    return command_result.stdout.strip()
-
-
-def print_errors(command_result: subprocess.CompletedProcess):
-    """Prints the error message if any."""
-    if command_result.stderr:
-        print("Error:", command_result.stderr)
-
+    """Executes a shell command and returns the standard output."""
+    try:
+        result = subprocess.run(command, shell=True, text=True, capture_output=True, check=True)
+        return result.stdout
+    except subprocess.CalledProcessError as e:
+        print(f"Command failed with error {e.returncode}")
+        print(f"Error output: {e.stderr}")
+        return ""
 
 def find_modified_python_files() -> list[str]:
-    """Find modified Python files between the base and head branches."""
+    """Find modified Python files between the base and head branches with enhanced debugging."""
     base_ref = os.getenv('GITHUB_BASE_REF')
     head_ref = os.getenv('GITHUB_HEAD_REF')
+
+    if not base_ref or not head_ref:
+        print("Environment variables GITHUB_BASE_REF or GITHUB_HEAD_REF are not set.")
+        return []
 
     command_to_run = f"""git diff --name-only 
         origin/{base_ref} 
         $(git merge-base origin/{base_ref} origin/{head_ref}) 
         | grep '\.py$'
     """
+
+    print(f"Running command: {command_to_run}")
     modified_files_raw = run_command(command_to_run)
 
-    modified_files = modified_files_raw.split()
+    if modified_files_raw == "":
+        print("No output from command, potentially due to an error or no files changed.")
+        return []
+
+    modified_files = modified_files_raw.strip().split()
+    print(f"Modified files: {modified_files}")
     return modified_files
 
 
 def run_and_get_errored_outputs(files_to_check: list[str], command: str) -> list[str]:
-    """Run a given command on the specified files and return the outputs, if they include errors"""
+    """Run a given command on specified files and return the outputs that include errors."""
     errored_outputs = []
     for file_to_check in files_to_check:
-        output = run_command(command + ' ' + file_to_check)
+        # Ensure proper spacing and quoting of filenames in case they contain spaces or special characters
+        full_command = f"{command} '{file_to_check}'"
+        print(f"Running command: {full_command}")  # Logging the command to be executed for easier debugging
+        output = run_command(full_command)
         if has_errors(output):
             errored_outputs.append(output)
+        else:
+            print(f"No errors found in {file_to_check}")  # Optional: Log files with no errors for clarity
     return errored_outputs
-
 
 def has_errors(output: str) -> bool:
     """Checks for specific keywords to indicate the presence of errors"""
-    return MYPY_ERROR_KEYWORD in output.lower() or PYDOCSTYLE_ERROR_KEYWORD in output.lower()
+    error_indicators = [MYPY_ERROR_KEYWORD, PYDOCSTYLE_ERROR_KEYWORD]
+    return any(indicator in output.lower() for indicator in error_indicators)
 
 
 def check_files(files_to_check: list[str]) -> tuple[list[str], list[str]]:
     """
-    Checks the specified files to see if they contain mypy or pydocstyle errors
-    Returns those errors if they exist
+    Checks the specified files to see if they contain mypy or pydocstyle errors.
+    Returns those errors if they exist.
     """
-    if files_to_check:
-        mypy_errors = run_and_get_errored_outputs(files_to_check, MYPY_COMMAND)
-        pydocstyle_errors = run_and_get_errored_outputs(files_to_check, PYDOCSTYLE_COMMAND)
-        return mypy_errors, pydocstyle_errors
-    else:
+    if not files_to_check:
         print("No Python files were modified.")
         return [], []
 
+    print(f"Checking {len(files_to_check)} files for mypy and pydocstyle errors.")
+    mypy_errors = run_and_get_errored_outputs(files_to_check, MYPY_COMMAND)
+    pydocstyle_errors = run_and_get_errored_outputs(files_to_check, PYDOCSTYLE_COMMAND)
+
+    if mypy_errors:
+        print(f"Mypy detected errors in {len(mypy_errors)} files.")
+    if pydocstyle_errors:
+        print(f"Pydocstyle detected style issues in {len(pydocstyle_errors)} files.")
+
+    return mypy_errors, pydocstyle_errors
 
 def announce_errors(mypy_errors: list[str], pydocstyle_errors: list[str]):
     """Announce errors if present"""
     print("\nMYPY RESULTS:\n")
     for output in mypy_errors:
+        # Because each file is individually run, the below string pattern occurs regularly.
+        # The below re.sub action is designed to remove it.
         output = re.sub(r'\nFound \d+ errors* in 1 file \(checked 1 source file\)', '', output)
         print(output)
     print("\nPYDOCSTYLE RESULTS:\n")
