@@ -73,3 +73,14 @@ def get_file_path(file_name: str, directory: str = None) -> Path:
     create_directories_if_not_exist(full_path)
 
     return Path(full_path)
+
+def print_header(text: str) -> None:
+    """
+    Prints a header-type string, encapsulated by borders
+    Args:
+        text: The text to be printed
+
+    Returns:
+    """
+    border = "=" * len(text)
+    print(f"{border}\n{text}\n{border}")
