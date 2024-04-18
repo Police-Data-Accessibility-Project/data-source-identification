@@ -6,6 +6,11 @@ running type and docstyle checking on the repository
 import re
 import subprocess
 import os
+import sys
+
+# The below code sets the working directory to be the root of the entire repository
+# This is done to solve otherwise quite annoying import issues.
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from util.miscellaneous_functions import get_project_root
 
