@@ -113,15 +113,16 @@ def main():
     if not table_exists("search_queries"):
         create_search_queries_table()
         create_queries()
-    query: QueryInfo = get_next_query()
-    try:
-        results = run_google_search(query.query_text)
-    except QuotaExceededError:
-        print("Quota Exceeded for the day")
-        return
-    upload_search_results(results, query.query_type.value, query.agency_id)
-    # If search is completed, even if no results, mark appropriate value in agencies table
-    update_query_search_status(query.agency_id, query.query_type)
+    while True:
+        query: QueryInfo = get_next_query()
+        try:
+            results = run_google_search(query.query_text)
+        except QuotaExceededError:
+            print("Quota Exceeded for the day")
+            return
+        upload_search_results(results, query.query_type.value, query.agency_id)
+        # If search is completed, even if no results, mark appropriate value in agencies table
+        update_query_search_status(query.agency_id, query.query_type)
 
 
 if __name__ == "__main__":
