@@ -12,7 +12,7 @@ import sys
 # This is done to solve otherwise quite annoying import issues.
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from util.miscellaneous_functions import get_project_root
+from util.miscellaneous_functions import get_project_root, print_header
 
 MYPY_COMMAND = 'mypy --ignore-missing-imports --disallow-untyped-defs '
 
@@ -108,13 +108,13 @@ def check_files(files_to_check: list[str]) -> tuple[list[str], list[str]]:
 
 def announce_errors(mypy_errors: list[str], pydocstyle_errors: list[str]):
     """Announce errors if present"""
-    print("\nMYPY RESULTS:\n")
+    print_header("MYPY RESULTS")
     for output in mypy_errors:
         # Because each file is individually run, the below string pattern occurs regularly.
         # The below re.sub action is designed to remove it.
         output = re.sub(r'\nFound \d+ errors* in 1 file \(checked 1 source file\)', '', output)
         print(output)
-    print("\nPYDOCSTYLE RESULTS:\n")
+    print_header("PYDOCSTYLE RESULTS")
     for output in pydocstyle_errors:
         print(output)
 
