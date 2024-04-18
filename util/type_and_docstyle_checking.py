@@ -112,7 +112,7 @@ def announce_errors(mypy_errors: list[str], pydocstyle_errors: list[str]):
     for output in mypy_errors:
         # Because each file is individually run, the below string pattern occurs regularly.
         # The below re.sub action is designed to remove it.
-        output = re.sub(r'\nFound \d+ errors* in 1 file \(checked 1 source file\)', '', output)
+        output = re.sub(r'\nFound \d+ errors* in \d+ files* \(checked 1 source file\)', '', output)
         print(output)
     print_header("PYDOCSTYLE RESULTS")
     for output in pydocstyle_errors:
