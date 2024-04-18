@@ -28,28 +28,8 @@ jobs:
         python -m pip install --upgrade pip
         pip install mypy pydocstyle
 
-    - name: Find modified Python files
-      run: |
-        echo "MODIFIED_FILES=$(git diff --name-only refs/remotes/origin/${{ github.base_ref }} $(git merge-base refs/remotes/origin/${{ github.base_ref }} refs/remotes/origin/${{ github.head_ref }}) | grep '\.py$')" >> $GITHUB_ENV
-
-    - name: Run mypy
-      if: env.MODIFIED_FILES != ''
-      run: |
-        echo "${{ env.MODIFIED_FILES }}" | xargs mypy --ignore-missing-imports --disallow-untyped-defs 
-        echo "mypy_exit_code=$?" >> $GITHUB_ENV
-      continue-on-error: true
-
-    - name: Run pydocstyle
-      if: env.MODIFIED_FILES != ''
-      run: |
-        echo "${{ env.MODIFIED_FILES }}" | xargs pydocstyle
-        echo "pydocstyle_exit_code=$?" >> $GITHUB_ENV
-      continue-on-error: true
-
-    - name: Check errors
-      if: env.MODIFIED_FILES != ''
-      run: |
-        if [ "$mypy_exit_code" != "0" ] || [ "$pydocstyle_exit_code" != "0" ]; then
-          echo "Errors detected in mypy or pydocstyle"
-          exit 1
-        fi
+    - name: Find and Check Modified Python Files
+      run: python util/type_and_docstyle_checking.py
+      env:
+        GITHUB_BASE_REF: ${{ github.base_ref }}
+        GITHUB_HEAD_REF: ${{ github.head_ref }}
