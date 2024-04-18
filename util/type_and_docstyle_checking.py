@@ -36,9 +36,12 @@ PYDOCSTYLE_COMMAND = 'pydocstyle ' + find_pydocstyle_config()
 
 def run_command(command: str) -> str:
     """Executes a shell command and returns the standard output."""
-    result = subprocess.run(command, shell=True, text=True, capture_output=True, check=True)
-    return result.stdout
-
+    try:
+        result = subprocess.run(command, shell=True, text=True, capture_output=True, check=True)
+        return result.stdout
+    except subprocess.CalledProcessError as e:
+        # Called Process Error is expected in execution if type hinting or docstring errors exist
+        return e.stdout
 
 def find_modified_python_files() -> list[str]:
     """Find modified Python files between the base and head branches with enhanced debugging."""
