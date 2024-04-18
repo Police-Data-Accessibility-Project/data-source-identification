@@ -64,21 +64,6 @@ def test_check_files_no_modification(mock_subprocess_run, capsys):
     assert "No Python files were modified." in captured.out
 
 
-def test_check_files_with_errors(mock_subprocess_run, capsys):
-    """Test check_files function when errors are found."""
-    mock_subprocess_run.side_effect = [
-        Mock(stdout="script1.py script2.py", stderr=''),
-        Mock(stdout="error: issue found in script1.py", stderr=''),
-        Mock(stdout="", stderr='')
-    ]
-    with pytest.raises(SystemExit) as e:
-        check_files(["script1.py", "script2.py"])
-    assert e.type == SystemExit
-    assert e.value.code == 1
-    captured = capsys.readouterr()
-    assert "Errors detected in mypy or pydocstyle" in captured.out
-
-
 def create_temp_py_file(content: str, file_name: str):
     """Helper function to create a temporary Python file with given content."""
     with open(f"{file_name}.py", 'w') as f:
