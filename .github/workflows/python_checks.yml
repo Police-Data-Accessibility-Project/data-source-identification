@@ -35,4 +35,4 @@ jobs:
       env:
         GITHUB_BASE_REF: ${{ github.base_ref }}
         GITHUB_HEAD_REF: ${{ github.head_ref }}
-        HEAD_REPO_PATH: ${{ github.workspace }}/head_repo  # Use this environment variable to refer to the checked-out fork
+      working-directory: ${{ github.workspace }}/head_repo
