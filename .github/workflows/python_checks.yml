@@ -35,4 +35,5 @@ jobs:
       env:
         GITHUB_BASE_REF: ${{ github.base_ref }}
         GITHUB_HEAD_REF: ${{ github.head_ref }}
+        HEAD_REPO_PATH: ${{ github.workspace }}/head_repo
       working-directory: ${{ github.workspace }}/head_repo
