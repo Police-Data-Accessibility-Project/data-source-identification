@@ -47,12 +47,17 @@ def find_modified_python_files() -> list[str]:
     """Find modified Python files between the base and head branches with enhanced debugging."""
     base_ref = os.getenv('GITHUB_BASE_REF')
     head_ref = os.getenv('GITHUB_HEAD_REF')
+    head_repo_path = os.getenv('HEAD_REPO_PATH')
 
     if not base_ref or not head_ref:
-        print("Environment variables GITHUB_BASE_REF or GITHUB_HEAD_REF are not set.")
+        print("Required environment variables are not set.")
         return []
 
-    command_to_run = f"git diff --name-only origin/{base_ref} $(git merge-base origin/{base_ref} origin/{head_ref}) | grep '\.py$'"
+    # Check if head repo is a fork
+    if head_repo_path:
+        head_ref = f"{head_repo_path}/{head_ref}"
+
+    command_to_run = f"git diff --name-only origin/{base_ref} $(git merge-base origin/{base_ref} {head_ref}) | grep '\.py$'"
 
     print(f"Running command: {command_to_run}")
     modified_files_raw = run_command(command_to_run)
