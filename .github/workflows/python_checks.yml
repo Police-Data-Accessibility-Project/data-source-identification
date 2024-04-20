@@ -2,21 +2,23 @@ name: Python Checks
 
 on: [pull_request]
 
-permissions:
-  issues: write
-  pull-requests: write
-
 jobs:
   type_and_docstring_check:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - name: Checkout base branch
+      uses: actions/checkout@v2
       with:
+        ref: ${{ github.base_ref }}
         fetch-depth: 0
-    - name: Fetch base and head branches
-      run: |
-        git fetch --no-tags --depth=1 origin +${{ github.base_ref }}:refs/remotes/origin/${{ github.base_ref }}
-        git fetch --no-tags --depth=1 origin +${{ github.head_ref }}:refs/remotes/origin/${{ github.head_ref }}
+
+    - name: Fetch head branch from fork
+      uses: actions/checkout@v2
+      with:
+        ref: ${{ github.event.pull_request.head.ref }}
+        repository: ${{ github.event.pull_request.head.repo.full_name }}
+        fetch-depth: 0
+        path: 'head_repo'  # This checks out the forked repo into a separate directory
 
     - name: Set up Python
       uses: actions/setup-python@v2
@@ -33,3 +35,4 @@ jobs:
       env:
         GITHUB_BASE_REF: ${{ github.base_ref }}
         GITHUB_HEAD_REF: ${{ github.head_ref }}
+        HEAD_REPO_PATH: ${{ github.workspace }}/head_repo  # Use this environment variable to refer to the checked-out fork
