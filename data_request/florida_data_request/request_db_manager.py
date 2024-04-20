@@ -2,7 +2,8 @@ import os
 import sqlite3
 
 from data_request.florida_data_request.constants import DATABASE_NAME
-from data_request.florida_data_request.request_dataclasses import QueryInfo
+from data_request.florida_data_request.request_dataclasses import QueryInfo, QueryAndSearchResults, SearchResult, \
+    MostRelevantResult
 from data_request.florida_data_request.request_enums import QueryType
 from util.google_searcher import GoogleSearchResult
 
@@ -58,6 +59,25 @@ def upload_query(agency_id: str, query_type: QueryType, query: str):
     print(f"Query inserted into search_queries: {row_id}")
 
 
+def create_relevant_search_gpt_table():
+    create_table_query = """
+    CREATE TABLE relevant_search_gpt (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    query_id INTEGER NOT NULL,
+    search_id INTEGER,
+    rationale TEXT,
+    FOREIGN KEY (query_id) REFERENCES search_queries(id),
+    FOREIGN KEY (search_id) REFERENCES search_results(id)
+);
+    """
+    with SQLiteCursorContext() as cur:
+        try:
+            cur.execute(create_table_query)
+        except sqlite3.Error as error:
+            print("Error occurred:", error)
+    print("Table 'relevant_search_gpt' created successfully.")
+
+
 def create_queries():
     sql_script = """
     Insert into search_queries(agency_id, query_text, search_type)
@@ -77,6 +97,54 @@ def create_queries():
         cur.execute(sql_script)
     print("Queries inserted into search_queries")
 
+def get_next_query_and_results() -> QueryAndSearchResults:
+    sql_text = """
+    SELECT 
+	sq.id query_id,
+	sq.query_text,
+	sr.id result_id,
+	sr.title,
+	sr.url,
+	sr.snippet
+FROM
+	search_results sr,
+	search_queries sq
+WHERE 
+	sr.agency_id = sq.agency_id
+	and sr.search_type = sq.search_type
+	and (query_id, query_text) IN (
+        SELECT id query_id, query_text
+        FROM search_queries sq1
+        WHERE query_id not in
+        (
+            SELECT query_id
+            from relevant_search_gpt rs
+        ) 
+        LIMIT 1
+	)
+ORDER BY query_id
+LIMIT 10
+    """
+    with SQLiteCursorContext() as cur:
+        cur.execute(sql_text)
+        results = cur.fetchall()
+        qasr = QueryAndSearchResults(
+            query_id=results[0][0],
+            query_text=results[0][1],
+            search_results=[]
+        )
+        for row in results:
+            assert qasr.query_id == row[0]
+            qasr.search_results.append(
+                SearchResult(
+                    result_id=row[2],
+                    title=row[3],
+                    url=row[4],
+                    snippet=row[5]
+                )
+            )
+
+        return qasr
 
 def table_exists(table_name: str) -> bool:
     """
@@ -241,3 +309,46 @@ def update_query_search_status(agency_id, query_type: QueryType):
             print("Updated agency_id:", agency_id, ". Rows affected:", cur.rowcount)
         except sqlite3.Error as error:
             print("Error while updating search_misconduct for agency_id:", agency_id, error)
+
+def upload_most_relevant_result(most_relevant_result: MostRelevantResult, query_id: int):
+    sql_text = """
+    INSERT INTO relevant_search_gpt(query_id, search_id, rationale)
+    VALUES(?, ?, ?)
+    """
+    if most_relevant_result.result_id == -1:
+        result_id = None
+    else:
+        result_id = most_relevant_result.result_id
+    with SQLiteCursorContext() as cur:
+        try:
+            cur.execute(sql_text, (query_id, result_id, most_relevant_result.rationale))
+            print(f"Most relevant result for query {query_id} inserted successfully.")
+        except sqlite3.Error as error:
+            print("Error while inserting into relevant_search_gpt:", error)
+
+def get_completed_queries_and_rationale():
+    sql_text = """
+    SELECT
+	sq.query_text,
+	sr.title,
+	sr.url,
+	sr.snippet,
+	rs.rationale
+FROM 
+	search_results sr,
+	search_queries sq
+	LEFT JOIN relevant_search_gpt rs
+	ON rs.search_id = sr.id
+WHERE sr.agency_id = sq.agency_id
+and sr.search_type = sq.search_type
+and sq.id in (
+	SELECT rs.query_id
+	FROM relevant_search_gpt rs
+	WHERE rs.query_id = sq.id
+)
+    """
+    with SQLiteCursorContext() as cur:
+        cur.execute(sql_text)
+        results = cur.fetchall()
+        raise NotImplementedError("Not sure what format to put this info in.")
+
