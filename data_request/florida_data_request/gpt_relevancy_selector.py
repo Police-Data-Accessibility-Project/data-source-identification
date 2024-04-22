@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 from openai import OpenAI
 
 from data_request.florida_data_request.request_dataclasses import SearchResult, MostRelevantResult
-from data_request.florida_data_request.request_db_manager import table_exists, create_relevant_search_gpt_table, \
+from data_request.florida_data_request.request_db_manager import \
     get_next_query_and_results, upload_most_relevant_result
 
 
@@ -51,8 +51,6 @@ def get_search_results_as_json_string(search_results: list[SearchResult]) -> str
 
 
 if __name__ == "__main__":
-    if not table_exists('relevant_search_gpt'):
-        create_relevant_search_gpt_table()
     for _ in range(47):
         next_query_and_results = get_next_query_and_results()
         search_results_json_string = get_search_results_as_json_string(next_query_and_results.search_results)
