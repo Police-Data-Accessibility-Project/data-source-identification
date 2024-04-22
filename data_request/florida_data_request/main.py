@@ -11,8 +11,7 @@ from data_request.florida_data_request.constants import DATABASE_NAME
 
 from data_request.florida_data_request.request_dataclasses import QueryInfo
 from data_request.florida_data_request.request_db_manager import database_exists, create_database_and_tables, \
-    upload_search_results, table_exists, \
-    create_search_queries_table, create_queries, get_next_query, update_query_search_status
+    upload_search_results, create_queries, get_next_query, update_query_search_status
 from util.google_searcher import GoogleSearcher, GoogleSearchResult, QuotaExceededError
 from util.miscellaneous_functions import get_project_root
 
@@ -98,21 +97,7 @@ def run_google_search(query) -> list[GoogleSearchResult]:
     )
     return google_searcher.search(query)
 
-
-def main():
-    # Run this loop only once at a time, for testing.
-
-    if not database_exists(DATABASE_NAME):
-        create_database_and_tables(DATABASE_NAME)
-        load_data_from_csv(
-            csv_filename="police_departments.csv",
-            db_name=DATABASE_NAME
-        )
-    else:
-        print("Database already exists")
-    if not table_exists("search_queries"):
-        create_search_queries_table()
-        create_queries()
+def run_google_search_loop():
     while True:
         query: QueryInfo = get_next_query()
         try:
@@ -120,10 +105,31 @@ def main():
         except QuotaExceededError:
             print("Quota Exceeded for the day")
             return
-        upload_search_results(results, query.query_type.value, query.agency_id)
-        # If search is completed, even if no results, mark appropriate value in agencies table
-        update_query_search_status(query.agency_id, query.query_type)
+        upload_search_results(results, query.query_id)
 
+
+def create_database_and_queries():
+    if not database_exists(DATABASE_NAME):
+        create_database_and_tables()
+        load_data_from_csv(
+            csv_filename="police_departments.csv",
+            db_name=DATABASE_NAME
+        )
+        create_queries()
+    else:
+        print("Database already exists")
+
+def main():
+    create_database_and_queries()
+    run_google_search_loop()
+
+"""
+TODO: Re-review email
+    Try searching for 'liability (insurance OR coverage) of MUNICIPALITY STATE' (no police agency mentioned
+    Try google searching for annual budget reports for each municipality (or finding where they might be aggregated)
+        - It's possible that these don't mention directly the insurance, and simply state 'insurance'
+
+"""
 
 if __name__ == "__main__":
     main()
