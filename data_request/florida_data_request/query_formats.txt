@@ -1,0 +1,2 @@
+a.agency_name || ' ' || a.state || ' ' || a.zip || ' Official ("Misconduct Report" OR "internal investigation") ext:PDF' as QUERY
+a.agency_name || ' ' || a.state || ' ' || a.zip || ' ("liability insurance policy" OR "insurance coverage details") ext:PDF' as QUERY
