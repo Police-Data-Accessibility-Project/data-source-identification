@@ -43,55 +43,22 @@ class SQLiteCursorContext:
             self.conn.rollback()
         self.conn.close()
 
-
-def upload_query(agency_id: str, query_type: QueryType, query: str):
-    insert_query = '''
-        INSERT INTO search_queries (agency_id, search_type, query_text)
-        VALUES (?, ?, ?);
-    '''
-
-    with SQLiteCursorContext() as cur:
-        try:
-            cur.execute(insert_query, (agency_id, query_type.value, query))
-            row_id = cur.lastrowid
-        except sqlite3.Error as error:
-            print("Error while inserting into search_queries:", error)
-    print(f"Query inserted into search_queries: {row_id}")
-
-
-def create_relevant_search_gpt_table():
-    create_table_query = """
-    CREATE TABLE relevant_search_gpt (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    query_id INTEGER NOT NULL,
-    search_id INTEGER,
-    rationale TEXT,
-    FOREIGN KEY (query_id) REFERENCES search_queries(id),
-    FOREIGN KEY (search_id) REFERENCES search_results(id)
-);
-    """
-    with SQLiteCursorContext() as cur:
-        try:
-            cur.execute(create_table_query)
-        except sqlite3.Error as error:
-            print("Error occurred:", error)
-    print("Table 'relevant_search_gpt' created successfully.")
-
-
 def create_queries():
     sql_script = """
     Insert into search_queries(agency_id, query_text, search_type)
     SELECT 
-        agency_id,
-        agency_name || ' ' || state || ' ' || zip || ' Misconduct Reports' as QUERY,
+        a.id,
+        a.agency_name || ' ' || a.state || ' ' || a.zip || ' Official ("Misconduct Report" OR "internal investigation") ext:PDF' as QUERY,
         'misconduct' as QUERY_TYPE
-    FROM agencies a
+    FROM 
+        agencies a
     UNION
     SELECT 
-        agency_id,
-        agency_name || ' ' || state || ' ' || zip || ' Liability Insurance' as QUERY,
+        a.id,
+        a.agency_name || ' ' || a.state || ' ' || a.zip || ' ("liability insurance policy" OR "insurance coverage details") ext:PDF' as QUERY,
         'insurance' as QUERY_TYPE
-    FROM agencies a
+    FROM 
+        agencies a
     """
     with SQLiteCursorContext() as cur:
         cur.execute(sql_script)
@@ -110,8 +77,7 @@ FROM
 	search_results sr,
 	search_queries sq
 WHERE 
-	sr.agency_id = sq.agency_id
-	and sr.search_type = sq.search_type
+	sr.query_id = sq.id
 	and (query_id, query_text) IN (
         SELECT id query_id, query_text
         FROM search_queries sq1
@@ -146,43 +112,7 @@ LIMIT 10
 
         return qasr
 
-def table_exists(table_name: str) -> bool:
-    """
-    Checks if the given table exists in the database
-    Args:
-        table_name: str, name of the table to check the existence of
-    Returns: True if table exists, False otherwise
-    """
-    with SQLiteCursorContext() as cur:
-        sql_script = "SELECT name FROM sqlite_master WHERE type='table' AND name=?"
-        cur.execute(sql_script, (table_name,))
-        result = cur.fetchone()
-        return result is not None
-
-
-def create_search_queries_table():
-    create_table_query = """
-    CREATE TABLE IF NOT EXISTS search_queries (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        agency_id INTEGER,
-        search_type TEXT CHECK(search_type IN ('misconduct', 'insurance')),
-        query_text TEXT UNIQUE,
-        FOREIGN KEY (agency_id) REFERENCES agencies(id)
-    );
-    """
-
-    with SQLiteCursorContext() as cur:
-        try:
-            cur.execute(create_table_query)
-        except sqlite3.Error as error:
-            print("Error occurred:", error)
-    print("Table 'search_queries' created successfully.")
-
-
-def create_database_and_tables(db_name):
-    # Connect to SQLite database (or create it if it doesn't exist)
-    conn = sqlite3.connect(db_name)
-    cursor = conn.cursor()
+def create_database_and_tables():
 
     create_table_agencies = """
     CREATE TABLE IF NOT EXISTS agencies (
@@ -198,44 +128,67 @@ def create_database_and_tables(db_name):
     );
     """
 
-    # SQL to create 'search_results' table
-    create_table_search_results = """
-    CREATE TABLE IF NOT EXISTS search_results (
+    create_table_query = """
+    CREATE TABLE IF NOT EXISTS search_queries (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        agency_id INTEGER NOT NULL,
-        search_type TEXT NOT NULL,
-        title TEXT NOT NULL,
-        url TEXT NOT NULL,
-        snippet TEXT,
-        FOREIGN KEY (agency_id) REFERENCES agencies (id)
+        agency_id INTEGER,
+        search_type TEXT CHECK(search_type IN ('misconduct', 'insurance')),
+        query_text TEXT UNIQUE,
+        FOREIGN KEY (agency_id) REFERENCES agencies(id)
     );
     """
 
-    # Execute the SQL commands to create the tables
-    cursor.execute(create_table_agencies)
-    cursor.execute(create_table_search_results)
+    create_table_search_results = """
+    CREATE TABLE IF NOT EXISTS search_results (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        query_id INTEGER NOT NULL,
+        title TEXT,
+        url TEXT,
+        snippet TEXT,
+        FOREIGN KEY (query_id) REFERENCES search_queries (id)
+    );
+    """
 
-    # Commit the changes
-    conn.commit()
+    create_table_relevant_search_gpt = """
+        CREATE TABLE relevant_search_gpt (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        query_id INTEGER NOT NULL,
+        search_id INTEGER,
+        rationale TEXT,
+        FOREIGN KEY (query_id) REFERENCES search_queries(id),
+        FOREIGN KEY (search_id) REFERENCES search_results(id)
+    );
+        """
 
-    # Close the connection
-    conn.close()
+    with SQLiteCursorContext() as cur:
+        # Execute the SQL commands to create the tables
+        for sql_query in (create_table_agencies, create_table_query, create_table_search_results, create_table_relevant_search_gpt ):
+            cur.execute(sql_query)
 
     print("Database created and tables added successfully.")
 
 
-def upload_search_results(results: list[GoogleSearchResult], search_type: str, agency_id: str):
+def upload_search_results(results: list[GoogleSearchResult], query_id: int):
     conn = sqlite3.connect(DATABASE_NAME)
     cursor = conn.cursor()
 
+    # If results are empty, create an empty search result so that it's not looked up again
+    if not results:
+        results = [GoogleSearchResult(
+            title=None,
+            url=None,
+            snippet=None
+        )]
+
     insert_query = '''
-        INSERT INTO search_results (agency_id, search_type, title, url, snippet)
-        VALUES (?, ?, ?, ?, ?);
+        INSERT INTO search_results (query_id, title, url, snippet)
+        VALUES (?, ?, ?, ?);
         '''
 
+    print(f"Inserting results for query {query_id}")
     for result in results:
         # Data tuple to insert
-        data = (agency_id, search_type, result.title, result.url, result.snippet)
+        data = (query_id, result.title, result.url, result.snippet)
 
         try:
             # Execute the query
@@ -253,41 +206,21 @@ def upload_search_results(results: list[GoogleSearchResult], search_type: str, a
 def get_next_query() -> QueryInfo:
     sql_text = """
     SELECT 
-	a.AGENCY_ID, 
-	s.query_text,
-	s.search_type
+    q.id, 
+    q.query_text
     from 
-        agencies a,
-        search_queries s
-    where s.agency_id = a.agency_id
-    and a.search_misconduct = 0
-    and s.search_type = 'misconduct'
-    UNION
-    SELECT 
-        a.agency_id,
-        s.query_text,
-        s.search_type
-    from 
-        agencies a,
-        search_queries s
-    where s.agency_id = a.agency_id
-    and a.search_insurance = 0
-    and s.search_type = 'insurance'
-    LIMIT 1
+        search_queries q
+    WHERE q.id NOT IN 
+        (SELECT s.query_id
+        FROM search_results s)
+        LIMIT 1
     """
     with SQLiteCursorContext() as cur:
         cur.execute(sql_text)
         row = cur.fetchone()
-        if row[2] == "misconduct":
-            query_type = QueryType.MISCONDUCT
-        elif row[2] == "insurance":
-            query_type = QueryType.INSURANCE
-        else:
-            raise ValueError("Invalid query type")
         return QueryInfo(
-            agency_id=row[0],
+            query_id=row[0],
             query_text=row[1],
-            query_type=query_type
         )
 
 
@@ -339,8 +272,7 @@ FROM
 	search_queries sq
 	LEFT JOIN relevant_search_gpt rs
 	ON rs.search_id = sr.id
-WHERE sr.agency_id = sq.agency_id
-and sr.search_type = sq.search_type
+WHERE sr.query_id = sq.id
 and sq.id in (
 	SELECT rs.query_id
 	FROM relevant_search_gpt rs
