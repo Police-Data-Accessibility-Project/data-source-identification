@@ -1,6 +1,6 @@
 name: Python Checks
 
-on: [pull_request]
+on: [push, pull_request]
 
 permissions:
   issues: write
