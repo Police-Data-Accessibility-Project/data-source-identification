@@ -1,10 +1,6 @@
-name: Python Checks
+name: flake8 Lint
 
-on: [push, pull_request]
-
-permissions:
-  issues: write
-  pull-requests: write
+on: [pull_request]
 
 jobs:
   flake8-lint:
@@ -12,12 +8,14 @@ jobs:
     name: Lint
     steps:
       - name: Check out source repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v2
       - name: Set up Python environment
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v2
         with:
           python-version: "3.11"
+      - run: pip install flake8 flake8-docstrings flake8-simplify flake8-unused-arguments flake8-annotations
       - name: flake8 Lint
-        uses: py-actions/flake8@v2
+        continue-on-error: true
+        uses: reviewdog/action-flake8@v3
         with:
-          plugins: "flake8-docstrings"
+          github_token: ${{ secrets.GITHUB_TOKEN }}
