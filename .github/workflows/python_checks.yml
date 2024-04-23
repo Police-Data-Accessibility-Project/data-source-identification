@@ -2,6 +2,10 @@ name: Python Checks
 
 on: [pull_request]
 
+permissions:
+  issues: write
+  pull-requests: write
+
 jobs:
   flake8-lint:
     runs-on: ubuntu-latest
