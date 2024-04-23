@@ -15,7 +15,6 @@ jobs:
           python-version: "3.11"
       - run: pip install flake8 flake8-docstrings flake8-simplify flake8-unused-arguments flake8-annotations
       - name: flake8 Lint with Reviewdog
-        continue-on-error: true
         uses: reviewdog/action-flake8@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
