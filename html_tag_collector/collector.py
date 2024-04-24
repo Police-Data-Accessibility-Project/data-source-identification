@@ -16,6 +16,7 @@ from tqdm.asyncio import tqdm
 import bs4
 from bs4 import BeautifulSoup
 import polars as pl
+from urllib.parse import urlparse
 
 from RootURLCache import RootURLCache
 from common import get_user_agent
@@ -240,7 +241,11 @@ def parse_response(url_response):
     tags = {}
     res = url_response["response"]
     tags["index"] = url_response["index"]
-    tags["url"] = url_response["url"][0]
+    url = url_response["url"][0]
+    tags["url"] = url
+    if not url.startswith("http"):
+        url = "https://" + url
+    tags["url_path"] = urlparse(url).path[1:]
     tags["html_title"] = ""
     tags["meta_description"] = ""
     tags["root_page_title"] = remove_excess_whitespace(root_url_cache.get_title(tags["url"]))
@@ -272,7 +277,6 @@ def parse_response(url_response):
 
     if soup.title is not None and soup.title.string is not None:
         tags["html_title"] = remove_excess_whitespace(soup.title.string)
-        print(soup.title.string)
     else:
         tags["html_title"] = ""
 
