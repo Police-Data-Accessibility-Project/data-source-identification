@@ -14,8 +14,10 @@ MODEL = "distilbert-base-uncased"
 DATASET = "PDAP/urls-relevance"
 MAX_STEPS = 1000
 
+
 def str2int(label):
     return labels.index(label)
+
 
 dataset = load_dataset(DATASET)
 dataset = concatenate_datasets([dataset["train"], dataset["test"]])
@@ -30,12 +32,40 @@ label_col = "label"
 train_df["label"] = train_df["label"].apply(str2int)
 test_df["label"] = test_df["label"].apply(str2int)
 
-text_cols = ["url_path", "html_title", "keywords", "meta_description", "root_page_title", "h1", "h2", "h3", "h4", "h5", "h6"] # "url", "http_response"
+text_cols = [
+    "url_path",
+    "html_title",
+    "keywords",
+    "meta_description",
+    "root_page_title",
+    "h1",
+    "h2",
+    "h3",
+    "h4",
+    "h5",
+    "h6",
+]  # "url", "http_response"
 empty_text_values = ['[""]', None, "[]", '""']
 tokenizer = AutoTokenizer.from_pretrained(MODEL)
 
-train_dataset = load_data(train_df, text_cols, tokenizer, label_col, label_list=labels, sep_text_token_str=tokenizer.sep_token, empty_text_values=empty_text_values)
-test_dataset = load_data(test_df, text_cols, tokenizer, label_col, label_list=labels, sep_text_token_str=tokenizer.sep_token, empty_text_values=empty_text_values)
+train_dataset = load_data(
+    train_df,
+    text_cols,
+    tokenizer,
+    label_col,
+    label_list=labels,
+    sep_text_token_str=tokenizer.sep_token,
+    empty_text_values=empty_text_values,
+)
+test_dataset = load_data(
+    test_df,
+    text_cols,
+    tokenizer,
+    label_col,
+    label_list=labels,
+    sep_text_token_str=tokenizer.sep_token,
+    empty_text_values=empty_text_values,
+)
 
 config = AutoConfig.from_pretrained(MODEL)
 tabular_config = TabularConfig(
@@ -56,7 +86,7 @@ def compute_metrics(eval_pred):
     predictions = np.argmax(logits[0], axis=-1) if isinstance(logits, tuple) else np.argmax(logits, axis=-1)
     labels = labels.flatten()
     predictions = predictions.flatten()
-    
+
     return metric.compute(predictions=predictions, references=labels)
 
 
@@ -69,15 +99,15 @@ training_args = TrainingArguments(
     evaluation_strategy="steps",
     eval_steps=25,
     logging_steps=25,
-    weight_decay=0.1
+    weight_decay=0.1,
 )
 
 trainer = Trainer(
-  model=model,
-  args=training_args,
-  train_dataset=train_dataset,
-  eval_dataset=test_dataset,
-  compute_metrics=compute_metrics
+    model=model,
+    args=training_args,
+    train_dataset=train_dataset,
+    eval_dataset=test_dataset,
+    compute_metrics=compute_metrics,
 )
 
 trainer.train()
