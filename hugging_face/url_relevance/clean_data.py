@@ -16,7 +16,7 @@ with open(FILE, newline="") as readFile, open("new.csv", "w", newline="") as wri
     for row in reader:
         write_row = row
 
-        """for key, value in write_row.items():
+        for key, value in write_row.items():
             try:
                 l = ast.literal_eval(value)
             except (SyntaxError, ValueError):
@@ -30,13 +30,9 @@ with open(FILE, newline="") as readFile, open("new.csv", "w", newline="") as wri
             except TypeError:
                 continue
 
-            write_row.update({key:value})"""
-
-        url = write_row["url"]
-        if not url.startswith("http"):
-            url = "https://" + url
-        write_row["url_path"] = urlparse(url).path[1:]
+            write_row.update({key:value})
 
         writer.writerow(write_row)
     
     os.rename("new.csv", FILE)
+    
