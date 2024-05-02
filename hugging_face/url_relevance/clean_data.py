@@ -2,7 +2,6 @@ import ast
 import csv
 import sys
 import os
-from urllib.parse import urlparse
 
 csv.field_size_limit(sys.maxsize)
 FILE = "train-urls-keywords.csv"

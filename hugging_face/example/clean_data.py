@@ -7,7 +7,7 @@ csv.field_size_limit(sys.maxsize)
 
 with open("labeled-urls-headers_all.csv", newline="") as csvfile:
     reader = csv.DictReader(csvfile)
-    #result = sorted(reader, key=lambda d: int(d["id"]))
+    # result = sorted(reader, key=lambda d: int(d["id"]))
     with open("train-urls.csv", "w", newline="") as writefile:
         writer = csv.writer(writefile)
         writer.writerow(["url", "label"])

@@ -82,7 +82,7 @@ metric = evaluate.load("accuracy")
 
 def compute_metrics(eval_pred):
     logits, labels = eval_pred
-    logits_shape = logits[0].shape if isinstance(logits, tuple) else logits.shape
+    # logits_shape = logits[0].shape if isinstance(logits, tuple) else logits.shape
     predictions = np.argmax(logits[0], axis=-1) if isinstance(logits, tuple) else np.argmax(logits, axis=-1)
     labels = labels.flatten()
     predictions = predictions.flatten()
