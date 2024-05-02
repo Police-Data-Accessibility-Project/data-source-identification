@@ -18,6 +18,7 @@ from bs4 import BeautifulSoup
 import polars as pl
 
 from RootURLCache import RootURLCache
+from common import get_user_agent
 
 # Define the list of header tags we want to extract
 header_tags = ["h1", "h2", "h3", "h4", "h5", "h6"]
@@ -61,16 +62,11 @@ def process_urls(manager_list, render_javascript):
         loop.run_until_complete(future)
         results = future.result()
 
-    parsed_data = []
-    with ThreadPoolExecutor(max_workers=100) as executor:
-        print("Parsing responses...")
-        future_to_tags = [executor.submit(parse_response, url_response) for url_response in urls_and_responses]
+    urls_and_headers = []
+    print("Parsing responses...")
+    for url_response in tqdm(urls_and_responses):
+        urls_and_headers.append(parse_response(url_response))
 
-        for future in tqdm(as_completed(future_to_tags), total=len(future_to_tags)):
-            data = future.result()
-            parsed_data.append(data)
-
-    urls_and_headers = sorted(parsed_data, key=lambda d: d["index"])
     [url_headers.pop("index") for url_headers in urls_and_headers]
     header_tags_df = pl.DataFrame(urls_and_headers)
     clean_header_tags_df = header_tags_df.with_columns(pl.all().fill_null(""))
@@ -96,7 +92,7 @@ async def run_get_response(urls):
     """
     tasks = []
     urllib3.disable_warnings()
-    session = AsyncHTMLSession(workers=100)
+    session = AsyncHTMLSession(workers=100, browser_args=["--no-sandbox", f"--user-agent={get_user_agent()}"])
 
     print("Retrieving HTML tags...")
     for i, url in enumerate(urls):
@@ -121,8 +117,7 @@ async def get_response(session, url, index):
         dict(int, Response): Dictionary of the url's index value and Response object, None if an error occurred.
     """
     headers = {
-        # Some websites refuse the connection of automated requests, setting the User-Agent will circumvent that
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36",
+        "User-Agent": get_user_agent(),
         # Make sure there's no pre-mature closing of responses before a redirect completes
         "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
     }
@@ -240,12 +235,15 @@ def parse_response(url_response):
     Returns:
         list[dict]: List of dictionaries containing urls and relevant HTML tags.
     """
+    remove_excess_whitespace = lambda s: " ".join(s.split()).strip()
+    
     tags = {}
     res = url_response["response"]
     tags["index"] = url_response["index"]
     tags["url"] = url_response["url"][0]
     tags["html_title"] = ""
     tags["meta_description"] = ""
+    tags["root_page_title"] = remove_excess_whitespace(root_url_cache.get_title(tags["url"]))
 
     if res is None:
         tags["http_response"] = -1
@@ -273,14 +271,13 @@ def parse_response(url_response):
         return tags
 
     if soup.title is not None and soup.title.string is not None:
-        tags["html_title"] = soup.title.string.strip()
+        tags["html_title"] = remove_excess_whitespace(soup.title.string)
     else:
         tags["html_title"] = ""
-    tags["root_page_title"] = root_url_cache.get_title(tags["url"])
 
     meta_tag = soup.find("meta", attrs={"name": "description"})
     try:
-        tags["meta_description"] = meta_tag["content"] if meta_tag is not None else ""
+        tags["meta_description"] = remove_excess_whitespace(meta_tag["content"]) if meta_tag is not None else ""
     except KeyError:
         tags["meta_description"] = ""
 
@@ -288,6 +285,21 @@ def parse_response(url_response):
         headers = soup.find_all(header_tag)
         header_content = [header.get_text(" ", strip=True) for header in headers]
         tags[header_tag] = json.dumps(header_content, ensure_ascii=False)
+
+    # Extract max 500 words of text from HTML <div>'s
+    div_text = ""
+    MAX_WORDS = 500
+    for div in soup.find_all("div"):
+        text = div.get_text(" ", strip=True)
+        if text:
+            # Check if adding the current text exceeds the word limit
+            if len(div_text.split()) + len(text.split()) <= MAX_WORDS:
+                div_text += text + " "
+            else:
+                break  # Stop adding text if word limit is reached
+
+    # truncate to 5000 characters in case of run-on 'words'
+    tags["div_text"] = div_text[:MAX_WORDS * 10]
 
     # Prevents most bs4 memory leaks
     if soup.html:
@@ -372,7 +384,7 @@ if __name__ == "__main__":
     cumulative_df = process_in_batches(df, render_javascript=render_javascript)
 
     # Drop duplicate columns
-    df = df.drop(["http_response", "html_title", "meta_description", *header_tags])
+    df = df.drop(["http_response", "html_title", "meta_description", "root_page_title", *header_tags])
     # join the url/header tag df with the original df which contains the labels (order has been preserved)
     # remove duplicate rows
     out_df = df.join(cumulative_df, on="url", how="left")
@@ -382,4 +394,4 @@ if __name__ == "__main__":
         print(out_df)
 
     # Write the updated JSON data to a new file
-    out_df.write_csv("labeled-urls-headers.csv")
+    out_df.write_csv("labeled-source-text.csv")

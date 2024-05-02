@@ -4,7 +4,11 @@ import requests
 from bs4 import BeautifulSoup
 import json
 import os
+import ssl
 
+from common import get_user_agent
+
+DEBUG = False
 
 class RootURLCache:
     def __init__(self, cache_file='url_cache.json'):
@@ -28,17 +32,47 @@ class RootURLCache:
             json.dump(self.cache, f, indent=4)
 
     def get_title(self, url):
+        if not url.startswith('http'):
+            url = "https://" + url
+
         parsed_url = urlparse(url)
         root_url = f"{parsed_url.scheme}://{parsed_url.netloc}"
+        headers = {
+            "User-Agent": get_user_agent(),
+        }
 
         if root_url not in self.cache:
             try:
-                response = requests.get(root_url)
-                soup = BeautifulSoup(response.text, 'html.parser')
-                title = soup.find('title').text
-                self.cache[root_url] = title
-                self.save_cache()
-                return title
+                response = requests.get(root_url, headers=headers, timeout=120)
+            except (requests.exceptions.SSLError, ssl.SSLError):
+                # This error is raised when the website uses a legacy SSL version, which is not supported by requests
+                # Retry without SSL verification
+                try:
+                    response = requests.get(root_url, headers=headers, timeout=120, verify=False)
+                except Exception as e:
+                    return self.handle_exception(e)
             except Exception as e:
-                return f"Error retrieving title: {e}"
+                return self.handle_exception(e)
+
+            soup = BeautifulSoup(response.text, 'html.parser')
+            try:
+                title = soup.find('title').text
+            except AttributeError:
+                title = ""
+            
+            self.cache[root_url] = title
+            self.save_cache()
+
+            # Prevents most bs4 memory leaks
+            if soup.html:
+                soup.html.decompose()
+                
+            return title
+
         return self.cache[root_url]
+
+    def handle_exception(self, e):
+        if DEBUG:
+            return f"Error retrieving title: {e}"
+        else:
+            return ""

@@ -4,17 +4,22 @@ This is a multi-language repo containing scripts or tools for identifying Data S
 
 name | description of purpose
 --- | ---
-Identification Pipeline | The core python script of a modular pipeline. More details below.
-hf_testing | Utilities for interacting with our machine learning space at [Hugging Face](https://huggingface.co/PDAP)
-HTML tag collector | Collects HTML header, meta, and title tags and appends them to a JSON file. The idea is to make a richer dataset for algorithm training and data labeling.
-ML URL Classifier (work in progress) | Classifies a set of URLs given by a CSV file using the KNN and Logistic Regression algorithms. This is a work in progress with one function experiment on a small labeled dataset (~400 observations, 1 feature, 2 classes). Pending progress involves testing the existing workflow in `main.ipynb` against a larger labeled dataset and including more labels in the classification problem.
+.github/workflows | Scheduling and automation
+agency_identifier | Matches URLs with an agency from the PDAP database
+common_crawler | Interfaces with the Common Crawl dataset to extract urls, creating batches to identify or annotate
+html_tag_collector | Collects HTML header, meta, and title tags and appends them to a JSON file. The idea is to make a richer dataset for algorithm training and data labeling.
+hugging_face | Utilities for interacting with our machine learning space at [Hugging Face](https://huggingface.co/PDAP)
+identification_pipeline.py | The core python script uniting this modular pipeline. More details below.
 openai-playground | Scripts for accessing the openai API on PDAP's shared account
 
 # Identification pipeline
-In an effort to build out a fully automated system for identifying and cataloguing new data sources, this pipeline:
-- Checks potential new data sources against all those already in the database
-- Runs non-duplicate sources through the `HTML tag collector` for use in ML training
-- Checks the hostnames against those of the agencies in the database
+In an effort to build out a fully automated system for identifying and cataloguing new data sources, this pipeline: 
+
+1. collects batches of URLs which may contain useful data
+2. uses our machine learning models to label them
+3. helps us and human-label them for training the models
+
+For more detail, see the diagrams below.
 
 ## How to use
 
@@ -31,81 +36,94 @@ Thank you for your interest in contributing to this project! Please follow these
 - If you want to work on something, create an issue first so the broader community can discuss it.
 - If you make a utility, script, app, or other useful bit of code: put it in a top-level directory with an appropriate name and dedicated README and add it to the index.
 
-# Pipeline flow & operations
 
-Each of these steps may be attempted with regex, human identification, or machine learning.
+# Diagrams
 
-We combine several machine learning (ML) models, each focusing on a specific task or property.
+## Training models by batching and annotating URLs
 
 ```mermaid
 %% Here's a guide to mermaid syntax: https://mermaid.js.org/syntax/flowchart.html
 
-flowchart TD
-0["Human-label batches
-using an annotation pipeline
-to train ML models on specific
-tasks or properties"]
-A["Start with a batch of URLs
-in JSON format, from common
-crawl or another source"]
-B["Check for duplicates in the
-pipeline's training data
-/ our database"]
-C["Make an HTTP request to
-each URL in the JSON batch
-and append some metadata"]
-D["Determine whether the URL
-is “relevant”, i.e. a source of
-data about one of our `agency_types`
-(police, courts, jails)"]
-E["Determine if this is an
-`individual record`. We're only
-looking for data sources, of which
-individual records are children."]
-F["Determine which `agency`
-or geographic area is described"]
-G["Define `record_type`,
-`name`, and `description`"]
-H["Identify other metadata
-using on our pipeline"]
-I["Submit Data Sources with `agency`,
-`name`, `description`, and
-`record_type` to the approval queue"]
-J["Manually approve or reject
-data source submissions"]
-K["Retrain models with approved
-submissions, particularly
-adjustments made before
-approval & rejections"]
-reject["Reject the URL"]
-manual["Human-identify and
-resubmit"]
+sequenceDiagram
 
-C --> 0
+participant HF as Hugging Face
+participant GH as GitHub
+participant LS as Label Studio
+participant PDAP as PDAP API
 
-subgraph Prepare URLs for labeling or identification
-A --> B
-B --> C
+loop create batches of URLs <br/>for human labeling
+  GH ->> GH: Crawl for a new batch<br/> of URLs with common_crawler<br/> or other methods
+  GH ->> GH: Add metadata to each batch<br/> with source_tag_collector
+  GH ->> HF: Add the batch <br/> of URLs to a dataset
+  HF -->> GH: Confirm batch created
+  GH ->> LS: Create labeling tasks <br/> from the batch
+  LS -->> GH: Confirm tasks created
+  GH ->> GH: add batches to a log file <br/> in this repo with URL<br/> and batch IDs
 end
 
-C --> D
-D -- not relevant --> reject
-E -- individual record --> reject
-
-subgraph Use ML models to ID data
-D -- relevant --> E
-E --> F
-F --> G
-G --> H
+loop annotate URLs
+  LS ->> LS: Users annotate using<br/>Label Studio interface
 end
 
-F -- cannot identify --> manual
-G -- cannot identify --> manual
-manual --> H
-H --> I
-
-subgraph Approve & submit
-I --> J
-J --> K
+loop update training data <br/> with new annotations
+  GH ->> LS: Check for completed <br/> annotation tasks
+  LS -->> GH: Confirm new annotations <br/> since last check
+  GH ->> HF: Write new annotations to <br/> training dataset
+  GH ->> GH: log batch status to file
 end
+
+loop check PDAP database <br/>for new sources
+  GH ->> PDAP: Trigger action to check <br/> for new data sources
+  PDAP -->> GH: confirm sources available <br/> since last check
+  GH ->> GH: Collect additional metadata
+  GH ->> HF: Write sources to <br/> training dataset
+end
+
+loop model training
+  GH ->> HF: retrain ML models with <br/>updated data using <br/>trainer in hugging_face
+end
+
 ```
+
+## Using trained models to identify URLs
+
+Each of these steps may be attempted with regex, human identification, or machine learning. We combine several machine learning (ML) models, each focusing on a specific task or property.
+
+```mermaid
+%% Here's a guide to mermaid syntax: https://mermaid.js.org/syntax/flowchart.html
+
+sequenceDiagram
+
+participant HF as Hugging Face
+participant GH as GitHub
+participant PDAP as PDAP API
+
+GH ->> GH: Start with a batch of URLs from <br/> common_crawler or another source <br/> with a batch log file
+GH ->> PDAP: Check for duplicate URLs
+PDAP ->> GH: Report back duplicates to remove
+GH ->> HF: Create batch for identification
+HF -->> GH: Confirm batch created
+
+loop trigger Hugging Face models to add <br/>labels to the same dataset
+  GH ->> HF: Check URLs for relevance <br/> to police, courts, or jails
+  HF -->> GH: complete
+  GH ->> HF: Check relevant URLs for <br/> "individual records"
+  HF -->> GH: complete
+  note over HF,GH: Ignore irrelevant and <br/> individual record sources <br/> for following steps
+  GH ->> HF: Identify an agency or <br/> geographic area
+  GH ->> HF: Identify record_type, <br/> name, and description
+  HF -->> GH: Confirm batch complete
+end
+
+GH ->> PDAP: Submit URLs for manual approval
+```
+
+# Docstring and Type Checking
+
+Docstrings and Type Checking are checked using the [pydocstyle](https://www.pydocstyle.org/en/stable/) and [mypy](https://mypy-lang.org/)
+modules, respectively. When making a pull request, a Github Action (`python_checks.yml`) will run and, 
+if it detects any missing docstrings or type hints in files that you have modified, post them in the Pull Request.
+
+These will *not* block any Pull request, but exist primarily as advisory comments to encourage good coding standards.
+
+Note that `python_checks.yml` will only function on pull requests made from within the repo, not from a forked repo.
