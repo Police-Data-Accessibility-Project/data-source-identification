@@ -241,11 +241,14 @@ def parse_response(url_response):
     tags = {}
     res = url_response["response"]
     tags["index"] = url_response["index"]
+
+    # Drop hostname from urls to reduce training bias
     url = url_response["url"][0]
     tags["url"] = url
     if not url.startswith("http"):
         url = "https://" + url
     tags["url_path"] = urlparse(url).path[1:]
+
     tags["html_title"] = ""
     tags["meta_description"] = ""
     tags["root_page_title"] = remove_excess_whitespace(root_url_cache.get_title(tags["url"]))
@@ -288,6 +291,7 @@ def parse_response(url_response):
 
     for header_tag in header_tags:
         headers = soup.find_all(header_tag)
+        # Retreives and drops headers containing links to reduce training bias
         header_content = [header.get_text(" ", strip=True) for header in headers if not header.a]
         tags[header_tag] = json.dumps(header_content, ensure_ascii=False)
 
