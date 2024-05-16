@@ -4,7 +4,7 @@ import sys
 import os
 
 csv.field_size_limit(sys.maxsize)
-FILE = "train-urls-keywords.csv"
+FILE = "clean-data-example.csv"
 
 with open(FILE, newline="") as readFile, open("new.csv", "w", newline="") as writeFile:
     reader = csv.DictReader(readFile)
