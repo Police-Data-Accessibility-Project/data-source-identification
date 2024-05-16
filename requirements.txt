@@ -2,8 +2,8 @@ requests~=2.31.0
 polars~=0.20.10
 python-dotenv~=1.0.1
 bs4~=0.0.2
-tqdm~=4.66.2
-pytest~=8.0.1
+tqdm>=4.64.1
+pytest>=7.2.2
 pytest-mock==3.12.0
 urllib3~=1.26.18
 psycopg2-binary~=2.9.6
@@ -18,6 +18,7 @@ transformers>=4.38.0
 datasets>=2.17.1
 accelerate>=0.27.2
 numpy>=1.26.4
+multimodal-transformers>=0.3.1
 # html_tag_collector_only
 requests_html>=0.10.0
 lxml>=5.1.0
