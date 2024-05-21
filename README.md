@@ -54,10 +54,8 @@ participant PDAP as PDAP API
 loop create batches of URLs <br/>for human labeling
   GH ->> GH: Crawl for a new batch<br/> of URLs with common_crawler<br/> or other methods
   GH ->> GH: Add metadata to each batch<br/> with source_tag_collector
-  GH ->> HF: Add the batch <br/> of URLs to the <br/> training_urls dataset
-  HF -->> GH: Confirm batch created
-  GH ->> LS: Create labeling tasks <br/> from the batch
-  LS -->> GH: Confirm tasks created
+  GH ->> LS: Add the batch as <br/> labeling tasks in <br/> the Label Studio project
+  LS -->> GH: Confirm batch created
   GH ->> GH: add batches to a log file <br/> in this repo with URL<br/> and batch IDs
 end
 
@@ -68,7 +66,7 @@ end
 loop update training data <br/> with new annotations
   GH ->> LS: Check for completed <br/> annotation tasks
   LS -->> GH: Confirm new annotations <br/> since last check
-  GH ->> HF: Write new annotations to <br/> training dataset
+  GH ->> HF: Write new annotations to <br/> training-urls dataset
   GH ->> GH: log batch status to file
 end
 
