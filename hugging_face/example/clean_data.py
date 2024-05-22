@@ -2,6 +2,12 @@ import csv
 import random
 import sys
 
+
+""" This script randomly seperates a csv into a train and test split for use in training.
+    The script will filter out rows containing multiple labels and preservve at least one unique label for the test script.
+"""
+
+
 labels = set()
 csv.field_size_limit(sys.maxsize)
 

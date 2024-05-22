@@ -3,6 +3,12 @@ import csv
 import sys
 import os
 
+
+""" This script cleans up raw website data from the tag collector so that it may be used for effective training.
+    It primarily merges list of strings into a single string, removing brackets and quotes from the string.
+"""
+
+
 csv.field_size_limit(sys.maxsize)
 FILE = "clean-data-example.csv"
 

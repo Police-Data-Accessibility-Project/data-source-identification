@@ -10,6 +10,11 @@ import pandas as pd
 import evaluate
 
 
+""" This model is trained using website data from a list of potentially relevant URLs.
+    A "relevant" URL is one that related to criminal justice. A "relevant" website does not necessarily mean it is a "good" data source.
+    The latest version of the model can be found here: https://huggingface.co/PDAP/url-relevance
+"""
+
 MODEL = "distilbert-base-uncased"
 DATASET = "PDAP/urls-relevance"
 MAX_STEPS = 1000
