@@ -20,6 +20,8 @@ from urllib.parse import urlparse
 
 from RootURLCache import RootURLCache
 from common import get_user_agent
+from DataClassTags import Tags
+
 
 # Define the list of header tags we want to extract
 header_tags = ["h1", "h2", "h3", "h4", "h5", "h6"]
