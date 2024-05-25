@@ -299,14 +299,13 @@ def parse_response(url_response):
     except KeyError:
         tags["meta_description"] = ""'''
     tags_test = get_meta_description(tags_test, soup)
-    print(tags_test)
 
-    for header_tag in header_tags:
+    '''for header_tag in header_tags:
         headers = soup.find_all(header_tag)
         # Retreives and drops headers containing links to reduce training bias
         header_content = [header.get_text(" ", strip=True) for header in headers if not header.a]
-        tags[header_tag] = json.dumps(header_content, ensure_ascii=False)
-        #setattr(tags_test, header_tag, "Test")
+        tags[header_tag] = json.dumps(header_content, ensure_ascii=False)'''
+    tags_test = get_header_tags(tags_test, soup)
 
     # Extract max 500 words of text from HTML <div>'s
     div_text = ""
@@ -331,7 +330,7 @@ def parse_response(url_response):
 
 
 def get_url(tags, url_response):
-    """Updates the Tags dataclass with the url and url_path.
+    """Updates the Tags DataClass with the url and url_path.
 
     Args:
         tags (Tags): DataClass for relevant HTML tags.
@@ -356,7 +355,7 @@ def get_url(tags, url_response):
 
 
 def get_html_title(tags, soup):
-    """Updates the Tags dataclass with the html_title.
+    """Updates the Tags DataClass with the html_title.
 
     Args:
         tags (Tags): DataClass for relevant HTML tags.
@@ -372,7 +371,7 @@ def get_html_title(tags, soup):
 
 
 def get_meta_description(tags, soup):
-    """Updates the Tags dataclass with the meta_description.
+    """Updates the Tags DataClass with the meta_description.
 
     Args:
         tags (Tags): DataClass for relevant HTML tags.
@@ -387,6 +386,26 @@ def get_meta_description(tags, soup):
     except KeyError:
         return
     
+    return tags
+
+
+def get_header_tags(tags, soup):
+    """Updates the Tags DataClass with the header tags.
+
+    Args:
+        tags (Tags): DataClass for relevant HTML tags.
+        soup (BeautifulSoup): BeautifulSoup object to pull the header tags from.
+
+    Returns:
+        Tags: DataClass with updated header tags.
+    """    
+    for header_tag in header_tags:
+        headers = soup.find_all(header_tag)
+        # Retreives and drops headers containing links to reduce training bias
+        header_content = [header.get_text(" ", strip=True) for header in headers if not header.a]
+        tag_content = json.dumps(header_content, ensure_ascii=False)
+        setattr(tags, header_tag, tag_content)
+
     return tags
 
 
