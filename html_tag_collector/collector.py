@@ -293,11 +293,13 @@ def parse_response(url_response):
         tags["html_title"] = ""'''
     tags_test = get_html_title(tags_test, soup)
 
-    meta_tag = soup.find("meta", attrs={"name": "description"})
+    '''meta_tag = soup.find("meta", attrs={"name": "description"})
     try:
         tags["meta_description"] = remove_excess_whitespace(meta_tag["content"]) if meta_tag is not None else ""
     except KeyError:
-        tags["meta_description"] = ""
+        tags["meta_description"] = ""'''
+    tags_test = get_meta_description(tags_test, soup)
+    print(tags_test)
 
     for header_tag in header_tags:
         headers = soup.find_all(header_tag)
@@ -329,7 +331,7 @@ def parse_response(url_response):
 
 
 def get_url(tags, url_response):
-    """Updates the Tags dataclass with the url and url_path
+    """Updates the Tags dataclass with the url and url_path.
 
     Args:
         tags (Tags): DataClass for relevant HTML tags.
@@ -354,7 +356,7 @@ def get_url(tags, url_response):
 
 
 def get_html_title(tags, soup):
-    """Updates the Tags dataclass with the html_title
+    """Updates the Tags dataclass with the html_title.
 
     Args:
         tags (Tags): DataClass for relevant HTML tags.
@@ -365,6 +367,25 @@ def get_html_title(tags, soup):
     """
     if soup.title is not None and soup.title.string is not None:
         tags.html_title = remove_excess_whitespace(soup.title.string)
+    
+    return tags
+
+
+def get_meta_description(tags, soup):
+    """Updates the Tags dataclass with the meta_description.
+
+    Args:
+        tags (Tags): DataClass for relevant HTML tags.
+        soup (BeautifulSoup): BeautifulSoup object to pull the meta description from.
+
+    Returns:
+        Tags: DataClass with updated meta_description.
+    """    
+    meta_tag = soup.find("meta", attrs={"name": "description"})
+    try:
+        tags.meta_description = remove_excess_whitespace(meta_tag["content"]) if meta_tag is not None else ""
+    except KeyError:
+        return
     
     return tags
 
