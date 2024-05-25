@@ -308,7 +308,7 @@ def parse_response(url_response):
     tags_test = get_header_tags(tags_test, soup)
 
     # Extract max 500 words of text from HTML <div>'s
-    div_text = ""
+    '''div_text = ""
     MAX_WORDS = 500
     for div in soup.find_all("div"):
         text = div.get_text(" ", strip=True)
@@ -320,8 +320,10 @@ def parse_response(url_response):
                 break  # Stop adding text if word limit is reached
 
     # Truncate to 5000 characters in case of run-on 'words'
-    tags["div_text"] = div_text[:MAX_WORDS * 10]
-    
+    tags["div_text"] = div_text[:MAX_WORDS * 10]'''
+    tags_test = get_div_text(tags_test, soup)
+    print(tags_test)
+
     # Prevents most bs4 memory leaks
     if soup.html:
         soup.html.decompose()
@@ -405,6 +407,34 @@ def get_header_tags(tags, soup):
         header_content = [header.get_text(" ", strip=True) for header in headers if not header.a]
         tag_content = json.dumps(header_content, ensure_ascii=False)
         setattr(tags, header_tag, tag_content)
+
+    return tags
+
+
+def get_div_text(tags, soup):
+    """Updates the Tags DataClass with the div_text.
+
+    Args:
+        tags (Tags): DataClass for relevant HTML tags.
+        soup (BeautifulSoup): BeautifulSoup object to pull the div text from.
+
+    Returns:
+        Tags: DataClass with updated div_text.
+    """    
+    # Extract max 500 words of text from HTML <div>'s
+    div_text = ""
+    MAX_WORDS = 500
+    for div in soup.find_all("div"):
+        text = div.get_text(" ", strip=True)
+        if text:
+            # Check if adding the current text exceeds the word limit
+            if len(div_text.split()) + len(text.split()) <= MAX_WORDS:
+                div_text += text + " "
+            else:
+                break  # Stop adding text if word limit is reached
+
+    # Truncate to 5000 characters in case of run-on 'words'
+    tags.div_text = div_text[:MAX_WORDS * 10]
 
     return tags
 
