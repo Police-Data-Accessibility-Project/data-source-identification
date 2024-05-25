@@ -272,7 +272,7 @@ def parse_response(url_response):
         return asdict(tags)
 
     # Attempt to read the content-type, set the parser accordingly to avoid warning messages
-    try:
+    '''try:
         content_type = res.headers["content-type"]
     except KeyError:
         return asdict(tags)
@@ -282,6 +282,9 @@ def parse_response(url_response):
     elif "xml" in content_type:
         parser = "lxml-xml"
     else:
+        return asdict(tags)'''
+    parser = get_parser(res)
+    if not parser:
         return asdict(tags)
 
     try:
@@ -367,7 +370,6 @@ def verify_response(tags, res):
         bool: False if verification fails, True otherwise.
         Tags: Dataclass for relevant HTML tags.
     """
-    print(type(res))
     # The response is None if there was an error during connection, meaning there is no content to read
     if res is None:
         return False, tags
@@ -378,6 +380,32 @@ def verify_response(tags, res):
         return False, tags
 
     return True, tags
+
+
+def get_parser(res):
+    """Retrieves the parser type to use with BeautifulSoup.
+
+    Args:
+        res (HTMLResponse|Response): Response object to read the content-type from.
+
+    Returns:
+        str|bool: A string of the parser to use, or False if not readable.
+    """    
+    # Attempt to read the content-type, set the parser accordingly to avoid warning messages
+    try:
+        content_type = res.headers["content-type"]
+    except KeyError:
+        return False
+
+    # If content type does not contain "html" or "xml" then we can assume that the content is unreadable
+    if "html" in content_type:
+        parser = "lxml"
+    elif "xml" in content_type:
+        parser = "lxml-xml"
+    else:
+        return False
+    
+    return parser
 
 
 def get_html_title(tags, soup):
