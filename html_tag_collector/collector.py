@@ -233,41 +233,48 @@ def parse_response(url_response):
     """Parses relevant HTML tags from a Response object into a dictionary.
 
     Args:
-        url_response (list[dict]): List of dictionaries containing urls and theeir responses.
+        url_response (list[dict]): List of dictionaries containing urls and their responses.
 
     Returns:
-        list[dict]: List of dictionaries containing urls and relevant HTML tags.
+        Tags: DataClass containing the url and relevant HTML tags.
     """
     remove_excess_whitespace = lambda s: " ".join(s.split()).strip()
     
     tags = {}
+    tags_test = Tags()
     res = url_response["response"]
-    tags["index"] = url_response["index"]
+    #tags["index"] = url_response["index"]
+    tags_test.index = url_response["index"]
 
     # Drop hostname from urls to reduce training bias
-    url = url_response["url"][0]
+    '''url = url_response["url"][0]
     tags["url"] = url
     if not url.startswith("http"):
         url = "https://" + url
-    tags["url_path"] = urlparse(url).path[1:]
+    tags["url_path"] = urlparse(url).path[1:]'''
+    tags_test = get_url(tags_test, url_response)
+    print(tags_test)
 
     tags["html_title"] = ""
     tags["meta_description"] = ""
-    tags["root_page_title"] = remove_excess_whitespace(root_url_cache.get_title(tags["url"]))
+    #tags["root_page_title"] = remove_excess_whitespace(root_url_cache.get_title(tags["url"]))
 
+    # The response is None if there was an error during connection, meaning there is no content to read
     if res is None:
         tags["http_response"] = -1
         return tags
 
+    # If the connection did not return a 300 code, we can assume there is no relevant content to read
     tags["http_response"] = res.status_code
     if not res.ok:
         return tags
 
+    # Attempt to read the content-type, set the parser accordingly to avoid warning messages
     try:
         content_type = res.headers["content-type"]
     except KeyError:
         return tags
-
+    # If content type does not contain "html" or "xml" then we can assume that the content is unreadable
     if "html" in content_type:
         parser = "lxml"
     elif "xml" in content_type:
@@ -296,6 +303,7 @@ def parse_response(url_response):
         # Retreives and drops headers containing links to reduce training bias
         header_content = [header.get_text(" ", strip=True) for header in headers if not header.a]
         tags[header_tag] = json.dumps(header_content, ensure_ascii=False)
+        #setattr(tags_test, header_tag, "Test")
 
     # Extract max 500 words of text from HTML <div>'s
     div_text = ""
@@ -309,12 +317,37 @@ def parse_response(url_response):
             else:
                 break  # Stop adding text if word limit is reached
 
-    # truncate to 5000 characters in case of run-on 'words'
+    # Truncate to 5000 characters in case of run-on 'words'
     tags["div_text"] = div_text[:MAX_WORDS * 10]
-
+    
     # Prevents most bs4 memory leaks
     if soup.html:
         soup.html.decompose()
+
+    return tags
+
+
+def get_url(tags, url_response):
+    """Updates the Tags dataclass with the url and url_path
+
+    Args:
+        tags (Tags): DataClass for relevant HTML tags.
+        url_response (list[dict]): List of dictionaries containing urls and their responses.
+
+    Returns:
+        Tags: DataClass with updated url and url_path.
+    """
+    url = url_response["url"][0]
+    tags.url = url
+    if not url.startswith("http"):
+        url = "https://" + url
+
+    # Drop hostname from urls to reduce training bias
+    url_path = urlparse(url).path[1:]
+    # Remove trailing backslash
+    if url_path[-1] == "/":
+        url_path = url_path[:-1]
+    tags.url_path = url_path
 
     return tags
 
