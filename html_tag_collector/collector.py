@@ -1,3 +1,4 @@
+from dataclasses import asdict
 import json
 import ssl
 import urllib3
@@ -240,11 +241,11 @@ def parse_response(url_response):
     """
     #remove_excess_whitespace = lambda s: " ".join(s.split()).strip()
     
-    tags = {}
-    tags_test = Tags()
+    #tags = {}
+    tags = Tags()
     res = url_response["response"]
     #tags["index"] = url_response["index"]
-    tags_test.index = url_response["index"]
+    tags.index = url_response["index"]
 
     # Drop hostname from urls to reduce training bias
     '''url = url_response["url"][0]
@@ -252,60 +253,61 @@ def parse_response(url_response):
     if not url.startswith("http"):
         url = "https://" + url
     tags["url_path"] = urlparse(url).path[1:]'''
-    tags_test = get_url(tags_test, url_response)
+    tags = get_url(tags, url_response)
 
     #tags["html_title"] = ""
     #tags["meta_description"] = ""
     #tags["root_page_title"] = remove_excess_whitespace(root_url_cache.get_title(tags["url"]))
 
-    # The response is None if there was an error during connection, meaning there is no content to read
+    '''# The response is None if there was an error during connection, meaning there is no content to read
     if res is None:
-        #tags["http_response"] = -1
-        return tags
+        return asdict(tags)
 
     # If the connection did not return a 300 code, we can assume there is no relevant content to read
-    #tags["http_response"] = res.status_code
-    tags_test.http_response = res.status_code
+    tags.http_response = res.status_code
     if not res.ok:
-        return tags
+        return asdict(tags)'''
+    verified, tags = verify_response(tags, res)
+    if not verified:
+        return asdict(tags)
 
     # Attempt to read the content-type, set the parser accordingly to avoid warning messages
     try:
         content_type = res.headers["content-type"]
     except KeyError:
-        return tags
+        return asdict(tags)
     # If content type does not contain "html" or "xml" then we can assume that the content is unreadable
     if "html" in content_type:
         parser = "lxml"
     elif "xml" in content_type:
         parser = "lxml-xml"
     else:
-        return tags
+        return asdict(tags)
 
     try:
         soup = BeautifulSoup(res.html.html, parser)
     except (bs4.builder.ParserRejectedMarkup, AssertionError, AttributeError):
-        return tags
+        return asdict(tags)
 
     '''if soup.title is not None and soup.title.string is not None:
         tags["html_title"] = remove_excess_whitespace(soup.title.string)
     else:
         tags["html_title"] = ""'''
-    tags_test = get_html_title(tags_test, soup)
+    tags = get_html_title(tags, soup)
 
     '''meta_tag = soup.find("meta", attrs={"name": "description"})
     try:
         tags["meta_description"] = remove_excess_whitespace(meta_tag["content"]) if meta_tag is not None else ""
     except KeyError:
         tags["meta_description"] = ""'''
-    tags_test = get_meta_description(tags_test, soup)
+    tags = get_meta_description(tags, soup)
 
     '''for header_tag in header_tags:
         headers = soup.find_all(header_tag)
         # Retreives and drops headers containing links to reduce training bias
         header_content = [header.get_text(" ", strip=True) for header in headers if not header.a]
         tags[header_tag] = json.dumps(header_content, ensure_ascii=False)'''
-    tags_test = get_header_tags(tags_test, soup)
+    tags = get_header_tags(tags, soup)
 
     # Extract max 500 words of text from HTML <div>'s
     '''div_text = ""
@@ -321,14 +323,13 @@ def parse_response(url_response):
 
     # Truncate to 5000 characters in case of run-on 'words'
     tags["div_text"] = div_text[:MAX_WORDS * 10]'''
-    tags_test = get_div_text(tags_test, soup)
-    print(tags_test)
+    tags = get_div_text(tags, soup)
 
     # Prevents most bs4 memory leaks
     if soup.html:
         soup.html.decompose()
 
-    return tags
+    return asdict(tags)
 
 
 def get_url(tags, url_response):
@@ -349,11 +350,34 @@ def get_url(tags, url_response):
     # Drop hostname from urls to reduce training bias
     url_path = urlparse(url).path[1:]
     # Remove trailing backslash
-    if url_path[-1] == "/":
+    if url_path and url_path[-1] == "/":
         url_path = url_path[:-1]
     tags.url_path = url_path
 
     return tags
+
+def verify_response(tags, res):
+    """Verifies the webpage response is readable and ok.
+
+    Args:
+        tags (Tags): DataClass for relevant HTML tags.
+        res (HTMLResponse|Response): Response object to verify.
+
+    Returns:
+        bool: False if verification fails, True otherwise.
+        Tags: Dataclass for relevant HTML tags.
+    """
+    print(type(res))
+    # The response is None if there was an error during connection, meaning there is no content to read
+    if res is None:
+        return False, tags
+
+    # If the connection did not return a 300 code, we can assume there is no relevant content to read
+    tags.http_response = res.status_code
+    if not res.ok:
+        return False, tags
+
+    return True, tags
 
 
 def get_html_title(tags, soup):
