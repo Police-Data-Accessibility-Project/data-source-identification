@@ -238,7 +238,7 @@ def parse_response(url_response):
     Returns:
         Tags: DataClass containing the url and relevant HTML tags.
     """
-    remove_excess_whitespace = lambda s: " ".join(s.split()).strip()
+    #remove_excess_whitespace = lambda s: " ".join(s.split()).strip()
     
     tags = {}
     tags_test = Tags()
@@ -253,19 +253,19 @@ def parse_response(url_response):
         url = "https://" + url
     tags["url_path"] = urlparse(url).path[1:]'''
     tags_test = get_url(tags_test, url_response)
-    print(tags_test)
 
-    tags["html_title"] = ""
-    tags["meta_description"] = ""
+    #tags["html_title"] = ""
+    #tags["meta_description"] = ""
     #tags["root_page_title"] = remove_excess_whitespace(root_url_cache.get_title(tags["url"]))
 
     # The response is None if there was an error during connection, meaning there is no content to read
     if res is None:
-        tags["http_response"] = -1
+        #tags["http_response"] = -1
         return tags
 
     # If the connection did not return a 300 code, we can assume there is no relevant content to read
-    tags["http_response"] = res.status_code
+    #tags["http_response"] = res.status_code
+    tags_test.http_response = res.status_code
     if not res.ok:
         return tags
 
@@ -287,10 +287,11 @@ def parse_response(url_response):
     except (bs4.builder.ParserRejectedMarkup, AssertionError, AttributeError):
         return tags
 
-    if soup.title is not None and soup.title.string is not None:
+    '''if soup.title is not None and soup.title.string is not None:
         tags["html_title"] = remove_excess_whitespace(soup.title.string)
     else:
-        tags["html_title"] = ""
+        tags["html_title"] = ""'''
+    tags_test = get_html_title(tags_test, soup)
 
     meta_tag = soup.find("meta", attrs={"name": "description"})
     try:
@@ -350,6 +351,34 @@ def get_url(tags, url_response):
     tags.url_path = url_path
 
     return tags
+
+
+def get_html_title(tags, soup):
+    """Updates the Tags dataclass with the html_title
+
+    Args:
+        tags (Tags): DataClass for relevant HTML tags.
+        soup (BeautifulSoup): BeautifulSoup object to pull the HTML title from.
+
+    Returns:
+        Tags: DataClass with updated html_title.
+    """
+    if soup.title is not None and soup.title.string is not None:
+        tags.html_title = remove_excess_whitespace(soup.title.string)
+    
+    return tags
+
+
+def remove_excess_whitespace(s):
+    """Removes leading, trailing, and excess adjacent whitespace.
+
+    Args:
+        s (str): String to remove whitespace from.
+
+    Returns:
+        str: Clean string with excess whitespace stripped.
+    """    
+    return " ".join(s.split()).strip()
 
 
 def collector_main(df, render_javascript=False):
