@@ -239,50 +239,18 @@ def parse_response(url_response):
     Returns:
         dict: Dictionary containing the url and relevant HTML tags.
     """
-    #remove_excess_whitespace = lambda s: " ".join(s.split()).strip()
-    
-    #tags = {}
     tags = Tags()
     res = url_response["response"]
-    #tags["index"] = url_response["index"]
     tags.index = url_response["index"]
 
-    # Drop hostname from urls to reduce training bias
-    '''url = url_response["url"][0]
-    tags["url"] = url
-    if not url.startswith("http"):
-        url = "https://" + url
-    tags["url_path"] = urlparse(url).path[1:]'''
     tags.url, tags.url_path = get_url(url_response)
 
-    #tags["html_title"] = ""
-    #tags["meta_description"] = ""
-    #tags["root_page_title"] = remove_excess_whitespace(root_url_cache.get_title(tags["url"]))
     tags.root_page_title = remove_excess_whitespace(root_url_cache.get_title(tags.url))
-    '''# The response is None if there was an error during connection, meaning there is no content to read
-    if res is None:
-        return asdict(tags)
 
-    # If the connection did not return a 300 code, we can assume there is no relevant content to read
-    tags.http_response = res.status_code
-    if not res.ok:
-        return asdict(tags)'''
     verified, tags.http_response = verify_response(res)
     if verified is False:
         return asdict(tags)
 
-    # Attempt to read the content-type, set the parser accordingly to avoid warning messages
-    '''try:
-        content_type = res.headers["content-type"]
-    except KeyError:
-        return asdict(tags)
-    # If content type does not contain "html" or "xml" then we can assume that the content is unreadable
-    if "html" in content_type:
-        parser = "lxml"
-    elif "xml" in content_type:
-        parser = "lxml-xml"
-    else:
-        return asdict(tags)'''
     parser = get_parser(res)
     if parser is False:
         return asdict(tags)
@@ -292,40 +260,12 @@ def parse_response(url_response):
     except (bs4.builder.ParserRejectedMarkup, AssertionError, AttributeError):
         return asdict(tags)
 
-    '''if soup.title is not None and soup.title.string is not None:
-        tags["html_title"] = remove_excess_whitespace(soup.title.string)
-    else:
-        tags["html_title"] = ""'''
     tags.html_title = get_html_title(soup)
 
-    '''meta_tag = soup.find("meta", attrs={"name": "description"})
-    try:
-        tags["meta_description"] = remove_excess_whitespace(meta_tag["content"]) if meta_tag is not None else ""
-    except KeyError:
-        tags["meta_description"] = ""'''
     tags.meta_description = get_meta_description(soup)
 
-    '''for header_tag in header_tags:
-        headers = soup.find_all(header_tag)
-        # Retreives and drops headers containing links to reduce training bias
-        header_content = [header.get_text(" ", strip=True) for header in headers if not header.a]
-        tags[header_tag] = json.dumps(header_content, ensure_ascii=False)'''
     tags = get_header_tags(tags, soup)
 
-    # Extract max 500 words of text from HTML <div>'s
-    '''div_text = ""
-    MAX_WORDS = 500
-    for div in soup.find_all("div"):
-        text = div.get_text(" ", strip=True)
-        if text:
-            # Check if adding the current text exceeds the word limit
-            if len(div_text.split()) + len(text.split()) <= MAX_WORDS:
-                div_text += text + " "
-            else:
-                break  # Stop adding text if word limit is reached
-
-    # Truncate to 5000 characters in case of run-on 'words'
-    tags["div_text"] = div_text[:MAX_WORDS * 10]'''
     tags.div_text = get_div_text(soup)
 
     # Prevents most bs4 memory leaks
