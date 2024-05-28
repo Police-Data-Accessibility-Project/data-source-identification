@@ -169,12 +169,15 @@ async def get_response(session, url, index):
         # or the response is an unreadable content type
         # or the response code from the website is not in the 200s
         if (
-            response is not None and len(response.content) > 10000000
-            or content_type is not None and any(
+            response is not None
+            and len(response.content) > 10000000
+            or content_type is not None
+            and any(
                 filtered_type in content_type
                 for filtered_type in ["pdf", "excel", "msword", "image", "rtf", "zip", "octet", "csv", "json"]
             )
-            or response is not None and not response.ok
+            or response is not None
+            and not response.ok
         ):
             # Discard the response content to prevent out of memory errors
             if DEBUG:
@@ -297,6 +300,7 @@ def get_url(url_response):
 
     return url, url_path
 
+
 def verify_response(res):
     """Verifies the webpage response is readable and ok.
 
@@ -326,7 +330,7 @@ def get_parser(res):
 
     Returns:
         str|bool: A string of the parser to use, or False if not readable.
-    """    
+    """
     # Attempt to read the content-type, set the parser accordingly to avoid warning messages
     try:
         content_type = res.headers["content-type"]
@@ -340,7 +344,7 @@ def get_parser(res):
         parser = "lxml-xml"
     else:
         return False
-    
+
     return parser
 
 
@@ -357,7 +361,7 @@ def get_html_title(soup):
 
     if soup.title is not None and soup.title.string is not None:
         html_title = remove_excess_whitespace(soup.title.string)
-    
+
     return html_title
 
 
@@ -369,7 +373,7 @@ def get_meta_description(soup):
 
     Returns:
         str: The meta description.
-    """    
+    """
     meta_tag = soup.find("meta", attrs={"name": "description"})
     try:
         meta_description = remove_excess_whitespace(meta_tag["content"]) if meta_tag is not None else ""
@@ -388,7 +392,7 @@ def get_header_tags(tags, soup):
 
     Returns:
         Tags: DataClass with updated header tags.
-    """    
+    """
     for header_tag in header_tags:
         headers = soup.find_all(header_tag)
         # Retrieves and drops headers containing links to reduce training bias
@@ -407,7 +411,7 @@ def get_div_text(soup):
 
     Returns:
         str: The div text.
-    """    
+    """
     # Extract max 500 words of text from HTML <div>'s
     div_text = ""
     MAX_WORDS = 500
@@ -421,7 +425,7 @@ def get_div_text(soup):
                 break  # Stop adding text if word limit is reached
 
     # Truncate to 5000 characters in case of run-on 'words'
-    div_text = div_text[:MAX_WORDS * 10]
+    div_text = div_text[: MAX_WORDS * 10]
 
     return div_text
 
@@ -434,7 +438,7 @@ def remove_excess_whitespace(s):
 
     Returns:
         str: Clean string with excess whitespace stripped.
-    """    
+    """
     return " ".join(s.split()).strip()
 
 
