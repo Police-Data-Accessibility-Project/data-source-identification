@@ -237,7 +237,7 @@ def parse_response(url_response):
         url_response (list[dict]): List of dictionaries containing urls and their responses.
 
     Returns:
-        Tags: DataClass containing the url and relevant HTML tags.
+        dict: Dictionary containing the url and relevant HTML tags.
     """
     #remove_excess_whitespace = lambda s: " ".join(s.split()).strip()
     
@@ -253,12 +253,12 @@ def parse_response(url_response):
     if not url.startswith("http"):
         url = "https://" + url
     tags["url_path"] = urlparse(url).path[1:]'''
-    tags = get_url(tags, url_response)
+    tags.url, tags.url_path = get_url(url_response)
 
     #tags["html_title"] = ""
     #tags["meta_description"] = ""
     #tags["root_page_title"] = remove_excess_whitespace(root_url_cache.get_title(tags["url"]))
-
+    tags.root_page_title = remove_excess_whitespace(root_url_cache.get_title(tags.url))
     '''# The response is None if there was an error during connection, meaning there is no content to read
     if res is None:
         return asdict(tags)
@@ -267,8 +267,8 @@ def parse_response(url_response):
     tags.http_response = res.status_code
     if not res.ok:
         return asdict(tags)'''
-    verified, tags = verify_response(tags, res)
-    if not verified:
+    verified, tags.http_response = verify_response(res)
+    if verified is False:
         return asdict(tags)
 
     # Attempt to read the content-type, set the parser accordingly to avoid warning messages
@@ -284,7 +284,7 @@ def parse_response(url_response):
     else:
         return asdict(tags)'''
     parser = get_parser(res)
-    if not parser:
+    if parser is False:
         return asdict(tags)
 
     try:
@@ -296,14 +296,14 @@ def parse_response(url_response):
         tags["html_title"] = remove_excess_whitespace(soup.title.string)
     else:
         tags["html_title"] = ""'''
-    tags = get_html_title(tags, soup)
+    tags.html_title = get_html_title(soup)
 
     '''meta_tag = soup.find("meta", attrs={"name": "description"})
     try:
         tags["meta_description"] = remove_excess_whitespace(meta_tag["content"]) if meta_tag is not None else ""
     except KeyError:
         tags["meta_description"] = ""'''
-    tags = get_meta_description(tags, soup)
+    tags.meta_description = get_meta_description(soup)
 
     '''for header_tag in header_tags:
         headers = soup.find_all(header_tag)
@@ -326,7 +326,7 @@ def parse_response(url_response):
 
     # Truncate to 5000 characters in case of run-on 'words'
     tags["div_text"] = div_text[:MAX_WORDS * 10]'''
-    tags = get_div_text(tags, soup)
+    tags.div_text = get_div_text(soup)
 
     # Prevents most bs4 memory leaks
     if soup.html:
@@ -335,51 +335,47 @@ def parse_response(url_response):
     return asdict(tags)
 
 
-def get_url(tags, url_response):
-    """Updates the Tags DataClass with the url and url_path.
+def get_url(url_response):
+    """Returns the url and url_path.
 
     Args:
-        tags (Tags): DataClass for relevant HTML tags.
         url_response (list[dict]): List of dictionaries containing urls and their responses.
 
     Returns:
-        Tags: DataClass with updated url and url_path.
+        (str, str): Tuple with the url and url_path.
     """
     url = url_response["url"][0]
-    tags.url = url
-    if not url.startswith("http"):
-        url = "https://" + url
+    new_url = url
+    if not new_url.startswith("http"):
+        new_url = "https://" + new_url
 
     # Drop hostname from urls to reduce training bias
-    url_path = urlparse(url).path[1:]
+    url_path = urlparse(new_url).path[1:]
     # Remove trailing backslash
     if url_path and url_path[-1] == "/":
         url_path = url_path[:-1]
-    tags.url_path = url_path
 
-    return tags
+    return url, url_path
 
-def verify_response(tags, res):
+def verify_response(res):
     """Verifies the webpage response is readable and ok.
 
     Args:
-        tags (Tags): DataClass for relevant HTML tags.
         res (HTMLResponse|Response): Response object to verify.
 
     Returns:
-        bool: False if verification fails, True otherwise.
-        Tags: Dataclass for relevant HTML tags.
+        (bool, int): A tuple containing False if verification fails, True otherwise and the http response code
     """
     # The response is None if there was an error during connection, meaning there is no content to read
     if res is None:
-        return False, tags
+        return False, -1
 
     # If the connection did not return a 300 code, we can assume there is no relevant content to read
-    tags.http_response = res.status_code
+    http_response = res.status_code
     if not res.ok:
-        return False, tags
+        return False, http_response
 
-    return True, tags
+    return True, http_response
 
 
 def get_parser(res):
@@ -408,39 +404,39 @@ def get_parser(res):
     return parser
 
 
-def get_html_title(tags, soup):
-    """Updates the Tags DataClass with the html_title.
+def get_html_title(soup):
+    """Retrieves the HTML title from a BeautifulSoup object.
 
     Args:
-        tags (Tags): DataClass for relevant HTML tags.
         soup (BeautifulSoup): BeautifulSoup object to pull the HTML title from.
 
     Returns:
-        Tags: DataClass with updated html_title.
+        str: The HTML title.
     """
+    html_title = ""
+
     if soup.title is not None and soup.title.string is not None:
-        tags.html_title = remove_excess_whitespace(soup.title.string)
+        html_title = remove_excess_whitespace(soup.title.string)
     
-    return tags
+    return html_title
 
 
-def get_meta_description(tags, soup):
-    """Updates the Tags DataClass with the meta_description.
+def get_meta_description(soup):
+    """Retrieves the meta description from a BeautifulSoup object.
 
     Args:
-        tags (Tags): DataClass for relevant HTML tags.
         soup (BeautifulSoup): BeautifulSoup object to pull the meta description from.
 
     Returns:
-        Tags: DataClass with updated meta_description.
+        str: The meta description.
     """    
     meta_tag = soup.find("meta", attrs={"name": "description"})
     try:
-        tags.meta_description = remove_excess_whitespace(meta_tag["content"]) if meta_tag is not None else ""
+        meta_description = remove_excess_whitespace(meta_tag["content"]) if meta_tag is not None else ""
     except KeyError:
-        return
-    
-    return tags
+        return ""
+
+    return meta_description
 
 
 def get_header_tags(tags, soup):
@@ -455,7 +451,7 @@ def get_header_tags(tags, soup):
     """    
     for header_tag in header_tags:
         headers = soup.find_all(header_tag)
-        # Retreives and drops headers containing links to reduce training bias
+        # Retrieves and drops headers containing links to reduce training bias
         header_content = [header.get_text(" ", strip=True) for header in headers if not header.a]
         tag_content = json.dumps(header_content, ensure_ascii=False)
         setattr(tags, header_tag, tag_content)
@@ -463,15 +459,14 @@ def get_header_tags(tags, soup):
     return tags
 
 
-def get_div_text(tags, soup):
-    """Updates the Tags DataClass with the div_text.
+def get_div_text(soup):
+    """Retrieves the div text from a BeautifulSoup object.
 
     Args:
-        tags (Tags): DataClass for relevant HTML tags.
         soup (BeautifulSoup): BeautifulSoup object to pull the div text from.
 
     Returns:
-        Tags: DataClass with updated div_text.
+        str: The div text.
     """    
     # Extract max 500 words of text from HTML <div>'s
     div_text = ""
@@ -486,9 +481,9 @@ def get_div_text(tags, soup):
                 break  # Stop adding text if word limit is reached
 
     # Truncate to 5000 characters in case of run-on 'words'
-    tags.div_text = div_text[:MAX_WORDS * 10]
+    div_text = div_text[:MAX_WORDS * 10]
 
-    return tags
+    return div_text
 
 
 def remove_excess_whitespace(s):
