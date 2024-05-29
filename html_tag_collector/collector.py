@@ -1,4 +1,5 @@
 from dataclasses import asdict
+from collections import namedtuple
 import json
 import ssl
 import urllib3
@@ -165,12 +166,12 @@ async def get_response(session, url, index):
         except (KeyError, AttributeError):
             pass
 
-        response = check_response(response, content_type, url)
+        response = response_valid(response, content_type, url)
 
         return {"index": index, "response": response}
 
 
-def check_response(response, content_type, url):
+def response_valid(response, content_type, url):
     """Checks the response to see if content is too large, unreadable, or invalid response code. The response is discarded if it is invalid.
 
     Args:
@@ -324,18 +325,19 @@ def verify_response(res):
         res (HTMLResponse|Response): Response object to verify.
 
     Returns:
-        (bool, int): A tuple containing False if verification fails, True otherwise and the http response code
+        VerifiedResponse(bool, int): A named tuple containing False if verification fails, True otherwise and the http response code.
     """
+    VerifiedResponse = namedtuple("VerifiedResponse", "verified http_response")
     # The response is None if there was an error during connection, meaning there is no content to read
     if res is None:
-        return False, -1
+        return VerifiedResponse(False, -1)
 
     # If the connection did not return a 200 code, we can assume there is no relevant content to read
     http_response = res.status_code
     if not res.ok:
-        return False, http_response
-
-    return True, http_response
+        return VerifiedResponse(False, http_response)
+        
+    return VerifiedResponse(True, http_response)
 
 
 def get_parser(res):
