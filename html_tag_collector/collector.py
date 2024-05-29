@@ -165,28 +165,44 @@ async def get_response(session, url, index):
         except (KeyError, AttributeError):
             pass
 
-        # If the response size is greater than 10 MB
-        # or the response is an unreadable content type
-        # or the response code from the website is not in the 200s
-        if (
-            response is not None
-            and len(response.content) > 10000000
-            or content_type is not None
-            and any(
-                filtered_type in content_type
-                for filtered_type in ["pdf", "excel", "msword", "image", "rtf", "zip", "octet", "csv", "json"]
-            )
-            or response is not None
-            and not response.ok
-        ):
-            # Discard the response content to prevent out of memory errors
-            if DEBUG:
-                print("Large or unreadable content discarded:", len(response.content), url)
-            new_response = requests.Response()
-            new_response.status_code = response.status_code
-            response = new_response
+        response = check_response(response, content_type, url)
 
         return {"index": index, "response": response}
+
+
+def check_response(response, content_type, url):
+    """Checks the response to see if content is too large, unreadable, or invalid response code. The response is discarded if it is invalid.
+
+    Args:
+        response (Response): Response object to check.
+        content_type (str): The content type returned by the website.
+        url (str): URL that was requested.
+
+    Returns:
+        Response: The response object is returned either unmodified or discarded.
+    """    
+    # If the response size is greater than 10 MB
+    # or the response is an unreadable content type
+    # or the response code from the website is not in the 200s
+    if (
+        response is not None
+        and len(response.content) > 10000000
+        or content_type is not None
+        and any(
+            filtered_type in content_type
+            for filtered_type in ["pdf", "excel", "msword", "image", "rtf", "zip", "octet", "csv", "json"]
+        )
+        or response is not None
+        and not response.ok
+    ):
+        # Discard the response content to prevent out of memory errors
+        if DEBUG:
+            print("Large or unreadable content discarded:", len(response.content), url)
+        new_response = requests.Response()
+        new_response.status_code = response.status_code
+        response = new_response
+    
+    return response
 
 
 async def render_js(urls_responses):
@@ -314,7 +330,7 @@ def verify_response(res):
     if res is None:
         return False, -1
 
-    # If the connection did not return a 300 code, we can assume there is no relevant content to read
+    # If the connection did not return a 200 code, we can assume there is no relevant content to read
     http_response = res.status_code
     if not res.ok:
         return False, http_response
