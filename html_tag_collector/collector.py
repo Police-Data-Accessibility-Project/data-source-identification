@@ -1,3 +1,15 @@
+""" The tag collector is used to collect HTML tags and other relevant data from websites that is useful for training prediction models.
+    Information being collected includes:
+        - The URL's path
+        - HTML title
+        - Meta description
+        - The root page's HTML title
+        - HTTP response code
+        - Contents of H1-H6 header tags
+        - Contents of div tags
+"""
+
+
 from dataclasses import asdict
 from collections import namedtuple
 import json
@@ -336,7 +348,7 @@ def verify_response(res):
     http_response = res.status_code
     if not res.ok:
         return VerifiedResponse(False, http_response)
-        
+
     return VerifiedResponse(True, http_response)
 
 
