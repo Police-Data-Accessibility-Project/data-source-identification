@@ -1,5 +1,7 @@
 import argparse
+import collections
 import dataclasses
+import re
 import sys
 import os
 from datetime import datetime
@@ -101,6 +103,42 @@ def main():
         print(f"Error while saving cache manager: {e}")
 
 
+def strip_url(url: str) -> str:
+    """Strips http(s)://www. from the beginning of a url if applicable. 
+
+    Args:
+        url (str): The URL to strip.
+
+    Returns:
+        str: The stripped URL.
+    """    
+    result = re.search(r"^(?:https?://)?(?:www\.)?(.*)$", url).group(1)
+    return result
+
+
+def remove_local_duplicates(url_results: list[str]) -> list[str]:
+    """Removes duplicate URLs from a list, ignoring http(s)://www.
+
+    Args:
+        url_results (list[str]): List of URLs to deduplicate.
+
+    Returns:
+        list[str]: List of unique URLs.
+    """    
+    stripped_url_results = [strip_url(url) for url in url_results]
+    unique_urls = collections.deque()
+    adjust = 0
+
+    for index, url in enumerate(stripped_url_results):
+        if url in unique_urls:
+            del (url_results[index - adjust])
+            adjust += 1
+        else:
+            unique_urls.appendleft(url)
+
+    return url_results
+
+
 def handle_csv_and_upload(
         common_crawl_result: CommonCrawlResult,
         huggingface_api_manager: HuggingFaceAPIManager,
@@ -149,6 +187,9 @@ def process_crawl_and_upload(
     if not common_crawl_result.url_results:
         print("No url results found. Ceasing main execution.")
         return common_crawl_result
+
+    common_crawl_result.url_results = remove_local_duplicates(common_crawl_result.url_results)
+    input()
     handle_csv_and_upload(common_crawl_result, huggingface_api_manager, args)
     return common_crawl_result
 
