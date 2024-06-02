@@ -18,6 +18,8 @@ from common_crawler.argparser import parse_args
 from common_crawler.cache import CommonCrawlerCacheManager
 from common_crawler.crawler import CommonCrawlerManager, CommonCrawlResult
 from common_crawler.csv_manager import CSVManager
+from label_studio_interface.LabelStudioConfig import LabelStudioConfig
+from label_studio_interface.LabelStudioAPIManager import LabelStudioAPIManager
 
 """
 This module contains the main function for the Common Crawler script.
@@ -139,6 +141,35 @@ def remove_local_duplicates(url_results: list[str]) -> list[str]:
     return url_results
 
 
+def remove_remote_duplicates(url_results: list[str]) -> list[str]:
+    """Removes URLs from a list that are already present in the Label Studio project, ignoring http(s)://www.
+
+    Args:
+        url_results (list[str]): List of URLs to deduplicate.
+
+    Returns:
+        list[str]: List of remaining URLs not present in the Label Studio project.
+    """    
+    # Retrieve URLs from remote Label Studio Project
+    config = LabelStudioConfig()
+    api_manager = LabelStudioAPIManager(config)
+    response = api_manager.export_tasks_from_project(all_tasks=True)
+    remote_results = response.json()
+    remote_urls = [strip_url(result["data"]["url"]) for result in remote_results]
+    remote_urls = set(remote_urls)
+
+    stripped_url_results = [strip_url(url) for url in url_results]
+    adjust = 0
+
+    for index, url in enumerate(stripped_url_results):
+        if url in remote_urls:
+            print(url_results[index - adjust])
+            del (url_results[index - adjust])
+            adjust += 1
+
+    return url_results
+
+
 def handle_csv_and_upload(
         common_crawl_result: CommonCrawlResult,
         huggingface_api_manager: HuggingFaceAPIManager,
@@ -188,7 +219,13 @@ def process_crawl_and_upload(
         print("No url results found. Ceasing main execution.")
         return common_crawl_result
 
+    print("Removing duplicates already in the database")
     common_crawl_result.url_results = remove_local_duplicates(common_crawl_result.url_results)
+    common_crawl_result.url_results = remove_remote_duplicates(common_crawl_result.url_results)
+    if not common_crawl_result.url_results:
+        print("No urls not already present in the database found. Ceasing main execution.")
+        return common_crawl_result
+    
     input()
     handle_csv_and_upload(common_crawl_result, huggingface_api_manager, args)
     return common_crawl_result
