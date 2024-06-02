@@ -133,7 +133,7 @@ def remove_local_duplicates(url_results: list[str]) -> list[str]:
 
     for index, url in enumerate(stripped_url_results):
         if url in unique_urls:
-            del (url_results[index - adjust])
+            del url_results[index - adjust]
             adjust += 1
         else:
             unique_urls.appendleft(url)
@@ -168,8 +168,7 @@ def remove_remote_duplicates(url_results: list[str]) -> list[str]:
 
     for index, url in enumerate(stripped_url_results):
         if url in remote_urls:
-            print(url_results[index - adjust])
-            del (url_results[index - adjust])
+            del url_results[index - adjust]
             adjust += 1
 
     return url_results
