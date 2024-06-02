@@ -19,12 +19,10 @@ pip install -r requirements.txt
 
 Please ensure you have a `.env` file located in the root directory (not the `common_crawler` directory) 
 which contains the following environment variable:
+
 * HUGGINGFACE_ACCESS_TOKEN = The access token to enable writing to the associated PDAP dataset.
-To obtain your access token, consult user settings at https://huggingface.co/settings/tokens 
-and ensure you have write access to https://huggingface.co/PDAP .
-
-To check for duplicate urls against a Label Studio project, add the following environment variables:
-
+To obtain your access token, consult user settings at <https://huggingface.co/settings/tokens>
+and ensure you have write access to <https://huggingface.co/PDAP> .
 * LABEL_STUDIO_ACCESS_TOKEN = The access token for the Label Studio API. This can be
   obtained by logging into Label Studio and navigating to the [user account section](https://app.heartex.com/user/account), where the access token can be copied.
 * LABEL_STUDIO_PROJECT_ID = The project ID for the Label Studio API. This can be
