@@ -155,7 +155,12 @@ def remove_remote_duplicates(url_results: list[str]) -> list[str]:
     api_manager = LabelStudioAPIManager(config)
     response = api_manager.export_tasks_from_project(all_tasks=True)
     remote_results = response.json()
-    remote_urls = [strip_url(result["data"]["url"]) for result in remote_results]
+    
+    try:
+        remote_urls = [strip_url(result["data"]["url"]) for result in remote_results]
+    except TypeError:
+        print("Invalid Label Studio credentials. Database could not be checked for duplicates.")
+        return url_results
     remote_urls = set(remote_urls)
 
     stripped_url_results = [strip_url(url) for url in url_results]
@@ -219,14 +224,13 @@ def process_crawl_and_upload(
         print("No url results found. Ceasing main execution.")
         return common_crawl_result
 
-    print("Removing duplicates already in the database")
+    print("Removing urls already in the database")
     common_crawl_result.url_results = remove_local_duplicates(common_crawl_result.url_results)
     common_crawl_result.url_results = remove_remote_duplicates(common_crawl_result.url_results)
     if not common_crawl_result.url_results:
         print("No urls not already present in the database found. Ceasing main execution.")
         return common_crawl_result
-    
-    input()
+  
     handle_csv_and_upload(common_crawl_result, huggingface_api_manager, args)
     return common_crawl_result
 
