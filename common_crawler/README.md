@@ -27,8 +27,6 @@ and ensure you have write access to <https://huggingface.co/PDAP> .
   obtained by logging into Label Studio and navigating to the [user account section](https://app.heartex.com/user/account), where the access token can be copied.
 * LABEL_STUDIO_PROJECT_ID = The project ID for the Label Studio API. This can be
   obtained by logging into Label Studio and navigating to the relevant project, where the project id will be in the URL.
-* LABEL_STUDIO_ORGANIZATION_ID = The organization ID for the Label Studio API. This can
-  be obtained by logging into Label Studio and navigating to the [Organization section](https://app.heartex.com/organization?page=1), where the organization ID can be copied.
 
 ### Instructions
 

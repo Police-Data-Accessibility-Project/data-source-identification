@@ -74,6 +74,23 @@ def main():
         access_token=hf_access_token,
         repo_id=args.huggingface_repo_id
     )
+    ls_access_token = os.getenv("LABEL_STUDIO_ACCESS_TOKEN")
+    if not ls_access_token:
+        raise ValueError(
+            "LABEL_STUDIO_ACCESS_TOKEN not accessible in .env file in root directory. "
+            "Please obtain access token from your personal account at "
+            "https://app.heartex.com/user/account and ensure you have read access to "
+            "https://app.heartex.com/projects/61550. Then include in .env file in root directory.")
+    ls_project_id = os.getenv("LABEL_STUDIO_PROJECT_ID")
+    if not ls_project_id:
+        raise ValueError(
+            "LABEL_STUDIO_PROJECT_ID not accessible in .env file in root directory. "
+            "Please obtain a project ID by navigating to the Label Studio project  "
+            "where it will be visibile in the url. Then include in .env file in root directory.")
+    label_studio_results = get_ls_data()
+    if label_studio_results is None:
+        return
+    input()
 
     if args.reset_cache:
         cache_manager.reset_cache()
@@ -103,6 +120,33 @@ def main():
         cache_manager.save_cache()
     except ValueError as e:
         print(f"Error while saving cache manager: {e}")
+
+
+def get_ls_data() -> list[dict] | None:
+    """Retrieves data from a Label Studio project to be used in deduplication of common crawl results.
+
+    Returns:
+        list[dict] | None: Data from the Labels Studio project or None if the result is invalid.
+    """
+    # Retrieve the data from the Labels Studio project
+    config = LabelStudioConfig()
+    api_manager = LabelStudioAPIManager(config)
+    response = api_manager.export_tasks_from_project(all_tasks=True)
+    remote_results = response.json()
+
+    # Check that the results are valid and usable
+    # remote_results will resolve to a list if the request is valid,
+    # otherwise it will be a dict
+    if type(remote_results) == list and "url" not in remote_results[0]["data"]:
+        print("Column 'url' not present in Label Studio project. Exiting...")
+    elif type(remote_results) == dict and remote_results["status_code"] == 401:
+        print("Invalid Label Studio token passed! Exiting...")
+    elif type(remote_results) == dict and remote_results["status_code"] == 404:
+        print("Invalid Label Studio project ID! Exiting...")
+    else:
+        return remote_results
+
+    return None
 
 
 def strip_url(url: str) -> str:
