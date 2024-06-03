@@ -87,10 +87,11 @@ def main():
             "LABEL_STUDIO_PROJECT_ID not accessible in .env file in root directory. "
             "Please obtain a project ID by navigating to the Label Studio project  "
             "where it will be visibile in the url. Then include in .env file in root directory.")
+    print("Retrieving Label Studio data for deduplication")
     label_studio_results = get_ls_data()
     if label_studio_results is None:
         return
-    input()
+    print("Label Studio data retrieved successfully")
 
     if args.reset_cache:
         cache_manager.reset_cache()
@@ -98,7 +99,7 @@ def main():
     try:
         # Retrieve the last page from the cache, or 0 if it does not exist
         last_page = cache_manager.get(args.common_crawl_id, args.url, args.keyword)
-        common_crawl_result = process_crawl_and_upload(args, last_page, huggingface_api_manager)
+        common_crawl_result = process_crawl_and_upload(args, last_page, huggingface_api_manager, label_studio_results)
         batch_info = BatchInfo(
             datetime=get_current_time(),
             source="Common Crawl",
@@ -185,23 +186,18 @@ def remove_local_duplicates(url_results: list[str]) -> list[str]:
     return url_results
 
 
-def remove_remote_duplicates(url_results: list[str]) -> list[str]:
+def remove_remote_duplicates(url_results: list[str], label_studio_data: list[dict]) -> list[str]:
     """Removes URLs from a list that are already present in the Label Studio project, ignoring http(s)://www.
 
     Args:
         url_results (list[str]): List of URLs to deduplicate.
+        label_studio_data (list[dict]): Label Studio project data to check for duplicates.
 
     Returns:
         list[str]: List of remaining URLs not present in the Label Studio project.
-    """    
-    # Retrieve URLs from remote Label Studio Project
-    config = LabelStudioConfig()
-    api_manager = LabelStudioAPIManager(config)
-    response = api_manager.export_tasks_from_project(all_tasks=True)
-    remote_results = response.json()
-    
+    """
     try:
-        remote_urls = [strip_url(result["data"]["url"]) for result in remote_results]
+        remote_urls = [strip_url(task["data"]["url"]) for task in label_studio_data]
     except TypeError:
         print("Invalid Label Studio credentials. Database could not be checked for duplicates.")
         return url_results
@@ -248,7 +244,8 @@ def handle_csv_and_upload(
 def process_crawl_and_upload(
         args: argparse.Namespace,
         last_page: int,
-        huggingface_api_manager: HuggingFaceAPIManager) -> CommonCrawlResult:
+        huggingface_api_manager: HuggingFaceAPIManager,
+        label_studio_data: list[dict]) -> CommonCrawlResult:
     # Initialize the CommonCrawlerManager
     crawler_manager = CommonCrawlerManager(
         args.common_crawl_id
@@ -269,7 +266,7 @@ def process_crawl_and_upload(
 
     print("Removing urls already in the database")
     common_crawl_result.url_results = remove_local_duplicates(common_crawl_result.url_results)
-    common_crawl_result.url_results = remove_remote_duplicates(common_crawl_result.url_results)
+    common_crawl_result.url_results = remove_remote_duplicates(common_crawl_result.url_results, label_studio_data)
     if not common_crawl_result.url_results:
         print("No urls not already present in the database found. Ceasing main execution.")
         return common_crawl_result
