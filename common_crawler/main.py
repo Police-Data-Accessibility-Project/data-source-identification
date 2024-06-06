@@ -280,7 +280,7 @@ def process_crawl_and_upload(
         return common_crawl_result
   
     handle_csv_and_upload(common_crawl_result, huggingface_api_manager, args)
->>>>>>> main
+
     return common_crawl_result
 
 
