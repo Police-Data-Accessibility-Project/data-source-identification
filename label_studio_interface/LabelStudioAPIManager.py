@@ -3,12 +3,17 @@ import json
 import os
 import random
 import string
+import sys
 
 import requests
 from dotenv import load_dotenv
 from enum import Enum
 
-from LabelStudioConfig import LabelStudioConfig
+# The below code sets the working directory to be the root of the entire repository
+# This is done to solve otherwise quite annoying import issues.
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+from label_studio_interface.LabelStudioConfig import LabelStudioConfig
 
 """
 This script contains code which interfaces with the Label Studio API.

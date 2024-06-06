@@ -1,5 +1,7 @@
 import argparse
+import collections
 import dataclasses
+import re
 import sys
 import os
 from datetime import datetime
@@ -16,6 +18,8 @@ from common_crawler.argparser import parse_args
 from common_crawler.cache import CommonCrawlerCacheManager
 from common_crawler.crawler import CommonCrawlerManager, CommonCrawlResult
 from common_crawler.csv_manager import CSVManager
+from label_studio_interface.LabelStudioConfig import LabelStudioConfig
+from label_studio_interface.LabelStudioAPIManager import LabelStudioAPIManager
 
 """
 This module contains the main function for the Common Crawler script.
@@ -70,6 +74,24 @@ def main():
         access_token=hf_access_token,
         repo_id=args.huggingface_repo_id
     )
+    ls_access_token = os.getenv("LABEL_STUDIO_ACCESS_TOKEN")
+    if not ls_access_token:
+        raise ValueError(
+            "LABEL_STUDIO_ACCESS_TOKEN not accessible in .env file in root directory. "
+            "Please obtain access token from your personal account at "
+            "https://app.heartex.com/user/account and ensure you have read access to "
+            "https://app.heartex.com/projects/61550. Then include in .env file in root directory.")
+    ls_project_id = os.getenv("LABEL_STUDIO_PROJECT_ID")
+    if not ls_project_id:
+        raise ValueError(
+            "LABEL_STUDIO_PROJECT_ID not accessible in .env file in root directory. "
+            "Please obtain a project ID by navigating to the Label Studio project  "
+            "where it will be visibile in the url. Then include in .env file in root directory.")
+    print("Retrieving Label Studio data for deduplication")
+    label_studio_results = get_ls_data()
+    if label_studio_results is None:
+        return
+    print("Label Studio data retrieved successfully")
 
     if args.reset_cache:
         cache_manager.reset_cache()
@@ -77,7 +99,7 @@ def main():
     try:
         # Retrieve the last page from the cache, or 0 if it does not exist
         last_page = cache_manager.get(args.common_crawl_id, args.url, args.keyword)
-        common_crawl_result = process_crawl_and_upload(args, last_page, huggingface_api_manager)
+        common_crawl_result = process_crawl_and_upload(args, last_page, huggingface_api_manager, label_studio_results)
         batch_info = BatchInfo(
             datetime=get_current_time(),
             source="Common Crawl",
@@ -99,6 +121,97 @@ def main():
         cache_manager.save_cache()
     except ValueError as e:
         print(f"Error while saving cache manager: {e}")
+
+
+def get_ls_data() -> list[dict] | None:
+    """Retrieves data from a Label Studio project to be used in deduplication of common crawl results.
+
+    Returns:
+        list[dict] | None: Data from the Labels Studio project or None if the result is invalid.
+    """
+    # Retrieve the data from the Labels Studio project
+    config = LabelStudioConfig()
+    api_manager = LabelStudioAPIManager(config)
+    response = api_manager.export_tasks_from_project(all_tasks=True)
+    remote_results = response.json()
+
+    # Check that the results are valid and usable
+    # remote_results will resolve to a list if the request is valid,
+    # otherwise it will be a dict
+    if type(remote_results) == list and "url" not in remote_results[0]["data"]:
+        print("Column 'url' not present in Label Studio project. Exiting...")
+    elif type(remote_results) == dict and remote_results["status_code"] == 401:
+        print("Invalid Label Studio token passed! Exiting...")
+    elif type(remote_results) == dict and remote_results["status_code"] == 404:
+        print("Invalid Label Studio project ID! Exiting...")
+    else:
+        return remote_results
+
+    return None
+
+
+def strip_url(url: str) -> str:
+    """Strips http(s)://www. from the beginning of a url if applicable. 
+
+    Args:
+        url (str): The URL to strip.
+
+    Returns:
+        str: The stripped URL.
+    """    
+    result = re.search(r"^(?:https?://)?(?:www\.)?(.*)$", url).group(1)
+    return result
+
+
+def remove_local_duplicates(url_results: list[str]) -> list[str]:
+    """Removes duplicate URLs from a list, ignoring http(s)://www.
+
+    Args:
+        url_results (list[str]): List of URLs to deduplicate.
+
+    Returns:
+        list[str]: List of unique URLs.
+    """    
+    stripped_url_results = [strip_url(url) for url in url_results]
+    unique_urls = collections.deque()
+    adjust = 0
+
+    for index, url in enumerate(stripped_url_results):
+        if url in unique_urls:
+            del url_results[index - adjust]
+            adjust += 1
+        else:
+            unique_urls.appendleft(url)
+
+    return url_results
+
+
+def remove_remote_duplicates(url_results: list[str], label_studio_data: list[dict]) -> list[str]:
+    """Removes URLs from a list that are already present in the Label Studio project, ignoring http(s)://www.
+
+    Args:
+        url_results (list[str]): List of URLs to deduplicate.
+        label_studio_data (list[dict]): Label Studio project data to check for duplicates.
+
+    Returns:
+        list[str]: List of remaining URLs not present in the Label Studio project.
+    """
+    try:
+        remote_urls = [strip_url(task["data"]["url"]) for task in label_studio_data]
+    except TypeError:
+        print("Invalid Label Studio credentials. Database could not be checked for duplicates.")
+        return url_results
+    remote_urls = set(remote_urls)
+
+    stripped_url_results = [strip_url(url) for url in url_results]
+    adjust = 0
+
+    for index, url in enumerate(stripped_url_results):
+        if url in remote_urls:
+            del url_results[index - adjust]
+            adjust += 1
+
+    return url_results
 
 
 def handle_csv_and_upload(
@@ -131,7 +244,8 @@ def handle_csv_and_upload(
 def process_crawl_and_upload(
         args: argparse.Namespace,
         last_page: int,
-        huggingface_api_manager: HuggingFaceAPIManager) -> CommonCrawlResult:
+        huggingface_api_manager: HuggingFaceAPIManager,
+        label_studio_data: list[dict]) -> CommonCrawlResult:
     # Initialize the CommonCrawlerManager
     crawler_manager = CommonCrawlerManager(
         args.common_crawl_id
@@ -149,6 +263,14 @@ def process_crawl_and_upload(
     if not common_crawl_result.url_results:
         print("No url results found. Ceasing main execution.")
         return common_crawl_result
+
+    print("Removing urls already in the database")
+    common_crawl_result.url_results = remove_local_duplicates(common_crawl_result.url_results)
+    common_crawl_result.url_results = remove_remote_duplicates(common_crawl_result.url_results, label_studio_data)
+    if not common_crawl_result.url_results:
+        print("No urls not already present in the database found. Ceasing main execution.")
+        return common_crawl_result
+  
     handle_csv_and_upload(common_crawl_result, huggingface_api_manager, args)
     return common_crawl_result
 
