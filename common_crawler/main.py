@@ -29,14 +29,13 @@ class BatchInfo:
     count: str
     keywords: str
     notes: str
+    filename: str
 
 
-BATCH_HEADERS = ['Datetime', 'Source', 'Count', 'Keywords', 'Notes']
-
+BATCH_HEADERS = ['Datetime', 'Source', 'Count', 'Keywords', 'Notes', 'Filename']
 
 def get_current_time():
     return str(datetime.now())
-
 
 def add_batch_info_to_csv(batch_info: BatchInfo, data_dir: str):
     batch_info_csv_manager = CSVManager(
@@ -78,14 +77,6 @@ def main():
         # Retrieve the last page from the cache, or 0 if it does not exist
         last_page = cache_manager.get(args.common_crawl_id, args.url, args.keyword)
         common_crawl_result = process_crawl_and_upload(args, last_page, huggingface_api_manager)
-        batch_info = BatchInfo(
-            datetime=get_current_time(),
-            source="Common Crawl",
-            count=str(len(common_crawl_result.url_results)),
-            keywords=f"{args.url} - {args.keyword}",
-            notes=f"{args.common_crawl_id}, {args.pages} pages, starting at {last_page + 1}"
-        )
-        add_batch_info_to_csv(batch_info, args.data_dir)
     except ValueError as e:
         print(f"Error during crawling: {e}")
         return
@@ -97,6 +88,7 @@ def main():
             keyword=args.keyword,
             last_page=common_crawl_result.last_page_search)
         cache_manager.save_cache()
+
     except ValueError as e:
         print(f"Error while saving cache manager: {e}")
 
@@ -104,17 +96,31 @@ def main():
 def handle_csv_and_upload(
         common_crawl_result: CommonCrawlResult,
         huggingface_api_manager: HuggingFaceAPIManager,
-        args: argparse.Namespace):
+        args: argparse.Namespace,
+        last_page: int):
     """
     Handles the CSV file and uploads it to Hugging Face repository.
     Args:
         common_crawl_result: The result from Common Crawl.
         huggingface_api_manager: The Hugging Face API manager.
         args: The command-line arguments.
+        last_page: last page crawled
 
     """
+
+    batch_info = BatchInfo(
+            datetime=get_current_time(),
+            source="Common Crawl",
+            count=str(len(common_crawl_result.url_results)),
+            keywords=f"{args.url} - {args.keyword}",
+            notes=f"{args.common_crawl_id}, {args.pages} pages, starting at {last_page + 1}",
+            filename=f"{args.output_filename}_{get_filename_friendly_timestamp()}"
+    )
+
+    add_batch_info_to_csv(batch_info, args.data_dir)
+
     csv_manager = CSVManager(
-        file_name=f"{args.output_filename}_{get_filename_friendly_timestamp()}",
+        file_name=batch_info.filename,
         headers=['url'],
         directory=args.data_dir
     )
@@ -149,7 +155,7 @@ def process_crawl_and_upload(
     if not common_crawl_result.url_results:
         print("No url results found. Ceasing main execution.")
         return common_crawl_result
-    handle_csv_and_upload(common_crawl_result, huggingface_api_manager, args)
+    handle_csv_and_upload(common_crawl_result, huggingface_api_manager, args, last_page)
     return common_crawl_result
 
 
