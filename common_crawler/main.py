@@ -6,7 +6,7 @@ import sys
 import os
 from datetime import datetime
 
-from dotenv import load_dotenv
+from dotenv import load_dotenv, find_dotenv
 
 # The below code sets the working directory to be the root of the entire repository
 # This is done to solve otherwise quite annoying import issues.
@@ -61,6 +61,7 @@ def main():
     )
 
     load_dotenv()
+    
     # Initialize the HuggingFace API Manager
     hf_access_token = os.getenv("HUGGINGFACE_ACCESS_TOKEN")
     if not hf_access_token:
@@ -270,16 +271,14 @@ def process_crawl_and_upload(
         print("No url results found. Ceasing main execution.")
         return common_crawl_result
 
-    handle_csv_and_upload(common_crawl_result, huggingface_api_manager, args, last_page)
-
     print("Removing urls already in the database")
     common_crawl_result.url_results = remove_local_duplicates(common_crawl_result.url_results)
     common_crawl_result.url_results = remove_remote_duplicates(common_crawl_result.url_results, label_studio_data)
     if not common_crawl_result.url_results:
         print("No urls not already present in the database found. Ceasing main execution.")
         return common_crawl_result
-  
-    handle_csv_and_upload(common_crawl_result, huggingface_api_manager, args)
+
+    handle_csv_and_upload(common_crawl_result, huggingface_api_manager, args, last_page)
 
     return common_crawl_result
 
