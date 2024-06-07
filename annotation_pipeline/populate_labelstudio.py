@@ -3,6 +3,7 @@ import pandas as pd
 import subprocess
 import sys
 import os
+import configparser
 
 # Add the directory containing label studio interface tools to sys.path
 script_dir = os.path.abspath('../label_studio_interface/')
@@ -76,6 +77,18 @@ def csv_to_label_studio_tasks(csv_file_path: str, batch_id: str, output_name: st
     tasks = [{"data": row.to_dict()} for _, row in df.iterrows()]
     return tasks
 
+def get_huggingface_repo_id(config_file: str) -> str:
+    config = configparser.ConfigParser()
+    config.read(config_file)
+
+    # Retrieve the huggingface_repo_id from the DEFAULT section
+    huggingface_repo_id = config['DEFAULT'].get('huggingface_repo_id')
+    
+    if huggingface_repo_id is None:
+        raise ValueError("huggingface_repo_id not found in the config file.")
+
+    return huggingface_repo_id
+
 def main():
     """
     This script automates the process of crawling for relevant URL's,
@@ -83,7 +96,7 @@ def main():
     and uploading to label studio
     """
 
-    # ----------------- COMMON CRAWL -----------------------------------
+# ----------------- COMMON CRAWL -----------------------------------
 
     #common crawl parameters
     common_crawl_id = 'CC-MAIN-2024-10'
@@ -96,17 +109,21 @@ def main():
 
     #check success
     if crawl_return_code != 0:
-        print(f"Common crawl script failed with error:\n{crawl_stderr}")
-        sys.exit(1)
+        print(f"Common crawl script failed:\n{crawl_stderr}")
+        return
 
     #print batch info to verify before continuing
     batch_info = pd.read_csv("common_crawler/data/batch_info.csv").iloc[-1]
     print("Batch Info:\n" + f"{batch_info}")
 
-    input("Confirm batch info and csv on HuggingFace, press any key to proceed. Ctrl-c to quit")
+    if(batch_info["Count"] != 0):
+        input("Confirm batch info and csv on HuggingFace, press any key to proceed. Ctrl-c to quit")
+    else:
+        return
 
     #get urls from hugging face
-    REPO_ID = "PDAP/unlabeled-urls"
+    #REPO_ID = "PDAP/unlabeled-urls"
+    REPO_ID = get_hugging_face_repo_id("../common_crawler/config.ini")
     FILENAME = "urls/" + batch_info["Filename"] + ".csv"
     df = pd.read_csv(hf_hub_download(repo_id=REPO_ID, filename=FILENAME, repo_type="dataset", local_dir="common_crawler/"), index_col=False)
 
@@ -117,8 +134,8 @@ def main():
 
     #check success
     if tag_collector_return_code != 0:
-        print(f"Tag collector script failed with error:\n{tag_collector_stderr}")
-        sys.exit(1)
+        print(f"Tag collector script failed:\n{tag_collector_stderr}")
+        return
 
     #create batch_id from datetime (removes milliseconds)
     datetime = batch_info["Datetime"]
@@ -146,7 +163,6 @@ def main():
         print(f"Tasks successfully imported. Please access the project at {labelstudio_url} to perform review and annotation tasks")
     else:
         print(f"Failed to import tasks. Response code: {label_studio_response.status_code}\n{label_studio_response.text}")
-        sys.exit(1)
 
 if __name__ == "__main__":
     print("Running Annotation Pipeline...")
