@@ -6,7 +6,7 @@ import sys
 import os
 from datetime import datetime
 
-from dotenv import load_dotenv, find_dotenv
+from dotenv import load_dotenv
 
 # The below code sets the working directory to be the root of the entire repository
 # This is done to solve otherwise quite annoying import issues.
@@ -41,13 +41,24 @@ BATCH_HEADERS = ['Datetime', 'Source', 'Count', 'Keywords', 'Notes', 'Filename']
 def get_current_time():
     return str(datetime.now())
 
-def add_batch_info_to_csv(batch_info: BatchInfo, data_dir: str):
+def add_batch_info_to_csv(common_crawl_result: CommonCrawlResult, args: argparse.Namespace, last_page: int) -> BatchInfo:
+    batch_info = BatchInfo(
+        datetime=get_current_time(),
+        source="Common Crawl",
+        count=str(len(common_crawl_result.url_results)),
+        keywords=f"{args.url} - {args.keyword}",
+        notes=f"{args.common_crawl_id}, {args.pages} pages, starting at {last_page + 1}",
+        filename=f"{args.output_filename}_{get_filename_friendly_timestamp()}"
+    )
+
     batch_info_csv_manager = CSVManager(
         file_name='batch_info',
-        directory=data_dir,
+        directory=args.data_dir,
         headers=BATCH_HEADERS
     )
     batch_info_csv_manager.add_row(dataclasses.astuple(batch_info))
+
+    return batch_info
 
 
 def main():
@@ -129,19 +140,28 @@ def get_ls_data() -> list[dict] | None:
     remote_results = response.json()
 
     # Check that the results are valid and usable
+    # Return empty list if project is valid but not yet populated
     # remote_results will resolve to a list if the request is valid,
     # otherwise it will be a dict
-    if type(remote_results) == list and "url" not in remote_results[0]["data"]:
-        print("Column 'url' not present in Label Studio project. Exiting...")
-    elif type(remote_results) == dict and remote_results["status_code"] == 401:
-        print("Invalid Label Studio token passed! Exiting...")
-    elif type(remote_results) == dict and remote_results["status_code"] == 404:
-        print("Invalid Label Studio project ID! Exiting...")
+    if isinstance(remote_results, list):
+        if not remote_results:
+            print("No data in Label Studio project.")
+            return []
+        elif "url" not in remote_results[0]["data"]:
+            print("Column 'url' not present in Label Studio project. Exiting...")
+        else:
+            return remote_results
+    elif isinstance(remote_results, dict):
+        if remote_results.get("status_code") == 401:
+            print("Invalid Label Studio token passed! Exiting...")
+        elif remote_results.get("status_code") == 404:
+            print("Invalid Label Studio project ID! Exiting...")
+        else:
+            print("Unexpected error: ", remote_results)
     else:
-        return remote_results
+        print("Unexpected response type.")
 
     return None
-
 
 def strip_url(url: str) -> str:
     """Strips http(s)://www. from the beginning of a url if applicable. 
@@ -221,17 +241,7 @@ def handle_csv_and_upload(
         last_page: last page crawled
 
     """
-
-    batch_info = BatchInfo(
-            datetime=get_current_time(),
-            source="Common Crawl",
-            count=str(len(common_crawl_result.url_results)),
-            keywords=f"{args.url} - {args.keyword}",
-            notes=f"{args.common_crawl_id}, {args.pages} pages, starting at {last_page + 1}",
-            filename=f"{args.output_filename}_{get_filename_friendly_timestamp()}"
-    )
-
-    add_batch_info_to_csv(batch_info, args.data_dir)
+    batch_info = add_batch_info_to_csv(common_crawl_result, args, last_page)
 
     csv_manager = CSVManager(
         file_name=batch_info.filename,
@@ -269,6 +279,7 @@ def process_crawl_and_upload(
     # Logic should conclude here if no results are found
     if not common_crawl_result.url_results:
         print("No url results found. Ceasing main execution.")
+        add_batch_info_to_csv(common_crawl_result, args, last_page)
         return common_crawl_result
 
     print("Removing urls already in the database")
@@ -276,6 +287,7 @@ def process_crawl_and_upload(
     common_crawl_result.url_results = remove_remote_duplicates(common_crawl_result.url_results, label_studio_data)
     if not common_crawl_result.url_results:
         print("No urls not already present in the database found. Ceasing main execution.")
+        add_batch_info_to_csv(common_crawl_result, args, last_page)
         return common_crawl_result
 
     handle_csv_and_upload(common_crawl_result, huggingface_api_manager, args, last_page)
