@@ -5,12 +5,11 @@ import sys
 import os
 import configparser
 
-# Add the directory containing label studio interface tools to sys.path
-script_dir = os.path.abspath('../label_studio_interface/')
-sys.path.append(script_dir)
+# The below code sets the working directory to be the root of the entire repository for module imports
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from LabelStudioConfig import LabelStudioConfig
-from LabelStudioAPIManager import LabelStudioAPIManager
+from label_studio_interface.LabelStudioConfig import LabelStudioConfig
+from label_studio_interface.LabelStudioAPIManager import LabelStudioAPIManager
 
 def run_subprocess(terminal_command: str):
     """
@@ -34,10 +33,7 @@ def run_subprocess(terminal_command: str):
 def run_common_crawl(common_crawl_id: str, url: str, search_term: str, num_pages: str):
     """
     Prompts terminal to run common crawl script provided the following:
-    common_crawl_id: (str)
-    url: (str)
-    search_term: (str)
-    num_pages: (str)
+    Args: SEE def process_crawl()
 
     See Common Crawl Documentation @ https://github.com/Police-Data-Accessibility-Project/data-source-identification/blob/main/common_crawler/README.md
 
@@ -78,6 +74,8 @@ def csv_to_label_studio_tasks(csv_file_path: str, batch_id: str, output_name: st
     return tasks
 
 def get_huggingface_repo_id(config_file: str) -> str:
+    """ Returns HuggingFace REPO_ID (where unlabeled URLs are stashed) from config.ini file"""
+
     config = configparser.ConfigParser()
     config.read(config_file)
 
@@ -89,21 +87,18 @@ def get_huggingface_repo_id(config_file: str) -> str:
 
     return huggingface_repo_id
 
-def main():
+def process_crawl(common_crawl_id: str, url: str, search_term: str, num_pages: str) -> pd.Series:
+    """Initiated common crawl script and handles output for further processing
+    
+    Args:
+        common_crawl_id: string to specify which common crawl corpus to search
+        url: specify type of url to search for (e.g. *.gov for all .gov domains)
+        search_term: further refine search with keyword that must be matched in full URL
+        num_pages: number of pages to search (15,000 records per page)
+
+    Returns: 
+        batch_info (pd.Series): summary info of crawl, including filename of csv containing relevant URLs
     """
-    This script automates the process of crawling for relevant URL's,
-    scraping HTML content from those pages, formatting the data as label studio tasks,
-    and uploading to label studio
-    """
-
-# ----------------- COMMON CRAWL -----------------------------------
-
-    #common crawl parameters
-    common_crawl_id = 'CC-MAIN-2024-10'
-    url = '*.gov'
-    search_term = 'police'
-    num_pages = '2'
-
     #run common crawl
     crawl_return_code, crawl_stdout, crawl_stderr = run_common_crawl(common_crawl_id, url, search_term, num_pages)
 
@@ -122,13 +117,24 @@ def main():
         return
 
     #get urls from hugging face
-    #REPO_ID = "PDAP/unlabeled-urls"
-    REPO_ID = get_hugging_face_repo_id("../common_crawler/config.ini")
+    REPO_ID = get_huggingface_repo_id("../common_crawler/config.ini")
     FILENAME = "urls/" + batch_info["Filename"] + ".csv"
     df = pd.read_csv(hf_hub_download(repo_id=REPO_ID, filename=FILENAME, repo_type="dataset", local_dir="common_crawler/"), index_col=False)
 
-# ----------------- TAG COLLECTOR ----------------------------------
+    return batch_info
 
+def process_tag_collector(batch_info: pd.Series, FILENAME: str) -> str:
+    """
+    Initiates tag collector script and creates a batch id for all samples
+
+    Args:
+        batch_info (pd.Series): summary info for crawl
+        FILENAME (str): filename of csv to collect tags on
+
+    Returns:
+        batch_id (str): a datetime stamp to track batches
+    """
+    
     #run tag collector
     tag_collector_return_code, tag_collector_stdout, tag_collector_stderr = run_tag_collector(FILENAME)
 
@@ -141,8 +147,13 @@ def main():
     datetime = batch_info["Datetime"]
     batch_id = datetime[:datetime.find('.')]
 
-# ----------------- LABEL STUDIO UPLOAD ----------------------------
+    return batch_id
 
+def label_studio_upload(batch_id: str, FILENAME: str):
+    """
+    Handles label studio task formatting and upload
+    """
+    
     #convert to label studio task format
     data = csv_to_label_studio_tasks("labeled-source-text.csv", batch_id, FILENAME)
 
@@ -164,9 +175,24 @@ def main():
     else:
         print(f"Failed to import tasks. Response code: {label_studio_response.status_code}\n{label_studio_response.text}")
 
+def main():
+    """
+    This script automates the process of crawling for relevant URL's,
+    scraping HTML content from those pages, formatting the data as label studio tasks,
+    and uploading to label studio
+    """
+
+    # COMMON CRAWL
+    batch_info = process_crawl('CC-MAIN-2024-10', '*.gov', 'police', '2')
+    FILENAME = "urls/" + batch_info["Filename"] + ".csv"
+
+    # TAG COLLECTOR
+    batch_id = process_tag_collector(batch_info, FILENAME)
+
+    # LABEL STUDIO UPLOAD
+    label_studio_upload(batch_id, FILENAME)
+
 if __name__ == "__main__":
     print("Running Annotation Pipeline...")
     main()
-
-
 

@@ -41,6 +41,7 @@ BATCH_HEADERS = ['Datetime', 'Source', 'Count', 'Keywords', 'Notes', 'Filename']
 def get_current_time():
     return str(datetime.now())
 
+
 def add_batch_info_to_csv(common_crawl_result: CommonCrawlResult, args: argparse.Namespace, last_page: int) -> BatchInfo:
     batch_info = BatchInfo(
         datetime=get_current_time(),
@@ -127,6 +128,35 @@ def main():
         print(f"Error while saving cache manager: {e}")
 
 
+def validate_remote_results(remote_results):
+    """
+    Validates the remote results retrieved from the Label Studio project
+
+    Args: remote_results (dict or list): The results from the Label Studio project
+
+    Returns:
+        list[dict]: If the remote results are valid
+        None: If the remote results are invalid
+    """
+    if isinstance(remote_results, list):
+        if not remote_results:
+            print("No data in Label Studio project.")
+            return []
+        elif "url" not in remote_results[0]["data"]:
+            sys.exit("Column 'url' not present in Label Studio project. Exiting...")
+        else:
+            return remote_results
+    elif isinstance(remote_results, dict):
+        if remote_results.get("status_code") == 401:
+            sys.exit("Invalid Label Studio token passed! Exiting...")
+        elif remote_results.get("status_code") == 404:
+            sys.exit("Invalid Label Studio project ID! Exiting...")
+        else:
+            sys.exit(f"Unexpected error: {remote_results}")
+    else:
+        sys.exit("Unexpected response type.")
+
+
 def get_ls_data() -> list[dict] | None:
     """Retrieves data from a Label Studio project to be used in deduplication of common crawl results.
 
@@ -139,29 +169,8 @@ def get_ls_data() -> list[dict] | None:
     response = api_manager.export_tasks_from_project(all_tasks=True)
     remote_results = response.json()
 
-    # Check that the results are valid and usable
-    # Return empty list if project is valid but not yet populated
-    # remote_results will resolve to a list if the request is valid,
-    # otherwise it will be a dict
-    if isinstance(remote_results, list):
-        if not remote_results:
-            print("No data in Label Studio project.")
-            return []
-        elif "url" not in remote_results[0]["data"]:
-            print("Column 'url' not present in Label Studio project. Exiting...")
-        else:
-            return remote_results
-    elif isinstance(remote_results, dict):
-        if remote_results.get("status_code") == 401:
-            print("Invalid Label Studio token passed! Exiting...")
-        elif remote_results.get("status_code") == 404:
-            print("Invalid Label Studio project ID! Exiting...")
-        else:
-            print("Unexpected error: ", remote_results)
-    else:
-        print("Unexpected response type.")
+    return validate_remote_results(remote_results)
 
-    return None
 
 def strip_url(url: str) -> str:
     """Strips http(s)://www. from the beginning of a url if applicable. 
