@@ -1,28 +1,31 @@
-import os
-
-import psycopg2
 from dotenv import load_dotenv
+import psycopg
 
 
 class DBManager:
+    """
+    Manages access to PostgreSQL database.
+    """
 
-    def __init__(self, db_name, user, password, host, port):
-        self.conn = psycopg2.connect(
-            dbname=db_name,
-            user=user,
-            password=password,
-            host=host,
-            port=port
-        )
+    def __init__(self, database_url: str):
+        self.conn = psycopg.connect(database_url)
         self.cursor = self.conn.cursor()
 
     def __del__(self):
         self.conn.close()
 
-    def execute(self, query, params=None):
+    def execute(self, query, params=None) -> list:
         self.cursor.execute(query, params)
         self.conn.commit()
         return self.cursor.fetchall()
+
+    def executemany(self, query, params=None) -> list:
+        self.cursor.executemany(query, params)
+        self.conn.commit()
+        try:
+            return self.cursor.fetchall()
+        except psycopg.ProgrammingError:
+            return []
 
     def fetchall(self):
         return self.cursor.fetchall()
@@ -35,12 +38,3 @@ class DBManager:
 
     def close(self):
         self.conn.close()
-
-
-if __name__ == "__main__":
-    # Note: This is test code to evaluate whether the connection url works. Will be removed in final version.
-    load_dotenv()
-    conn_url = os.getenv("DIGITAL_OCEAN_DB_CONNECTION_URL")
-    conn = psycopg2.connect(conn_url)
-
-    pass
