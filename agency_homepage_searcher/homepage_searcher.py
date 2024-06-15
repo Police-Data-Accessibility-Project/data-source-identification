@@ -1,9 +1,15 @@
 import csv
+import json
+import os
 import tempfile
+from http import HTTPStatus
+
+import requests
 from dataclasses import dataclass
 from pathlib import Path
 from typing import List, Union
 from enum import Enum
+
 
 from agency_homepage_searcher.agency_info import AgencyInfo
 from agency_homepage_searcher.google_searcher import GoogleSearcher, QuotaExceededError
@@ -12,7 +18,9 @@ from util.db_manager import DBManager
 from util.miscellaneous_functions import get_filename_friendly_timestamp
 
 MAX_SEARCHES = 100  # Maximum searches to perform at a time when searching for results
-
+BASE_URL = "https://data-sources.pdap.io/api/"
+SEARCH_CACHE_ENDPOINT = "homepage-search-cache"
+FULL_CACHE_ENDPOINT = f"{BASE_URL}{SEARCH_CACHE_ENDPOINT}"
 
 class SearchResultEnum(Enum):
     """
@@ -94,6 +102,17 @@ class HomepageSearcher:
         self.database_manager = database_manager
         self.huggingface_api_manager = huggingface_api_manager
         self.us_state_reference = USStateReference(database_manager)
+        self.pdap_api_key = os.getenv("PDAP_API_KEY")
+
+    def get_search_cache_header(self) -> dict:
+        """
+        Returns a header for the search cache table.
+        Returns: dict
+        """
+        return {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {self.pdap_api_key}"
+        }
 
     def create_agency_info(self, agency_row: list) -> AgencyInfo:
         """
@@ -123,8 +142,16 @@ class HomepageSearcher:
         Retrieves a list of agencies without homepage URLs.
         Returns: list[AgencyInfo]
         """
-        agency_rows = self.database_manager.execute(SQL_GET_AGENCIES_WITHOUT_HOMEPAGE_URLS)
-        return [self.create_agency_info(agency_row) for agency_row in agency_rows]
+        # TODO: Implement endpoint
+        response = requests.get(
+            url=FULL_CACHE_ENDPOINT,
+            headers=self.get_search_cache_header()
+        )
+        if response.status_code != HTTPStatus.OK:
+            raise Exception(f"Failed to get search cache. Status code: {response.status_code}")
+
+        return [self.create_agency_info(row) for row in response.json()]
+
 
     def search(self, agency_info: AgencyInfo) -> Union[SearchResults, None]:
         """
@@ -260,11 +287,15 @@ class HomepageSearcher:
         Args:
             search_results:
         """
-        parameters = []
-        for search_result in search_results:
-            parameter = (search_result.agency_id, search_result.search_result_status.value)
-            parameters.append(parameter)
-        self.database_manager.executemany(SQL_UPDATE_CACHE, parameters)
+
+        response = requests.post(
+            url=FULL_CACHE_ENDPOINT,
+            data=json.dumps((search_result.search_result_status.value for search_result in search_results)),
+            headers=self.get_search_cache_header()
+        )
+
+        if response.status_code != HTTPStatus.OK:
+            raise Exception(f"Failed to update search cache. Status code: {response.status_code}")
 
     def _try_search_agency_info(self, agency_info: AgencyInfo) -> Union[SearchResults, List]:
         """
