@@ -103,7 +103,7 @@ class CommonCrawlerManager:
                     print(f"Rate limit exceeded. Rerun in {delay} second(s)... (Attempt {retries}/{max_retries})")
                     time.sleep(delay)
                 else:
-                    print(f"Failed to get records for {url} on page {page}: {response_text}")
+                    print(f"Failed to get records for {url} on page {page}: {response.text}")
                     return None
 
         print(f"Max retries exceeded. Failed to get records for {url} on page {page}.")
