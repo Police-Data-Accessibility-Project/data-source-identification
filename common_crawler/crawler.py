@@ -63,7 +63,7 @@ class CommonCrawlerManager:
 
         return CommonCrawlResult(last_page, url_results)
 
-    def search_common_crawl_index(self, url: str, page: int = 0) -> list[dict]:
+    def search_common_crawl_index(self, url: str, page: int = 0, max_retries: int = 20) -> list[dict]:
         """
         This method is used to search the Common Crawl index for a given URL and page number
         Args:
@@ -79,21 +79,35 @@ class CommonCrawlerManager:
         search_url.add_parameter('output', 'json')
         search_url.add_parameter('page', page)
 
-        # Perform an HTTP GET request to retrieve records for the encoded URL.
-        response = requests.get(str(search_url))
+        retries = 0
+        delay = 1
 
-        # If the request is successful, parse each record from the response and return them.
-        if response.status_code == 200:
-            records = response.text.strip().split('\n')
-            print(f"Found {len(records)} records for {url} on page {page}")
-            return [json.loads(record) for record in records]
-        elif 'First Page is 0, Last Page is 0' in response.text:
-            print("No records exist in index matching the url search term")
-            return None
-        else:
-            print(f"Failed to get records for {url} on page {page}: {response.text}")
-            # Return None to indicate that no records were found or an error occurred.
-            return None
+        # put HTTP GET request in re-try loop in case of rate limiting. Once per second is nice enough per common crawl doc.
+        while retries < max_retries:
+            try:
+                # Perform an HTTP GET request to retrieve records for the encoded URL.
+                response = requests.get(str(search_url))
+                response.raise_for_status()
+
+                # If the request is successful, parse each record from the response and return them.
+                if response.status_code == 200:
+                    records = response.text.strip().split('\n')
+                    print(f"Found {len(records)} records for {url} on page {page}")
+                    return [json.loads(record) for record in records]
+                elif 'First Page is 0, Last Page is 0' in response.text:
+                    print("No records exist in index matching the url search term")
+                    return None
+            except requests.exceptions.RequestException as e:
+                if response.status_code == 500 and 'SlowDown' in response.text:
+                    retries += 1
+                    print(f"Rate limit exceeded. Rerun in {delay} second(s)... (Attempt {retries}/{max_retries})")
+                    time.sleep(delay)
+                else:
+                    print(f"Failed to get records for {url} on page {page}: {response_text}")
+                    return None
+
+        print(f"Max retries exceeded. Failed to get records for {url} on page {page}.")
+        return None
 
     @staticmethod
     def get_urls_with_keyword(records: list[dict], keyword) -> list[str]:
