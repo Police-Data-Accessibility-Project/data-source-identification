@@ -4,6 +4,7 @@ import subprocess
 import sys
 import os
 import configparser
+import argparse
 
 # The below code sets the working directory to be the root of the entire repository for module imports
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -59,7 +60,7 @@ def run_tag_collector(filename: str):
 
     return return_code, stdout, stderr
 
-def csv_to_label_studio_tasks(csv_file_path: str, batch_id: str, output_name: str) -> list[dict]:
+def csv_to_label_studio_tasks(csv_file_path: str, batch_id: str, output_name: str, record_type: str = None) -> list[dict]:
     """
     Formats CSV into list[dict] with "data" key as labelstudio expects
     csv_file_path: path to csv with labeled source text
@@ -70,8 +71,36 @@ def csv_to_label_studio_tasks(csv_file_path: str, batch_id: str, output_name: st
     df['batch_id'] = [batch_id] * len(df)
     df = df.fillna('')
     df.to_csv("tag_collector/" + output_name.replace("urls/", "", 1), index=False)
-    tasks = [{"data": row.to_dict()} for _, row in df.iterrows()]
+
+    tasks = []
+
+    if record_type:
+        for _, row in df.iterrows():
+            task_data = row.to_dict()
+            task_predictions = {
+                "model_version": "record-type prediction",
+                "result": [
+                    {
+                        "from_name": "record-type",
+                        "to_name": "url",
+                        "type": "choices",
+                        "value": {
+                            "choices": [record_type]
+                        }
+                    }
+                ]
+            }
+
+            tasks.append({"data": task_data, "predictions": [task_predictions]})
+    else:
+        tasks = [{"data": row.to_dict()} for _, row in df.iterrows()]
+
     return tasks
+
+def get_valid_record_types(file_path):
+    with open(file_path, 'r') as file:
+        valid_record_types = {line.strip() for line in file}
+    return valid_record_types
 
 def get_huggingface_repo_id(config_file: str) -> str:
     """ Returns HuggingFace REPO_ID (where unlabeled URLs are stashed) from config.ini file"""
@@ -149,13 +178,13 @@ def process_tag_collector(batch_info: pd.Series, FILENAME: str) -> str:
 
     return batch_id
 
-def label_studio_upload(batch_id: str, FILENAME: str):
+def label_studio_upload(batch_id: str, FILENAME: str, record_type: str):
     """
     Handles label studio task formatting and upload
     """
     
     #convert to label studio task format
-    data = csv_to_label_studio_tasks("labeled-source-text.csv", batch_id, FILENAME)
+    data = csv_to_label_studio_tasks("labeled-source-text.csv", batch_id, FILENAME, record_type)
 
     # Load the configuration for the Label Studio API
     config = LabelStudioConfig("dev.env")
@@ -182,15 +211,27 @@ def main():
     and uploading to label studio
     """
 
+    parser = argparse.ArgumentParser(description='Process crawl arguments')
+    parser.add_argument('common_crawl_id', type=str, help='common crawl ID')
+    parser.add_argument('url', type=str, help='URL type to search for')
+    parser.add_argument('keyword', type=str, help='require this keyword in URL results')
+    parser.add_argument('--pages', type=str, required=True, help='number of pages to process')
+    parser.add_argument('--record-type', type=str, required=False, help='assumed record type for pre-annotation')
+    args = parser.parse_args()
+
+    valid_record_types = get_valid_record_types("record_types.txt")
+    if args.record_type is not None and args.record_type not in valid_record_types:
+        raise ValueError(f"Invalid record type: {args.record_type}. Must be one of {valid_record_types}")
+
     # COMMON CRAWL
-    batch_info = process_crawl('CC-MAIN-2024-10', '*.gov', 'police', '2')
+    batch_info = process_crawl(args.common_crawl_id, args.url, args.keyword, args.pages)
     FILENAME = "urls/" + batch_info["Filename"] + ".csv"
 
     # TAG COLLECTOR
     batch_id = process_tag_collector(batch_info, FILENAME)
 
     # LABEL STUDIO UPLOAD
-    label_studio_upload(batch_id, FILENAME)
+    label_studio_upload(batch_id, FILENAME, args.record_type)
 
 if __name__ == "__main__":
     print("Running Annotation Pipeline...")
