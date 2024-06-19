@@ -32,7 +32,7 @@ This Python script automates the process of crawling for relevant URLs, scraping
 
 Run from within the annotation_pipeline/ folder
 
-`python annotation_pipeline.py common_crawl_id url keyword --pages num_pages [--record-type record_type]`
+`python populate_labelstudio.py common_crawl_id url keyword --pages num_pages [--record-type record_type]`
 
 - `common_crawl_id`: ID of the Common Crawl Corpus to search
 - `url`: Type of URL to search for (e.g. *.gov for all .gov domains).
@@ -40,4 +40,4 @@ Run from within the annotation_pipeline/ folder
 - `--pages num_pages`: Number of pages to search
 - `--record-type record_type` (optional): Assumed record type for pre-annotation.
 
-e.g. `python annotation_pipeline.py CC-MAIN-2024-10 '*.gov' arrest --pages 2 --record-type 'Arrest Records'`
+e.g. `python populate_labelstudio.py CC-MAIN-2024-10 '*.gov' arrest --pages 2 --record-type 'Arrest Records'`
