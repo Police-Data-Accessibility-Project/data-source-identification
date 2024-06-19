@@ -30,12 +30,14 @@ This Python script automates the process of crawling for relevant URLs, scraping
 
 ## Usage
 
+Run from within the annotation_pipeline/ folder
+
 `python annotation_pipeline.py common_crawl_id url keyword --pages num_pages [--record-type record_type]`
 
 - `common_crawl_id`: ID of the Common Crawl Corpus to search
 - `url`: Type of URL to search for (e.g. *.gov for all .gov domains).
 - `keyword`: Keyword that must be matched in the full URL
 - `--pages num_pages`: Number of pages to search
-- `--record-type record_type` (optional): Assumed rescord type for pre-annotation.
+- `--record-type record_type` (optional): Assumed record type for pre-annotation.
 
 e.g. `python annotation_pipeline.py CC-MAIN-2024-10 '*.gov' arrest --pages 2 --record-type 'Arrest Records'`
