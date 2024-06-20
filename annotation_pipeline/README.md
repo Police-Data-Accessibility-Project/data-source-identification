@@ -15,7 +15,7 @@ This Python script automates the process of crawling for relevant URLs, scraping
 ## Setup
 
 1. Install Python dependencies:
-   `pip install pandas argparse huggingface-hub`
+   `pip install pandas python-dotenv argparse huggingface-hub`
 
 2. Setup Environment variables in annotation_pipeline/dev.env
    - LABEL_STUDIO_ACCESS_TOKEN=...
