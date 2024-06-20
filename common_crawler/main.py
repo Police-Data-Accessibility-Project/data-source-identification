@@ -35,6 +35,9 @@ class BatchInfo:
     notes: str
     filename: str
 
+class LabelStudioError(Exception):
+    """Custom exception for Label Studio Errors"""
+    pass
 
 BATCH_HEADERS = ['Datetime', 'Source', 'Count', 'Keywords', 'Notes', 'Filename']
 
@@ -99,11 +102,16 @@ def main():
             "LABEL_STUDIO_PROJECT_ID not accessible in .env file in root directory. "
             "Please obtain a project ID by navigating to the Label Studio project  "
             "where it will be visibile in the url. Then include in .env file in root directory.")
-    print("Retrieving Label Studio data for deduplication")
-    label_studio_results = get_ls_data()
-    if label_studio_results is None:
-        return
-    print("Label Studio data retrieved successfully")
+
+    try:
+        print("Retrieving Label Studio data for deduplication")
+        label_studio_results = get_ls_data()
+        if label_studio_results is None:
+            raise LabelStudioError("Failed to retrieve Label Studio Data")
+        print("Label Studio data retrieved successfully")
+    except LabelStudioError as e:
+        print(e)
+        raise
 
     if args.reset_cache:
         cache_manager.reset_cache()
@@ -127,6 +135,21 @@ def main():
     except ValueError as e:
         print(f"Error while saving cache manager: {e}")
 
+def handle_remote_results_error(remote_results):
+    """
+    Handles errors in the remote results
+
+    Args: remote_results (dict): The results from the label studio project
+    Raises: LabelStudioError: If an error is found in the remote results
+    """
+
+    status_code = remote_results.get("status_code")
+    if status_code == 401:
+        raise LabelStudioError("Invalid Label Studio token passed! Exiting...")
+    elif status_code == 404:
+        raise LabelStudioError("Invalid Label Studio Project ID! Exiting...")
+    else:
+        raise LabelStudioError(f"Unexpected error: {remote_results}")
 
 def validate_remote_results(remote_results):
     """
@@ -143,19 +166,13 @@ def validate_remote_results(remote_results):
             print("No data in Label Studio project.")
             return []
         elif "url" not in remote_results[0]["data"]:
-            sys.exit("Column 'url' not present in Label Studio project. Exiting...")
+            raise LabelStudioError("Column 'url' not present in Label Studio project. Exiting...")
         else:
             return remote_results
     elif isinstance(remote_results, dict):
-        if remote_results.get("status_code") == 401:
-            sys.exit("Invalid Label Studio token passed! Exiting...")
-        elif remote_results.get("status_code") == 404:
-            sys.exit("Invalid Label Studio project ID! Exiting...")
-        else:
-            sys.exit(f"Unexpected error: {remote_results}")
+        handle_remote_results_error(remote_results)
     else:
-        sys.exit("Unexpected response type.")
-
+        raise LabelStudioError("Unexpected response type.")
 
 def get_ls_data() -> list[dict] | None:
     """Retrieves data from a Label Studio project to be used in deduplication of common crawl results.
