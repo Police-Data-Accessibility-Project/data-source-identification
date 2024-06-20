@@ -1,6 +1,7 @@
 import json
 import time
 from urllib.parse import quote_plus
+from http import HTTPStatus
 
 import requests
 
@@ -84,30 +85,45 @@ class CommonCrawlerManager:
 
         # put HTTP GET request in re-try loop in case of rate limiting. Once per second is nice enough per common crawl doc.
         while retries < max_retries:
-            try:
-                # Perform an HTTP GET request to retrieve records for the encoded URL.
-                response = requests.get(str(search_url))
-                response.raise_for_status()
+            response = self.make_request(search_url)
+            if response:
+                return self.process_response(response, url, page)
 
-                # If the request is successful, parse each record from the response and return them.
-                if response.status_code == 200:
-                    records = response.text.strip().split('\n')
-                    print(f"Found {len(records)} records for {url} on page {page}")
-                    return [json.loads(record) for record in records]
-                elif 'First Page is 0, Last Page is 0' in response.text:
-                    print("No records exist in index matching the url search term")
-                    return None
-            except requests.exceptions.RequestException as e:
-                if response.status_code == 500 and 'SlowDown' in response.text:
-                    retries += 1
-                    print(f"Rate limit exceeded. Rerun in {delay} second(s)... (Attempt {retries}/{max_retries})")
-                    time.sleep(delay)
-                else:
-                    print(f"Failed to get records for {url} on page {page}: {response.text}")
-                    return None
+            retries += 1
+            print(f"Rate limit exceeded. Retrying in {delay} second(s)... (Attempt {retries}/{max_retries})")
+            time.sleep(delay)
 
         print(f"Max retries exceeded. Failed to get records for {url} on page {page}.")
         return None
+
+    def make_request(self, search_url: str) -> requests.Response:
+        """
+        Makes the HTTP GET request to the given search URL.
+        Return the response if successful, None if rate-limited.
+        """
+        try:
+            response = requests.get(str(search_url))
+            response.raise_for_status()
+            return response
+        except requests.exception.RequestException as e:
+            if response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR and 'SlowDown' in response.text:
+                return None
+            else:
+                print(f"Failed to get records: {e}")
+                return None
+
+    def process_response(self, response: requests.Response, url: str, page: int) -> list[dict]:
+        """Processes the HTTP response and returns the parsed records if successful."""
+        if response.status_code == HTTPStatus.OK:
+            records = response.text.strip().split('\n')
+            print(f"Found {len(records)} records for {url} on page {page}")
+            return [json.loads(record) for record in records]
+        elif 'First Page is 0, Last Page is 0' in response.text:
+            print("No records exist in index matching the url search term")
+            return None
+        else:
+            print(f"Unexpected response: {response.status_code}")
+            return None
 
     @staticmethod
     def get_urls_with_keyword(records: list[dict], keyword) -> list[str]:
