@@ -97,7 +97,8 @@ def csv_to_label_studio_tasks(csv_file_path: str, batch_id: str, output_name: st
 
     return tasks
 
-def get_valid_record_types(file_path):
+def get_valid_record_types(file_path: str) -> set:
+    """ load file containing valid record types and return them as a set"""
     with open(file_path, 'r') as file:
         valid_record_types = {line.strip() for line in file}
     return valid_record_types
@@ -133,8 +134,7 @@ def process_crawl(common_crawl_id: str, url: str, search_term: str, num_pages: s
 
     #check success
     if crawl_return_code != 0:
-        print(f"Common crawl script failed:\n{crawl_stderr}")
-        return
+        raise ValueError(f"Common crawl script failed:\n{crawl_stderr}")
 
     #print batch info to verify before continuing
     batch_info = pd.read_csv("common_crawler/data/batch_info.csv").iloc[-1]
@@ -143,7 +143,7 @@ def process_crawl(common_crawl_id: str, url: str, search_term: str, num_pages: s
     if(batch_info["Count"] != 0):
         input("Confirm batch info and csv on HuggingFace, press any key to proceed. Ctrl-c to quit")
     else:
-        return
+        raise ValueError("Batch count is 0. Rerun to crawl more pages.")
 
     #get urls from hugging face
     REPO_ID = get_huggingface_repo_id("../common_crawler/config.ini")
@@ -169,8 +169,7 @@ def process_tag_collector(batch_info: pd.Series, FILENAME: str) -> str:
 
     #check success
     if tag_collector_return_code != 0:
-        print(f"Tag collector script failed:\n{tag_collector_stderr}")
-        return
+        raise ValueError(f"Tag collector script failed:\n{tag_collector_stderr}")
 
     #create batch_id from datetime (removes milliseconds)
     datetime = batch_info["Datetime"]
@@ -202,7 +201,7 @@ def label_studio_upload(batch_id: str, FILENAME: str, record_type: str):
         labelstudio_url = api_manager.api_url_constructor.get_import_url().rstrip('/import')
         print(f"Tasks successfully imported. Please access the project at {labelstudio_url} to perform review and annotation tasks")
     else:
-        print(f"Failed to import tasks. Response code: {label_studio_response.status_code}\n{label_studio_response.text}")
+        raise ValueError(f"Failed to import tasks. Response code: {label_studio_response.status_code}\n{label_studio_response.text}")
 
 def main():
     """
@@ -222,16 +221,21 @@ def main():
     valid_record_types = get_valid_record_types("record_types.txt")
     if args.record_type is not None and args.record_type not in valid_record_types:
         raise ValueError(f"Invalid record type: {args.record_type}. Must be one of {valid_record_types}")
+        return
 
-    # COMMON CRAWL
-    batch_info = process_crawl(args.common_crawl_id, args.url, args.keyword, args.pages)
-    FILENAME = "urls/" + batch_info["Filename"] + ".csv"
+    try:
+        # COMMON CRAWL
+        batch_info = process_crawl(args.common_crawl_id, args.url, args.keyword, args.pages)
+        FILENAME = "urls/" + batch_info["Filename"] + ".csv"
 
-    # TAG COLLECTOR
-    batch_id = process_tag_collector(batch_info, FILENAME)
-
-    # LABEL STUDIO UPLOAD
-    label_studio_upload(batch_id, FILENAME, args.record_type)
+        # TAG COLLECTOR
+        batch_id = process_tag_collector(batch_info, FILENAME)
+    
+        # LABEL STUDIO UPLOAD
+        label_studio_upload(batch_id, FILENAME, args.record_type)
+    except ValueError as e:
+        print(f"Error: {e}")
+        return
 
 if __name__ == "__main__":
     print("Running Annotation Pipeline...")
