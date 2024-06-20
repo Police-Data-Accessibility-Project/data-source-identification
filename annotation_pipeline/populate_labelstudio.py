@@ -1,4 +1,12 @@
+"""
+This Python script automates the process of crawling Common Crawl Corpus for relevant URLs,
+scraping HTML content from those pages,
+formatting the data as Label Studio tasks,
+and uploading them to Label Studio for annotation.
+"""
+
 from huggingface_hub import hf_hub_download
+from http import HTTPStatus
 import pandas as pd
 import subprocess
 import sys
@@ -132,6 +140,8 @@ def process_crawl(common_crawl_id: str, url: str, search_term: str, num_pages: s
     #run common crawl
     crawl_return_code, crawl_stdout, crawl_stderr = run_common_crawl(common_crawl_id, url, search_term, num_pages)
 
+    print(f"from populate label studio crawl error: crawl return {crawl_return_code}, crawl stdout {crawl_stdout}, crawl stderr {crawl_stderr}")
+
     #check success
     if crawl_return_code != 0:
         raise ValueError(f"Common crawl script failed:\n{crawl_stderr}")
@@ -144,11 +154,6 @@ def process_crawl(common_crawl_id: str, url: str, search_term: str, num_pages: s
         input("Confirm batch info and csv on HuggingFace, press any key to proceed. Ctrl-c to quit")
     else:
         raise ValueError("Batch count is 0. Rerun to crawl more pages.")
-
-    #get urls from hugging face
-    REPO_ID = get_huggingface_repo_id("../common_crawler/config.ini")
-    FILENAME = "urls/" + batch_info["Filename"] + ".csv"
-    df = pd.read_csv(hf_hub_download(repo_id=REPO_ID, filename=FILENAME, repo_type="dataset", local_dir="common_crawler/"), index_col=False)
 
     return batch_info
 
@@ -197,7 +202,7 @@ def label_studio_upload(batch_id: str, FILENAME: str, record_type: str):
     label_studio_response = api_manager.import_tasks_into_project(data)
 
     #check import success
-    if label_studio_response.status_code == 201:
+    if label_studio_response.status_code == HTTPStatus.CREATED:
         labelstudio_url = api_manager.api_url_constructor.get_import_url().rstrip('/import')
         print(f"Tasks successfully imported. Please access the project at {labelstudio_url} to perform review and annotation tasks")
     else:
@@ -226,7 +231,10 @@ def main():
     try:
         # COMMON CRAWL
         batch_info = process_crawl(args.common_crawl_id, args.url, args.keyword, args.pages)
+        #get urls from hugging face
+        REPO_ID = get_huggingface_repo_id("../common_crawler/config.ini")
         FILENAME = "urls/" + batch_info["Filename"] + ".csv"
+        hf_hub_download(repo_id=REPO_ID, filename=FILENAME, repo_type="dataset", local_dir="common_crawler/")
 
         # TAG COLLECTOR
         batch_id = process_tag_collector(batch_info, FILENAME)
