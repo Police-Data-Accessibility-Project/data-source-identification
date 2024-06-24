@@ -33,22 +33,36 @@ class BatchInfo:
     count: str
     keywords: str
     notes: str
+    filename: str
 
+class LabelStudioError(Exception):
+    """Custom exception for Label Studio Errors"""
+    pass
 
-BATCH_HEADERS = ['Datetime', 'Source', 'Count', 'Keywords', 'Notes']
-
+BATCH_HEADERS = ['Datetime', 'Source', 'Count', 'Keywords', 'Notes', 'Filename']
 
 def get_current_time():
     return str(datetime.now())
 
 
-def add_batch_info_to_csv(batch_info: BatchInfo, data_dir: str):
+def add_batch_info_to_csv(common_crawl_result: CommonCrawlResult, args: argparse.Namespace, last_page: int) -> BatchInfo:
+    batch_info = BatchInfo(
+        datetime=get_current_time(),
+        source="Common Crawl",
+        count=str(len(common_crawl_result.url_results)),
+        keywords=f"{args.url} - {args.keyword}",
+        notes=f"{args.common_crawl_id}, {args.pages} pages, starting at {last_page + 1}",
+        filename=f"{args.output_filename}_{get_filename_friendly_timestamp()}"
+    )
+
     batch_info_csv_manager = CSVManager(
         file_name='batch_info',
-        directory=data_dir,
+        directory=args.data_dir,
         headers=BATCH_HEADERS
     )
     batch_info_csv_manager.add_row(dataclasses.astuple(batch_info))
+
+    return batch_info
 
 
 def main():
@@ -62,6 +76,7 @@ def main():
     )
 
     load_dotenv()
+    
     # Initialize the HuggingFace API Manager
     hf_access_token = os.getenv("HUGGINGFACE_ACCESS_TOKEN")
     if not hf_access_token:
@@ -87,11 +102,16 @@ def main():
             "LABEL_STUDIO_PROJECT_ID not accessible in .env file in root directory. "
             "Please obtain a project ID by navigating to the Label Studio project  "
             "where it will be visibile in the url. Then include in .env file in root directory.")
-    print("Retrieving Label Studio data for deduplication")
-    label_studio_results = get_ls_data()
-    if label_studio_results is None:
-        return
-    print("Label Studio data retrieved successfully")
+
+    try:
+        print("Retrieving Label Studio data for deduplication")
+        label_studio_results = get_ls_data()
+        if label_studio_results is None:
+            raise LabelStudioError("Failed to retrieve Label Studio Data")
+        print("Label Studio data retrieved successfully")
+    except LabelStudioError as e:
+        print(e)
+        raise
 
     if args.reset_cache:
         cache_manager.reset_cache()
@@ -100,14 +120,6 @@ def main():
         # Retrieve the last page from the cache, or 0 if it does not exist
         last_page = cache_manager.get(args.common_crawl_id, args.url, args.keyword)
         common_crawl_result = process_crawl_and_upload(args, last_page, huggingface_api_manager, label_studio_results)
-        batch_info = BatchInfo(
-            datetime=get_current_time(),
-            source="Common Crawl",
-            count=str(len(common_crawl_result.url_results)),
-            keywords=f"{args.url} - {args.keyword}",
-            notes=f"{args.common_crawl_id}, {args.pages} pages, starting at {last_page + 1}"
-        )
-        add_batch_info_to_csv(batch_info, args.data_dir)
     except ValueError as e:
         print(f"Error during crawling: {e}")
         return
@@ -119,9 +131,48 @@ def main():
             keyword=args.keyword,
             last_page=common_crawl_result.last_page_search)
         cache_manager.save_cache()
+
     except ValueError as e:
         print(f"Error while saving cache manager: {e}")
 
+def handle_remote_results_error(remote_results):
+    """
+    Handles errors in the remote results
+
+    Args: remote_results (dict): The results from the label studio project
+    Raises: LabelStudioError: If an error is found in the remote results
+    """
+
+    status_code = remote_results.get("status_code")
+    if status_code == 401:
+        raise LabelStudioError("Invalid Label Studio token passed! Exiting...")
+    elif status_code == 404:
+        raise LabelStudioError("Invalid Label Studio Project ID! Exiting...")
+    else:
+        raise LabelStudioError(f"Unexpected error: {remote_results}")
+
+def validate_remote_results(remote_results):
+    """
+    Validates the remote results retrieved from the Label Studio project
+
+    Args: remote_results (dict or list): The results from the Label Studio project
+
+    Returns:
+        list[dict]: If the remote results are valid
+        None: If the remote results are invalid
+    """
+    if isinstance(remote_results, list):
+        if not remote_results:
+            print("No data in Label Studio project.")
+            return []
+        elif "url" not in remote_results[0]["data"]:
+            raise LabelStudioError("Column 'url' not present in Label Studio project. Exiting...")
+        else:
+            return remote_results
+    elif isinstance(remote_results, dict):
+        handle_remote_results_error(remote_results)
+    else:
+        raise LabelStudioError("Unexpected response type.")
 
 def get_ls_data() -> list[dict] | None:
     """Retrieves data from a Label Studio project to be used in deduplication of common crawl results.
@@ -135,19 +186,7 @@ def get_ls_data() -> list[dict] | None:
     response = api_manager.export_tasks_from_project(all_tasks=True)
     remote_results = response.json()
 
-    # Check that the results are valid and usable
-    # remote_results will resolve to a list if the request is valid,
-    # otherwise it will be a dict
-    if type(remote_results) == list and "url" not in remote_results[0]["data"]:
-        print("Column 'url' not present in Label Studio project. Exiting...")
-    elif type(remote_results) == dict and remote_results["status_code"] == 401:
-        print("Invalid Label Studio token passed! Exiting...")
-    elif type(remote_results) == dict and remote_results["status_code"] == 404:
-        print("Invalid Label Studio project ID! Exiting...")
-    else:
-        return remote_results
-
-    return None
+    return validate_remote_results(remote_results)
 
 
 def strip_url(url: str) -> str:
@@ -217,17 +256,21 @@ def remove_remote_duplicates(url_results: list[str], label_studio_data: list[dic
 def handle_csv_and_upload(
         common_crawl_result: CommonCrawlResult,
         huggingface_api_manager: HuggingFaceAPIManager,
-        args: argparse.Namespace):
+        args: argparse.Namespace,
+        last_page: int):
     """
     Handles the CSV file and uploads it to Hugging Face repository.
     Args:
         common_crawl_result: The result from Common Crawl.
         huggingface_api_manager: The Hugging Face API manager.
         args: The command-line arguments.
+        last_page: last page crawled
 
     """
+    batch_info = add_batch_info_to_csv(common_crawl_result, args, last_page)
+
     csv_manager = CSVManager(
-        file_name=f"{args.output_filename}_{get_filename_friendly_timestamp()}",
+        file_name=batch_info.filename,
         headers=['url'],
         directory=args.data_dir
     )
@@ -262,6 +305,7 @@ def process_crawl_and_upload(
     # Logic should conclude here if no results are found
     if not common_crawl_result.url_results:
         print("No url results found. Ceasing main execution.")
+        add_batch_info_to_csv(common_crawl_result, args, last_page)
         return common_crawl_result
 
     print("Removing urls already in the database")
@@ -269,9 +313,11 @@ def process_crawl_and_upload(
     common_crawl_result.url_results = remove_remote_duplicates(common_crawl_result.url_results, label_studio_data)
     if not common_crawl_result.url_results:
         print("No urls not already present in the database found. Ceasing main execution.")
+        add_batch_info_to_csv(common_crawl_result, args, last_page)
         return common_crawl_result
-  
-    handle_csv_and_upload(common_crawl_result, huggingface_api_manager, args)
+
+    handle_csv_and_upload(common_crawl_result, huggingface_api_manager, args, last_page)
+
     return common_crawl_result
 
 

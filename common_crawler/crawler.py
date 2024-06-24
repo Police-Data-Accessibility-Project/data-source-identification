@@ -1,6 +1,7 @@
 import json
 import time
 from urllib.parse import quote_plus
+from http import HTTPStatus
 
 import requests
 
@@ -63,7 +64,7 @@ class CommonCrawlerManager:
 
         return CommonCrawlResult(last_page, url_results)
 
-    def search_common_crawl_index(self, url: str, page: int = 0) -> list[dict]:
+    def search_common_crawl_index(self, url: str, page: int = 0, max_retries: int = 20) -> list[dict]:
         """
         This method is used to search the Common Crawl index for a given URL and page number
         Args:
@@ -79,11 +80,41 @@ class CommonCrawlerManager:
         search_url.add_parameter('output', 'json')
         search_url.add_parameter('page', page)
 
-        # Perform an HTTP GET request to retrieve records for the encoded URL.
-        response = requests.get(str(search_url))
+        retries = 0
+        delay = 1
 
-        # If the request is successful, parse each record from the response and return them.
-        if response.status_code == 200:
+        # put HTTP GET request in re-try loop in case of rate limiting. Once per second is nice enough per common crawl doc.
+        while retries < max_retries:
+            response = self.make_request(search_url)
+            if response:
+                return self.process_response(response, url, page)
+
+            retries += 1
+            print(f"Rate limit exceeded. Retrying in {delay} second(s)... (Attempt {retries}/{max_retries})")
+            time.sleep(delay)
+
+        print(f"Max retries exceeded. Failed to get records for {url} on page {page}.")
+        return None
+
+    def make_request(self, search_url: str) -> requests.Response:
+        """
+        Makes the HTTP GET request to the given search URL.
+        Return the response if successful, None if rate-limited.
+        """
+        try:
+            response = requests.get(str(search_url))
+            response.raise_for_status()
+            return response
+        except requests.exception.RequestException as e:
+            if response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR and 'SlowDown' in response.text:
+                return None
+            else:
+                print(f"Failed to get records: {e}")
+                return None
+
+    def process_response(self, response: requests.Response, url: str, page: int) -> list[dict]:
+        """Processes the HTTP response and returns the parsed records if successful."""
+        if response.status_code == HTTPStatus.OK:
             records = response.text.strip().split('\n')
             print(f"Found {len(records)} records for {url} on page {page}")
             return [json.loads(record) for record in records]
@@ -91,8 +122,7 @@ class CommonCrawlerManager:
             print("No records exist in index matching the url search term")
             return None
         else:
-            print(f"Failed to get records for {url} on page {page}: {response.text}")
-            # Return None to indicate that no records were found or an error occurred.
+            print(f"Unexpected response: {response.status_code}")
             return None
 
     @staticmethod
