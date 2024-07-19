@@ -14,10 +14,11 @@ This Python script automates the process of crawling for relevant URLs, scraping
 
 ## Setup
 
-1. Create venv and install Python dependencies:
-   - 'python -m venv annotation-pipeline-env'
-   - 'source annotation-pipeline-env'
-   - `pip install -r requirements`
+1. Create venv and install Python dependencies (if not done previously)
+   (assuming these are run within the annotation_pipeline/ folder):
+   - `python -m venv annotation-pipeline-env`
+   - `source annotation-pipeline-env`
+   - `pip install -r requirements.txt`
 
 2. Setup Environment variables in data_source_identification/.env
    - HUGGINGFACE_ACCESS_TOKEN
