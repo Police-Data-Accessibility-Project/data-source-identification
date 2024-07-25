@@ -13,11 +13,11 @@ on:
         default: '*.gov'
       keyword:
         description: 'keyword'
-        required: 'true'
+        required: true
         default: 'police'
       pages:
         description: 'num pages'
-        required: 'true'
+        required: true
         default: '2'
       record_type:
         description: 'record type'
