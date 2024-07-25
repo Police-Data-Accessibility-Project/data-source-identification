@@ -21,7 +21,7 @@ on:
         default: '2'
       record_type:
         description: 'record type'
-        required: 'false'
+        required: false
         
 
 jobs:
