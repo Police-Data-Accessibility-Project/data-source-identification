@@ -150,9 +150,7 @@ def process_crawl(common_crawl_id: str, url: str, search_term: str, num_pages: s
     batch_info = pd.read_csv("common_crawler/data/batch_info.csv").iloc[-1]
     print("Batch Info:\n" + f"{batch_info}")
 
-    if(batch_info["Count"] != 0):
-        input("Confirm batch info and csv on HuggingFace, press any key to proceed. Ctrl-c to quit")
-    else:
+    if(batch_info["Count"] == 0):
         raise ValueError("Batch count is 0. Rerun to crawl more pages.")
 
     return batch_info
@@ -191,7 +189,7 @@ def label_studio_upload(batch_id: str, FILENAME: str, record_type: str):
     data = csv_to_label_studio_tasks("labeled-source-text.csv", batch_id, FILENAME, record_type)
 
     # Load the configuration for the Label Studio API
-    config = LabelStudioConfig("dev.env")
+    config = LabelStudioConfig("../.env")
     if "REPLACE_WITH_YOUR_TOKEN" in config.authorization_token:
         raise ValueError("Please replace the access token in dev.env with your own access token")
 
