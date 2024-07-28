@@ -62,7 +62,7 @@ def run_tag_collector(filename: str):
 
     CSV of URL's + collected tags saved in ./labeled-source-text.csv
     """
-    tag_collector = f"python3 html_tag_collector/collector.py annotation_pipeline/common_crawler/{filename} --render-javascript"
+    tag_collector = f"python3 html_tag_collector/collector.py annotation_pipeline/data/{filename} --render-javascript"
 
     return_code, stdout, stderr = run_subprocess(tag_collector)
 
@@ -148,7 +148,7 @@ def process_crawl(common_crawl_id: str, url: str, search_term: str, num_pages: s
         raise ValueError(f"Common crawl script failed:\n{crawl_stderr}")
 
     #print batch info to verify before continuing
-    batch_info = pd.read_csv("annotation_pipeline/common_crawler/data/batch_info.csv").iloc[-1]
+    batch_info = pd.read_csv("annotation_pipeline/data/batch_info.csv").iloc[-1]
     print("Batch Info:\n" + f"{batch_info}")
 
     if(batch_info["Count"] == 0):
@@ -234,7 +234,7 @@ def main():
         #get urls from hugging face
         REPO_ID = get_huggingface_repo_id("annotation_pipeline/config.ini")
         FILENAME = "urls/" + batch_info["Filename"] + ".csv"
-        hf_hub_download(repo_id=REPO_ID, filename=FILENAME, repo_type="dataset", local_dir="annotation_pipeline/common_crawler/")
+        hf_hub_download(repo_id=REPO_ID, filename=FILENAME, repo_type="dataset", local_dir="annotation_pipeline/data/")
 
         # TAG COLLECTOR
         batch_id = process_tag_collector(batch_info, FILENAME)
