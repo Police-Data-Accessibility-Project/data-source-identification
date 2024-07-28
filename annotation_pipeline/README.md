@@ -28,9 +28,11 @@ This Python script automates the process of crawling for relevant URLs, scraping
 
 ## Usage
 
-Run from within the annotation_pipeline/ folder
+Run from the parent directory (data-source-identification/)
 
-`python populate_labelstudio.py common_crawl_id url keyword --pages num_pages [--record-type record_type]`
+The output logs from common crawl will be stored in `annotation_pipeline/data` by default. This can be modified by editing the `annotation_pipeline/config.ini` file.
+
+`python annotation_pipeline/populate_labelstudio.py common_crawl_id url keyword --pages num_pages [--record-type record_type]`
 
 - `common_crawl_id`: ID of the Common Crawl Corpus to search
 - `url`: Type of URL to search for (e.g. *.gov for all .gov domains).
@@ -38,4 +40,4 @@ Run from within the annotation_pipeline/ folder
 - `--pages num_pages`: Number of pages to search
 - `--record-type record_type` (optional): Assumed record type for pre-annotation.
 
-e.g. `python populate_labelstudio.py CC-MAIN-2024-10 '*.gov' arrest --pages 2 --record-type 'Arrest Records'`
+e.g. `python annotation_pipeline/populate_labelstudio.py CC-MAIN-2024-10 '*.gov' arrest --pages 2 --record-type 'Arrest Records'`
