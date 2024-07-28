@@ -78,6 +78,7 @@ def csv_to_label_studio_tasks(csv_file_path: str, batch_id: str, output_name: st
     df = pd.read_csv(csv_file_path)
     df['batch_id'] = [batch_id] * len(df)
     df = df.fillna('')
+    os.makedirs("annotation_pipeline/tag_collector/", exist_ok=True)
     df.to_csv("annotation_pipeline/tag_collector/" + output_name.replace("urls/", "", 1), index=False)
 
     tasks = []
