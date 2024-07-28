@@ -80,6 +80,10 @@ def csv_to_label_studio_tasks(csv_file_path: str, batch_id: str, output_name: st
     df = df.fillna('')
     os.makedirs("annotation_pipeline/data/tag_collector/", exist_ok=True)
     df.to_csv("annotation_pipeline/data/tag_collector/" + output_name.replace("urls/", "", 1), index=False)
+    
+    #remove labeled-source-text.csv (updated and written to data/tag_collector)
+    if os.path.exists(csv_file_path):
+        os.remove(csv_file_path)
 
     tasks = []
 
