@@ -59,7 +59,6 @@ jobs:
       run: |
         git config --global user.name "github-actions[bot]"
         git config --global user.email "action@github.com"
-        git add annotation_pipeline/common_crawler/data/*
-        git add annotation_pipeline/tag_collector/*
+        git add annotation_pipeline/data/*
         git commit -m "Update batch info and collected urls & tags"
         git push
