@@ -49,7 +49,7 @@ def run_common_crawl(common_crawl_id: str, url: str, search_term: str, num_pages
     CSV of crawled URL's uploaded to HuggingFace
     """
 
-    common_crawl = f"python ../common_crawler/main.py {common_crawl_id} '{url}' {search_term} --config ../common_crawler/config.ini --pages {num_pages}"
+    common_crawl = f"python common_crawler/main.py {common_crawl_id} '{url}' {search_term} --config annotation_pipeline/config.ini --pages {num_pages}"
 
     return_code, stdout, stderr = run_subprocess(common_crawl)
 
@@ -62,7 +62,7 @@ def run_tag_collector(filename: str):
 
     CSV of URL's + collected tags saved in ./labeled-source-text.csv
     """
-    tag_collector = f"python3 ../html_tag_collector/collector.py common_crawler/{filename} --render-javascript"
+    tag_collector = f"python3 html_tag_collector/collector.py annotation_pipeline/data/{filename} --render-javascript"
 
     return_code, stdout, stderr = run_subprocess(tag_collector)
 
@@ -73,12 +73,17 @@ def csv_to_label_studio_tasks(csv_file_path: str, batch_id: str, output_name: st
     Formats CSV into list[dict] with "data" key as labelstudio expects
     csv_file_path: path to csv with labeled source text
     batch_id: timestamp to append to all URL's in batch
-    output_name: saves tag_collected CSV + batch_info in tag_collector/{output_name}
+    output_name: saves tag_collected CSV + batch_info in data/tag_collector/{output_name}
     """
     df = pd.read_csv(csv_file_path)
     df['batch_id'] = [batch_id] * len(df)
     df = df.fillna('')
-    df.to_csv("tag_collector/" + output_name.replace("urls/", "", 1), index=False)
+    os.makedirs("annotation_pipeline/data/tag_collector/", exist_ok=True)
+    df.to_csv("annotation_pipeline/data/tag_collector/" + output_name.replace("urls/", "", 1), index=False)
+    
+    #remove labeled-source-text.csv (updated and written to data/tag_collector)
+    if os.path.exists(csv_file_path):
+        os.remove(csv_file_path)
 
     tasks = []
 
@@ -147,7 +152,7 @@ def process_crawl(common_crawl_id: str, url: str, search_term: str, num_pages: s
         raise ValueError(f"Common crawl script failed:\n{crawl_stderr}")
 
     #print batch info to verify before continuing
-    batch_info = pd.read_csv("common_crawler/data/batch_info.csv").iloc[-1]
+    batch_info = pd.read_csv("annotation_pipeline/data/batch_info.csv").iloc[-1]
     print("Batch Info:\n" + f"{batch_info}")
 
     if(batch_info["Count"] == 0):
@@ -189,9 +194,9 @@ def label_studio_upload(batch_id: str, FILENAME: str, record_type: str):
     data = csv_to_label_studio_tasks("labeled-source-text.csv", batch_id, FILENAME, record_type)
 
     # Load the configuration for the Label Studio API
-    config = LabelStudioConfig("../.env")
+    config = LabelStudioConfig(".env")
     if "REPLACE_WITH_YOUR_TOKEN" in config.authorization_token:
-        raise ValueError("Please replace the access token in dev.env with your own access token")
+        raise ValueError("Please replace the access token in .env with your own access token")
 
     # Create an API manager
     api_manager = LabelStudioAPIManager(config)
@@ -221,18 +226,19 @@ def main():
     parser.add_argument('--record-type', type=str, required=False, help='assumed record type for pre-annotation')
     args = parser.parse_args()
 
-    valid_record_types = get_valid_record_types("record_types.txt")
-    if args.record_type is not None and args.record_type not in valid_record_types:
-        raise ValueError(f"Invalid record type: {args.record_type}. Must be one of {valid_record_types}")
-        return
+    if args.record_type is not None:
+        valid_record_types = get_valid_record_types("annotation_pipeline/record_types.txt")
+        if args.record_type not in valid_record_types:
+            raise ValueError(f"Invalid record type: {args.record_type}. Must be one of {valid_record_types}")
+            return
 
     try:
         # COMMON CRAWL
         batch_info = process_crawl(args.common_crawl_id, args.url, args.keyword, args.pages)
         #get urls from hugging face
-        REPO_ID = get_huggingface_repo_id("../common_crawler/config.ini")
+        REPO_ID = get_huggingface_repo_id("annotation_pipeline/config.ini")
         FILENAME = "urls/" + batch_info["Filename"] + ".csv"
-        hf_hub_download(repo_id=REPO_ID, filename=FILENAME, repo_type="dataset", local_dir="common_crawler/")
+        hf_hub_download(repo_id=REPO_ID, filename=FILENAME, repo_type="dataset", local_dir="annotation_pipeline/data/")
 
         # TAG COLLECTOR
         batch_id = process_tag_collector(batch_info, FILENAME)
