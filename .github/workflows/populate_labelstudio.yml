@@ -54,6 +54,11 @@ jobs:
         else
           python annotation_pipeline/populate_labelstudio.py ${{ github.event.inputs.crawl_id }} "${{ github.event.inputs.url }}" ${{ github.event.inputs.keyword }} --pages ${{ github.event.inputs.pages }}
         fi
+    
+    - name: Create new branch
+      run: |
+        BRANCH_NAME=bot-update-$(date +%Y%m%d%H%M%S)
+        git checkout -b $BRANCH_NAME
 
     - name: Commit and push outputs
       run: |
@@ -61,6 +66,8 @@ jobs:
         git config --global user.email "action@github.com"
         git add annotation_pipeline/data/batch_info.csv
         git add annotation_pipeline/data/cache.json
-        git add annotation_pipeline/data/tag_collector/*
-        git commit -m "Update batch info and collected urls & tags"
-        git push
+        if [ -d "annotation_pipeline/data/tag_collector" ]; then
+          git add annotation_pipeline/data/tag_collector/*
+        fi
+        git commit -m "Update batch info, cache, and collected urls & tags"
+        git push origin $BRANCH_NAME
