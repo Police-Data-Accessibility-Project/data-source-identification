@@ -70,4 +70,4 @@ jobs:
           git add annotation_pipeline/data/tag_collector/*
         fi
         git commit -m "Update batch info, cache, and collected urls & tags"
-        git push origin $BRANCH_NAME
+        git push --set-upstream origin $BRANCH_NAME
