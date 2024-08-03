@@ -59,6 +59,7 @@ jobs:
       run: |
         BRANCH_NAME=bot-update-$(date +%Y%m%d%H%M%S)
         git checkout -b $BRANCH_NAME
+        echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
 
     - name: Commit and push outputs
       run: |
@@ -70,4 +71,4 @@ jobs:
           git add annotation_pipeline/data/tag_collector/*
         fi
         git commit -m "Update batch info, cache, and collected urls & tags"
-        git push --set-upstream origin $BRANCH_NAME
+        git push --set-upstream origin $BRANCH_NAME || git push -u origin $BRANCH_NAME
