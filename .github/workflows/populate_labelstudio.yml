@@ -72,3 +72,13 @@ jobs:
         fi
         git commit -m "Update batch info, cache, and collected urls & tags"
         git push --set-upstream origin $BRANCH_NAME || git push -u origin $BRANCH_NAME
+
+    - name: Create pull request
+      uses: peter-evans/create-pull-request@v5
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        commit-message: Update batch info, cache, and collected urls & tags
+        branch: ${{ env.BRANCH_NAME }}
+        base: main
+        title: Update batch info, cache, and collected urls & tags
+        body: This PR was created automatically by a GitHub Action 
