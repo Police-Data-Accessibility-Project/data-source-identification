@@ -70,15 +70,10 @@ jobs:
       run: |
         git config --global user.name "github-actions[bot]"
         git config --global user.email "action@github.com"
-        git add annotation_pipeline/data/batch_info.csv
-        git add annotation_pipeline/data/cache.json
-        if [ -d "annotation_pipeline/data/tag_collector" ]; then
-          git add annotation_pipeline/data/tag_collector/*
-        fi
-        git status
+        git add annotation_pipeline/data/batch_info.csv annotation_pipeline/data/cache.json annotation_pipeline/data/tag_collector/*
         git commit -m "Update batch info, cache, and collected urls & tags"
         git log -1 --stat
-        git push --set-upstream origin $BRANCH_NAME || git push -u origin $BRANCH_NAME
+        git push origin $BRANCH_NAME
 
     - name: confirm push
       run: |
