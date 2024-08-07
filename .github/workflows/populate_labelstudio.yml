@@ -54,6 +54,11 @@ jobs:
         else
           python annotation_pipeline/populate_labelstudio.py ${{ github.event.inputs.crawl_id }} "${{ github.event.inputs.url }}" ${{ github.event.inputs.keyword }} --pages ${{ github.event.inputs.pages }}
         fi
+
+    - name: Check create files
+      run: |
+        echo "Checking files in annotation_pipeline/data/"
+        ls -R annotation_pipeline/data/
     
     - name: Create new branch
       run: |
@@ -70,6 +75,7 @@ jobs:
         if [ -d "annotation_pipeline/data/tag_collector" ]; then
           git add annotation_pipeline/data/tag_collector/*
         fi
+        git status
         git commit -m "Update batch info, cache, and collected urls & tags"
         git push --set-upstream origin $BRANCH_NAME || git push -u origin $BRANCH_NAME
 
