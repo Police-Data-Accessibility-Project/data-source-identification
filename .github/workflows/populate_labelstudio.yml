@@ -31,6 +31,8 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v3
+      with:
+        ref: main
 
     - name: Set up Python
       uses: actions/setup-python@v4
@@ -73,7 +75,7 @@ jobs:
         git add annotation_pipeline/data/batch_info.csv annotation_pipeline/data/cache.json annotation_pipeline/data/tag_collector/*
         git commit -m "Update batch info, cache, and collected urls & tags"
         git log -1 --stat
-        git push origin $BRANCH_NAME
+        git push --set-upstream origin $BRANCH_NAME
 
     - name: confirm push
       run: |
@@ -81,13 +83,3 @@ jobs:
         git checkout $BRANCH_NAME
         echo "confirming files in branch $BRANCH_NAME"
         ls -R annotation_pipeline/data/
-
-    - name: Create pull request
-      uses: peter-evans/create-pull-request@v5
-      with:
-        token: ${{ secrets.GITHUB_TOKEN }}
-        commit-message: Update batch info, cache, and collected urls & tags
-        branch: ${{ env.BRANCH_NAME }}
-        base: main
-        title: Update batch info, cache, and collected urls & tags
-        body: This PR was created automatically by a GitHub Action 
