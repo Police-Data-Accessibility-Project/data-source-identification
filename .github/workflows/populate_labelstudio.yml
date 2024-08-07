@@ -77,7 +77,15 @@ jobs:
         fi
         git status
         git commit -m "Update batch info, cache, and collected urls & tags"
+        git log -1 --stat
         git push --set-upstream origin $BRANCH_NAME || git push -u origin $BRANCH_NAME
+
+    - name: confirm push
+      run: |
+        git fetch origin $BRANCH_NAME
+        git checkout $BRANCH_NAME
+        echo "confirming files in branch $BRANCH_NAME"
+        ls -R annotation_pipeline/data/
 
     - name: Create pull request
       uses: peter-evans/create-pull-request@v5
