@@ -31,6 +31,8 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v3
+      with:
+        ref: main
 
     - name: Set up Python
       uses: actions/setup-python@v4
@@ -55,12 +57,38 @@ jobs:
           python annotation_pipeline/populate_labelstudio.py ${{ github.event.inputs.crawl_id }} "${{ github.event.inputs.url }}" ${{ github.event.inputs.keyword }} --pages ${{ github.event.inputs.pages }}
         fi
 
+    - name: Check created/modified files
+      run: |
+        echo "Checking files in annotation_pipeline/data/"
+        ls -R annotation_pipeline/data/
+    
+    - name: Create new branch
+      run: |
+        BRANCH_NAME=bot-update-$(date +%Y%m%d%H%M%S)
+        git checkout -b $BRANCH_NAME
+        echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
+
     - name: Commit and push outputs
       run: |
         git config --global user.name "github-actions[bot]"
         git config --global user.email "action@github.com"
-        git add annotation_pipeline/data/batch_info.csv
+        git add annotation_pipeline/data/batch_info.csv 
         git add annotation_pipeline/data/cache.json
-        git add annotation_pipeline/data/tag_collector/*
-        git commit -m "Update batch info and collected urls & tags"
-        git push
+        if [ -d "annotation_pipeline/data/tag_collector" ]; then 
+          git add annotation_pipeline/data/tag_collector/*
+        fi
+        git commit -m "Update batch info, cache, and collected urls & tags"
+        git log -1 --stat
+        git push --set-upstream origin $BRANCH_NAME
+
+    - name: Create pull request
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        BRANCH_NAME: ${{ env.BRANCH_NAME }}
+      run: |
+        PR_TITLE="Update batch info, cache, and collected urls & tags"
+        PR_BODY="This PR was created automatically by a GitHub Action."
+        echo "Creating PR from branch $BRANCH_NAME to main"
+        curl -X POST -H "Authorization: token $GITHUB_TOKEN" \
+          -d "{\"title\":\"$PR_TITLE\",\"body\":\"$PR_BODY\",\"head\":\"$BRANCH_NAME\",\"base\":\"main\"}" \
+          https://api.github.com/repos/${{ github.repository }}/pulls

@@ -105,7 +105,7 @@ class CommonCrawlerManager:
             response = requests.get(str(search_url))
             response.raise_for_status()
             return response
-        except requests.exception.RequestException as e:
+        except requests.exceptions.RequestException as e:
             if response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR and 'SlowDown' in response.text:
                 return None
             else:
