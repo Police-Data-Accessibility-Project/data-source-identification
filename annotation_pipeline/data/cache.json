@@ -7,6 +7,9 @@
     "CC-MAIN-2024-30": {
         "*.com": {
             "police": 2
+        },
+        "*.gov": {
+            "police": 2
         }
     }
 }
