@@ -11,7 +11,7 @@ package_search = [
     {"url": "https://open.jacksonms.gov/", "terms": ["tags:police"]},
     {"url": "https://data.milwaukee.gov/", "terms": ["mpd", "wibr"]},
     {"url": "https://data.sanantonio.gov/", "terms": ["sapd"]},
-    {"url": "https://data.sanjoseca.gov/", "terms": ["police"]}
+    {"url": "https://data.sanjoseca.gov/", "terms": ["police"]},
 ]
 
 group_search = [

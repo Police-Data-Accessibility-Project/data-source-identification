@@ -1,4 +1,5 @@
 """Toolkit of functions that use ckanapi to retrieve packages from CKAN data portals"""
+
 from concurrent.futures import as_completed, ThreadPoolExecutor
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -150,10 +151,7 @@ def ckan_collection_search(base_url: str, collection_id: str) -> list[Package]:
                 for dataset_content in soup.find_all(class_="dataset-content")
             ]
 
-            [
-                packages.append(package.result())
-                for package in as_completed(futures)
-            ]
+            [packages.append(package.result()) for package in as_completed(futures)]
 
         # Take a break to avoid being timed out
         if len(futures) >= 15:
@@ -186,10 +184,12 @@ def _collection_search_get_package_data(dataset_content, base_url: str):
         record_format.text.strip() for record_format in dataset_content.find_all("li")
     ]
     package.record_format = list(set(package.record_format))
-    
+
     date = dataset_soup.find(property="dct:modified").text.strip()
-    package.source_last_updated = datetime.strptime(date, "%B %d, %Y").strftime("%Y-%d-%m")
-    
+    package.source_last_updated = datetime.strptime(date, "%B %d, %Y").strftime(
+        "%Y-%d-%m"
+    )
+
     return package
 
 

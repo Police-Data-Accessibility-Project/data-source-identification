@@ -7,23 +7,48 @@ from utils import format_filename_json_to_csv
 
 # Load the JSON data
 parser = argparse.ArgumentParser(description="Parse JSON from a file.")
-parser.add_argument('--json_file', type=str, required=True,
-                    help="Path to the JSON file")
+parser.add_argument(
+    "--json_file", type=str, required=True, help="Path to the JSON file"
+)
 
 args = parser.parse_args()
 
-with open(args.json_file, 'r') as f:
+with open(args.json_file, "r") as f:
     json_data = json.load(f)
 
 # Define the CSV headers
 headers = [
-    "name", "agency_described", "record_type", "description", "source_url",
-    "readme_url", "scraper_url", "state", "county", "municipality",
-    "agency_type", "jurisdiction_type", "View Archive", "agency_aggregation",
-    "agency_supplied", "supplying_entity", "agency_originated", "originating_agency",
-    "coverage_start", "source_last_updated", "coverage_end", "number_of_records_available",
-    "size", "access_type", "data_portal_type", "access_notes", "record_format", "update_frequency",
-    "update_method", "retention_schedule", "detail_level"
+    "name",
+    "agency_described",
+    "record_type",
+    "description",
+    "source_url",
+    "readme_url",
+    "scraper_url",
+    "state",
+    "county",
+    "municipality",
+    "agency_type",
+    "jurisdiction_type",
+    "View Archive",
+    "agency_aggregation",
+    "agency_supplied",
+    "supplying_entity",
+    "agency_originated",
+    "originating_agency",
+    "coverage_start",
+    "source_last_updated",
+    "coverage_end",
+    "number_of_records_available",
+    "size",
+    "access_type",
+    "data_portal_type",
+    "access_notes",
+    "record_format",
+    "update_frequency",
+    "update_method",
+    "retention_schedule",
+    "detail_level",
 ]
 
 
@@ -59,7 +84,7 @@ def get_jurisdiction(jurisdiction_id):
 
 output_csv = format_filename_json_to_csv(args.json_file)
 # Open a CSV file for writing
-with open(output_csv, 'w', newline='') as csvfile:
+with open(output_csv, "w", newline="") as csvfile:
     writer = csv.DictWriter(csvfile, fieldnames=headers)
 
     # Write the header row
@@ -87,8 +112,7 @@ with open(output_csv, 'w', newline='') as csvfile:
             juris_type = "state"
         # local jurisdiction level
         if jurisdiction_level == "l":
-            parent_juris_data = get_jurisdiction(
-                jurisdiction_data.get("parent"))
+            parent_juris_data = get_jurisdiction(jurisdiction_data.get("parent"))
             state = parent_juris_data.get("abbrev")
             if "County" in jurisdiction_data.get("name"):
                 county = jurisdiction_data.get("name")
@@ -99,24 +123,24 @@ with open(output_csv, 'w', newline='') as csvfile:
                 municipality = jurisdiction_data.get("name")
                 juris_type = "local"
 
-        if 'Police' in agency_data.get("types"):
-            agency_type = 'law enforcement/police'
+        if "Police" in agency_data.get("types"):
+            agency_type = "law enforcement/police"
         else:
-            agency_type = ''
+            agency_type = ""
 
-        source_url = ''
+        source_url = ""
         absolute_url = item.get("absolute_url")
-        access_type = ''
+        access_type = ""
         for comm in item["communications"]:
             if comm["files"]:
-                source_url = absolute_url + '#files'
-                access_type = 'Web page,Download,API'
+                source_url = absolute_url + "#files"
+                access_type = "Web page,Download,API"
                 break
 
         # Extract the relevant fields from the JSON object
         csv_row = {
             "name": item.get("title", ""),
-            "agency_described": agency_data.get("name", "") + ' - ' + state,
+            "agency_described": agency_data.get("name", "") + " - " + state,
             "record_type": "",
             "description": "",
             "source_url": source_url,
@@ -145,7 +169,7 @@ with open(output_csv, 'w', newline='') as csvfile:
             "update_frequency": "",
             "update_method": "",
             "retention_schedule": "",
-            "detail_level": ""
+            "detail_level": "",
         }
 
         # Write the extracted row to the CSV file

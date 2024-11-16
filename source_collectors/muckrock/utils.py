@@ -1,18 +1,17 @@
-'''
+"""
 utils.py
 
 Provides useful functions for muckrock_tools.
 
 Functions:
     - format_filename_json_to_csv()
-'''
-
+"""
 
 import re
 
 
 def format_filename_json_to_csv(json_filename: str) -> str:
-    '''
+    """
     Converts JSON filename format to CSV filename format.
 
     Args:
@@ -21,7 +20,7 @@ def format_filename_json_to_csv(json_filename: str) -> str:
     Returns:
         csv_filename (str): A CSV filename string.
 
-    '''
-    csv_filename = re.sub(r'_(?=[^.]*$)', '-', json_filename[:-5]) + '.csv'
+    """
+    csv_filename = re.sub(r"_(?=[^.]*$)", "-", json_filename[:-5]) + ".csv"
 
     return csv_filename

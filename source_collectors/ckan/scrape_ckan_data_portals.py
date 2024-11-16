@@ -1,4 +1,5 @@
 """Retrieves packages from CKAN data portals and parses relevant information then outputs to a CSV file"""
+
 from itertools import chain
 import json
 import sys

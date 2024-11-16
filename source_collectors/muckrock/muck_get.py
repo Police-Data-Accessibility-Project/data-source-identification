@@ -14,17 +14,23 @@ max_count = 20
 while True:
 
     # Make the GET request with the search string as a query parameter
-    response = requests.get(base_url, params={"page" : page, "page_size" : per_page, "format": "json"})
+    response = requests.get(
+        base_url, params={"page": page, "page_size": per_page, "format": "json"}
+    )
 
     # Check if the request was successful
     if response.status_code == 200:
         # Parse the JSON response
         data = response.json()
 
-        if not data['results']:
+        if not data["results"]:
             break
 
-        filtered_results = [item for item in data['results'] if search_string.lower() in item['title'].lower()]
+        filtered_results = [
+            item
+            for item in data["results"]
+            if search_string.lower() in item["title"].lower()
+        ]
 
         all_results.extend(filtered_results)
 
@@ -44,7 +50,7 @@ while True:
 
 # Dump list into a JSON file
 json_out_file = search_string.replace(" ", "_") + ".json"
-with open(json_out_file, 'w') as json_file:
+with open(json_out_file, "w") as json_file:
     json.dump(all_results, json_file)
 
 print(f"List dumped into {json_out_file}")
