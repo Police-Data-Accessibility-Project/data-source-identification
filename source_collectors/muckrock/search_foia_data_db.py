@@ -178,8 +178,7 @@ def main() -> None:
         df["communications"] = df["communications"].apply(parse_communications_column)
 
     print(
-        f'Found {df.shape[0]} matching entries containing "{
-          search_string}" in the title or tags'
+        f'Found {df.shape[0]} matching entries containing "{search_string}" in the title or tags'
     )
 
     generate_json(df, search_string)

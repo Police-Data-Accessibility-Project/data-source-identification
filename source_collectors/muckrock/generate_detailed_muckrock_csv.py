@@ -69,8 +69,9 @@ def get_agency(agency_id):
 
 def get_jurisdiction(jurisdiction_id):
     if jurisdiction_id:
-        jurisdiction_url = f"https://www.muckrock.com/api_v1/jurisdiction/{
-            jurisdiction_id}/"
+        jurisdiction_url = (
+            f"https://www.muckrock.com/api_v1/jurisdiction/{jurisdiction_id}/"
+        )
         response = requests.get(jurisdiction_url)
 
         if response.status_code == 200:

@@ -1,3 +1,12 @@
+"""
+***DEPRECATED***
+
+download_muckrock_foia.py
+
+This script fetches data from the MuckRock FOIA API and stores the results in a JSON file.
+
+"""
+
 import requests
 import csv
 import time

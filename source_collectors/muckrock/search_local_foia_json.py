@@ -1,3 +1,10 @@
+"""
+***DEPRECATED***
+
+search_local_foia_json.py
+
+"""
+
 import json
 
 # Specify the JSON file path
@@ -41,4 +48,4 @@ print(
 with open("matching_entries.json", "w", encoding="utf-8") as file:
     json.dump(matching_entries, file, indent=4)
 
-print(f"Matching entries written to 'matching_entries.json'")
+print("Matching entries written to 'matching_entries.json'")
