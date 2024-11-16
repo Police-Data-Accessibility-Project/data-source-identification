@@ -225,4 +225,5 @@ flycheck_*.el
 *.db
 *.json
 *.csv
+/csv
 last_page_fetched.txt
