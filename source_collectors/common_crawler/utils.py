@@ -12,7 +12,7 @@ class URLWithParameters:
         self.url = url
 
     def add_parameter(self, parameter, value):
-        if '?' in self.url:
+        if "?" in self.url:
             self.url += f"&{parameter}={value}"
         else:
             self.url += f"?{parameter}={value}"

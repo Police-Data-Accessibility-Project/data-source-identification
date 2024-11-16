@@ -8,11 +8,13 @@ These classes include:
     - CommonCrawlerCache: a class for managing the cache logic of Common Crawl search results
 """
 
+
 class CommonCrawlerCacheManager:
     """
     A class for managing the cache of Common Crawl search results.
     This class is responsible for adding, retrieving, and saving cache data.
     """
+
     def __init__(self, file_name: str = "cache", directory=None):
         """
         Initializes the CacheStorage object with a file name and directory.
@@ -41,7 +43,6 @@ class CommonCrawlerCacheManager:
             self.cache[index][url] = {}
         self.cache[index][url][keyword] = last_page
 
-
     def get(self, index, url, keyword) -> int:
         """
         Retrieves a page number from the cache.
@@ -53,11 +54,14 @@ class CommonCrawlerCacheManager:
         Returns: int - the last page crawled
 
         """
-        if index in self.cache and url in self.cache[index] and keyword in self.cache[index][url]:
+        if (
+            index in self.cache
+            and url in self.cache[index]
+            and keyword in self.cache[index][url]
+        ):
             return self.cache[index][url][keyword]
         # The cache object does not exist. Return 0 as the default value.
         return 0
-
 
     def load_or_create_cache(self) -> dict:
         """
@@ -66,11 +70,10 @@ class CommonCrawlerCacheManager:
         Returns: dict - the cache data
         """
         try:
-            with open(self.file_path, 'r') as file:
+            with open(self.file_path, "r") as file:
                 return json.load(file)
         except FileNotFoundError:
             return {}
-
 
     def save_cache(self) -> None:
         """
@@ -79,9 +82,8 @@ class CommonCrawlerCacheManager:
         persistence of crawl data across sessions.
         """
         # Reformat cache data for JSON serialization
-        with open(self.file_path, 'w') as file:
+        with open(self.file_path, "w") as file:
             json.dump(self.cache, file, indent=4)
-
 
     def reset_cache(self) -> None:
         """

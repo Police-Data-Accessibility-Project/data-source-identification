@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 
 # The below code sets the working directory to be the root of the entire repository
 # This is done to solve otherwise quite annoying import issues.
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from util.huggingface_api_manager import HuggingFaceAPIManager
 from util.miscellaneous_functions import get_filename_friendly_timestamp
@@ -35,30 +35,34 @@ class BatchInfo:
     notes: str
     filename: str
 
+
 class LabelStudioError(Exception):
     """Custom exception for Label Studio Errors"""
+
     pass
 
-BATCH_HEADERS = ['Datetime', 'Source', 'Count', 'Keywords', 'Notes', 'Filename']
+
+BATCH_HEADERS = ["Datetime", "Source", "Count", "Keywords", "Notes", "Filename"]
+
 
 def get_current_time():
     return str(datetime.now())
 
 
-def add_batch_info_to_csv(common_crawl_result: CommonCrawlResult, args: argparse.Namespace, last_page: int) -> BatchInfo:
+def add_batch_info_to_csv(
+    common_crawl_result: CommonCrawlResult, args: argparse.Namespace, last_page: int
+) -> BatchInfo:
     batch_info = BatchInfo(
         datetime=get_current_time(),
         source="Common Crawl",
         count=str(len(common_crawl_result.url_results)),
         keywords=f"{args.url} - {args.keyword}",
         notes=f"{args.common_crawl_id}, {args.pages} pages, starting at {last_page + 1}",
-        filename=f"{args.output_filename}_{get_filename_friendly_timestamp()}"
+        filename=f"{args.output_filename}_{get_filename_friendly_timestamp()}",
     )
 
     batch_info_csv_manager = CSVManager(
-        file_name='batch_info',
-        directory=args.data_dir,
-        headers=BATCH_HEADERS
+        file_name="batch_info", directory=args.data_dir, headers=BATCH_HEADERS
     )
     batch_info_csv_manager.add_row(dataclasses.astuple(batch_info))
 
@@ -71,12 +75,11 @@ def main():
 
     # Initialize the Cache
     cache_manager = CommonCrawlerCacheManager(
-        file_name=args.cache_filename,
-        directory=args.data_dir
+        file_name=args.cache_filename, directory=args.data_dir
     )
 
     load_dotenv()
-    
+
     # Initialize the HuggingFace API Manager
     hf_access_token = os.getenv("HUGGINGFACE_ACCESS_TOKEN")
     if not hf_access_token:
@@ -84,10 +87,10 @@ def main():
             "HUGGINGFACE_ACCESS_TOKEN not accessible in .env file in root directory. "
             "Please obtain access token from your personal account at "
             "https://huggingface.co/settings/tokens and ensure you have write access to "
-            "https://huggingface.co/PDAP. Then include in .env file in root directory.")
+            "https://huggingface.co/PDAP. Then include in .env file in root directory."
+        )
     huggingface_api_manager = HuggingFaceAPIManager(
-        access_token=hf_access_token,
-        repo_id=args.huggingface_repo_id
+        access_token=hf_access_token, repo_id=args.huggingface_repo_id
     )
     ls_access_token = os.getenv("LABEL_STUDIO_ACCESS_TOKEN")
     if not ls_access_token:
@@ -95,13 +98,15 @@ def main():
             "LABEL_STUDIO_ACCESS_TOKEN not accessible in .env file in root directory. "
             "Please obtain access token from your personal account at "
             "https://app.heartex.com/user/account and ensure you have read access to "
-            "https://app.heartex.com/projects/61550. Then include in .env file in root directory.")
+            "https://app.heartex.com/projects/61550. Then include in .env file in root directory."
+        )
     ls_project_id = os.getenv("LABEL_STUDIO_PROJECT_ID")
     if not ls_project_id:
         raise ValueError(
             "LABEL_STUDIO_PROJECT_ID not accessible in .env file in root directory. "
             "Please obtain a project ID by navigating to the Label Studio project  "
-            "where it will be visibile in the url. Then include in .env file in root directory.")
+            "where it will be visibile in the url. Then include in .env file in root directory."
+        )
 
     try:
         print("Retrieving Label Studio data for deduplication")
@@ -119,7 +124,9 @@ def main():
     try:
         # Retrieve the last page from the cache, or 0 if it does not exist
         last_page = cache_manager.get(args.common_crawl_id, args.url, args.keyword)
-        common_crawl_result = process_crawl_and_upload(args, last_page, huggingface_api_manager, label_studio_results)
+        common_crawl_result = process_crawl_and_upload(
+            args, last_page, huggingface_api_manager, label_studio_results
+        )
     except ValueError as e:
         print(f"Error during crawling: {e}")
         return
@@ -129,11 +136,13 @@ def main():
             index=args.common_crawl_id,
             url=args.url,
             keyword=args.keyword,
-            last_page=common_crawl_result.last_page_search)
+            last_page=common_crawl_result.last_page_search,
+        )
         cache_manager.save_cache()
 
     except ValueError as e:
         print(f"Error while saving cache manager: {e}")
+
 
 def handle_remote_results_error(remote_results):
     """
@@ -151,6 +160,7 @@ def handle_remote_results_error(remote_results):
     else:
         raise LabelStudioError(f"Unexpected error: {remote_results}")
 
+
 def validate_remote_results(remote_results):
     """
     Validates the remote results retrieved from the Label Studio project
@@ -166,13 +176,16 @@ def validate_remote_results(remote_results):
             print("No data in Label Studio project.")
             return []
         elif "url" not in remote_results[0]["data"]:
-            raise LabelStudioError("Column 'url' not present in Label Studio project. Exiting...")
+            raise LabelStudioError(
+                "Column 'url' not present in Label Studio project. Exiting..."
+            )
         else:
             return remote_results
     elif isinstance(remote_results, dict):
         handle_remote_results_error(remote_results)
     else:
         raise LabelStudioError("Unexpected response type.")
+
 
 def get_ls_data() -> list[dict] | None:
     """Retrieves data from a Label Studio project to be used in deduplication of common crawl results.
@@ -190,14 +203,14 @@ def get_ls_data() -> list[dict] | None:
 
 
 def strip_url(url: str) -> str:
-    """Strips http(s)://www. from the beginning of a url if applicable. 
+    """Strips http(s)://www. from the beginning of a url if applicable.
 
     Args:
         url (str): The URL to strip.
 
     Returns:
         str: The stripped URL.
-    """    
+    """
     result = re.search(r"^(?:https?://)?(?:www\.)?(.*)$", url).group(1)
     return result
 
@@ -210,7 +223,7 @@ def remove_local_duplicates(url_results: list[str]) -> list[str]:
 
     Returns:
         list[str]: List of unique URLs.
-    """    
+    """
     stripped_url_results = [strip_url(url) for url in url_results]
     unique_urls = collections.deque()
     adjust = 0
@@ -225,7 +238,9 @@ def remove_local_duplicates(url_results: list[str]) -> list[str]:
     return url_results
 
 
-def remove_remote_duplicates(url_results: list[str], label_studio_data: list[dict]) -> list[str]:
+def remove_remote_duplicates(
+    url_results: list[str], label_studio_data: list[dict]
+) -> list[str]:
     """Removes URLs from a list that are already present in the Label Studio project, ignoring http(s)://www.
 
     Args:
@@ -238,7 +253,9 @@ def remove_remote_duplicates(url_results: list[str], label_studio_data: list[dic
     try:
         remote_urls = [strip_url(task["data"]["url"]) for task in label_studio_data]
     except TypeError:
-        print("Invalid Label Studio credentials. Database could not be checked for duplicates.")
+        print(
+            "Invalid Label Studio credentials. Database could not be checked for duplicates."
+        )
         return url_results
     remote_urls = set(remote_urls)
 
@@ -254,10 +271,11 @@ def remove_remote_duplicates(url_results: list[str], label_studio_data: list[dic
 
 
 def handle_csv_and_upload(
-        common_crawl_result: CommonCrawlResult,
-        huggingface_api_manager: HuggingFaceAPIManager,
-        args: argparse.Namespace,
-        last_page: int):
+    common_crawl_result: CommonCrawlResult,
+    huggingface_api_manager: HuggingFaceAPIManager,
+    args: argparse.Namespace,
+    last_page: int,
+):
     """
     Handles the CSV file and uploads it to Hugging Face repository.
     Args:
@@ -270,29 +288,27 @@ def handle_csv_and_upload(
     batch_info = add_batch_info_to_csv(common_crawl_result, args, last_page)
 
     csv_manager = CSVManager(
-        file_name=batch_info.filename,
-        headers=['url'],
-        directory=args.data_dir
+        file_name=batch_info.filename, headers=["url"], directory=args.data_dir
     )
     csv_manager.add_rows(common_crawl_result.url_results)
     huggingface_api_manager.upload_file(
         local_file_path=csv_manager.file_path,
-        repo_file_path=f"{args.output_filename}/{csv_manager.file_path.name}"
+        repo_file_path=f"{args.output_filename}/{csv_manager.file_path.name}",
     )
     print(
-        f"Uploaded file to Hugging Face repo {huggingface_api_manager.repo_id} at {args.output_filename}/{csv_manager.file_path.name}")
+        f"Uploaded file to Hugging Face repo {huggingface_api_manager.repo_id} at {args.output_filename}/{csv_manager.file_path.name}"
+    )
     csv_manager.delete_file()
 
 
 def process_crawl_and_upload(
-        args: argparse.Namespace,
-        last_page: int,
-        huggingface_api_manager: HuggingFaceAPIManager,
-        label_studio_data: list[dict]) -> CommonCrawlResult:
+    args: argparse.Namespace,
+    last_page: int,
+    huggingface_api_manager: HuggingFaceAPIManager,
+    label_studio_data: list[dict],
+) -> CommonCrawlResult:
     # Initialize the CommonCrawlerManager
-    crawler_manager = CommonCrawlerManager(
-        args.common_crawl_id
-    )
+    crawler_manager = CommonCrawlerManager(args.common_crawl_id)
     # Determine the pages to search, based on the last page searched
     start_page = last_page + 1
     # Use the parsed arguments
@@ -300,7 +316,7 @@ def process_crawl_and_upload(
         search_term=args.url,
         keyword=args.keyword,
         num_pages=args.pages,
-        start_page=start_page
+        start_page=start_page,
     )
     # Logic should conclude here if no results are found
     if not common_crawl_result.url_results:
@@ -309,10 +325,16 @@ def process_crawl_and_upload(
         return common_crawl_result
 
     print("Removing urls already in the database")
-    common_crawl_result.url_results = remove_local_duplicates(common_crawl_result.url_results)
-    common_crawl_result.url_results = remove_remote_duplicates(common_crawl_result.url_results, label_studio_data)
+    common_crawl_result.url_results = remove_local_duplicates(
+        common_crawl_result.url_results
+    )
+    common_crawl_result.url_results = remove_remote_duplicates(
+        common_crawl_result.url_results, label_studio_data
+    )
     if not common_crawl_result.url_results:
-        print("No urls not already present in the database found. Ceasing main execution.")
+        print(
+            "No urls not already present in the database found. Ceasing main execution."
+        )
         add_batch_info_to_csv(common_crawl_result, args, last_page)
         return common_crawl_result
 
