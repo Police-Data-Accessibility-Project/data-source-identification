@@ -19,8 +19,10 @@ datasets>=2.17.1
 accelerate>=0.27.2
 numpy>=1.26.4
 multimodal-transformers>=0.3.1
-# html_tag_collector_only
+# html_tag_collector only
 requests_html>=0.10.0
 lxml~=5.1.0
+lxml_html_clean~=0.4.1
 pyppeteer>=2.0.0
 beautifulsoup4>=4.12.3
+from_root
