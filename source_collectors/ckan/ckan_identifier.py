@@ -7,6 +7,7 @@ import asyncio
 from bs4 import BeautifulSoup
 from from_root import from_root
 import polars as pl
+from polars.dataframe.frame import DataFrame
 import requests
 from requests import Response
 
@@ -17,9 +18,9 @@ from html_tag_collector.collector import run_get_response
 
 
 def get_responses(urls: list[str]) -> list[Response]:
-    """Uses the tag collector's run_get_response method to get response objects for each url.
+    """Uses the tag collector's run_get_response method to get response objects for each URL.
 
-    :param urls: The list of urls.
+    :param urls: The list of URLs.
     :return: The list of resulting responses.
     """
     loop = asyncio.get_event_loop()
@@ -45,9 +46,21 @@ def is_ckan_hosted(response: Response) -> bool:
     return False
 
 
-def main():
-    file = sys.argv[1]
-    df = pl.read_csv(file)
+def ckan_identifier(
+    urls: list[str] = None, write_output_csv: bool = False
+) -> DataFrame:
+    """Identifies if each URL in a list is hosted using ckan.
+
+    :param urls: List of URLs to identify, defaults to None.
+    None will use a CSV file specified on the command line at runtime.
+    :param write_output_csv: Whether to output the results to a CSV file, defaults to False.
+    :return: Returns a DataFrame with URLs and their labels.
+    """
+    if urls is None:
+        file = sys.argv[1]
+        df = pl.read_csv(file)
+    else:
+        df = pl.DataFrame([pl.Series("url", urls)])
 
     results = get_responses(urls=list(df["url"]))
 
@@ -66,8 +79,12 @@ def main():
         .alias("is_ckan_hosted")
     )
 
-    urls_and_responses.select(["url", "is_ckan_hosted"]).write_csv("output.csv")
+    output_columns = urls_and_responses.select(["url", "is_ckan_hosted"])
+    if write_output_csv is True:
+        output_columns.write_csv("output.csv")
+
+    return output_columns
 
 
 if __name__ == "__main__":
-    main()
+    ckan_identifier(write_output_csv=True)
