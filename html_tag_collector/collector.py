@@ -24,6 +24,7 @@ import multiprocessing
 import requests
 from requests_html import AsyncHTMLSession
 import asyncio
+from from_root import from_root
 import pyppeteer
 from tqdm import tqdm
 from tqdm.asyncio import tqdm
@@ -32,9 +33,12 @@ from bs4 import BeautifulSoup
 import polars as pl
 from urllib.parse import urlparse
 
-from RootURLCache import RootURLCache
-from common import get_user_agent
-from DataClassTags import Tags
+p = from_root(".gitignore").parent
+sys.path.insert(1, str(p))
+
+from html_tag_collector.RootURLCache import RootURLCache
+from html_tag_collector.common import get_user_agent
+from html_tag_collector.DataClassTags import Tags
 
 
 # Define the list of header tags we want to extract

@@ -6,7 +6,7 @@ import json
 import os
 import ssl
 
-from common import get_user_agent
+from html_tag_collector.common import get_user_agent
 
 DEBUG = False
 
