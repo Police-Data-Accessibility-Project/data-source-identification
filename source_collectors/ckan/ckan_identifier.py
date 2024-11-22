@@ -35,7 +35,13 @@ def is_ckan_hosted(response: Response) -> bool:
     :param response: The response object.
     :return: True if the CKAN version tag is found, False otherwise.
     """
+    if not response.ok:
+        return False
+
     soup = BeautifulSoup(response.content, "lxml")
+
+    if soup.head is None:
+        return False
 
     # Checks if the CKAN version tag is present, looks like this:
     # <meta name="generator" content="ckan 2.10.5">
