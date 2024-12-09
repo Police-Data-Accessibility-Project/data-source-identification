@@ -1,4 +1,4 @@
-This is a multi-language repo containing scripts or tools for identifying Data Sources by their URL and HTML content.
+This is a multi-language repo containing scripts or tools for identifying and cataloguing Data Sources based on their URL and HTML content.
 
 # Index
 
@@ -12,15 +12,6 @@ html_tag_collector | Collects HTML header, meta, and title tags and appends them
 hugging_face | Utilities for interacting with our machine learning space at [Hugging Face](https://huggingface.co/PDAP)
 identification_pipeline.py | The core python script uniting this modular pipeline. More details below.
 openai-playground | Scripts for accessing the openai API on PDAP's shared account
-
-# Identification pipeline
-In an effort to build out a fully automated system for identifying and cataloguing new data sources, this pipeline: 
-
-1. collects batches of URLs which may contain useful data
-2. uses our machine learning models to label them
-3. helps us and human-label them for training the models
-
-For more detail, see the diagrams below.
 
 ## How to use
 
@@ -39,6 +30,46 @@ Thank you for your interest in contributing to this project! Please follow these
 
 
 # Diagrams
+
+## Identification pipeline plan
+
+```mermaid
+flowchart TD
+    SourceCollectors["**Source Collectors:** automatic searches, citation follower, portal scrapers, agency crawlers, common crawler"]
+    Logging["Logging source collection attempts"]
+    API["Submitting sources to the **Data Sources API** for approval"]
+    Identifier["**Data Source Identifier:** agency matcher, duplicate checker, tag collector, ML metadata labelers"]
+    LabelStudio["Human labeling of missing or uncertain metadata in LabelStudio"]
+
+    Identifier --> LabelStudio
+    Identifier ---> API
+    LabelStudio --> API
+    Identifier --> Logging
+
+    SourceCollectors --> Identifier
+
+    API --> Search["Allowing users to search for data and browse maps"]
+    Search --> Sentiment["Capturing user sentiment and overall database utility"]
+    API --> MLModels["Improving ML metadata labelers: relevance, agency, record type, etc"]
+    API --> Missingness["Documenting data we have searched for and found to be missing"]
+    Missingness --> Maps["Mapping our progress and the overall state of data access"]
+
+    %% Default class for black stroke
+    classDef default fill:#fffbfa,stroke:#000,stroke-width:1px;
+
+    %% Custom styles
+    class API gold;
+    class Search lightgold;
+    class MLModels,Missingness lightergold;
+    class SourceCollectors,Identifier byzantium
+
+    %% Define specific classes
+    classDef gray fill:#bfc0c0
+    classDef gold fill:#d5a23c
+    classDef lightgold fill:#fbd597
+    classDef lightergold fill:#fdf0dd
+    classDef byzantium fill:#dfd6de
+```
 
 ## Training models by batching and annotating URLs
 
