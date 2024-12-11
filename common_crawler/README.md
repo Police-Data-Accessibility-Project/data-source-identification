@@ -4,6 +4,8 @@ This module interfaces with the Common Crawl dataset to extract urls.
 
 ## Installation
 
+Python Version Required: 3.11
+
 To install all necessary dependencies, run the following command from the root directory:
 
 ```bash
@@ -17,15 +19,20 @@ pip install -r requirements.txt
 
 Please ensure you have a `.env` file located in the root directory (not the `common_crawler` directory) 
 which contains the following environment variable:
+
 * HUGGINGFACE_ACCESS_TOKEN = The access token to enable writing to the associated PDAP dataset.
-To obtain your access token, consult user settings at https://huggingface.co/settings/tokens 
-and ensure you have write access to https://huggingface.co/PDAP .
+To obtain your access token, consult user settings at <https://huggingface.co/settings/tokens>
+and ensure you have write access to <https://huggingface.co/PDAP> .
+* LABEL_STUDIO_ACCESS_TOKEN = The access token for the Label Studio API. This can be
+  obtained by logging into Label Studio and navigating to the [user account section](https://app.heartex.com/user/account), where the access token can be copied.
+* LABEL_STUDIO_PROJECT_ID = The project ID for the Label Studio API. This can be
+  obtained by logging into Label Studio and navigating to the relevant project, where the project id will be in the URL.
 
 ### Instructions
 
 Run the following script from the root directory
 ```bash
-python common_crawler/main.py CC-MAIN-2023-50 *.gov police --config common_crawler/config.ini --pages 2
+python common_crawler/main.py CC-MAIN-2023-50 '*.gov' police --config common_crawler/config.ini --pages 2
 ```
 
 This example will crawl a single page (typically 15000 records) of the Common Crawl dataset with ID `CC-MAIN-2023-50` 
@@ -42,7 +49,7 @@ This csv file contains both the url and the parameters used to query it.
 ### Parameters
 
 - **common_crawl_id**: Required. Specifies the Common Crawl Index to perform the search on.
-- **url**: Required. Specifies the domain URL to query. Wildcard characters such as * can be used to expand the search.
+- **url**: Required. Specifies the domain URL to query. Wildcard characters such as * can be used to expand the search. Note that the query must be contained within quotes (as in '*.gov') to prevent misinterpretation of wildcards
 - **search_term**: Required. Specifies keyword within the url to search for.
 - **-c or --config**: Optional. Specifies the configuration file to use. The default value is config.ini.
 - **-p or --pages**: Optional. Specifies the number of pages to search. The default value is 1.

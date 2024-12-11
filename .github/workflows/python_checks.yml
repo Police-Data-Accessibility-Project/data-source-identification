@@ -1,0 +1,22 @@
+name: flake8 Lint
+
+on: [pull_request]
+
+jobs:
+  flake8-lint:
+    runs-on: ubuntu-latest
+    name: Lint
+    steps:
+      - name: Check out source repository
+        uses: actions/checkout@v4
+      - name: Set up Python environment
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install flake8 flake8-docstrings flake8-simplify flake8-unused-arguments flake8-annotations
+      - name: flake8 Lint with Reviewdog
+        uses: reviewdog/action-flake8@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          flake8_args: --ignore E501,W291,W293,D401,D400,E402,E302,D200,D202,D205
+          level: warning
