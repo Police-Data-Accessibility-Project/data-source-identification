@@ -19,8 +19,10 @@ with open(json_file, "r", encoding="utf-8") as file:
 matching_entries = []
 
 
-# Function to search within an entry
 def search_entry(entry):
+    """
+    search within an entry
+    """
     # Check if 'status' is 'done'
     if entry.get("status") != "done":
         return False

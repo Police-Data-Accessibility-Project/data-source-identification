@@ -247,6 +247,9 @@ def get_supplying_entity(result: dict[str, Any]) -> str:
 
 
 def main():
+    """
+    Main function.
+    """
     results = []
 
     print("Gathering results...")

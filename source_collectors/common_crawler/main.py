@@ -28,6 +28,9 @@ This module contains the main function for the Common Crawler script.
 
 @dataclasses.dataclass
 class BatchInfo:
+    """
+    Dataclass for batch info
+    """
     datetime: str
     source: str
     count: str
@@ -46,12 +49,18 @@ BATCH_HEADERS = ["Datetime", "Source", "Count", "Keywords", "Notes", "Filename"]
 
 
 def get_current_time():
+    """
+    Returns the current time
+    """
     return str(datetime.now())
 
 
 def add_batch_info_to_csv(
     common_crawl_result: CommonCrawlResult, args: argparse.Namespace, last_page: int
 ) -> BatchInfo:
+    """
+    Adds batch info to CSV
+    """
     batch_info = BatchInfo(
         datetime=get_current_time(),
         source="Common Crawl",
@@ -70,6 +79,9 @@ def add_batch_info_to_csv(
 
 
 def main():
+    """
+    Main function
+    """
     # Parse the arguments
     args = parse_args()
 
@@ -307,6 +319,9 @@ def process_crawl_and_upload(
     huggingface_api_manager: HuggingFaceAPIManager,
     label_studio_data: list[dict],
 ) -> CommonCrawlResult:
+    """
+    Processes a crawl and uploads the results to Hugging Face.
+    """
     # Initialize the CommonCrawlerManager
     crawler_manager = CommonCrawlerManager(args.common_crawl_id)
     # Determine the pages to search, based on the last page searched

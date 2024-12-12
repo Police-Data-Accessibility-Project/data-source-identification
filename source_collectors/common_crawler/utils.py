@@ -9,9 +9,15 @@ class URLWithParameters:
     """
 
     def __init__(self, url):
+        """
+        Initialize the URLWithParameters object with the given URL
+        """
         self.url = url
 
     def add_parameter(self, parameter, value):
+        """
+        Add a parameter to the URL
+        """
         if "?" in self.url:
             self.url += f"&{parameter}={value}"
         else:
@@ -19,4 +25,7 @@ class URLWithParameters:
         return self.url
 
     def __str__(self):
+        """
+        Return the URL
+        """
         return self.url

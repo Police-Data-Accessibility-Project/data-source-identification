@@ -53,7 +53,9 @@ headers = [
 
 
 def get_agency(agency_id):
-    # API call to get agency_described
+    """
+    Function to get agency_described
+    """
     if agency_id:
         agency_url = f"https://www.muckrock.com/api_v1/agency/{agency_id}/"
         response = requests.get(agency_url)
@@ -68,6 +70,9 @@ def get_agency(agency_id):
 
 
 def get_jurisdiction(jurisdiction_id):
+    """
+    Function to get jurisdiction_described
+    """
     if jurisdiction_id:
         jurisdiction_url = (
             f"https://www.muckrock.com/api_v1/jurisdiction/{jurisdiction_id}/"

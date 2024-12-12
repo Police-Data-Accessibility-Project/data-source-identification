@@ -18,6 +18,12 @@ This module contains classes for managing a cache of Common Crawl search results
 
 @dataclass
 class CommonCrawlResult:
+    """
+    A class to hold the results of a Common Crawl search.
+    Args:
+        last_page_search: the last page searched
+        url_results: the list of URLs found in the search
+    """
     last_page_search: int
     url_results: list[str]
 
@@ -31,12 +37,25 @@ class CommonCrawlerManager:
     """
 
     def __init__(self, crawl_id="CC-MAIN-2023-50"):
+        """
+        Initializes the CommonCrawlerManager with a crawl ID.
+        Args:
+            crawl_id: the Common Crawl index to use
+        """
         self.crawl_id = crawl_id
         CC_INDEX_SERVER = "http://index.commoncrawl.org/"
         INDEX_NAME = f"{self.crawl_id}-index"
         self.root_url = f"{CC_INDEX_SERVER}{INDEX_NAME}"
 
     def crawl(self, search_term, keyword, start_page, num_pages) -> CommonCrawlResult:
+        """
+        Crawls the Common Crawl index for a given search term and keyword.
+        Args:
+            search_term: the term to search for
+            keyword: the keyword to search for
+            start_page: the page to start the search from
+            num_pages: the number of pages to search
+        """
         print(
             f"Searching for {keyword} on {search_term} in {self.crawl_id} for {num_pages} pages,"
             f" starting at page {start_page}"
@@ -136,4 +155,7 @@ class CommonCrawlerManager:
 
     @staticmethod
     def get_urls_with_keyword(records: list[dict], keyword) -> list[str]:
+        """
+        Returns a list of URLs that contain the given keyword
+        """
         return [record["url"] for record in records if keyword in record["url"]]

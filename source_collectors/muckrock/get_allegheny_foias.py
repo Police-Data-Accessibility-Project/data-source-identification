@@ -7,8 +7,10 @@ import json
 import time
 
 
-# Function to fetch jurisdiction IDs based on town names from a text file
 def fetch_jurisdiction_ids(town_file, base_url):
+    """
+    fetch jurisdiction IDs based on town names from a text file
+    """
     with open(town_file, "r") as file:
         town_names = [line.strip() for line in file]
 
@@ -39,8 +41,10 @@ def fetch_jurisdiction_ids(town_file, base_url):
     return jurisdiction_ids
 
 
-# Function to fetch FOIA data for each jurisdiction ID and save it to a JSON file
 def fetch_foia_data(jurisdiction_ids):
+    """
+    fetch FOIA data for each jurisdiction ID and save it to a JSON file
+    """
     all_data = []
     for name, id_ in jurisdiction_ids.items():
         url = f"https://www.muckrock.com/api_v1/foia/?status=done&jurisdiction={id_}"
@@ -68,8 +72,10 @@ def fetch_foia_data(jurisdiction_ids):
     print(f"Saved {len(all_data)} records to foia_data_combined.json")
 
 
-# Main function to execute the script
 def main():
+    """
+    Execute the script
+    """
     town_file = "allegheny-county-towns.txt"
     jurisdiction_url = (
         "https://www.muckrock.com/api_v1/jurisdiction/?level=l&parent=126"

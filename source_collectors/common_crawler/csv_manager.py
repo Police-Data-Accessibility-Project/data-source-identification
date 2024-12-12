@@ -11,6 +11,12 @@ class CSVManager:
     """
 
     def __init__(self, file_name: str, headers: list[str], directory=None):
+        """
+        Args:
+            file_name: the name of the CSV file
+            headers: the headers for the CSV file
+            directory: the directory to store the CSV file
+        """
         self.file_path = get_file_path(f"{file_name}.csv", directory)
         self.headers = headers
         if not os.path.exists(self.file_path):

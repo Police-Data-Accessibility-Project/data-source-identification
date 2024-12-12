@@ -22,8 +22,10 @@ all_data = []
 output_file = "foia_data.json"
 
 
-# Function to fetch data from a specific page
 def fetch_page(page):
+    """
+    Fetches data from a specific page of the MuckRock FOIA API.
+    """
     response = requests.get(
         base_url, params={"page": page, "page_size": per_page, "format": "json"}
     )
