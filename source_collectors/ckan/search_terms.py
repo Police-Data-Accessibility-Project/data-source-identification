@@ -1,3 +1,7 @@
+"""
+CKAN search terms
+"""
+
 package_search = [
     {
         "url": "https://catalog.data.gov/",
