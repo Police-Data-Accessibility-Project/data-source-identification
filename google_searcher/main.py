@@ -17,6 +17,8 @@ if __name__ == "__main__":
     google_searcher = GoogleSearcher(
         api_key=os.getenv("CUSTOM_SEARCH_API_KEY"),
         cse_id=os.getenv("CUSTOM_SEARCH_ENGINE_ID"))
+    # TODO: Change to call API. Or consider a non-API method entirely.
+    # TODO: Perhaps a separate database?
     db_manager = DBManager(
         user=os.getenv("DIGITAL_OCEAN_DB_USERNAME"),
         password=os.getenv("DIGITAL_OCEAN_DB_PASSWORD"),
