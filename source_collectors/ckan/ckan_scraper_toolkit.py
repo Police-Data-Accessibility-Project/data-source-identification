@@ -17,6 +17,9 @@ import requests
 
 @dataclass
 class Package:
+    """
+    A class representing a CKAN package (dataset).
+    """
     base_url: str = ""
     url: str = ""
     title: str = ""
@@ -28,6 +31,9 @@ class Package:
     source_last_updated: str = ""
 
     def to_dict(self):
+        """
+        Returns a dictionary representation of the package.
+        """
         return {
             "source_url": self.url,
             "submitted_name": self.title,
