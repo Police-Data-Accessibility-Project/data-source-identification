@@ -18,5 +18,5 @@ jobs:
         uses: reviewdog/action-flake8@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          flake8_args: --ignore E501,W291,W293,D401,D400,E402,E302,D200,D202,D205
+          flake8_args: --ignore E501,W291,W293,D401,D400,E402,E302,D200,D202,D205,W503,E203
           level: warning
