@@ -56,7 +56,7 @@ pip install -r requirements.txt
 
 ### 2. Clone Muckrock database & search locally
 
-~~- `download_muckrock_foia.py` `search_local_foia_json.py`~~ (deprecated)
+~~- `search_local_foia_json.py`~~ (deprecated)
 
 - scripts to clone the MuckRock foia requests collection for fast local querying (total size <2GB at present)
 
