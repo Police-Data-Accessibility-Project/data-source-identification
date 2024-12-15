@@ -16,6 +16,7 @@ import time
 import json
 
 from source_collectors.muckrock.FOIAFetcher import FOIAFetcher
+from source_collectors.muckrock.utils import save_json_file
 
 # Set initial parameters
 all_data = []
@@ -36,7 +37,6 @@ while True:
 
 
 # Write data to CSV
-with open(output_file, mode="w", encoding="utf-8") as json_file:
-    json.dump(all_data, json_file, indent=4)
+save_json_file(file_path=output_file, data=all_data)
 
 print(f"Data written to {output_file}")

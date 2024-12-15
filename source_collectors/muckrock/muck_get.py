@@ -7,6 +7,7 @@ import requests
 import json
 
 from source_collectors.muckrock.FOIAFetcher import FOIAFetcher
+from source_collectors.muckrock.utils import save_json_file
 
 # Define the base API endpoint
 base_url = "https://www.muckrock.com/api_v1/foia/"
@@ -16,9 +17,7 @@ def dump_list(all_results: list[dict], search_string: str) -> None:
     Dumps a list of dictionaries into a JSON file.
     """
     json_out_file = search_string.replace(" ", "_") + ".json"
-    with open(json_out_file, "w") as json_file:
-        json.dump(all_results, json_file)
-
+    save_json_file(file_path=json_out_file, data=all_results)
     print(f"List dumped into {json_out_file}")
 
 def search_for_foia(search_string: str, per_page: int = 100, max_count: int = 20) -> list[dict]:

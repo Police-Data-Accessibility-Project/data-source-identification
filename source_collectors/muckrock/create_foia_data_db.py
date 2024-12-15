@@ -112,6 +112,7 @@ def fetch_page(page: int) -> Union[JSON, Literal[NO_MORE_DATA], None]:
             - None: If there is an error other than 404.
     """
 
+    # TODO: Refactor to use FOIA Fetcher
     per_page = 100
     response = requests.get(
         base_url, params={"page": page, "page_size": per_page, "format": "json"}

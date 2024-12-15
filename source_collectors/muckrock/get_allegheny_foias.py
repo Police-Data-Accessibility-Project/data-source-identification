@@ -7,6 +7,8 @@ import requests
 import json
 import time
 
+from source_collectors.muckrock.utils import save_json_file
+
 
 def fetch_jurisdiction_ids(town_file, base_url):
     """
@@ -70,10 +72,7 @@ def fetch_foia_data(jurisdiction_ids):
                 break
 
     # Save the combined data to a JSON file
-    # TODO: Generalize this logic with similar logic in `muck_get.py` to function
-    with open("foia_data_combined.json", "w") as json_file:
-        json.dump(all_data, json_file, indent=4)
-
+    save_json_file(file_path="foia_data_combined.json", data=all_data)
     print(f"Saved {len(all_data)} records to foia_data_combined.json")
 
 

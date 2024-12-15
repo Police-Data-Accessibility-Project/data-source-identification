@@ -7,13 +7,14 @@ search_local_foia_json.py
 
 import json
 
+from source_collectors.muckrock.utils import load_json_file, save_json_file
+
 # Specify the JSON file path
 json_file = "foia_data.json"
 search_string = "use of force"
 
 # Load the JSON data
-with open(json_file, "r", encoding="utf-8") as file:
-    data = json.load(file)
+data = load_json_file(json_file)
 
 # List to store matching entries
 matching_entries = []
@@ -47,7 +48,6 @@ print(
 )
 
 # Optionally, write matching entries to a new JSON file
-with open("matching_entries.json", "w", encoding="utf-8") as file:
-    json.dump(matching_entries, file, indent=4)
+save_json_file(file_path="matching_entries.json", data=matching_entries)
 
 print("Matching entries written to 'matching_entries.json'")

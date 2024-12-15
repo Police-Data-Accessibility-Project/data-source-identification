@@ -4,12 +4,11 @@ Converts JSON file of MuckRock FOIA requests to CSV for further processing
 
 # TODO: Look into linking up this logic with other components in pipeline.
 
-import json
 import argparse
 import csv
 import requests
 import time
-from utils import format_filename_json_to_csv
+from utils import format_filename_json_to_csv, load_json_file
 
 # Define the CSV headers
 headers = [
@@ -92,8 +91,7 @@ def main():
     args = parser.parse_args()
 
     # TODO: Generalize logic
-    with open(args.json_file, "r") as f:
-        json_data = json.load(f)
+    json_data = load_json_file(args.json_file)
 
     output_csv = format_filename_json_to_csv(args.json_file)
     # Open a CSV file for writing
