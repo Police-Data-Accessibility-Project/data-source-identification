@@ -1,5 +1,6 @@
 """
-get_allegheny_foias.py
+Get Allegheny County FOIA requests
+and save them to a JSON file
 
 """
 import requests
@@ -47,9 +48,12 @@ def fetch_foia_data(jurisdiction_ids):
     """
     all_data = []
     for name, id_ in jurisdiction_ids.items():
+        # TODO: The muckrock api should be centralized in a `constants.py` folder
+        #   and the url should be constructed in a function or class
         url = f"https://www.muckrock.com/api_v1/foia/?status=done&jurisdiction={id_}"
         while url:
             response = requests.get(url)
+            # TODO: If logic similar to `fetch_jurisdiction_ids` and should be generalized
             if response.status_code == 200:
                 data = response.json()
                 all_data.extend(data.get("results", []))
@@ -66,6 +70,7 @@ def fetch_foia_data(jurisdiction_ids):
                 break
 
     # Save the combined data to a JSON file
+    # TODO: Generalize this logic with similar logic in `muck_get.py` to function
     with open("foia_data_combined.json", "w") as json_file:
         json.dump(all_data, json_file, indent=4)
 
