@@ -7,49 +7,33 @@ This script fetches data from the MuckRock FOIA API and stores the results in a 
 
 """
 
+
+# TODO: Logic redundant with `muck_get.py`. Generalize
+
 import requests
 import csv
 import time
 import json
 
-# Define the base API endpoint
-base_url = "https://www.muckrock.com/api_v1/foia/"
+from source_collectors.muckrock.FOIAFetcher import FOIAFetcher
 
 # Set initial parameters
-page = 1
-per_page = 100
 all_data = []
 output_file = "foia_data.json"
 
-
-def fetch_page(page):
-    """
-    Fetches data from a specific page of the MuckRock FOIA API.
-    """
-    response = requests.get(
-        base_url, params={"page": page, "page_size": per_page, "format": "json"}
-    )
-    if response.status_code == 200:
-        return response.json()
-    else:
-        print(f"Error fetching page {page}: {response.status_code}")
-        return None
-
-
 # Fetch and store data from all pages
+fetcher = FOIAFetcher()
 while True:
-    print(f"Fetching page {page}...")
-    data = fetch_page(page)
+    print(f"Fetching page {fetcher.current_page}...")
+    data = fetcher.fetch_next_page()
     if data is None:
-        print(f"Skipping page {page}...")
-        page += 1
+        print(f"Skipping page {fetcher.current_page}...")
         continue
 
     all_data.extend(data["results"])
     if not data["next"]:
         break
 
-    page += 1
 
 # Write data to CSV
 with open(output_file, mode="w", encoding="utf-8") as json_file:
