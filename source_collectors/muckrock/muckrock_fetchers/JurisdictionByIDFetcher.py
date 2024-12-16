@@ -2,13 +2,13 @@ from source_collectors.muckrock.constants import BASE_MUCKROCK_URL
 from source_collectors.muckrock.muckrock_fetchers.MuckrockFetcher import FetchRequest, MuckrockFetcher
 
 
-class JurisdictionFetchRequest(FetchRequest):
+class JurisdictionByIDFetchRequest(FetchRequest):
     jurisdiction_id: int
 
-class JurisdictionFetcher(MuckrockFetcher):
+class JurisdictionByIDFetcher(MuckrockFetcher):
 
-    def build_url(self, request: JurisdictionFetchRequest) -> str:
+    def build_url(self, request: JurisdictionByIDFetchRequest) -> str:
         return f"{BASE_MUCKROCK_URL}/jurisdiction/{request.jurisdiction_id}/"
 
     def get_jurisdiction(self, jurisdiction_id: int) -> dict:
-        return self.fetch(request=JurisdictionFetchRequest(jurisdiction_id=jurisdiction_id))
+        return self.fetch(request=JurisdictionByIDFetchRequest(jurisdiction_id=jurisdiction_id))

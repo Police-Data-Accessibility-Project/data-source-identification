@@ -13,7 +13,7 @@ from typing import Optional
 from pydantic import BaseModel
 
 from source_collectors.muckrock.muckrock_fetchers.AgencyFetcher import AgencyFetcher
-from source_collectors.muckrock.muckrock_fetchers.JurisdictionFetcher import JurisdictionFetcher
+from source_collectors.muckrock.muckrock_fetchers.JurisdictionByIDFetcher import JurisdictionByIDFetcher
 from utils import format_filename_json_to_csv, load_json_file
 
 
@@ -77,7 +77,7 @@ def main():
 
 def get_agency_infos(json_data):
     a_fetcher = AgencyFetcher()
-    j_fetcher = JurisdictionFetcher()
+    j_fetcher = JurisdictionByIDFetcher()
     agency_infos = []
     # Iterate through the JSON data
     for item in json_data:
