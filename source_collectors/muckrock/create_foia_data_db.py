@@ -27,9 +27,9 @@ from typing import List, Tuple, Dict, Any
 
 from tqdm import tqdm
 
-from source_collectors.muckrock.SQLiteClient import SQLiteClientContextManager, SQLClientError
-from source_collectors.muckrock.muckrock_fetchers.FOIAFetcher import FOIAFetcher
-from source_collectors.muckrock.muckrock_fetchers.MuckrockFetcher import MuckrockNoMoreDataError
+from source_collectors.muckrock.classes.SQLiteClient import SQLiteClientContextManager, SQLClientError
+from source_collectors.muckrock.classes.muckrock_fetchers import FOIAFetcher
+from source_collectors.muckrock.classes.muckrock_fetchers.MuckrockFetcher import MuckrockNoMoreDataError
 
 logging.basicConfig(
     filename="errors.log", level=logging.ERROR, format="%(levelname)s: %(message)s"

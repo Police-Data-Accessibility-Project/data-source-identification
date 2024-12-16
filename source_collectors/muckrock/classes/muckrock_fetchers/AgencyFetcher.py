@@ -1,5 +1,5 @@
 from source_collectors.muckrock.constants import BASE_MUCKROCK_URL
-from source_collectors.muckrock.muckrock_fetchers.MuckrockFetcher import FetchRequest, MuckrockFetcher
+from source_collectors.muckrock.classes.muckrock_fetchers.MuckrockFetcher import FetchRequest, MuckrockFetcher
 
 
 class AgencyFetchRequest(FetchRequest):

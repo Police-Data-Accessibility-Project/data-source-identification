@@ -2,8 +2,8 @@
 A straightforward standalone script for downloading data from MuckRock
 and searching for it with a specific search string.
 """
-from source_collectors.muckrock.muckrock_fetchers.FOIAFetcher import FOIAFetcher
-from source_collectors.muckrock.FOIASearcher import FOIASearcher
+from source_collectors.muckrock.classes.muckrock_fetchers import FOIAFetcher
+from source_collectors.muckrock.classes.FOIASearcher import FOIASearcher
 from source_collectors.muckrock.utils import save_json_file
 
 if __name__ == "__main__":

@@ -4,8 +4,8 @@ and save them to a JSON file
 
 """
 
-from source_collectors.muckrock.muckrock_fetchers.FOIALoopFetcher import FOIALoopFetchRequest, FOIALoopFetcher
-from source_collectors.muckrock.muckrock_fetchers.JurisdictionLoopFetcher import JurisdictionLoopFetchRequest, \
+from source_collectors.muckrock.classes.muckrock_fetchers.FOIALoopFetcher import FOIALoopFetchRequest, FOIALoopFetcher
+from source_collectors.muckrock.classes.muckrock_fetchers import JurisdictionLoopFetchRequest, \
     JurisdictionLoopFetcher
 from source_collectors.muckrock.utils import save_json_file
 

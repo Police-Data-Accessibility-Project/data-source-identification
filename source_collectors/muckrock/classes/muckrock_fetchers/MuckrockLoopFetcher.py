@@ -3,7 +3,7 @@ from time import sleep
 
 import requests
 
-from source_collectors.muckrock.muckrock_fetchers.MuckrockFetcher import FetchRequest
+from source_collectors.muckrock.classes.muckrock_fetchers.MuckrockFetcher import FetchRequest
 
 
 class MuckrockLoopFetcher(ABC):

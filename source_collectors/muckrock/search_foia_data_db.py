@@ -18,14 +18,12 @@ Error Handling:
 Errors encountered during database operations, JSON parsing, or file writing are printed to the console.
 """
 
-import sqlite3
 import pandas as pd
 import json
 import argparse
-import os
 from typing import Union, List, Dict
 
-from source_collectors.muckrock.FOIADBSearcher import FOIADBSearcher
+from source_collectors.muckrock.classes.FOIADBSearcher import FOIADBSearcher
 
 
 def parser_init() -> argparse.ArgumentParser:

@@ -1,8 +1,8 @@
 from datasets import tqdm
 
 from source_collectors.muckrock.constants import BASE_MUCKROCK_URL
-from source_collectors.muckrock.muckrock_fetchers.MuckrockFetcher import FetchRequest
-from source_collectors.muckrock.muckrock_fetchers.MuckrockLoopFetcher import MuckrockLoopFetcher
+from source_collectors.muckrock.classes.muckrock_fetchers.MuckrockFetcher import FetchRequest
+from source_collectors.muckrock.classes.muckrock_fetchers.MuckrockLoopFetcher import MuckrockLoopFetcher
 
 class FOIALoopFetchRequest(FetchRequest):
     jurisdiction: int

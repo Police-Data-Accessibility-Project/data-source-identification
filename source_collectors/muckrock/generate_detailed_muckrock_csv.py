@@ -12,8 +12,8 @@ from typing import Optional
 
 from pydantic import BaseModel
 
-from source_collectors.muckrock.muckrock_fetchers.AgencyFetcher import AgencyFetcher
-from source_collectors.muckrock.muckrock_fetchers.JurisdictionByIDFetcher import JurisdictionByIDFetcher
+from source_collectors.muckrock.classes.muckrock_fetchers import AgencyFetcher
+from source_collectors.muckrock.classes.muckrock_fetchers.JurisdictionByIDFetcher import JurisdictionByIDFetcher
 from utils import format_filename_json_to_csv, load_json_file
 
 
