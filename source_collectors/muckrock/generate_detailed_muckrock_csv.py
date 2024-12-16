@@ -7,166 +7,164 @@ Converts JSON file of MuckRock FOIA requests to CSV for further processing
 import argparse
 import csv
 import time
+from enum import Enum
+from typing import Optional
 
-from source_collectors.muckrock.muckrock_fetchers.AgencyFetcher import AgencyFetcher, AgencyFetchRequest
-from source_collectors.muckrock.muckrock_fetchers.JurisdictionFetcher import JurisdictionFetcher, \
-    JurisdictionFetchRequest
+from pydantic import BaseModel
+
+from source_collectors.muckrock.muckrock_fetchers.AgencyFetcher import AgencyFetcher
+from source_collectors.muckrock.muckrock_fetchers.JurisdictionFetcher import JurisdictionFetcher
 from utils import format_filename_json_to_csv, load_json_file
 
-# Define the CSV headers
-headers = [
-    "name",
-    "agency_described",
-    "record_type",
-    "description",
-    "source_url",
-    "readme_url",
-    "scraper_url",
-    "state",
-    "county",
-    "municipality",
-    "agency_type",
-    "jurisdiction_type",
-    "View Archive",
-    "agency_aggregation",
-    "agency_supplied",
-    "supplying_entity",
-    "agency_originated",
-    "originating_agency",
-    "coverage_start",
-    "source_last_updated",
-    "coverage_end",
-    "number_of_records_available",
-    "size",
-    "access_type",
-    "data_portal_type",
-    "access_notes",
-    "record_format",
-    "update_frequency",
-    "update_method",
-    "retention_schedule",
-    "detail_level",
-]
+
+class JurisdictionType(Enum):
+    FEDERAL = "federal"
+    STATE = "state"
+    COUNTY = "county"
+    LOCAL = "local"
+
+
+class AgencyInfo(BaseModel):
+    name: Optional[str] = ""
+    agency_described: Optional[str] = ""
+    record_type: Optional[str] = ""
+    description: Optional[str] = ""
+    source_url: Optional[str] = ""
+    readme_url: Optional[str] = ""
+    scraper_url: Optional[str] = ""
+    state: Optional[str] = ""
+    county: Optional[str] = ""
+    municipality: Optional[str] = ""
+    agency_type: Optional[str] = ""
+    jurisdiction_type: Optional[JurisdictionType] = None
+    agency_aggregation: Optional[str] = ""
+    agency_supplied: Optional[bool] = False
+    supplying_entity: Optional[str] = "MuckRock"
+    agency_originated: Optional[bool] = True
+    originating_agency: Optional[str] = ""
+    coverage_start: Optional[str] = ""
+    source_last_updated: Optional[str] = ""
+    coverage_end: Optional[str] = ""
+    number_of_records_available: Optional[str] = ""
+    size: Optional[str] = ""
+    access_type: Optional[str] = ""
+    data_portal_type: Optional[str] = "MuckRock"
+    access_notes: Optional[str] = ""
+    record_format: Optional[str] = ""
+    update_frequency: Optional[str] = ""
+    update_method: Optional[str] = ""
+    retention_schedule: Optional[str] = ""
+    detail_level: Optional[str] = ""
+
+
+    def model_dump(self, *args, **kwargs):
+        original_dict = super().model_dump(*args, **kwargs)
+        original_dict['View Archive'] = ''
+        return {key: (value.value if isinstance(value, Enum) else value)
+                for key, value in original_dict.items()}
+
+    def keys(self) -> list[str]:
+        return list(self.model_dump().keys())
 
 
 def main():
+    json_filename = get_json_filename()
+    json_data = load_json_file(json_filename)
+    output_csv = format_filename_json_to_csv(json_filename)
+    agency_infos = get_agency_infos(json_data)
+    write_to_csv(agency_infos, output_csv)
+
+
+def get_agency_infos(json_data):
+    a_fetcher = AgencyFetcher()
+    j_fetcher = JurisdictionFetcher()
+    agency_infos = []
+    # Iterate through the JSON data
+    for item in json_data:
+        print(f"Writing data for {item.get('title')}")
+        agency_data = a_fetcher.get_agency(agency_id=item.get("agency"))
+        time.sleep(1)
+        jurisdiction_data = j_fetcher.get_jurisdiction(
+            jurisdiction_id=agency_data.get("jurisdiction")
+        )
+        agency_name = agency_data.get("name", "")
+        agency_info = AgencyInfo(
+            name=item.get("title", ""),
+            originating_agency=agency_name,
+            agency_described=agency_name
+        )
+        jurisdiction_level = jurisdiction_data.get("level")
+        add_locational_info(agency_info, j_fetcher, jurisdiction_data, jurisdiction_level)
+        optionally_add_agency_type(agency_data, agency_info)
+        optionally_add_access_info(agency_info, item)
+
+        # Extract the relevant fields from the JSON object
+        # TODO: I question the utility of creating columns that are then left blank until later
+        #   and possibly in a different file entirely.
+        agency_infos.append(agency_info)
+    return agency_infos
+
+
+def write_to_csv(agency_infos, output_csv):
+    # Open a CSV file for writing
+    with open(output_csv, "w", newline="") as csvfile:
+        writer = csv.DictWriter(csvfile, fieldnames=AgencyInfo().keys())
+
+        # Write the header row
+        writer.writeheader()
+
+        for agency_info in agency_infos:
+            csv_row = agency_info.model_dump()
+
+            # Write the extracted row to the CSV file
+            writer.writerow(csv_row)
+
+
+def get_json_filename():
     # Load the JSON data
     parser = argparse.ArgumentParser(description="Parse JSON from a file.")
     parser.add_argument(
         "--json_file", type=str, required=True, help="Path to the JSON file"
     )
-
     args = parser.parse_args()
+    json_filename = args.json_file
+    return json_filename
 
-    # TODO: Generalize logic
-    json_data = load_json_file(args.json_file)
 
-    output_csv = format_filename_json_to_csv(args.json_file)
-    # Open a CSV file for writing
+def add_locational_info(agency_info, j_fetcher, jurisdiction_data, jurisdiction_level):
+    # federal jurisdiction level
+    if jurisdiction_level == "f":
+        agency_info.jurisdiction_type = JurisdictionType.FEDERAL
+    # state jurisdiction level
+    if jurisdiction_level == "s":
+        agency_info.jurisdiction_type = JurisdictionType.STATE
+        agency_info.state = jurisdiction_data.get("name")
+    # local jurisdiction level
+    if jurisdiction_level == "l":
+        parent_juris_data = j_fetcher.get_jurisdiction(
+            jurisdiction_id=jurisdiction_data.get("parent")
+        )
+        agency_info.state = parent_juris_data.get("abbrev")
+        if "County" in jurisdiction_data.get("name"):
+            agency_info.county = jurisdiction_data.get("name")
+            agency_info.jurisdiction_type = JurisdictionType.COUNTY
+        else:
+            agency_info.municipality = jurisdiction_data.get("name")
+            agency_info.jurisdiction_type = JurisdictionType.LOCAL
 
-    # TODO: CSV writing and composition logic is tightly coupled -- separate
-    with open(output_csv, "w", newline="") as csvfile:
-        writer = csv.DictWriter(csvfile, fieldnames=headers)
 
-        # Write the header row
-        writer.writeheader()
+def optionally_add_access_info(agency_info, item):
+    absolute_url = item.get("absolute_url")
+    for comm in item["communications"]:
+        if comm["files"]:
+            agency_info.source_url = absolute_url + "#files"
+            agency_info.access_type = "Web page,Download,API"
+            break
 
-        a_fetcher = AgencyFetcher()
-        j_fetcher = JurisdictionFetcher()
 
-        # Iterate through the JSON data
-        for item in json_data:
-            print(f"Writing data for {item.get('title')}")
-            agency_data = a_fetcher.get_agency(agency_id=item.get("agency"))
-            # agency_data = get_agency(item.get("agency"))
-            time.sleep(1)
-            jurisdiction_data = j_fetcher.get_jurisdiction(
-                jurisdiction_id=agency_data.get("jurisdiction")
-            )
-            # jurisdiction_data = get_jurisdiction(agency_data.get("jurisdiction"))
-
-            jurisdiction_level = jurisdiction_data.get("level")
-            # federal jurisduction level
-            if jurisdiction_level == "f":
-                state = ""
-                county = ""
-                municipality = ""
-                juris_type = "federal"
-            # state jurisdiction level
-            if jurisdiction_level == "s":
-                state = jurisdiction_data.get("name")
-                county = ""
-                municipality = ""
-                juris_type = "state"
-            # local jurisdiction level
-            if jurisdiction_level == "l":
-                parent_juris_data = j_fetcher.get_jurisdiction(
-                    jurisdiction_id=jurisdiction_data.get("parent")
-                )
-
-                state = parent_juris_data.get("abbrev")
-                if "County" in jurisdiction_data.get("name"):
-                    county = jurisdiction_data.get("name")
-                    municipality = ""
-                    juris_type = "county"
-                else:
-                    county = ""
-                    municipality = jurisdiction_data.get("name")
-                    juris_type = "local"
-
-            if "Police" in agency_data.get("types"):
-                agency_type = "law enforcement/police"
-            else:
-                agency_type = ""
-
-            source_url = ""
-            absolute_url = item.get("absolute_url")
-            access_type = ""
-            for comm in item["communications"]:
-                if comm["files"]:
-                    source_url = absolute_url + "#files"
-                    access_type = "Web page,Download,API"
-                    break
-
-            # Extract the relevant fields from the JSON object
-            # TODO: I question the utility of creating columns that are then left blank until later
-            #   and possibly in a different file entirely.
-            csv_row = {
-                "name": item.get("title", ""),
-                "agency_described": agency_data.get("name", "") + " - " + state,
-                "record_type": "",
-                "description": "",
-                "source_url": source_url,
-                "readme_url": absolute_url,
-                "scraper_url": "",
-                "state": state,
-                "county": county,
-                "municipality": municipality,
-                "agency_type": agency_type,
-                "jurisdiction_type": juris_type,
-                "View Archive": "",
-                "agency_aggregation": "",
-                "agency_supplied": "no",
-                "supplying_entity": "MuckRock",
-                "agency_originated": "yes",
-                "originating_agency": agency_data.get("name", ""),
-                "coverage_start": "",
-                "source_last_updated": "",
-                "coverage_end": "",
-                "number_of_records_available": "",
-                "size": "",
-                "access_type": access_type,
-                "data_portal_type": "MuckRock",
-                "access_notes": "",
-                "record_format": "",
-                "update_frequency": "",
-                "update_method": "",
-                "retention_schedule": "",
-                "detail_level": "",
-            }
-
-            # Write the extracted row to the CSV file
-            writer.writerow(csv_row)
+def optionally_add_agency_type(agency_data, agency_info):
+    if "Police" in agency_data.get("types"):
+        agency_info.agency_type = "law enforcement/police"
 
 
 if __name__ == "__main__":
