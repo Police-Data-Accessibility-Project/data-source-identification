@@ -6,8 +6,11 @@ Converts JSON file of MuckRock FOIA requests to CSV for further processing
 
 import argparse
 import csv
-import requests
 import time
+
+from source_collectors.muckrock.muckrock_fetchers.AgencyFetcher import AgencyFetcher, AgencyFetchRequest
+from source_collectors.muckrock.muckrock_fetchers.JurisdictionFetcher import JurisdictionFetcher, \
+    JurisdictionFetchRequest
 from utils import format_filename_json_to_csv, load_json_file
 
 # Define the CSV headers
@@ -46,41 +49,6 @@ headers = [
 ]
 
 
-def get_agency(agency_id):
-    """
-    Get agency data from the MuckRock API via agency ID
-    """
-    if agency_id:
-        agency_url = f"https://www.muckrock.com/api_v1/agency/{agency_id}/"
-        response = requests.get(agency_url)
-
-        if response.status_code == 200:
-            agency_data = response.json()
-            return agency_data
-        else:
-            return ""
-    else:
-        print("Agency ID not found in item")
-
-
-def get_jurisdiction(jurisdiction_id):
-    """
-    Get jurisdiction data from the MuckRock API via jurisdiction ID
-    """
-    if jurisdiction_id:
-        jurisdiction_url = (
-            f"https://www.muckrock.com/api_v1/jurisdiction/{jurisdiction_id}/"
-        )
-        response = requests.get(jurisdiction_url)
-
-        if response.status_code == 200:
-            jurisdiction_data = response.json()
-            return jurisdiction_data
-        else:
-            return ""
-    else:
-        print("Jurisdiction ID not found in item")
-
 def main():
     # Load the JSON data
     parser = argparse.ArgumentParser(description="Parse JSON from a file.")
@@ -103,12 +71,19 @@ def main():
         # Write the header row
         writer.writeheader()
 
+        a_fetcher = AgencyFetcher()
+        j_fetcher = JurisdictionFetcher()
+
         # Iterate through the JSON data
         for item in json_data:
             print(f"Writing data for {item.get('title')}")
-            agency_data = get_agency(item.get("agency"))
+            agency_data = a_fetcher.get_agency(agency_id=item.get("agency"))
+            # agency_data = get_agency(item.get("agency"))
             time.sleep(1)
-            jurisdiction_data = get_jurisdiction(agency_data.get("jurisdiction"))
+            jurisdiction_data = j_fetcher.get_jurisdiction(
+                jurisdiction_id=agency_data.get("jurisdiction")
+            )
+            # jurisdiction_data = get_jurisdiction(agency_data.get("jurisdiction"))
 
             jurisdiction_level = jurisdiction_data.get("level")
             # federal jurisduction level
@@ -125,7 +100,10 @@ def main():
                 juris_type = "state"
             # local jurisdiction level
             if jurisdiction_level == "l":
-                parent_juris_data = get_jurisdiction(jurisdiction_data.get("parent"))
+                parent_juris_data = j_fetcher.get_jurisdiction(
+                    jurisdiction_id=jurisdiction_data.get("parent")
+                )
+
                 state = parent_juris_data.get("abbrev")
                 if "County" in jurisdiction_data.get("name"):
                     county = jurisdiction_data.get("name")

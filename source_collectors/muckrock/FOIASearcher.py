@@ -1,6 +1,6 @@
 from typing import Optional
 
-from source_collectors.muckrock.FOIAFetcher import FOIAFetcher
+from source_collectors.muckrock.muckrock_fetchers.FOIAFetcher import FOIAFetcher
 from tqdm import tqdm
 
 class FOIASearcher:
