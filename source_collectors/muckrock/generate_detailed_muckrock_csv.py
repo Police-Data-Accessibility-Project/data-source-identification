@@ -132,25 +132,23 @@ def get_json_filename():
 
 
 def add_locational_info(agency_info, j_fetcher, jurisdiction_data, jurisdiction_level):
-    # federal jurisdiction level
-    if jurisdiction_level == "f":
-        agency_info.jurisdiction_type = JurisdictionType.FEDERAL
-    # state jurisdiction level
-    if jurisdiction_level == "s":
-        agency_info.jurisdiction_type = JurisdictionType.STATE
-        agency_info.state = jurisdiction_data.get("name")
-    # local jurisdiction level
-    if jurisdiction_level == "l":
-        parent_juris_data = j_fetcher.get_jurisdiction(
-            jurisdiction_id=jurisdiction_data.get("parent")
-        )
-        agency_info.state = parent_juris_data.get("abbrev")
-        if "County" in jurisdiction_data.get("name"):
-            agency_info.county = jurisdiction_data.get("name")
-            agency_info.jurisdiction_type = JurisdictionType.COUNTY
-        else:
-            agency_info.municipality = jurisdiction_data.get("name")
-            agency_info.jurisdiction_type = JurisdictionType.LOCAL
+    match jurisdiction_level:
+        case "f":  # federal jurisdiction level
+            agency_info.jurisdiction_type = JurisdictionType.FEDERAL
+        case "s":  # state jurisdiction level
+            agency_info.jurisdiction_type = JurisdictionType.STATE
+            agency_info.state = jurisdiction_data.get("name")
+        case "l":  # local jurisdiction level
+            parent_juris_data = j_fetcher.get_jurisdiction(
+                jurisdiction_id=jurisdiction_data.get("parent")
+            )
+            agency_info.state = parent_juris_data.get("abbrev")
+            if "County" in jurisdiction_data.get("name"):
+                agency_info.county = jurisdiction_data.get("name")
+                agency_info.jurisdiction_type = JurisdictionType.COUNTY
+            else:
+                agency_info.municipality = jurisdiction_data.get("name")
+                agency_info.jurisdiction_type = JurisdictionType.LOCAL
 
 
 def optionally_add_access_info(agency_info, item):
