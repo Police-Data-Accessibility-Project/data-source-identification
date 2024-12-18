@@ -1,37 +1,12 @@
 from http import HTTPStatus
-from urllib import parse
-from enum import Enum
 from typing import Optional, List
 
 import requests
-from pydantic import BaseModel
-from requests.models import PreparedRequest
 
-from pdap_api_client.DTOs import MatchAgencyInfo
+from pdap_api_client.DTOs import MatchAgencyInfo, UniqueURLDuplicateInfo, UniqueURLResponseInfo, Namespaces, \
+    RequestType, RequestInfo, ResponseInfo
 
 API_URL = "https://data-sources-v2.pdap.dev/api"
-
-class Namespaces(Enum):
-    AUTH = "auth"
-    MATCH = "match"
-
-class RequestType(Enum):
-    POST = "POST"
-    PUT = "PUT"
-    GET = "GET"
-    DELETE = "DELETE"
-
-class RequestInfo(BaseModel):
-    type_: RequestType
-    url: str
-    json: Optional[dict] = None
-    headers: Optional[dict] = None
-    params: Optional[dict] = None
-    timeout: Optional[int] = None
-
-class ResponseInfo(BaseModel):
-    status_code: HTTPStatus
-    data: Optional[dict]
 
 request_methods = {
     RequestType.POST: requests.post,
@@ -39,37 +14,29 @@ request_methods = {
     RequestType.GET: requests.get,
     RequestType.DELETE: requests.delete,
 }
+
+
+class CustomHTTPException(Exception):
+    pass
+
+
 def make_request(ri: RequestInfo) -> ResponseInfo:
-    response = request_methods[ri.type_](
-        ri.url,
-        json=ri.json,
-        headers=ri.headers,
-        params=ri.params,
-        timeout=ri.timeout
-    )
-    response.raise_for_status()
+    try:
+        response = request_methods[ri.type_](
+            ri.url,
+            json=ri.json,
+            headers=ri.headers,
+            params=ri.params,
+            timeout=ri.timeout
+        )
+        response.raise_for_status()
+    except requests.RequestException as e:
+        raise CustomHTTPException(f"Error making {ri.type_} request to {ri.url}: {e}")
     return ResponseInfo(
-        status_code=response.status_code,
+        status_code=HTTPStatus(response.status_code),
         data=response.json()
     )
 
-
-
-
-class URLBuilder:
-
-    def __init__(self):
-        self.base_url = API_URL
-
-    def build_url(
-        self,
-        namespace: Namespaces,
-        subdomains: Optional[list[str]] = None,
-    ):
-        url = f"{self.base_url}/{namespace.value}"
-        if subdomains is not None:
-            url = f"{url}/{'/'.join(subdomains)}"
-        return url
 
 def build_url(
     namespace: Namespaces,
@@ -85,7 +52,6 @@ class AccessManager:
     Manages login, api key, access and refresh tokens
     """
     def __init__(self, email: str, password: str, api_key: Optional[str]):
-        self.url_builder = URLBuilder()
         self.access_token = None
         self.refresh_token = None
         self.api_key = None
@@ -99,11 +65,41 @@ class AccessManager:
             subdomains=["api-key"]
         )
         request_info = RequestInfo(
+            type_ = RequestType.POST,
             url=url,
             headers=self.jwt_header()
         )
         response_info = make_request(request_info)
         self.api_key = response_info.data["api_key"]
+
+    def refresh_access_token(self):
+        url = build_url(
+            namespace=Namespaces.AUTH,
+            subdomains=["refresh-session"],
+        )
+        raise NotImplementedError("Waiting on https://github.com/Police-Data-Accessibility-Project/data-sources-app/issues/566")
+
+    def make_request(self, ri: RequestInfo) -> ResponseInfo:
+        try:
+            response = request_methods[ri.type_](
+                ri.url,
+                json=ri.json,
+                headers=ri.headers,
+                params=ri.params,
+                timeout=ri.timeout
+            )
+            response.raise_for_status()
+        except requests.RequestException as e:
+            # TODO: Precise string matching here is brittle. Consider changing later.
+            if e.response.json().message == "Token is expired. Please request a new token.":
+                self.refresh_access_token()
+                return make_request(ri)
+            else:
+                raise CustomHTTPException(f"Error making {ri.type_} request to {ri.url}: {e}")
+        return ResponseInfo(
+            status_code=HTTPStatus(response.status_code),
+            data=response.json()
+        )
 
     def login(self, email: str, password: str):
         url = build_url(
@@ -111,6 +107,7 @@ class AccessManager:
             subdomains=["login"]
         )
         request_info = RequestInfo(
+            type_=RequestType.POST,
             url=url,
             json={
                 "email": email,
@@ -157,11 +154,15 @@ class PDAPClient:
             county: str,
             locality: str
     ) -> List[MatchAgencyInfo]:
+        """
+        Returns agencies, if any, that match or partially match the search criteria
+        """
         url = build_url(
             namespace=Namespaces.MATCH,
             subdomains=["agency"]
         )
         request_info = RequestInfo(
+            type_=RequestType.POST,
             url=url,
             json={
                 "name": name,
@@ -174,5 +175,28 @@ class PDAPClient:
         return [MatchAgencyInfo(**agency) for agency in response_info.data["agencies"]]
 
 
-    def check_for_unique_source_url(self, url: str):
-        pass
+    def is_url_unique(
+        self,
+        url_to_check: str
+    ) -> UniqueURLResponseInfo:
+        """
+        Check if a URL is unique. Returns duplicate info otherwise
+        """
+        url = build_url(
+            namespace=Namespaces.CHECK,
+            subdomains=["unique-url"]
+        )
+        request_info = RequestInfo(
+            type_=RequestType.GET,
+            url=url,
+            params={
+                "url": url_to_check
+            }
+        )
+        response_info = make_request(request_info)
+        duplicates = [UniqueURLDuplicateInfo(**entry) for entry in response_info.data["duplicates"]]
+        is_unique = (len(duplicates) == 0)
+        return UniqueURLResponseInfo(
+            is_unique=is_unique,
+            duplicates=duplicates
+        )
