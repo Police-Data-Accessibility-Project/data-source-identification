@@ -1,0 +1,4 @@
+class Status:
+    RUNNING = "RUNNING"
+    COMPLETED = "COMPLETED"
+    ERRORED = "ERRORED"
