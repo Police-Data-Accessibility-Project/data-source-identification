@@ -13,6 +13,7 @@ identification_pipeline.py | The core python script uniting this modular pipelin
 openai-playground | Scripts for accessing the openai API on PDAP's shared account
 source_collectors| Tools for extracting metadata from different sources, including CKAN data portals and Common Crawler
 collector_db | Database for storing data from source collectors
+collector_manager | A module which provides a unified interface for interacting with source collectors and relevant data
 
 ## How to use
 
