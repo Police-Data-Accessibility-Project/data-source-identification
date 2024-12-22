@@ -7,11 +7,12 @@ name | description of purpose
 .github/workflows | Scheduling and automation
 agency_identifier | Matches URLs with an agency from the PDAP database
 annotation_pipeline | Automated pipeline for generating training data in our ML data source identification models. Manages common crawl, HTML tag collection, and Label Studio import/export
-common_crawler | Interfaces with the Common Crawl dataset to extract urls, creating batches to identify or annotate
 html_tag_collector | Collects HTML header, meta, and title tags and appends them to a JSON file. The idea is to make a richer dataset for algorithm training and data labeling.
 hugging_face | Utilities for interacting with our machine learning space at [Hugging Face](https://huggingface.co/PDAP)
 identification_pipeline.py | The core python script uniting this modular pipeline. More details below.
 openai-playground | Scripts for accessing the openai API on PDAP's shared account
+source_collectors| Tools for extracting metadata from different sources, including CKAN data portals and Common Crawler
+collector_db | Database for storing data from source collectors
 collector_manager | A module which provides a unified interface for interacting with source collectors and relevant data
 
 ## How to use
