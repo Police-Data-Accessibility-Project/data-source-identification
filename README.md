@@ -12,6 +12,7 @@ hugging_face | Utilities for interacting with our machine learning space at [Hug
 identification_pipeline.py | The core python script uniting this modular pipeline. More details below.
 openai-playground | Scripts for accessing the openai API on PDAP's shared account
 source_collectors| Tools for extracting metadata from different sources, including CKAN data portals and Common Crawler
+collector_db | Database for storing data from source collectors
 
 ## How to use
 
