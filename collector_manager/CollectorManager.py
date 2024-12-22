@@ -3,22 +3,26 @@ Manager for all collectors
 Can start, stop, and get info on running collectors
 And manages the retrieval of collector info
 """
-
+import json
 import threading
 import uuid
 from typing import Dict, List, Optional
 
-from collector_manager.ExampleCollector import ExampleCollector
+from collector_manager.CollectorBase import CollectorBase
+from collector_manager.collector_mapping import COLLECTOR_MAPPING
 from collector_manager.enums import Status
 
+
+class InvalidCollectorError(Exception):
+    pass
 
 # Collector Manager Class
 class CollectorManager:
     def __init__(self):
-        self.collectors: Dict[str, ExampleCollector] = {}
+        self.collectors: Dict[str, CollectorBase] = {}
 
     def list_collectors(self) -> List[str]:
-        return ["example_collector"]
+        return list(COLLECTOR_MAPPING.keys())
 
     def start_collector(
             self,
@@ -26,9 +30,11 @@ class CollectorManager:
             config: Optional[dict] = None
     ) -> str:
         cid = str(uuid.uuid4())
-        # The below would need to become more sophisticated
-        # As we may load different collectors depending on the name
-        collector = ExampleCollector(name, config)
+        try:
+            collector = COLLECTOR_MAPPING[name](name, config)
+        except KeyError:
+            raise ValueError(f"Collector {name} not found.")
+
         self.collectors[cid] = collector
         thread = threading.Thread(target=collector.run, daemon=True)
         thread.start()
@@ -55,6 +61,7 @@ class CollectorManager:
 
     def close_collector(self, cid: str) -> str:
         collector = self.collectors.get(cid)
+        # TODO: Extract logic
         if not collector:
             return f"Collector with CID {cid} not found."
         match collector.status:
@@ -62,8 +69,19 @@ class CollectorManager:
                 collector.stop()
                 return f"Collector {cid} stopped."
             case Status.COMPLETED:
-                data = collector.data
+                close_info = collector.close()
+                name = collector.name
                 del self.collectors[cid]
+                if close_info.error_msg is not None:
+                    data = close_info.data
+                    with open(f"{name}_{cid}.json", "w", encoding='utf-8') as f:
+                        json.dump(obj=data, fp=f, ensure_ascii=False, indent=4)
+                    return f"Error closing collector {cid}: {close_info.error_msg}"
+                # Write data to file
+                data = close_info.data
+                with open(f"{name}_{cid}.json", "w") as f:
+                    json.dump(data, f, indent=4)
+
                 return f"Collector {cid} harvested. Data: {data}"
             case _:
                 return f"Cannot close collector {cid} with status {collector.status}."
