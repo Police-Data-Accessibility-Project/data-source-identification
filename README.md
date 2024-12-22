@@ -12,6 +12,7 @@ html_tag_collector | Collects HTML header, meta, and title tags and appends them
 hugging_face | Utilities for interacting with our machine learning space at [Hugging Face](https://huggingface.co/PDAP)
 identification_pipeline.py | The core python script uniting this modular pipeline. More details below.
 openai-playground | Scripts for accessing the openai API on PDAP's shared account
+collector_manager | A module which provides a unified interface for interacting with source collectors and relevant data
 
 ## How to use
 
