@@ -1,5 +1,5 @@
 from collector_manager.CollectorBase import CollectorBase
-from collector_manager.enums import Status
+from collector_manager.enums import CollectorStatus, CollectorType
 from source_collectors.auto_googler.AutoGoogler import AutoGoogler
 from source_collectors.auto_googler.schemas import AutoGooglerCollectorConfigSchema, \
     AutoGooglerCollectorInnerOutputSchema, AutoGooglerCollectorOuterOutputSchema
@@ -10,6 +10,7 @@ from source_collectors.auto_googler.SearchConfig import SearchConfig
 class AutoGooglerCollector(CollectorBase):
     config_schema = AutoGooglerCollectorConfigSchema
     output_schema = AutoGooglerCollectorOuterOutputSchema
+    collector_type = CollectorType.AUTO_GOOGLER
 
     def run_implementation(self) -> None:
         auto_googler = AutoGoogler(

@@ -3,29 +3,37 @@ Base class for all collectors
 """
 import abc
 import threading
+import time
 from abc import ABC
 from typing import Optional
 
 from marshmallow import Schema, ValidationError
 from pydantic import BaseModel
 
-from collector_manager.enums import Status
+from collector_manager.enums import CollectorStatus, CollectorType
+
 
 class CollectorCloseInfo(BaseModel):
-    data: dict
+    collector_type: CollectorType
+    status: CollectorStatus
+    data: dict = None
     logs: list[str]
-    error_msg: Optional[str] = None
+    message: str = None
+    compute_time: float
 
 class CollectorBase(ABC):
     config_schema: Schema = None # Schema for validating configuration
     output_schema: Schema = None # Schema for validating output
+    collector_type: CollectorType = None # Collector type
 
     def __init__(self, name: str, config: dict) -> None:
         self.name = name
         self.config = self.validate_config(config)
         self.data = {}
         self.logs = []
-        self.status = Status.RUNNING
+        self.status = CollectorStatus.RUNNING
+        self.start_time = None
+        self.compute_time = None
         # # TODO: Determine how to update this in some of the other collectors
         self._stop_event = threading.Event()
 
@@ -33,27 +41,59 @@ class CollectorBase(ABC):
     def run_implementation(self) -> None:
         raise NotImplementedError
 
+    def start_timer(self) -> None:
+        self.start_time = time.time()
+
+    def stop_timer(self) -> None:
+        self.compute_time = time.time() - self.start_time
+
     def run(self) -> None:
         try:
+            self.start_timer()
             self.run_implementation()
-            self.status = Status.COMPLETED
+            self.stop_timer()
+            self.status = CollectorStatus.COMPLETED
             self.log("Collector completed successfully.")
         except Exception as e:
-            self.status = Status.ERRORED
+            self.stop_timer()
+            self.status = CollectorStatus.ERRORED
             self.log(f"Error: {e}")
 
     def log(self, message: str) -> None:
         self.logs.append(message)
 
-    def stop(self) -> None:
+    def abort(self) -> CollectorCloseInfo:
         self._stop_event.set()
+        self.stop_timer()
+        return CollectorCloseInfo(
+            status=CollectorStatus.ABORTED,
+            message="Collector aborted.",
+            logs=self.logs,
+            compute_time=self.compute_time,
+            collector_type=self.collector_type
+        )
 
     def close(self):
+        logs = self.logs
+        compute_time = self.compute_time
+
         try:
             data = self.validate_output(self.data)
-            return CollectorCloseInfo(data=data, logs=self.logs)
+            status = CollectorStatus.COMPLETED
+            message = "Collector closed and data harvested successfully."
         except Exception as e:
-            return CollectorCloseInfo(data=self.data, logs=self.logs, error_msg=str(e))
+            data = self.data
+            status = CollectorStatus.ERRORED
+            message = str(e)
+
+        return CollectorCloseInfo(
+            status=status,
+            data=data,
+            logs=logs,
+            message=message,
+            compute_time=compute_time,
+            collector_type=self.collector_type
+        )
 
 
     def validate_output(self, output: dict) -> dict:
@@ -63,7 +103,7 @@ class CollectorBase(ABC):
             schema = self.output_schema()
             return schema.load(output)
         except ValidationError as e:
-            self.status = Status.ERRORED
+            self.status = CollectorStatus.ERRORED
             raise ValueError(f"Invalid output: {e.messages}")
 
     def validate_config(self, config: dict) -> dict:
