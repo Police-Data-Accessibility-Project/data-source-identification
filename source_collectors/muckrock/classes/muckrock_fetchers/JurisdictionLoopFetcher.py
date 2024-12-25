@@ -1,22 +1,17 @@
 from tqdm import tqdm
 
-from source_collectors.muckrock.constants import BASE_MUCKROCK_URL
-from source_collectors.muckrock.classes.muckrock_fetchers.MuckrockFetcher import FetchRequest
+from source_collectors.muckrock.classes.fetch_requests.JurisdictionLoopFetchRequest import JurisdictionLoopFetchRequest
+from source_collectors.muckrock.classes.muckrock_fetchers.JurisdictionFetchManager import JurisdictionFetchManager
 from source_collectors.muckrock.classes.muckrock_fetchers.MuckrockLoopFetcher import MuckrockLoopFetcher
 
-
-class JurisdictionLoopFetchRequest(FetchRequest):
-    level: str
-    parent: int
-    town_names: list
 
 class JurisdictionLoopFetcher(MuckrockLoopFetcher):
 
     def __init__(self, initial_request: JurisdictionLoopFetchRequest):
         super().__init__(initial_request)
-        self.town_names = initial_request.town_names
+        self.jfm = JurisdictionFetchManager(town_names=initial_request.town_names)
         self.pbar_jurisdictions = tqdm(
-            total=len(self.town_names),
+            total=len(self.jfm.town_names),
             desc="Fetching jurisdictions",
             unit="jurisdiction",
             position=0,
@@ -28,20 +23,16 @@ class JurisdictionLoopFetcher(MuckrockLoopFetcher):
             position=1,
             leave=False
         )
-        self.num_found = 0
-        self.jurisdictions = {}
 
     def build_url(self, request: JurisdictionLoopFetchRequest) -> str:
-        return f"{BASE_MUCKROCK_URL}/jurisdiction/?level={request.level}&parent={request.parent}"
+        return self.jfm.build_url(request)
 
     def process_results(self, results: list[dict]):
-        for item in results:
-            if item["name"] in self.town_names:
-                self.jurisdictions[item["name"]] = item["id"]
+        self.jfm.process_results(results)
 
     def report_progress(self):
-        old_num_found = self.num_found
-        self.num_found = len(self.jurisdictions)
-        difference = self.num_found - old_num_found
+        old_num_jurisdictions_found = self.jfm.num_jurisdictions_found
+        self.jfm.num_jurisdictions_found = len(self.jfm.jurisdictions)
+        difference = self.jfm.num_jurisdictions_found - old_num_jurisdictions_found
         self.pbar_jurisdictions.update(difference)
         self.pbar_page.update(1)

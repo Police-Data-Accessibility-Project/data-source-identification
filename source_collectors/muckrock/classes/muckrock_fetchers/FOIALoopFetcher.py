@@ -1,11 +1,9 @@
 from datasets import tqdm
 
-from source_collectors.muckrock.constants import BASE_MUCKROCK_URL
-from source_collectors.muckrock.classes.muckrock_fetchers.MuckrockFetcher import FetchRequest
+from source_collectors.muckrock.classes.fetch_requests.FOIALoopFetchRequest import FOIALoopFetchRequest
+from source_collectors.muckrock.classes.muckrock_fetchers.FOIAFetchManager import FOIAFetchManager
 from source_collectors.muckrock.classes.muckrock_fetchers.MuckrockLoopFetcher import MuckrockLoopFetcher
 
-class FOIALoopFetchRequest(FetchRequest):
-    jurisdiction: int
 
 class FOIALoopFetcher(MuckrockLoopFetcher):
 
@@ -15,17 +13,13 @@ class FOIALoopFetcher(MuckrockLoopFetcher):
             desc="Fetching FOIA records",
             unit="record",
         )
-        self.num_found = 0
-        self.results = []
+        self.ffm = FOIAFetchManager()
 
     def process_results(self, results: list[dict]):
-        self.results.extend(results)
+        self.ffm.process_results(results)
 
     def build_url(self, request: FOIALoopFetchRequest):
-        return f"{BASE_MUCKROCK_URL}/foia/?status=done&jurisdiction={request.jurisdiction}"
+        return self.ffm.build_url(request)
 
     def report_progress(self):
-        old_num_found = self.num_found
-        self.num_found = len(self.results)
-        difference = self.num_found - old_num_found
-        self.pbar_records.update(difference)
+        self.pbar_records.update(self.ffm.num_found_last_loop)

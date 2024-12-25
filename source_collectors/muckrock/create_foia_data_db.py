@@ -216,7 +216,7 @@ def main() -> None:
     with tqdm(initial=start_page, unit="page") as pbar:
         while True:
 
-            # TODO: Replace with TQDM
+            # TODO: Build collector that does similar logic
             try:
                 pbar.update()
                 page_data = fetcher.fetch_next_page()

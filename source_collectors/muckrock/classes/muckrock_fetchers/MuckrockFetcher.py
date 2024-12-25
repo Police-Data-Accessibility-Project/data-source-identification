@@ -1,9 +1,10 @@
 import abc
 from abc import ABC
-from dataclasses import dataclass
 
 import requests
-from pydantic import BaseModel
+
+from source_collectors.muckrock.classes.fetch_requests.FetchRequestBase import FetchRequest
+
 
 class MuckrockNoMoreDataError(Exception):
     pass
@@ -11,8 +12,6 @@ class MuckrockNoMoreDataError(Exception):
 class MuckrockServerError(Exception):
     pass
 
-class FetchRequest(BaseModel):
-    pass
 
 class MuckrockFetcher(ABC):
 

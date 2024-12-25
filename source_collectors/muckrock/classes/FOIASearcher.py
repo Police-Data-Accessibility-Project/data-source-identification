@@ -3,6 +3,10 @@ from typing import Optional
 from source_collectors.muckrock.classes.muckrock_fetchers import FOIAFetcher
 from tqdm import tqdm
 
+
+class SearchCompleteException(Exception):
+    pass
+
 class FOIASearcher:
     """
     Used for searching FOIA data from MuckRock
@@ -46,13 +50,22 @@ class FOIASearcher:
         all_results = []
         with tqdm(total=max_count, desc="Fetching results", unit="result") as pbar:
             while count > 0:
-                data = self.fetch_page()
-                if not data:
+                try:
+                    results = self.get_next_page_results()
+                except SearchCompleteException:
                     break
 
-                results = self.filter_results(data["results"])
                 all_results.extend(results)
                 count -= self.update_progress(pbar, results)
 
         return all_results
+
+    def get_next_page_results(self) -> list[dict]:
+        """
+        Fetches and processes the next page of results.
+        """
+        data = self.fetch_page()
+        if not data:
+            raise SearchCompleteException
+        return self.filter_results(data["results"])
 

@@ -1,4 +1,5 @@
-from source_collectors.muckrock.classes.muckrock_fetchers.MuckrockFetcher import MuckrockFetcher, FetchRequest
+from source_collectors.muckrock.classes.muckrock_fetchers.MuckrockFetcher import MuckrockFetcher
+from source_collectors.muckrock.classes.fetch_requests.FetchRequestBase import FetchRequest
 from source_collectors.muckrock.constants import BASE_MUCKROCK_URL
 
 FOIA_BASE_URL = f"{BASE_MUCKROCK_URL}/foia"
@@ -10,6 +11,10 @@ class FOIAFetchRequest(FetchRequest):
 
 
 class FOIAFetcher(MuckrockFetcher):
+    """
+    A fetcher for FOIA requests.
+    Iterates through all FOIA requests available through the MuckRock FOIA API.
+    """
 
     def __init__(self, start_page: int = 1, per_page: int = 100):
         """

@@ -1,8 +1,8 @@
 import os
-import time
 
 import dotenv
 
+from Tests.source_collector.helpers.common_test_procedures import run_collector_and_wait_for_completion
 from collector_manager.enums import CollectorType
 from core.enums import BatchStatus
 
@@ -21,21 +21,11 @@ def test_auto_googler_collector_lifecycle(test_core_interface):
             "Dune"
         ]
     }
-    response = ci.start_collector(
+    run_collector_and_wait_for_completion(
         collector_type=CollectorType.AUTO_GOOGLER,
+        ci=ci,
         config=config
     )
-    assert response == "Started auto_googler collector with CID: 1"
-
-    response = ci.get_status(1)
-    while response == "1 (auto_googler) - RUNNING":
-        time.sleep(1)
-        response = ci.get_status(1)
-
-
-    assert response == "1 (auto_googler) - COMPLETED"
-    response = ci.close_collector(1)
-    assert response == "Collector closed and data harvested successfully."
 
     batch_info = ci.core.db_client.get_batch_by_id(1)
     assert batch_info.strategy == "auto_googler"
@@ -48,3 +38,5 @@ def test_auto_googler_collector_lifecycle(test_core_interface):
     q2_urls = [url_info.url for url_info in url_infos if url_info.url_metadata["query"] == "Dune"]
 
     assert len(q1_urls) == len(q2_urls) == 10
+
+

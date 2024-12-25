@@ -4,7 +4,8 @@ and save them to a JSON file
 
 """
 
-from source_collectors.muckrock.classes.muckrock_fetchers.FOIALoopFetcher import FOIALoopFetchRequest, FOIALoopFetcher
+from source_collectors.muckrock.classes.muckrock_fetchers.FOIALoopFetcher import FOIALoopFetcher
+from source_collectors.muckrock.classes.fetch_requests.FOIALoopFetchRequest import FOIALoopFetchRequest
 from source_collectors.muckrock.classes.muckrock_fetchers import JurisdictionLoopFetchRequest, \
     JurisdictionLoopFetcher
 from source_collectors.muckrock.utils import save_json_file
@@ -37,7 +38,7 @@ def fetch_foia_data(jurisdiction_ids):
         request = FOIALoopFetchRequest(jurisdiction=id_)
         fetcher = FOIALoopFetcher(request)
         fetcher.loop_fetch()
-        all_data.extend(fetcher.results)
+        all_data.extend(fetcher.ffm.results)
 
     # Save the combined data to a JSON file
     save_json_file(file_path="foia_data_combined.json", data=all_data)
