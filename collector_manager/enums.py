@@ -10,6 +10,7 @@ class CollectorStatus(Enum):
 class CollectorType(Enum):
     EXAMPLE = "example_collector"
     AUTO_GOOGLER = "auto_googler"
+    COMMON_CRAWLER = "common_crawler"
 
 class URLOutcome(Enum):
     PENDING = "pending"

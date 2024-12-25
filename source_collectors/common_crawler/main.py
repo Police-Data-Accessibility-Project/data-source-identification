@@ -8,16 +8,17 @@ from datetime import datetime
 
 from dotenv import load_dotenv
 
+from source_collectors.common_crawler.argparser import parse_args
+from source_collectors.common_crawler.cache import CommonCrawlerCacheManager
+from source_collectors.common_crawler.crawler import CommonCrawlResult, CommonCrawlerManager
+from source_collectors.common_crawler.csv_manager import CSVManager
+
 # The below code sets the working directory to be the root of the entire repository
 # This is done to solve otherwise quite annoying import issues.
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from util.huggingface_api_manager import HuggingFaceAPIManager
 from util.miscellaneous_functions import get_filename_friendly_timestamp
-from common_crawler.argparser import parse_args
-from common_crawler.cache import CommonCrawlerCacheManager
-from common_crawler.crawler import CommonCrawlerManager, CommonCrawlResult
-from common_crawler.csv_manager import CSVManager
 from label_studio_interface.LabelStudioConfig import LabelStudioConfig
 from label_studio_interface.LabelStudioAPIManager import LabelStudioAPIManager
 

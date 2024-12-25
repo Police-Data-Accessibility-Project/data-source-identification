@@ -1,8 +1,6 @@
 from typing import List
 
-from collector_db.BatchInfo import BatchInfo
 from collector_db.URLInfo import URLInfo
-from core.enums import BatchStatus
 from core.preprocessors.PreprocessorBase import PreprocessorBase
 
 
