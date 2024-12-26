@@ -1,84 +1,21 @@
-from datetime import datetime
 from functools import wraps
 
-from sqlalchemy import create_engine, Column, Integer, String, Float, Text, JSON, ForeignKey, CheckConstraint, TIMESTAMP, UniqueConstraint
-from sqlalchemy.orm import declarative_base, sessionmaker, relationship
-from typing import Optional, Dict, Any, List
-
-from sqlalchemy.sql.functions import current_timestamp, func
-from torch.backends.opt_einsum import strategy
+from sqlalchemy import create_engine
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import sessionmaker
+from typing import Optional, List
 
 from collector_db.BatchInfo import BatchInfo
+from collector_db.DTOs.DuplicateInfo import DuplicateInfo
+from collector_db.DTOs.InsertURLsInfo import InsertURLsInfo
+from collector_db.DTOs.URLMapping import URLMapping
 from collector_db.URLInfo import URLInfo
+from collector_db.models import Base, Batch, URL
 from core.enums import BatchStatus
-from util.helper_functions import get_enum_values
 
-# Base class for SQLAlchemy ORM models
-Base = declarative_base()
 
-status_check_string = ", ".join([f"'{status}'" for status in get_enum_values(BatchStatus)])
-
-CURRENT_TIME_SERVER_DEFAULT = func.now()
 
 # SQLAlchemy ORM models
-class Batch(Base):
-    __tablename__ = 'batches'
-
-    id = Column(Integer, primary_key=True)
-    strategy = Column(String, nullable=False)
-    # Gives the status of the batch
-    status = Column(String, CheckConstraint(f"status IN ({status_check_string})"), nullable=False)
-    # The number of URLs in the batch
-    # TODO: Add means to update after execution
-    count = Column(Integer, nullable=False)
-    date_generated = Column(TIMESTAMP, nullable=False, server_default=CURRENT_TIME_SERVER_DEFAULT)
-    # How often URLs ended up approved in the database
-    strategy_success_rate = Column(Float)
-    # Percentage of metadata identified by models
-    metadata_success_rate = Column(Float)
-    # Rate of matching to agencies
-    agency_match_rate = Column(Float)
-    # Rate of matching to record types
-    record_type_match_rate = Column(Float)
-    # Rate of matching to record categories
-    record_category_match_rate = Column(Float)
-    # Time taken to generate the batch
-    # TODO: Add means to update after execution
-    compute_time = Column(Float)
-    # The parameters used to generate the batch
-    parameters = Column(JSON)
-
-    urls = relationship("URL", back_populates="batch")
-    missings = relationship("Missing", back_populates="batch")
-
-
-class URL(Base):
-    __tablename__ = 'urls'
-
-    id = Column(Integer, primary_key=True)
-    # The batch this URL is associated with
-    batch_id = Column(Integer, ForeignKey('batches.id'), nullable=False)
-    url = Column(Text, unique=True)
-    # The metadata associated with the URL
-    url_metadata = Column(JSON)
-    # The outcome of the URL: submitted, human_labeling, rejected, duplicate, etc.
-    outcome = Column(String)
-    created_at = Column(TIMESTAMP, nullable=False, server_default=CURRENT_TIME_SERVER_DEFAULT)
-
-    batch = relationship("Batch", back_populates="urls")
-
-
-class Missing(Base):
-    __tablename__ = 'missing'
-
-    id = Column(Integer, primary_key=True)
-    place_id = Column(Integer, nullable=False)
-    record_type = Column(String, nullable=False)
-    batch_id = Column(Integer, ForeignKey('batches.id'))
-    strategy_used = Column(Text, nullable=False)
-    date_searched = Column(TIMESTAMP, nullable=False, server_default=CURRENT_TIME_SERVER_DEFAULT)
-
-    batch = relationship("Batch", back_populates="missings")
 
 
 # Database Client
@@ -146,13 +83,33 @@ class DatabaseClient:
         batch = self.session.query(Batch).filter_by(id=batch_id).first()
         return BatchInfo(**batch.__dict__)
 
-    def insert_urls(self, url_infos: List[URLInfo], batch_id: int):
+    def insert_urls(self, url_infos: List[URLInfo], batch_id: int) -> InsertURLsInfo:
+        url_mappings = []
+        duplicates = []
         for url_info in url_infos:
             url_info.batch_id = batch_id
-            self.insert_url(url_info)
+            try:
+                url_id = self.insert_url(url_info)
+                url_mappings.append(URLMapping(url_id=url_id, url=url_info.url))
+            except IntegrityError:
+                orig_url_info = self.get_url_info_by_url(url_info.url)
+                duplicates.append(DuplicateInfo(
+                    source_url=url_info.url,
+                    original_url_id=orig_url_info.id,
+                    duplicate_metadata=url_info.url_metadata,
+                    original_metadata=orig_url_info.url_metadata
+                ))
+
+        return InsertURLsInfo(url_mappings=url_mappings, duplicates=duplicates)
+
 
     @session_manager
-    def insert_url(self, url_info: URLInfo):
+    def get_url_info_by_url(self, url: str) -> Optional[URLInfo]:
+        url = self.session.query(URL).filter_by(url=url).first()
+        return URLInfo(**url.__dict__)
+
+    @session_manager
+    def insert_url(self, url_info: URLInfo) -> int:
         """Insert a new URL into the database."""
         url_entry = URL(
             batch_id=url_info.batch_id,
@@ -161,6 +118,10 @@ class DatabaseClient:
             outcome=url_info.outcome.value
         )
         self.session.add(url_entry)
+        self.session.commit()
+        self.session.refresh(url_entry)
+        return url_entry.id
+
 
     @session_manager
     def get_urls_by_batch(self, batch_id: int) -> List[URLInfo]:

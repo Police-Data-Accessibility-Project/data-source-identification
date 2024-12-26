@@ -2,6 +2,7 @@ from typing import Optional
 
 from collector_manager.CollectorManager import InvalidCollectorError
 from collector_manager.enums import CollectorType
+from core.DTOs.CollectionLifecycleInfo import CollectionLifecycleInfo
 from core.SourceCollectorCore import SourceCollectorCore
 
 
@@ -27,7 +28,7 @@ class CoreInterface:
         )
         return f"Started {collector_type.value} collector with CID: {cid}"
 
-    def close_collector(self, cid: int) -> str:
+    def close_collector(self, cid: int) -> CollectionLifecycleInfo:
         return self.core.harvest_collector(cid)
 
     def get_info(self, cid: int) -> str:

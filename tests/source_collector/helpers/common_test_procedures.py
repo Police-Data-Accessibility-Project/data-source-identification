@@ -21,4 +21,4 @@ def run_collector_and_wait_for_completion(
         response = ci.get_status(1)
     assert response == f"1 ({collector_name}) - COMPLETED", response
     response = ci.close_collector(1)
-    assert response == "Collector closed and data harvested successfully."
+    assert response.message == "Collector closed and data harvested successfully."

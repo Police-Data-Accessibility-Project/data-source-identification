@@ -83,6 +83,11 @@ class CoreCommandHandler:
         if len(args) < 2:
             return "Usage: close {cid}"
         cid = self.get_cid(cid_str=args[1])
+        try:
+            lifecycle_info = self.cm.close_collector(cid)
+            return lifecycle_info.message
+        except InvalidCollectorError:
+            return f"Collector {cid} not found."
         return self.ci.close_collector(cid=cid)
 
     def get_info(self, args: List[str]):

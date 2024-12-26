@@ -14,6 +14,7 @@ class CollectorType(Enum):
     MUCKROCK_SIMPLE_SEARCH = "muckrock_simple_search"
     MUCKROCK_COUNTY_SEARCH = "muckrock_county_search"
     MUCKROCK_ALL_SEARCH = "muckrock_all_search"
+    CKAN = "ckan"
 
 class URLOutcome(Enum):
     PENDING = "pending"

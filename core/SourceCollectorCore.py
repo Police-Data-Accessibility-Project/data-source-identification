@@ -6,6 +6,7 @@ from collector_manager.CollectorBase import CollectorCloseInfo
 from collector_manager.CollectorManager import CollectorManager, InvalidCollectorError
 from collector_manager.collector_mapping import COLLECTOR_MAPPING
 from collector_manager.enums import CollectorType, CollectorStatus
+from core.DTOs.CollectionLifecycleInfo import CollectionLifecycleInfo
 from core.DTOs.CollectorStartParams import CollectorStartParams
 from core.enums import BatchStatus
 from core.preprocessors.PreprocessorBase import PreprocessorBase
@@ -62,26 +63,28 @@ class SourceCollectorCore:
 
         return batch_id
 
-    def harvest_collector(self, batch_id: int) -> str:
-        try:
-            close_info = self.collector_manager.close_collector(batch_id)
-            batch_status = collector_to_batch_status(close_info.status)
-            preprocessor = self.get_preprocessor(close_info.collector_type)
-            url_infos = preprocessor.preprocess(close_info.data)
-            self.db_client.update_batch_post_collection(
-                batch_id=batch_id,
-                url_count=len(url_infos),
-                batch_status=batch_status,
-                compute_time=close_info.compute_time
-            )
-            self.db_client.insert_urls(
-                url_infos=url_infos,
-                batch_id=batch_id
-            )
-            return close_info.message
+    def harvest_collector(self, batch_id: int) -> CollectionLifecycleInfo:
+        close_info = self.collector_manager.close_collector(batch_id)
+        batch_status = collector_to_batch_status(close_info.status)
+        preprocessor = self.get_preprocessor(close_info.collector_type)
+        url_infos = preprocessor.preprocess(close_info.data)
+        self.db_client.update_batch_post_collection(
+            batch_id=batch_id,
+            url_count=len(url_infos),
+            batch_status=batch_status,
+            compute_time=close_info.compute_time
+        )
+        insert_url_infos = self.db_client.insert_urls(
+            url_infos=url_infos,
+            batch_id=batch_id
+        )
+        return CollectionLifecycleInfo(
+            batch_id=batch_id,
+            url_id_mapping=insert_url_infos.url_mappings,
+            duplicates=insert_url_infos.duplicates,
+            message=close_info.message
+        )
 
-        except InvalidCollectorError as e:
-            return str(e)
 
     def get_preprocessor(
         self,

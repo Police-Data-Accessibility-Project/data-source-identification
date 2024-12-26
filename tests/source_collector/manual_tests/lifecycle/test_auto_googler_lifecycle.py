@@ -2,7 +2,7 @@ import os
 
 import dotenv
 
-from Tests.source_collector.helpers.common_test_procedures import run_collector_and_wait_for_completion
+from tests.source_collector.helpers.common_test_procedures import run_collector_and_wait_for_completion
 from collector_manager.enums import CollectorType
 from core.enums import BatchStatus
 
