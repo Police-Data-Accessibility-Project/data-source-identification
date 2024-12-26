@@ -1,0 +1,1 @@
+This directory tests the lifecycle of a source collector -- that is, its progression from initial call, to completion, to batch preprocessing and ingestion into the database.

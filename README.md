@@ -14,6 +14,7 @@ openai-playground | Scripts for accessing the openai API on PDAP's shared accoun
 source_collectors| Tools for extracting metadata from different sources, including CKAN data portals and Common Crawler
 collector_db | Database for storing data from source collectors
 collector_manager | A module which provides a unified interface for interacting with source collectors and relevant data
+core | A module which integrates other components, such as collector_manager and collector_db
 
 ## How to use
 

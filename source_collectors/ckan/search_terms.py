@@ -25,7 +25,7 @@ group_search = [
             "3c648d96-0a29-4deb-aa96-150117119a23",
             "92654c61-3a7d-484f-a146-257c0f6c55aa",
         ],
-    },
+    }
 ]
 
 organization_search = [

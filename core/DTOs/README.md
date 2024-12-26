@@ -1,0 +1,1 @@
+This directory consists of Data Transfer Objects (DTOs) which are utilized by other core submodules.

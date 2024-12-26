@@ -1,0 +1,1 @@
+This directory consists of data transfer objects (DTOs) for the Source Collector Database.

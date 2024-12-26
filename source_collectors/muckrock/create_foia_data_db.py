@@ -19,20 +19,24 @@ Errors encountered during API requests or database operations are logged to an `
 and/or printed to the console.
 """
 
-import requests
-import sqlite3
 import logging
 import os
 import json
 import time
-from typing import List, Tuple, Dict, Any, Union, Literal
+from typing import List, Tuple, Dict, Any
+
+from tqdm import tqdm
+
+from source_collectors.muckrock.classes.SQLiteClient import SQLiteClientContextManager, SQLClientError
+from source_collectors.muckrock.classes.muckrock_fetchers import FOIAFetcher
+from source_collectors.muckrock.classes.muckrock_fetchers.MuckrockFetcher import MuckrockNoMoreDataError
 
 logging.basicConfig(
     filename="errors.log", level=logging.ERROR, format="%(levelname)s: %(message)s"
 )
 
+# TODO: Why are we pulling every single FOIA request?
 
-base_url = "https://www.muckrock.com/api_v1/foia/"
 last_page_fetched = "last_page_fetched.txt"
 
 NO_MORE_DATA = -1  # flag for program exit
@@ -83,69 +87,32 @@ def create_db() -> bool:
         bool: True, if database is successfully created; False otherwise.
 
     Raises:
-        sqlite3.Error: If the table creation operation fails, prints error and returns False.
+        sqlite3.Error: If the table creation operation fails,
+        prints error and returns False.
     """
-
-    try:
-        with sqlite3.connect("foia_data.db") as conn:
-            conn.execute(create_table_query)
-            conn.commit()
-        print("Successfully created foia_data.db!")
-        return True
-    except sqlite3.Error as e:
-        print(f"SQLite error: {e}.")
-        logging.error(f"Failed to create foia_data.db due to SQLite error: {e}")
-        return False
-
-
-def fetch_page(page: int) -> Union[JSON, Literal[NO_MORE_DATA], None]:
-    """
-    Fetches a page of 100 results from the MuckRock FOIA API.
-
-    Args:
-        page (int): The page number to fetch from the API.
-
-    Returns:
-        Union[JSON, None, Literal[NO_MORE_DATA]]:
-            - JSON Dict[str, Any]: The response's JSON data, if the request is successful.
-            - NO_MORE_DATA (int = -1): A constant, if there are no more pages to fetch (indicated by a 404 response).
-            - None: If there is an error other than 404.
-    """
-
-    per_page = 100
-    response = requests.get(
-        base_url, params={"page": page, "page_size": per_page, "format": "json"}
-    )
-
-    if response.status_code == 200:
-        return response.json()
-    elif response.status_code == 404:
-        print("No more pages to fetch")
-        return NO_MORE_DATA  # Typically 404 response will mean there are no more pages to fetch
-    elif 500 <= response.status_code < 600:
-        logging.error(f"Server error {response.status_code} on page {page}")
-        page = page + 1
-        return fetch_page(page)
-    else:
-        print(f"Error fetching page {page}: {response.status_code}")
-        logging.error(
-            f"Fetching page {page} failed with response code: {
-                      response.status_code}"
-        )
-        return None
-
+    with SQLiteClientContextManager("foia_data.db") as client:
+        try:
+            client.execute_query(create_table_query)
+            return True
+        except SQLClientError as e:
+            print(f"SQLite error: {e}.")
+            logging.error(f"Failed to create foia_data.db due to SQLite error: {e}")
+            return False
 
 def transform_page_data(data_to_transform: JSON) -> List[Tuple[Any, ...]]:
     """
-    Transforms the data recieved from the MuckRock FOIA API into a structured format for insertion into a database with `populate_db()`.
+    Transforms the data received from the MuckRock FOIA API
+    into a structured format for insertion into a database with `populate_db()`.
 
-    Transforms JSON input into a list of tuples, as well as serializes the nested `tags` and `communications` fields into JSON strings.
+    Transforms JSON input into a list of tuples,
+    as well as serializes the nested `tags` and `communications` fields
+    into JSON strings.
 
     Args:
-        data_to_transform (JSON: Dict[str, Any]): The JSON data from the API response.
-
+        data_to_transform: The JSON data from the API response.
     Returns:
-        transformed_data (List[Tuple[Any, ...]]: A list of tuples, where each tuple contains the fields of a single FOIA request.
+        A list of tuples, where each tuple contains the fields
+        of a single FOIA request.
     """
 
     transformed_data = []
@@ -197,39 +164,40 @@ def populate_db(transformed_data: List[Tuple[Any, ...]], page: int) -> None:
         sqlite3.Error: If the insertion operation fails, attempts to retry operation (max_retries = 2). If retries are
                        exhausted, logs error and exits.
     """
-
-    with sqlite3.connect("foia_data.db") as conn:
-
+    with SQLiteClientContextManager("foia_data.db") as client:
         retries = 0
         max_retries = 2
         while retries < max_retries:
             try:
-                conn.executemany(foia_insert_query, transformed_data)
-                conn.commit()
+                client.execute_query(foia_insert_query, many=transformed_data)
                 print("Successfully inserted data!")
                 return
-            except sqlite3.Error as e:
-                print(f"SQLite error: {e}. Retrying...")
-                conn.rollback()
+            except SQLClientError as e:
+                print(f"{e}. Retrying...")
                 retries += 1
                 time.sleep(1)
 
         if retries == max_retries:
-            print(
-                f"Failed to insert data from page {page} after {
-                max_retries} attempts. Skipping to next page."
-            )
-            logging.error(
-                f"Failed to insert data from page {page} after {
-                max_retries} attempts."
-            )
+            report_max_retries_error(max_retries, page)
+
+
+def report_max_retries_error(max_retries, page):
+    print(
+        f"Failed to insert data from page {page} after {
+        max_retries} attempts. Skipping to next page."
+    )
+    logging.error(
+        f"Failed to insert data from page {page} after {
+        max_retries} attempts."
+    )
 
 
 def main() -> None:
     """
     Main entry point for create_foia_data_db.py.
 
-    This function orchestrates the process of fetching FOIA requests data from the MuckRock FOIA API, transforming it,
+    This function orchestrates the process of fetching
+    FOIA requests data from the MuckRock FOIA API, transforming it,
     and storing it in a SQLite database.
     """
 
@@ -240,33 +208,46 @@ def main() -> None:
             print("Failed to create foia_data.db")
             return
 
+    start_page = get_start_page()
+    fetcher = FOIAFetcher(
+        start_page=start_page
+    )
+
+    with tqdm(initial=start_page, unit="page") as pbar:
+        while True:
+
+            # TODO: Build collector that does similar logic
+            try:
+                pbar.update()
+                page_data = fetcher.fetch_next_page()
+            except MuckrockNoMoreDataError:
+                # Exit program because no more data exists
+                break
+            if page_data is None:
+                continue
+            transformed_data = transform_page_data(page_data)
+            populate_db(transformed_data, fetcher.current_page)
+
+            with open(last_page_fetched, mode="w") as file:
+                file.write(str(fetcher.current_page))
+
+    print("create_foia_data_db.py run finished")
+
+
+def get_start_page():
+    """
+    Returns the page number to start fetching from.
+
+    If the file `last_page_fetched` exists,
+    reads the page number from the file and returns it + 1.
+    Otherwise, returns 1.
+    """
     if os.path.exists(last_page_fetched):
         with open(last_page_fetched, mode="r") as file:
             page = int(file.read()) + 1
     else:
         page = 1
-
-    while True:
-
-        print(f"Fetching page {page}...")
-        page_data = fetch_page(page)
-
-        if page_data == NO_MORE_DATA:
-            break  # Exit program because no more data exixts
-        if page_data is None:
-            print(f"Skipping page {page}...")
-            page += 1
-            continue
-
-        transformed_data = transform_page_data(page_data)
-
-        populate_db(transformed_data, page)
-
-        with open(last_page_fetched, mode="w") as file:
-            file.write(str(page))
-        page += 1
-
-    print("create_foia_data_db.py run finished")
+    return page
 
 
 if __name__ == "__main__":

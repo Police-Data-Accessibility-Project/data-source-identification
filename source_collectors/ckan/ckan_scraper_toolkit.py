@@ -72,8 +72,7 @@ def ckan_package_search(
         packages = remote.action.package_search(
             q=query, rows=num_rows, start=start, **kwargs
         )
-        # Add the base_url to each package
-        [package.update(base_url=base_url) for package in packages["results"]]
+        add_base_url_to_packages(base_url, packages)
         results += packages["results"]
 
         total_results = packages["count"]
@@ -90,6 +89,11 @@ def ckan_package_search(
     return results
 
 
+def add_base_url_to_packages(base_url, packages):
+    # Add the base_url to each package
+    [package.update(base_url=base_url) for package in packages["results"]]
+
+
 def ckan_package_search_from_organization(
     base_url: str, organization_id: str
 ) -> list[dict[str, Any]]:
@@ -104,12 +108,16 @@ def ckan_package_search_from_organization(
         id=organization_id, include_datasets=True
     )
     packages = organization["packages"]
-    results = []
+    results = search_for_results(base_url, packages)
 
+    return results
+
+
+def search_for_results(base_url, packages):
+    results = []
     for package in packages:
         query = f"id:{package['id']}"
         results += ckan_package_search(base_url=base_url, query=query)
-
     return results
 
 
@@ -137,7 +145,6 @@ def ckan_collection_search(base_url: str, collection_id: str) -> list[Package]:
     :param collection_id: The ID of the parent package.
     :return: List of Package objects representing the packages associated with the collection.
     """
-    packages = []
     url = f"{base_url}?collection_package_id={collection_id}"
     soup = _get_soup(url)
 
@@ -145,25 +152,37 @@ def ckan_collection_search(base_url: str, collection_id: str) -> list[Package]:
     num_results = int(soup.find(class_="new-results").text.split()[0].replace(",", ""))
     pages = math.ceil(num_results / 20)
 
+    packages = get_packages(base_url, collection_id, pages)
+
+    return packages
+
+
+def get_packages(base_url, collection_id, pages):
+    packages = []
     for page in range(1, pages + 1):
         url = f"{base_url}?collection_package_id={collection_id}&page={page}"
         soup = _get_soup(url)
 
-        with ThreadPoolExecutor(max_workers=10) as executor:
-            futures = [
-                executor.submit(
-                    _collection_search_get_package_data, dataset_content, base_url
-                )
-                for dataset_content in soup.find_all(class_="dataset-content")
-            ]
-
-            [packages.append(package.result()) for package in as_completed(futures)]
+        futures = get_futures(base_url, packages, soup)
 
         # Take a break to avoid being timed out
         if len(futures) >= 15:
             time.sleep(10)
-
     return packages
+
+
+def get_futures(base_url: str, packages: list[Package], soup: BeautifulSoup) -> list[Any]:
+    """Returns a list of futures for the collection search."""
+    with ThreadPoolExecutor(max_workers=10) as executor:
+        futures = [
+            executor.submit(
+                _collection_search_get_package_data, dataset_content, base_url
+            )
+            for dataset_content in soup.find_all(class_="dataset-content")
+        ]
+
+        [packages.append(package.result()) for package in as_completed(futures)]
+    return futures
 
 
 def _collection_search_get_package_data(dataset_content, base_url: str):
@@ -172,31 +191,73 @@ def _collection_search_get_package_data(dataset_content, base_url: str):
     joined_url = urljoin(base_url, dataset_content.a.get("href"))
     dataset_soup = _get_soup(joined_url)
     # Determine if the dataset url should be the linked page to an external site or the current site
+    resources = get_resources(dataset_soup)
+    button = get_button(resources)
+    set_url_and_data_portal_type(button, joined_url, package, resources)
+    package.base_url = base_url
+    set_title(dataset_soup, package)
+    set_agency_name(dataset_soup, package)
+    set_supplying_entity(dataset_soup, package)
+    set_description(dataset_soup, package)
+    set_record_format(dataset_content, package)
+    date = get_data(dataset_soup)
+    set_source_last_updated(date, package)
+
+    return package
+
+
+def set_source_last_updated(date, package):
+    package.source_last_updated = datetime.strptime(date, "%B %d, %Y").strftime(
+        "%Y-%d-%m"
+    )
+
+
+def get_data(dataset_soup):
+    date = dataset_soup.find(property="dct:modified").text.strip()
+    return date
+
+
+def get_button(resources):
+    button = resources[0].find(class_="btn-group")
+    return button
+
+
+def get_resources(dataset_soup):
     resources = dataset_soup.find("section", id="dataset-resources").find_all(
         class_="resource-item"
     )
-    button = resources[0].find(class_="btn-group")
+    return resources
+
+
+def set_url_and_data_portal_type(button, joined_url, package, resources):
     if len(resources) == 1 and button is not None and button.a.text == "Visit page":
         package.url = button.a.get("href")
     else:
         package.url = joined_url
         package.data_portal_type = "CKAN"
-    package.base_url = base_url
-    package.title = dataset_soup.find(itemprop="name").text.strip()
-    package.agency_name = dataset_soup.find("h1", class_="heading").text.strip()
-    package.supplying_entity = dataset_soup.find(property="dct:publisher").text.strip()
-    package.description = dataset_soup.find(class_="notes").p.text
+
+
+def set_record_format(dataset_content, package):
     package.record_format = [
-        record_format.text.strip() for record_format in dataset_content.find_all("li")
+        format1.text.strip() for format1 in dataset_content.find_all("li")
     ]
     package.record_format = list(set(package.record_format))
 
-    date = dataset_soup.find(property="dct:modified").text.strip()
-    package.source_last_updated = datetime.strptime(date, "%B %d, %Y").strftime(
-        "%Y-%d-%m"
-    )
 
-    return package
+def set_title(dataset_soup, package):
+    package.title = dataset_soup.find(itemprop="name").text.strip()
+
+
+def set_agency_name(dataset_soup, package):
+    package.agency_name = dataset_soup.find("h1", class_="heading").text.strip()
+
+
+def set_supplying_entity(dataset_soup, package):
+    package.supplying_entity = dataset_soup.find(property="dct:publisher").text.strip()
+
+
+def set_description(dataset_soup, package):
+    package.description = dataset_soup.find(class_="notes").p.text
 
 
 def _get_soup(url: str) -> BeautifulSoup:
