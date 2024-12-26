@@ -57,7 +57,7 @@ flowchart TD
     Missingness --> Maps["Mapping our progress and the overall state of data access"]
 
     %% Default class for black stroke
-    classDef default fill:#fffbfa,stroke:#000,stroke-width:1px;
+    classDef default fill:#fffbfa,stroke:#000,stroke-width:1px,color:#000;
 
     %% Custom styles
     class API gold;
