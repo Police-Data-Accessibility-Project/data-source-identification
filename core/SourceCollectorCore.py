@@ -1,13 +1,11 @@
 from typing import Optional
 
-from collector_db.BatchInfo import BatchInfo
+from collector_db.DTOs.BatchInfo import BatchInfo
 from collector_db.DatabaseClient import DatabaseClient
-from collector_manager.CollectorBase import CollectorCloseInfo
 from collector_manager.CollectorManager import CollectorManager, InvalidCollectorError
 from collector_manager.collector_mapping import COLLECTOR_MAPPING
 from collector_manager.enums import CollectorType, CollectorStatus
 from core.DTOs.CollectionLifecycleInfo import CollectionLifecycleInfo
-from core.DTOs.CollectorStartParams import CollectorStartParams
 from core.enums import BatchStatus
 from core.preprocessors.PreprocessorBase import PreprocessorBase
 from core.preprocessors.preprocessor_mapping import PREPROCESSOR_MAPPING

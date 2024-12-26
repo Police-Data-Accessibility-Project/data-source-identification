@@ -1,0 +1,1 @@
+These test the functionality of the collectors individually -- from initiation to completion of the collector. They do not test the larger lifecycle.

@@ -1,6 +1,6 @@
 from typing import List
 
-from collector_db.URLInfo import URLInfo
+from collector_db.DTOs.URLInfo import URLInfo
 from core.preprocessors.PreprocessorBase import PreprocessorBase
 
 

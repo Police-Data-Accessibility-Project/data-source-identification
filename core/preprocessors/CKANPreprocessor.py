@@ -1,7 +1,6 @@
-import json
 from typing import List
 
-from collector_db.URLInfo import URLInfo
+from collector_db.DTOs.URLInfo import URLInfo
 
 
 class CKANPreprocessor:

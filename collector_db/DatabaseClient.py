@@ -5,11 +5,11 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import sessionmaker
 from typing import Optional, List
 
-from collector_db.BatchInfo import BatchInfo
+from collector_db.DTOs.BatchInfo import BatchInfo
 from collector_db.DTOs.DuplicateInfo import DuplicateInfo
 from collector_db.DTOs.InsertURLsInfo import InsertURLsInfo
 from collector_db.DTOs.URLMapping import URLMapping
-from collector_db.URLInfo import URLInfo
+from collector_db.DTOs.URLInfo import URLInfo
 from collector_db.models import Base, Batch, URL
 from core.enums import BatchStatus
 

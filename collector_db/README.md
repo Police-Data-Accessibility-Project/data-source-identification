@@ -1,0 +1,1 @@
+The collector database is a database for storing collector data and associated metadata. It consists of both the database structure itself as well as the interfaces and helper functions for interacting with it.
