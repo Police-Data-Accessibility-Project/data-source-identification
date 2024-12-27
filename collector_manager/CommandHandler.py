@@ -3,10 +3,10 @@ Command Handler
 
 This module provides a command handler for the Collector Manager CLI.
 """
-
+import json
 from typing import List
 
-from collector_manager.CollectorManager import CollectorManager
+from collector_manager.CollectorManager import CollectorManager, InvalidCollectorError
 
 
 class CommandHandler:
@@ -32,7 +32,7 @@ class CommandHandler:
         func(parts)
 
     def list_collectors(self, args: List[str]):
-        print("\n".join(self.cm.list_collectors()))
+        print(" " + "\n ".join(self.cm.list_collectors()))
 
     def start_collector(self, args: List[str]):
         if len(args) < 2:
@@ -40,9 +40,22 @@ class CommandHandler:
             return
         collector_name = args[1]
         config = None
+        # TODO: Refactor and extract functions
         if len(args) > 3 and args[2] == "--config":
-            config = args[3]
-        cid = self.cm.start_collector(collector_name, config)
+            try:
+                f = open(args[3], "r")
+            except FileNotFoundError:
+                print(f"Config file not found: {args[3]}")
+                return
+            try:
+                config = json.load(f)
+            except json.JSONDecodeError:
+                print(f"Invalid config file: {args[3]}")
+        try:
+            cid = self.cm.start_collector(collector_name, config)
+        except InvalidCollectorError:
+            print(f"Invalid collector name: {collector_name}")
+            return
         print(f"Started collector with CID: {cid}")
 
     def get_status(self, args: List[str]):

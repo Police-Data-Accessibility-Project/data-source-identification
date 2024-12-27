@@ -53,10 +53,18 @@ class GoogleSearcher:
             If the daily quota is exceeded, None is returned.
         """
         try:
-            res = self.service.cse().list(q=query, cx=self.cse_id).execute()
-            if "items" not in res:
+            raw_results = self.service.cse().list(q=query, cx=self.cse_id).execute()
+            if "items" not in raw_results:
                 return None
-            return res['items']
+            results = []
+            for result in raw_results['items']:
+                entry = {
+                    'title': result['title'],
+                    'url': result['link'],
+                    'snippet': result['snippet']
+                }
+                results.append(entry)
+            return results
             # Process your results
         except HttpError as e:
             if "Quota exceeded" in str(e):
