@@ -44,6 +44,8 @@ class Batch(Base):
 
     urls = relationship("URL", back_populates="batch")
     missings = relationship("Missing", back_populates="batch")
+    logs = relationship("Log", back_populates="batch")
+    duplicates = relationship("Duplicate", back_populates="batch")
 
 
 class URL(Base):
@@ -60,6 +62,7 @@ class URL(Base):
     created_at = Column(TIMESTAMP, nullable=False, server_default=CURRENT_TIME_SERVER_DEFAULT)
 
     batch = relationship("Batch", back_populates="urls")
+    duplicates = relationship("Duplicate", back_populates="original_url")
 
 
 class Missing(Base):
@@ -73,3 +76,36 @@ class Missing(Base):
     date_searched = Column(TIMESTAMP, nullable=False, server_default=CURRENT_TIME_SERVER_DEFAULT)
 
     batch = relationship("Batch", back_populates="missings")
+
+class Log(Base):
+    __tablename__ = 'logs'
+
+    id = Column(Integer, primary_key=True)
+    batch_id = Column(Integer, ForeignKey('batches.id'), nullable=False)
+    log = Column(Text, nullable=False)
+    created_at = Column(TIMESTAMP, nullable=False, server_default=CURRENT_TIME_SERVER_DEFAULT)
+
+    batch = relationship("Batch", back_populates="logs")
+
+class Duplicate(Base):
+    """
+    Identifies duplicates which occur within a batch
+    """
+    __tablename__ = 'duplicates'
+
+    id = Column(Integer, primary_key=True)
+    batch_id = Column(
+        Integer,
+        ForeignKey('batches.id'),
+        nullable=False,
+        doc="The batch that produced the duplicate"
+    )
+    original_url_id = Column(
+        Integer,
+        ForeignKey('urls.id'),
+        nullable=False,
+        doc="The original URL ID"
+    )
+
+    batch = relationship("Batch", back_populates="duplicates")
+    original_url = relationship("URL", back_populates="duplicates")

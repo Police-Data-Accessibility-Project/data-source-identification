@@ -1,6 +1,7 @@
 from typing import List
 
 from collector_db.DTOs.URLInfo import URLInfo
+from collector_manager.DTOs.ExampleOutputDTO import ExampleOutputDTO
 from core.preprocessors.PreprocessorBase import PreprocessorBase
 
 
@@ -8,9 +9,9 @@ class ExamplePreprocessor(PreprocessorBase):
     pass
 
 
-    def preprocess(self, data: dict) -> List[URLInfo]:
+    def preprocess(self, data: ExampleOutputDTO) -> List[URLInfo]:
         url_infos = []
-        for url in data["urls"]:
+        for url in data.urls:
             url_info = URLInfo(
                 url=url,
             )

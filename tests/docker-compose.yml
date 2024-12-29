@@ -1,0 +1,13 @@
+services:
+  postgres:
+    image: postgres:15
+    ports:
+      - 5432:5432
+    volumes:
+      - dbscripts:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_PASSWORD=HanviliciousHamiltonHilltops
+      - POSTGRES_USER=test_source_collector_user
+      - POSTGRES_DB=source_collector_test_db
+volumes:
+  dbscripts:

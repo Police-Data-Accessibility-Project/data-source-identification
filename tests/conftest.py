@@ -2,23 +2,31 @@ import os
 
 import pytest
 
-from tests.source_collector.helpers.constants import TEST_DATABASE_URL, TEST_DATABASE_FILENAME
+from collector_db.helper_functions import get_postgres_connection_string
+from collector_db.models import Base
+from core.CoreLogger import CoreLogger
+from tests.helpers.DBDataCreator import DBDataCreator
 from collector_db.DatabaseClient import DatabaseClient
-from core.CoreInterface import CoreInterface
 from core.SourceCollectorCore import SourceCollectorCore
 
 
 @pytest.fixture
 def db_client_test() -> DatabaseClient:
-    db_client = DatabaseClient(TEST_DATABASE_URL)
+    db_client = DatabaseClient(db_url=get_postgres_connection_string())
     yield db_client
     db_client.engine.dispose()
-    os.remove(TEST_DATABASE_FILENAME)
+    Base.metadata.drop_all(db_client.engine)
 
 @pytest.fixture
-def test_core_interface(db_client_test):
-    core = SourceCollectorCore(
-        db_client=db_client_test
-    )
-    ci = CoreInterface(core=core)
-    yield ci
+def test_core(db_client_test):
+    with CoreLogger() as logger:
+        core = SourceCollectorCore(
+            db_client=db_client_test,
+            core_logger=logger
+        )
+        yield core
+
+@pytest.fixture
+def db_data_creator(db_client_test):
+    db_data_creator = DBDataCreator(db_client=db_client_test)
+    yield db_data_creator

@@ -7,33 +7,36 @@ import time
 from abc import ABC
 from typing import Optional
 
-from marshmallow import Schema, ValidationError
 from pydantic import BaseModel
 
-from collector_manager.enums import CollectorStatus, CollectorType
+from collector_db.DTOs.LogInfo import LogInfo
+from collector_db.DatabaseClient import DatabaseClient
+from collector_manager.DTOs.CollectorCloseInfo import CollectorCloseInfo
+from collector_manager.enums import CollectorType
+from core.CoreLogger import CoreLogger
+from core.enums import BatchStatus
+from core.exceptions import InvalidPreprocessorError
+from core.preprocessors.PreprocessorBase import PreprocessorBase
+from core.preprocessors.preprocessor_mapping import PREPROCESSOR_MAPPING
 
-
-class CollectorCloseInfo(BaseModel):
-    collector_type: CollectorType
-    status: CollectorStatus
-    data: dict = None
-    logs: list[str]
-    message: str = None
-    compute_time: float
 
 class CollectorBase(ABC):
-    config_schema: Schema = None # Schema for validating configuration
-    output_schema: Schema = None # Schema for validating output
-    collector_type: CollectorType = None # Collector type
+    collector_type: CollectorType = None
 
-    def __init__(self, name: str, config: dict) -> None:
-        self.name = name
-        self.config = self.validate_config(config)
-        self.data = {}
-        self.logs = []
-        self.status = CollectorStatus.RUNNING
+    def __init__(
+            self,
+            batch_id: int,
+            dto: BaseModel,
+            logger: CoreLogger,
+            raise_error: bool = False) -> None:
+        self.batch_id = batch_id
+        self.dto = dto
+        self.data: Optional[BaseModel] = None
+        self.logger = logger
+        self.status = BatchStatus.IN_PROCESS
         self.start_time = None
         self.compute_time = None
+        self.raise_error = raise_error
         # # TODO: Determine how to update this in some of the other collectors
         self._stop_event = threading.Event()
 
@@ -47,69 +50,84 @@ class CollectorBase(ABC):
     def stop_timer(self) -> None:
         self.compute_time = time.time() - self.start_time
 
+    def handle_error(self, e: Exception) -> None:
+        if self.raise_error:
+            raise e
+        self.log(f"Error: {e}")
+
+    @staticmethod
+    def get_preprocessor(
+            collector_type: CollectorType
+    ) -> PreprocessorBase:
+        # TODO: Look into just having the preprocessor in the collector
+        try:
+            return PREPROCESSOR_MAPPING[collector_type]()
+        except KeyError:
+            raise InvalidPreprocessorError(f"Preprocessor for {collector_type} not found.")
+
+    def process(self, close_info: CollectorCloseInfo) -> None:
+        db_client = DatabaseClient()
+        self.log("Processing collector...")
+        batch_status = close_info.status
+        preprocessor = self.get_preprocessor(close_info.collector_type)
+        url_infos = preprocessor.preprocess(close_info.data)
+        self.log(f"URLs processed: {len(url_infos)}")
+        db_client.update_batch_post_collection(
+            batch_id=close_info.batch_id,
+            url_count=len(url_infos),
+            batch_status=batch_status,
+            compute_time=close_info.compute_time
+        )
+        self.log("Inserting URLs...")
+        insert_urls_info = db_client.insert_urls(
+            url_infos=url_infos,
+            batch_id=close_info.batch_id
+        )
+        self.log("Inserting duplicates...")
+        db_client.add_duplicate_info(insert_urls_info.duplicates)
+        self.log("Done processing collector.")
+
+
     def run(self) -> None:
         try:
             self.start_timer()
             self.run_implementation()
             self.stop_timer()
-            self.status = CollectorStatus.COMPLETED
+            self.status = BatchStatus.COMPLETE
             self.log("Collector completed successfully.")
+            self.process(
+                close_info=self.close()
+            )
         except Exception as e:
             self.stop_timer()
-            self.status = CollectorStatus.ERRORED
-            self.log(f"Error: {e}")
+            self.status = BatchStatus.ERROR
+            self.handle_error(e)
 
     def log(self, message: str) -> None:
-        self.logs.append(message)
+        self.logger.log(LogInfo(
+            batch_id=self.batch_id,
+            log=message
+        ))
 
     def abort(self) -> CollectorCloseInfo:
         self._stop_event.set()
         self.stop_timer()
         return CollectorCloseInfo(
-            status=CollectorStatus.ABORTED,
+            batch_id=self.batch_id,
+            status=BatchStatus.ABORTED,
             message="Collector aborted.",
-            logs=self.logs,
             compute_time=self.compute_time,
             collector_type=self.collector_type
         )
 
     def close(self):
-        logs = self.logs
         compute_time = self.compute_time
-
-        try:
-            data = self.validate_output(self.data)
-            status = CollectorStatus.COMPLETED
-            message = "Collector closed and data harvested successfully."
-        except Exception as e:
-            data = self.data
-            status = CollectorStatus.ERRORED
-            message = str(e)
-
+        self._stop_event.set()
         return CollectorCloseInfo(
-            status=status,
-            data=data,
-            logs=logs,
-            message=message,
+            batch_id=self.batch_id,
+            status=BatchStatus.COMPLETE,
+            data=self.data,
+            message="Collector closed and data harvested successfully.",
             compute_time=compute_time,
             collector_type=self.collector_type
         )
-
-
-    def validate_output(self, output: dict) -> dict:
-        if self.output_schema is None:
-            raise NotImplementedError("Subclasses must define a schema.")
-        try:
-            schema = self.output_schema()
-            return schema.load(output)
-        except ValidationError as e:
-            self.status = CollectorStatus.ERRORED
-            raise ValueError(f"Invalid output: {e.messages}")
-
-    def validate_config(self, config: dict) -> dict:
-        if self.config_schema is None:
-            raise NotImplementedError("Subclasses must define a schema.")
-        try:
-            return self.config_schema().load(config)
-        except ValidationError as e:
-            raise ValueError(f"Invalid configuration: {e.messages}")
