@@ -66,6 +66,10 @@ class SourceCollectorCore:
             message=f"Started {collector_type.value} collector."
         )
 
+    def shutdown(self):
+        self.collector_manager.shutdown_all_collectors()
+        self.collector_manager.logger.shutdown()
+
 
 
 

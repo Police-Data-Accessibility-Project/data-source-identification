@@ -1,5 +1,5 @@
 from tests.automated.core.helpers.constants import ALLEGHENY_COUNTY_MUCKROCK_ID, ALLEGHENY_COUNTY_TOWN_NAMES
-from collector_manager.enums import CollectorStatus
+from core.enums import BatchStatus
 from source_collectors.muckrock.classes.MuckrockCollector import MuckrockSimpleSearchCollector, \
     MuckrockCountyLevelSearchCollector, MuckrockAllFOIARequestsCollector
 
@@ -14,7 +14,7 @@ def test_muckrock_simple_search_collector():
         }
     )
     collector.run()
-    assert collector.status == CollectorStatus.COMPLETED, collector.logs
+    assert collector.status == BatchStatus.COMPLETE, collector.logs
     assert len(collector.data["urls"]) >= 10
 
 def test_muckrock_county_level_search_collector():
@@ -26,7 +26,7 @@ def test_muckrock_county_level_search_collector():
         }
     )
     collector.run()
-    assert collector.status == CollectorStatus.COMPLETED, collector.logs
+    assert collector.status == BatchStatus.COMPLETE, collector.logs
     assert len(collector.data["urls"]) >= 10
 
 def test_muckrock_full_search_collector():
@@ -38,5 +38,5 @@ def test_muckrock_full_search_collector():
         }
     )
     collector.run()
-    assert collector.status == CollectorStatus.COMPLETED, collector.logs
+    assert collector.status == BatchStatus.COMPLETE, collector.logs
     assert len(collector.data["urls"]) >= 1

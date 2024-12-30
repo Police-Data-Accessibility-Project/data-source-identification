@@ -1,8 +1,8 @@
 from collector_manager.CollectorBase import CollectorBase
-from collector_manager.enums import CollectorStatus, CollectorType
+from collector_manager.enums import CollectorType
 from source_collectors.auto_googler.AutoGoogler import AutoGoogler
 from source_collectors.auto_googler.schemas import AutoGooglerCollectorConfigSchema, \
-    AutoGooglerCollectorInnerOutputSchema, AutoGooglerCollectorOuterOutputSchema
+    AutoGooglerCollectorOuterOutputSchema
 from source_collectors.auto_googler.GoogleSearcher import GoogleSearcher
 from source_collectors.auto_googler.SearchConfig import SearchConfig
 

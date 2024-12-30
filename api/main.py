@@ -24,6 +24,7 @@ async def lifespan(app: FastAPI):
     yield  # Code here runs before shutdown
 
     # Shutdown logic (if needed)
+    app.state.core.shutdown()
     # Clean up resources, close connections, etc.
     pass
 

@@ -1,12 +1,10 @@
 from http import HTTPMethod, HTTPStatus
 from typing import Optional, Annotated
 
-from httpx import Response
 from pydantic import BaseModel
 from starlette.testclient import TestClient
 
 from collector_db.DTOs.BatchInfo import BatchInfo
-from core.DTOs.CollectorStatusResponse import CollectorStatusResponse
 from core.DTOs.GetBatchStatusResponse import GetBatchStatusResponse
 from core.DTOs.GetStatusResponse import GetStatusResponse
 

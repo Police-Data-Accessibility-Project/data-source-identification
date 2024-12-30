@@ -8,7 +8,7 @@ import time
 from collector_manager.CollectorBase import CollectorBase
 from collector_manager.DTOs.ExampleInputDTO import ExampleInputDTO
 from collector_manager.DTOs.ExampleOutputDTO import ExampleOutputDTO
-from collector_manager.enums import CollectorStatus, CollectorType
+from collector_manager.enums import CollectorType
 
 
 class ExampleCollector(CollectorBase):
@@ -18,10 +18,6 @@ class ExampleCollector(CollectorBase):
         dto: ExampleInputDTO = self.dto
         sleep_time = dto.sleep_time
         for i in range(sleep_time):  # Simulate a task
-            if self._stop_event.is_set():
-                self.log("Collector stopped.")
-                self.status = CollectorStatus.ERRORED
-                return
             self.log(f"Step {i + 1}/{sleep_time}")
             time.sleep(1)  # Simulate work
         self.data = ExampleOutputDTO(

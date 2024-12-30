@@ -195,6 +195,10 @@ class DatabaseClient:
         batches = query.all()
         return [BatchStatusInfo(**self.row_to_dict(batch)) for batch in batches]
 
+    @session_manager
+    def delete_all_logs(self, session):
+        session.query(Log).delete()
+
 if __name__ == "__main__":
     client = DatabaseClient()
     print("Database client initialized.")

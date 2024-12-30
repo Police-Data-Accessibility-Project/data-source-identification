@@ -1,10 +1,8 @@
 import time
 
 from collector_db.DTOs.BatchInfo import BatchInfo
-from collector_manager.enums import CollectorType, CollectorStatus
+from collector_manager.enums import CollectorType
 from core.DTOs.BatchStatusInfo import BatchStatusInfo
-from core.DTOs.CollectorStatusInfo import CollectorStatusInfo
-from core.DTOs.CollectorStatusResponse import CollectorStatusResponse
 from core.DTOs.GetBatchStatusResponse import GetBatchStatusResponse
 from core.enums import BatchStatus
 
