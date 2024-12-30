@@ -1,7 +1,8 @@
 from functools import wraps
 
-from sqlalchemy import create_engine, Row
+from sqlalchemy import create_engine, Row, select, delete
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, AsyncEngine, async_sessionmaker
 from sqlalchemy.orm import sessionmaker, scoped_session, aliased
 from typing import Optional, List
 
@@ -27,27 +28,32 @@ from core.enums import BatchStatus
 class DatabaseClient:
     def __init__(self, db_url: str = get_postgres_connection_string()):
         """Initialize the DatabaseClient."""
-        self.engine = create_engine(
+        self.engine: AsyncEngine = create_async_engine(
             url=db_url,
             echo=ConfigManager.get_sqlalchemy_echo(),
         )
-        Base.metadata.create_all(self.engine)
-        self.session_maker = scoped_session(sessionmaker(bind=self.engine))
+        self.session_maker = async_sessionmaker(
+            bind=self.engine,
+            expire_on_commit=False
+        )
         self.session = None
+
+    async def init_db(self):
+        """Initialize the database schema (create tables)."""
+        async with self.engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
 
     def session_manager(method):
         @wraps(method)
-        def wrapper(self, *args, **kwargs):
-            session = self.session_maker()
-            try:
-                result = method(self, session, *args, **kwargs)
-                session.commit()
-                return result
-            except Exception as e:
-                session.rollback()
-                raise e
-            finally:
-                session.close()  # Ensures the session is cleaned up
+        async def wrapper(self, *args, **kwargs):
+            async with self.session_maker() as session:
+                try:
+                    result = await method(self, session, *args, **kwargs)
+                    session.commit()
+                    return result
+                except Exception as e:
+                    session.rollback()
+                    raise e
 
         return wrapper
 
@@ -56,7 +62,7 @@ class DatabaseClient:
 
 
     @session_manager
-    def insert_batch(self, session, batch_info: BatchInfo) -> int:
+    async def insert_batch(self, session, batch_info: BatchInfo) -> int:
         """Insert a new batch into the database and return its ID."""
         batch = Batch(
             strategy=batch_info.strategy,
@@ -73,12 +79,11 @@ class DatabaseClient:
             record_category_match_rate=batch_info.record_category_match_rate,
         )
         session.add(batch)
-        session.commit()
-        session.refresh(batch)
+        await session.flush()
         return batch.id
 
     @session_manager
-    def update_batch_post_collection(
+    async def update_batch_post_collection(
         self,
         session,
         batch_id: int,
@@ -88,7 +93,7 @@ class DatabaseClient:
         batch_status: BatchStatus,
         compute_time: float = None,
     ):
-        batch = session.query(Batch).filter_by(id=batch_id).first()
+        batch = await session.get(Batch, batch_id).scalar()
         batch.total_url_count = total_url_count
         batch.original_url_count = original_url_count
         batch.duplicate_url_count = duplicate_url_count
@@ -96,18 +101,19 @@ class DatabaseClient:
         batch.compute_time = compute_time
 
     @session_manager
-    def get_batch_by_id(self, session, batch_id: int) -> Optional[BatchInfo]:
+    async def get_batch_by_id(self, session, batch_id: int) -> Optional[BatchInfo]:
         """Retrieve a batch by ID."""
-        batch = session.query(Batch).filter_by(id=batch_id).first()
-        return BatchInfo(**batch.__dict__)
+        query = await session.execute(select(Batch).filter_by(id=batch_id))
+        batch = query.scalar_one_or_none()
+        return BatchInfo(**batch.__dict__) if batch else None
 
-    def insert_urls(self, url_infos: List[URLInfo], batch_id: int) -> InsertURLsInfo:
+    async def insert_urls(self, url_infos: List[URLInfo], batch_id: int) -> InsertURLsInfo:
         url_mappings = []
         duplicates = []
         for url_info in url_infos:
             url_info.batch_id = batch_id
             try:
-                url_id = self.insert_url(url_info)
+                url_id = await self.insert_url(url_info)
                 url_mappings.append(URLMapping(url_id=url_id, url=url_info.url))
             except IntegrityError:
                 orig_url_info = self.get_url_info_by_url(url_info.url)
@@ -116,7 +122,7 @@ class DatabaseClient:
                     original_url_id=orig_url_info.id
                 )
                 duplicates.append(duplicate_info)
-        self.insert_duplicates(duplicates)
+        await self.insert_duplicates(duplicates)
 
         return InsertURLsInfo(
             url_mappings=url_mappings,
@@ -126,7 +132,7 @@ class DatabaseClient:
         )
 
     @session_manager
-    def insert_duplicates(self, session, duplicate_infos: list[DuplicateInsertInfo]):
+    async def insert_duplicates(self, session, duplicate_infos: list[DuplicateInsertInfo]):
         for duplicate_info in duplicate_infos:
             duplicate = Duplicate(
                 batch_id=duplicate_info.duplicate_batch_id,
@@ -137,12 +143,12 @@ class DatabaseClient:
 
 
     @session_manager
-    def get_url_info_by_url(self, session, url: str) -> Optional[URLInfo]:
-        url = session.query(URL).filter_by(url=url).first()
-        return URLInfo(**url.__dict__)
+    async def get_url_info_by_url(self, session, url: str) -> Optional[URLInfo]:
+        url = await session.execute(select(URL).filter_by(url=url)).scalar_one_or_none()
+        return URLInfo(**url.__dict__) if url else None
 
     @session_manager
-    def insert_url(self, session, url_info: URLInfo) -> int:
+    async def insert_url(self, session, url_info: URLInfo) -> int:
         """Insert a new URL into the database."""
         url_entry = URL(
             batch_id=url_info.batch_id,
@@ -151,55 +157,59 @@ class DatabaseClient:
             outcome=url_info.outcome.value
         )
         session.add(url_entry)
-        session.commit()
-        session.refresh(url_entry)
+        await session.flush()
         return url_entry.id
 
 
     @session_manager
-    def get_urls_by_batch(self, session, batch_id: int) -> List[URLInfo]:
+    async def get_urls_by_batch(self, session, batch_id: int) -> List[URLInfo]:
         """Retrieve all URLs associated with a batch."""
-        urls = session.query(URL).filter_by(batch_id=batch_id).all()
+        query = await session.execute(select(URL).filter_by(batch_id=batch_id))
+        urls = query.scalars().all()
         return ([URLInfo(**url.__dict__) for url in urls])
 
     @session_manager
-    def is_duplicate_url(self, session, url: str) -> bool:
-        result = session.query(URL).filter_by(url=url).first()
+    async def is_duplicate_url(self, session, url: str) -> bool:
+        result = await session.execute(select(URL).filter_by(url=url)).scalar_one_or_none()
         return result is not None
 
     @session_manager
-    def insert_logs(self, session, log_infos: List[LogInfo]):
+    async def insert_logs(self, session, log_infos: List[LogInfo]):
         for log_info in log_infos:
             log = Log(log=log_info.log, batch_id=log_info.batch_id)
             session.add(log)
 
     @session_manager
-    def get_logs_by_batch_id(self, session, batch_id: int) -> List[LogInfo]:
-        logs = session.query(Log).filter_by(batch_id=batch_id).all()
-        return ([LogInfo(**log.__dict__) for log in logs])
+    async def get_logs_by_batch_id(self, session, batch_id: int) -> List[LogInfo]:
+        query = await session.execute(select(Log).filter_by(batch_id=batch_id))
+        logs = query.scalars().all()
+        return [LogInfo(**log.__dict__) for log in logs]
 
     @session_manager
-    def get_all_logs(self, session) -> List[LogInfo]:
-        logs = session.query(Log).all()
-        return ([LogInfo(**log.__dict__) for log in logs])
+    async def get_all_logs(self, session) -> List[LogInfo]:
+        query = await session.execute(select(Log))
+        logs = query.scalars().all()
+        return [LogInfo(**log.__dict__) for log in logs]
+
 
     @session_manager
-    def add_duplicate_info(self, session, duplicate_infos: list[DuplicateInfo]):
+    async def add_duplicate_info(self, session, duplicate_infos: list[DuplicateInfo]):
         # TODO: Add test for this method when testing CollectorDatabaseProcessor
         for duplicate_info in duplicate_infos:
             duplicate = Duplicate(
-                batch_id=duplicate_info.batch_id,
+                batch_id=duplicate_info.duplicate_batch_id,
                 original_url_id=duplicate_info.original_url_id,
             )
             session.add(duplicate)
 
     @session_manager
-    def get_batch_status(self, session, batch_id: int) -> BatchStatus:
-        batch = session.query(Batch).filter_by(id=batch_id).first()
+    async def get_batch_status(self, session, batch_id: int) -> BatchStatus:
+        query = await session.execute(select(Batch).filter_by(id=batch_id))
+        batch = query.scalar_one_or_none()
         return BatchStatus(batch.status)
 
     @session_manager
-    def get_recent_batch_status_info(
+    async def get_recent_batch_status_info(
         self,
         session,
         limit: int,
@@ -207,22 +217,31 @@ class DatabaseClient:
         status: Optional[BatchStatus] = None,
     ) -> List[BatchStatusInfo]:
         # Get only the batch_id, collector_type, status, and created_at
-        query = session.query(Batch).order_by(Batch.date_generated.desc()).limit(limit)
-        query = query.with_entities(Batch.id, Batch.strategy, Batch.status, Batch.date_generated)
+        query = ((select(Batch.id, Batch.collector_type, Batch.status, Batch.created_at)
+                 .order_by(Batch.created_at.desc()))
+                 .limit(limit))
         if collector_type:
-            query = query.filter(Batch.strategy == collector_type.value)
+            query = query.filter(Batch.collector_type == collector_type.value)
         if status:
             query = query.filter(Batch.status == status.value)
-        batches = query.all()
-        return [BatchStatusInfo(**self.row_to_dict(batch)) for batch in batches]
+        results = await session.execute(query)
+        return [
+            BatchStatusInfo(
+                id=result.id,
+                strategy=result.collector_type,
+                status=result.status,
+                date_generated=result.created_at,
+            )
+            for result in results
+        ]
 
     @session_manager
-    def get_duplicates_by_batch_id(self, session, batch_id: int) -> List[DuplicateInfo]:
+    async def get_duplicates_by_batch_id(self, session, batch_id: int) -> List[DuplicateInfo]:
         original_batch = aliased(Batch)
         duplicate_batch = aliased(Batch)
 
         query = (
-            session.query(
+            select(
                 URL.url.label("source_url"),
                 URL.id.label("original_url_id"),
                 duplicate_batch.id.label("duplicate_batch_id"),
@@ -236,24 +255,27 @@ class DatabaseClient:
             .join(original_batch, URL.batch_id == original_batch.id)
             .filter(duplicate_batch.id == batch_id)
         )
-        results = query.all()
-        final_results = []
-        for result in results:
-            final_results.append(
-                DuplicateInfo(
-                    source_url=result.source_url,
-                    duplicate_batch_id=result.duplicate_batch_id,
-                    duplicate_metadata=result.duplicate_batch_parameters,
-                    original_batch_id=result.original_batch_id,
-                    original_metadata=result.original_batch_parameters,
-                    original_url_id=result.original_url_id
-                )
+
+        results = await session.execute(query)
+        rows = results.fetchall()
+
+        final_results = [
+            DuplicateInfo(
+                source_url=row.source_url,
+                duplicate_batch_id=row.duplicate_batch_id,
+                duplicate_metadata=row.duplicate_batch_parameters,
+                original_batch_id=row.original_batch_id,
+                original_metadata=row.original_batch_parameters,
+                original_url_id=row.original_url_id,
             )
+            for row in rows
+        ]
+
         return final_results
 
     @session_manager
-    def delete_all_logs(self, session):
-        session.query(Log).delete()
+    async def delete_all_logs(self, session):
+        await session.execute(delete(Log))
 
 if __name__ == "__main__":
     client = DatabaseClient()

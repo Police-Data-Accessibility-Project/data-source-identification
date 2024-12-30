@@ -1,7 +1,9 @@
+import asyncio
 import os
 import threading
 
 import pytest
+from sqlalchemy import create_engine
 
 from collector_db.helper_functions import get_postgres_connection_string
 from collector_db.models import Base
@@ -14,9 +16,13 @@ from core.SourceCollectorCore import SourceCollectorCore
 @pytest.fixture
 def db_client_test() -> DatabaseClient:
     db_client = DatabaseClient(db_url=get_postgres_connection_string())
+    asyncio.run(db_client.init_db())
     yield db_client
     db_client.engine.dispose()
-    Base.metadata.drop_all(db_client.engine)
+    sync_engine = create_engine(
+        url=get_postgres_connection_string(with_async=False),
+    )
+    Base.metadata.drop_all(sync_engine)
 
 @pytest.fixture
 def test_core(db_client_test):

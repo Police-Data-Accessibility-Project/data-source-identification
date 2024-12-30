@@ -1,10 +1,55 @@
+import pytest
+
 from collector_db.DTOs.BatchInfo import BatchInfo
 from collector_db.DTOs.DuplicateInfo import DuplicateInfo
 from collector_db.DTOs.LogInfo import LogInfo
 from collector_db.DTOs.URLMapping import URLMapping
 from collector_db.DTOs.URLInfo import URLInfo
+from collector_db.DatabaseClient import DatabaseClient
+from collector_db.models import Batch
 from core.enums import BatchStatus
 from tests.helpers.DBDataCreator import DBDataCreator
+
+
+@pytest.mark.asyncio
+async def test_insert_batch(db_client_test):
+    client = db_client_test
+
+    # Create a BatchInfo object with sample data
+    batch_info = BatchInfo(
+        strategy="Test Strategy",
+        status=BatchStatus.IN_PROCESS,
+        parameters={"key": "value"},
+        total_url_count=100,
+        original_url_count=80,
+        duplicate_url_count=20,
+        compute_time=10.5,
+        strategy_success_rate=0.8,
+        metadata_success_rate=0.9,
+        agency_match_rate=0.7,
+        record_type_match_rate=0.85,
+        record_category_match_rate=0.75,
+    )
+
+    # Act: Insert the batch into the database
+    batch_id = await client.insert_batch(batch_info=batch_info)
+
+    # Assert: Check if the batch was inserted correctly
+    async with client.session_maker() as session:
+        batch = await session.get(Batch, batch_id)
+        assert batch is not None
+        assert batch.strategy == "Test Strategy"
+        assert batch.status == BatchStatus.IN_PROCESS.value
+        assert batch.parameters == {"key": "value"}
+        assert batch.total_url_count == 100
+        assert batch.original_url_count == 80
+        assert batch.duplicate_url_count == 20
+        assert batch.compute_time == 10.5
+        assert batch.strategy_success_rate == 0.8
+        assert batch.metadata_success_rate == 0.9
+        assert batch.agency_match_rate == 0.7
+        assert batch.record_type_match_rate == 0.85
+        assert batch.record_category_match_rate == 0.75
 
 
 def test_insert_urls(db_client_test):

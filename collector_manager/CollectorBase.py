@@ -2,6 +2,7 @@
 Base class for all collectors
 """
 import abc
+import asyncio
 import threading
 import time
 from abc import ABC
@@ -38,22 +39,22 @@ class CollectorBase(ABC):
         self.compute_time = None
         self.raise_error = raise_error
         # # TODO: Determine how to update this in some of the other collectors
-        self._stop_event = threading.Event()
+        self._stop_event = asyncio.Event()
 
     @abc.abstractmethod
-    def run_implementation(self) -> None:
+    async def run_implementation(self) -> None:
         raise NotImplementedError
 
-    def start_timer(self) -> None:
-        self.start_time = time.time()
+    async def start_timer(self) -> None:
+        self.start_time = asyncio.get_event_loop().time()
 
-    def stop_timer(self) -> None:
-        self.compute_time = time.time() - self.start_time
+    async def stop_timer(self) -> None:
+        self.compute_time = asyncio.get_event_loop().time() - self.start_time
 
-    def handle_error(self, e: Exception) -> None:
+    async def handle_error(self, e: Exception) -> None:
         if self.raise_error:
             raise e
-        self.log(f"Error: {e}")
+        await self.log(f"Error: {e}")
 
     @staticmethod
     def get_preprocessor(
@@ -65,20 +66,20 @@ class CollectorBase(ABC):
         except KeyError:
             raise InvalidPreprocessorError(f"Preprocessor for {collector_type} not found.")
 
-    def process(self, close_info: CollectorCloseInfo) -> None:
+    async def process(self, close_info: CollectorCloseInfo) -> None:
         db_client = DatabaseClient()
-        self.log("Processing collector...")
+        await self.log("Processing collector...")
         batch_status = close_info.status
         preprocessor = self.get_preprocessor(close_info.collector_type)
         url_infos = preprocessor.preprocess(close_info.data)
-        self.log(f"URLs processed: {len(url_infos)}")
+        await self.log(f"URLs processed: {len(url_infos)}")
 
-        self.log("Inserting URLs...")
+        await self.log("Inserting URLs...")
         insert_urls_info = db_client.insert_urls(
             url_infos=url_infos,
             batch_id=close_info.batch_id
         )
-        self.log("Updating batch...")
+        await self.log("Updating batch...")
         db_client.update_batch_post_collection(
             batch_id=close_info.batch_id,
             total_url_count=insert_urls_info.total_count,
@@ -88,33 +89,32 @@ class CollectorBase(ABC):
             compute_time=close_info.compute_time
         )
         db_client.add_duplicate_info(insert_urls_info.duplicates)
-        self.log("Done processing collector.")
+        await self.log("Done processing collector.")
 
 
-    def run(self) -> None:
+    async def run(self) -> None:
         try:
-            self.start_timer()
-            self.run_implementation()
-            self.stop_timer()
+            await self.start_timer()
+            await self.run_implementation()
+            await self.stop_timer()
             self.status = BatchStatus.COMPLETE
-            self.log("Collector completed successfully.")
-            self.process(
+            await self.log("Collector completed successfully.")
+            await self.process(
                 close_info=self.close()
             )
         except Exception as e:
-            self.stop_timer()
+            await self.stop_timer()
             self.status = BatchStatus.ERROR
-            self.handle_error(e)
+            await self.handle_error(e)
 
-    def log(self, message: str) -> None:
-        self.logger.log(LogInfo(
+    async def log(self, message: str) -> None:
+        await self.logger.log(LogInfo(
             batch_id=self.batch_id,
             log=message
         ))
 
     def abort(self) -> CollectorCloseInfo:
         self._stop_event.set()
-        self.stop_timer()
         return CollectorCloseInfo(
             batch_id=self.batch_id,
             status=BatchStatus.ABORTED,
@@ -124,13 +124,12 @@ class CollectorBase(ABC):
         )
 
     def close(self):
-        compute_time = self.compute_time
         self._stop_event.set()
         return CollectorCloseInfo(
             batch_id=self.batch_id,
             status=BatchStatus.COMPLETE,
             data=self.data,
             message="Collector closed and data harvested successfully.",
-            compute_time=compute_time,
+            compute_time=self.compute_time,
             collector_type=self.collector_type
         )

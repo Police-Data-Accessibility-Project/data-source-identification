@@ -30,3 +30,7 @@ fastapi[standard]~=0.115.6
 httpx~=0.28.1
 ckanapi~=4.8
 psycopg[binary]~=3.1.20
+pydantic~=2.10.3
+
+pytest-asyncio~=0.25.0
+asyncpg~=0.30.0

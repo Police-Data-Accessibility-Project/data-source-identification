@@ -55,7 +55,9 @@ class SourceCollectorCore:
     def initiate_collector(
             self,
             collector_type: CollectorType,
-            dto: Optional[BaseModel] = None,):
+            dto: Optional[BaseModel] = None,
+            raise_error: bool = False
+    ):
         """
         Reserves a batch ID from the database
         and starts the requisite collector
@@ -69,7 +71,8 @@ class SourceCollectorCore:
         self.collector_manager.start_collector(
             collector_type=collector_type,
             batch_id=batch_id,
-            dto=dto
+            dto=dto,
+            raise_error=raise_error
         )
         return CollectorStartInfo(
             batch_id=batch_id,

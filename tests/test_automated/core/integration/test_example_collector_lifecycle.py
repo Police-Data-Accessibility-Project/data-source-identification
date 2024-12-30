@@ -25,7 +25,8 @@ def test_example_collector_lifecycle(test_core: SourceCollectorCore):
     )
     csi: CollectorStartInfo = core.initiate_collector(
         collector_type=CollectorType.EXAMPLE,
-        dto=dto
+        dto=dto,
+        raise_error=True
     )
     assert csi.message == "Started example_collector collector."
     assert csi.batch_id is not None

@@ -1,5 +1,4 @@
-
-
+import asyncio
 import threading
 import queue
 import time
@@ -10,15 +9,10 @@ from collector_db.DatabaseClient import DatabaseClient
 class CoreLogger:
     def __init__(self, flush_interval=10, db_client: DatabaseClient = DatabaseClient(), batch_size=100):
         self.db_client = db_client
-        self.log_queue = queue.Queue()
-        self.lock = threading.Lock()
+        self.log_queue = asyncio.Queue()
         self.flush_interval = flush_interval
         self.batch_size = batch_size
-        self.stop_event = threading.Event()
 
-        # Start the flush thread
-        self.flush_thread = threading.Thread(target=self._flush_logs)
-        self.flush_thread.start()
 
     def __enter__(self):
         """
@@ -32,19 +26,13 @@ class CoreLogger:
         """
         self.shutdown()
 
-    def log(self, log_info: LogInfo):
+    async def log(self, log_info: LogInfo):
         """
         Adds a log entry to the queue.
         """
-        self.log_queue.put(log_info)
+        await self.log_queue.put(log_info)
 
-    def _flush_logs(self):
-        """
-        Periodically flushes logs from the queue to the database.
-        """
-        while not self.stop_event.is_set():
-            time.sleep(self.flush_interval)
-            self.flush()
+
 
     def flush_all(self):
         """
@@ -53,30 +41,23 @@ class CoreLogger:
         while not self.log_queue.empty():
             self.flush()
 
-    def flush(self):
+    async def flush(self):
         """
         Flushes all logs from the queue to the database in batches.
         """
-        with self.lock:
-            logs: list[LogInfo] = []
-            while not self.log_queue.empty() and len(logs) < self.batch_size:
-                try:
-                    log = self.log_queue.get_nowait()
-                    logs.append(log)
-                except queue.Empty:
-                    break
+        logs: list[LogInfo] = []
+        while not self.log_queue.empty() and len(logs) < self.batch_size:
+            log = await self.log_queue.get()
+            logs.append(log)
+        if logs:
+            try:
+                await self.db_client.insert_logs(log_infos=logs)
+            except Exception as e:
+                # Handle logging database errors (e.g., save to fallback storage)
+                print(f"Error while flushing logs: {e}")
 
-            if logs:
-                try:
-                    self.db_client.insert_logs(log_infos=logs)
-                except Exception as e:
-                    # Handle logging database errors (e.g., save to fallback storage)
-                    print(f"Error while flushing logs: {e}")
-
-    def shutdown(self):
+    async def shutdown(self):
         """
         Stops the logger gracefully and flushes any remaining logs.
         """
-        self.stop_event.set()
-        self.flush_thread.join(timeout=1)
-        self.flush()  # Flush remaining logs
+        self.flush_all()  # Flush remaining logs
