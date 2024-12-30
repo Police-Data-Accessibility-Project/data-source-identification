@@ -17,7 +17,7 @@ class CoreLogger:
         self.stop_event = threading.Event()
 
         # Start the flush thread
-        self.flush_thread = threading.Thread(target=self._flush_logs, daemon=True)
+        self.flush_thread = threading.Thread(target=self._flush_logs)
         self.flush_thread.start()
 
     def __enter__(self):
@@ -78,5 +78,5 @@ class CoreLogger:
         Stops the logger gracefully and flushes any remaining logs.
         """
         self.stop_event.set()
-        self.flush_thread.join()
+        self.flush_thread.join(timeout=1)
         self.flush()  # Flush remaining logs

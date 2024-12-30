@@ -9,6 +9,8 @@ from collector_manager.enums import CollectorType
 from core.CoreLogger import CoreLogger
 from core.DTOs.CollectorStartInfo import CollectorStartInfo
 from core.DTOs.GetBatchStatusResponse import GetBatchStatusResponse
+from core.DTOs.GetDuplicatesByBatchResponse import GetDuplicatesByBatchResponse
+from core.DTOs.GetURLsByBatchResponse import GetURLsByBatchResponse
 from core.enums import BatchStatus
 
 
@@ -25,6 +27,14 @@ class SourceCollectorCore:
 
     def get_batch_info(self, batch_id: int) -> BatchInfo:
         return self.db_client.get_batch_by_id(batch_id)
+
+    def get_urls_by_batch(self, batch_id: int) -> GetURLsByBatchResponse:
+        url_infos = self.db_client.get_urls_by_batch(batch_id)
+        return GetURLsByBatchResponse(urls=url_infos)
+
+    def get_duplicate_urls_by_batch(self, batch_id: int) -> GetDuplicatesByBatchResponse:
+        dup_infos = self.db_client.get_duplicates_by_batch_id(batch_id)
+        return GetDuplicatesByBatchResponse(duplicates=dup_infos)
 
     def get_batch_statuses(
             self,

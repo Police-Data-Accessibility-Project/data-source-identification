@@ -10,7 +10,9 @@ class BatchInfo(BaseModel):
     strategy: str
     status: BatchStatus
     parameters: dict
-    count: int = 0
+    total_url_count: int = 0
+    original_url_count: int = 0
+    duplicate_url_count: int = 0
     strategy_success_rate: Optional[float] = None
     metadata_success_rate: Optional[float] = None
     agency_match_rate: Optional[float] = None

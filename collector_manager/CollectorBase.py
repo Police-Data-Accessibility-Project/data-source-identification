@@ -72,18 +72,21 @@ class CollectorBase(ABC):
         preprocessor = self.get_preprocessor(close_info.collector_type)
         url_infos = preprocessor.preprocess(close_info.data)
         self.log(f"URLs processed: {len(url_infos)}")
-        db_client.update_batch_post_collection(
-            batch_id=close_info.batch_id,
-            url_count=len(url_infos),
-            batch_status=batch_status,
-            compute_time=close_info.compute_time
-        )
+
         self.log("Inserting URLs...")
         insert_urls_info = db_client.insert_urls(
             url_infos=url_infos,
             batch_id=close_info.batch_id
         )
-        self.log("Inserting duplicates...")
+        self.log("Updating batch...")
+        db_client.update_batch_post_collection(
+            batch_id=close_info.batch_id,
+            total_url_count=insert_urls_info.total_count,
+            duplicate_url_count=insert_urls_info.duplicate_count,
+            original_url_count=insert_urls_info.original_count,
+            batch_status=batch_status,
+            compute_time=close_info.compute_time
+        )
         db_client.add_duplicate_info(insert_urls_info.duplicates)
         self.log("Done processing collector.")
 

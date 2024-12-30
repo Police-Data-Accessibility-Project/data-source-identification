@@ -1,6 +1,7 @@
 import time
 
 from collector_db.DTOs.BatchInfo import BatchInfo
+from collector_manager.DTOs.ExampleInputDTO import ExampleInputDTO
 from collector_manager.enums import CollectorType
 from core.DTOs.BatchStatusInfo import BatchStatusInfo
 from core.DTOs.GetBatchStatusResponse import GetBatchStatusResponse
@@ -10,14 +11,12 @@ from core.enums import BatchStatus
 def test_example_collector(api_test_helper):
     ath = api_test_helper
 
-    config = {
-            "example_field": "example_value",
-            "sleep_time": 1
-        }
+    dto = ExampleInputDTO(
+            sleep_time=1
+        )
 
-    data = ath.request_validator.post(
-        url="/collector/example",
-        json=config
+    data = ath.request_validator.example_collector(
+        dto=dto
     )
     batch_id = data["batch_id"]
     assert batch_id is not None
@@ -45,8 +44,8 @@ def test_example_collector(api_test_helper):
 
     bi: BatchInfo = ath.request_validator.get_batch_info(batch_id=batch_id)
     assert bi.status == BatchStatus.COMPLETE
-    assert bi.count == 2
-    assert bi.parameters == config
+    assert bi.total_url_count == 2
+    assert bi.parameters == dto.model_dump()
     assert bi.strategy == "example_collector"
 
 

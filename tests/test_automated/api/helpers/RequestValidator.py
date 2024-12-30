@@ -5,7 +5,10 @@ from pydantic import BaseModel
 from starlette.testclient import TestClient
 
 from collector_db.DTOs.BatchInfo import BatchInfo
+from collector_manager.DTOs.ExampleInputDTO import ExampleInputDTO
 from core.DTOs.GetBatchStatusResponse import GetBatchStatusResponse
+from core.DTOs.GetDuplicatesByBatchResponse import GetDuplicatesByBatchResponse
+from core.DTOs.GetURLsByBatchResponse import GetURLsByBatchResponse
 
 
 class ExpectedResponseInfo(BaseModel):
@@ -101,8 +104,27 @@ class RequestValidator:
         )
         return GetBatchStatusResponse(**data)
 
+    def example_collector(self, dto: ExampleInputDTO) -> dict:
+        data = self.post(
+            url="/collector/example",
+            json=dto.model_dump()
+        )
+        return data
+
     def get_batch_info(self, batch_id: int) -> BatchInfo:
         data = self.get(
             url=f"/batch/{batch_id}"
         )
         return BatchInfo(**data)
+
+    def get_batch_urls(self, batch_id: int) -> GetURLsByBatchResponse:
+        data = self.get(
+            url=f"/batch/{batch_id}/urls"
+        )
+        return GetURLsByBatchResponse(**data)
+
+    def get_batch_url_duplicates(self, batch_id: int) -> GetDuplicatesByBatchResponse:
+        data = self.get(
+            url=f"/batch/{batch_id}/duplicates"
+        )
+        return GetDuplicatesByBatchResponse(**data)

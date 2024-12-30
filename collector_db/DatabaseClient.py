@@ -2,12 +2,12 @@ from functools import wraps
 
 from sqlalchemy import create_engine, Row
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import sessionmaker, scoped_session
+from sqlalchemy.orm import sessionmaker, scoped_session, aliased
 from typing import Optional, List
 
 from collector_db.ConfigManager import ConfigManager
 from collector_db.DTOs.BatchInfo import BatchInfo
-from collector_db.DTOs.DuplicateInfo import DuplicateInfo
+from collector_db.DTOs.DuplicateInfo import DuplicateInfo, DuplicateInsertInfo
 from collector_db.DTOs.InsertURLsInfo import InsertURLsInfo
 from collector_db.DTOs.LogInfo import LogInfo
 from collector_db.DTOs.URLMapping import URLMapping
@@ -62,7 +62,9 @@ class DatabaseClient:
             strategy=batch_info.strategy,
             status=batch_info.status.value,
             parameters=batch_info.parameters,
-            count=batch_info.count,
+            total_url_count=batch_info.total_url_count,
+            original_url_count=batch_info.original_url_count,
+            duplicate_url_count=batch_info.duplicate_url_count,
             compute_time=batch_info.compute_time,
             strategy_success_rate=batch_info.strategy_success_rate,
             metadata_success_rate=batch_info.metadata_success_rate,
@@ -80,12 +82,16 @@ class DatabaseClient:
         self,
         session,
         batch_id: int,
-        url_count: int,
+        total_url_count: int,
+        original_url_count: int,
+        duplicate_url_count: int,
         batch_status: BatchStatus,
         compute_time: float = None,
     ):
         batch = session.query(Batch).filter_by(id=batch_id).first()
-        batch.count = url_count
+        batch.total_url_count = total_url_count
+        batch.original_url_count = original_url_count
+        batch.duplicate_url_count = duplicate_url_count
         batch.status = batch_status.value
         batch.compute_time = compute_time
 
@@ -105,14 +111,29 @@ class DatabaseClient:
                 url_mappings.append(URLMapping(url_id=url_id, url=url_info.url))
             except IntegrityError:
                 orig_url_info = self.get_url_info_by_url(url_info.url)
-                duplicates.append(DuplicateInfo(
-                    source_url=url_info.url,
-                    original_url_id=orig_url_info.id,
-                    duplicate_metadata=url_info.url_metadata,
-                    original_metadata=orig_url_info.url_metadata
-                ))
+                duplicate_info = DuplicateInsertInfo(
+                    duplicate_batch_id=batch_id,
+                    original_url_id=orig_url_info.id
+                )
+                duplicates.append(duplicate_info)
+        self.insert_duplicates(duplicates)
 
-        return InsertURLsInfo(url_mappings=url_mappings, duplicates=duplicates)
+        return InsertURLsInfo(
+            url_mappings=url_mappings,
+            total_count=len(url_infos),
+            original_count=len(url_mappings),
+            duplicate_count=len(duplicates),
+        )
+
+    @session_manager
+    def insert_duplicates(self, session, duplicate_infos: list[DuplicateInsertInfo]):
+        for duplicate_info in duplicate_infos:
+            duplicate = Duplicate(
+                batch_id=duplicate_info.duplicate_batch_id,
+                original_url_id=duplicate_info.original_url_id,
+            )
+            session.add(duplicate)
+
 
 
     @session_manager
@@ -194,6 +215,41 @@ class DatabaseClient:
             query = query.filter(Batch.status == status.value)
         batches = query.all()
         return [BatchStatusInfo(**self.row_to_dict(batch)) for batch in batches]
+
+    @session_manager
+    def get_duplicates_by_batch_id(self, session, batch_id: int) -> List[DuplicateInfo]:
+        original_batch = aliased(Batch)
+        duplicate_batch = aliased(Batch)
+
+        query = (
+            session.query(
+                URL.url.label("source_url"),
+                URL.id.label("original_url_id"),
+                duplicate_batch.id.label("duplicate_batch_id"),
+                duplicate_batch.parameters.label("duplicate_batch_parameters"),
+                original_batch.id.label("original_batch_id"),
+                original_batch.parameters.label("original_batch_parameters"),
+            )
+            .select_from(Duplicate)
+            .join(URL, Duplicate.original_url_id == URL.id)
+            .join(duplicate_batch, Duplicate.batch_id == duplicate_batch.id)
+            .join(original_batch, URL.batch_id == original_batch.id)
+            .filter(duplicate_batch.id == batch_id)
+        )
+        results = query.all()
+        final_results = []
+        for result in results:
+            final_results.append(
+                DuplicateInfo(
+                    source_url=result.source_url,
+                    duplicate_batch_id=result.duplicate_batch_id,
+                    duplicate_metadata=result.duplicate_batch_parameters,
+                    original_batch_id=result.original_batch_id,
+                    original_metadata=result.original_batch_parameters,
+                    original_url_id=result.original_url_id
+                )
+            )
+        return final_results
 
     @session_manager
     def delete_all_logs(self, session):

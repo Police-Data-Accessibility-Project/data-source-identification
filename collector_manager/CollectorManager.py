@@ -4,7 +4,7 @@ Can start, stop, and get info on running collectors
 And manages the retrieval of collector info
 """
 import threading
-from typing import Dict, List, Optional
+from typing import Dict, List
 
 from pydantic import BaseModel
 
@@ -48,7 +48,7 @@ class CollectorManager:
             except KeyError:
                 raise InvalidCollectorError(f"Collector {collector_type.value} not found.")
             self.collectors[batch_id] = collector
-            thread = threading.Thread(target=collector.run, daemon=True)
+            thread = threading.Thread(target=collector.run)
             self.threads[batch_id] = thread
             thread.start()
 
@@ -85,6 +85,6 @@ class CollectorManager:
             for cid, collector in self.collectors.items():
                 collector.abort()
             for thread in self.threads.values():
-                thread.join()
+                thread.join(timeout=1)
             self.collectors.clear()
             self.threads.clear()

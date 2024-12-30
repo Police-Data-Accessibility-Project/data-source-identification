@@ -24,7 +24,9 @@ class Batch(Base):
     status = Column(String, CheckConstraint(f"status IN ({status_check_string})"), nullable=False)
     # The number of URLs in the batch
     # TODO: Add means to update after execution
-    count = Column(Integer, nullable=False)
+    total_url_count = Column(Integer, nullable=False)
+    original_url_count = Column(Integer, nullable=False)
+    duplicate_url_count = Column(Integer, nullable=False)
     date_generated = Column(TIMESTAMP, nullable=False, server_default=CURRENT_TIME_SERVER_DEFAULT)
     # How often URLs ended up approved in the database
     strategy_success_rate = Column(Float)
@@ -65,27 +67,7 @@ class URL(Base):
     duplicates = relationship("Duplicate", back_populates="original_url")
 
 
-class Missing(Base):
-    __tablename__ = 'missing'
 
-    id = Column(Integer, primary_key=True)
-    place_id = Column(Integer, nullable=False)
-    record_type = Column(String, nullable=False)
-    batch_id = Column(Integer, ForeignKey('batches.id'))
-    strategy_used = Column(Text, nullable=False)
-    date_searched = Column(TIMESTAMP, nullable=False, server_default=CURRENT_TIME_SERVER_DEFAULT)
-
-    batch = relationship("Batch", back_populates="missings")
-
-class Log(Base):
-    __tablename__ = 'logs'
-
-    id = Column(Integer, primary_key=True)
-    batch_id = Column(Integer, ForeignKey('batches.id'), nullable=False)
-    log = Column(Text, nullable=False)
-    created_at = Column(TIMESTAMP, nullable=False, server_default=CURRENT_TIME_SERVER_DEFAULT)
-
-    batch = relationship("Batch", back_populates="logs")
 
 class Duplicate(Base):
     """
@@ -109,3 +91,27 @@ class Duplicate(Base):
 
     batch = relationship("Batch", back_populates="duplicates")
     original_url = relationship("URL", back_populates="duplicates")
+
+
+
+class Log(Base):
+    __tablename__ = 'logs'
+
+    id = Column(Integer, primary_key=True)
+    batch_id = Column(Integer, ForeignKey('batches.id'), nullable=False)
+    log = Column(Text, nullable=False)
+    created_at = Column(TIMESTAMP, nullable=False, server_default=CURRENT_TIME_SERVER_DEFAULT)
+
+    batch = relationship("Batch", back_populates="logs")
+
+class Missing(Base):
+    __tablename__ = 'missing'
+
+    id = Column(Integer, primary_key=True)
+    place_id = Column(Integer, nullable=False)
+    record_type = Column(String, nullable=False)
+    batch_id = Column(Integer, ForeignKey('batches.id'))
+    strategy_used = Column(Text, nullable=False)
+    date_searched = Column(TIMESTAMP, nullable=False, server_default=CURRENT_TIME_SERVER_DEFAULT)
+
+    batch = relationship("Batch", back_populates="missings")

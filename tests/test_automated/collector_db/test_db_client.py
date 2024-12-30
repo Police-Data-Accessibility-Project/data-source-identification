@@ -45,14 +45,9 @@ def test_insert_urls(db_client_test):
             url_id=2
         )
     ]
-    assert insert_urls_info.duplicates == [
-        DuplicateInfo(
-            source_url="https://example.com/1",
-            original_url_id=1,
-            duplicate_metadata={"name": "example_duplicate"},
-            original_metadata={"name": "example_1"}
-        )
-    ]
+    assert insert_urls_info.original_count == 2
+    assert insert_urls_info.duplicate_count == 1
+
 
 def test_insert_logs(db_data_creator: DBDataCreator):
     batch_id_1 = db_data_creator.batch()

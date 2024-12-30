@@ -16,10 +16,10 @@ class APITestHelper:
 @pytest.fixture
 def client(db_client_test) -> Generator[TestClient, None, None]:
     with TestClient(app) as c:
-        yield c
         core: SourceCollectorCore = c.app.state.core
-        core.collector_manager.shutdown_all_collectors()
-        core.collector_manager.logger.shutdown()
+        core.shutdown()
+        yield c
+        core.shutdown()
 
 @pytest.fixture
 def api_test_helper(client: TestClient) -> APITestHelper:

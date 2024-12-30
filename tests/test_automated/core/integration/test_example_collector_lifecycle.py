@@ -3,6 +3,7 @@ import time
 import pytest
 
 import api.dependencies
+from collector_db.DTOs.BatchInfo import BatchInfo
 from collector_manager.DTOs.ExampleInputDTO import ExampleInputDTO
 from collector_manager.enums import CollectorType, URLOutcome
 from core.DTOs.CollectorStartInfo import CollectorStartInfo
@@ -37,10 +38,10 @@ def test_example_collector_lifecycle(test_core: SourceCollectorCore):
     print("Done sleeping...")
     assert core.get_status(batch_id) == BatchStatus.COMPLETE
 
-    batch_info = db_client.get_batch_by_id(batch_id)
+    batch_info: BatchInfo = db_client.get_batch_by_id(batch_id)
     assert batch_info.strategy == "example_collector"
     assert batch_info.status == BatchStatus.COMPLETE
-    assert batch_info.count == 2
+    assert batch_info.total_url_count == 2
     assert batch_info.parameters == dto.model_dump()
     assert batch_info.compute_time > 1
 
