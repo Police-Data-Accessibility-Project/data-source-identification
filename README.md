@@ -15,6 +15,8 @@ source_collectors| Tools for extracting metadata from different sources, includi
 collector_db | Database for storing data from source collectors
 collector_manager | A module which provides a unified interface for interacting with source collectors and relevant data
 core | A module which integrates other components, such as collector_manager and collector_db
+api | API for interacting with collector_manager, core, and collector_db
+local_database | Resources for setting up a test database for local development
 
 ## How to use
 

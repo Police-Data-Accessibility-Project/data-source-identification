@@ -6,7 +6,6 @@ from starlette.testclient import TestClient
 
 from collector_db.DTOs.BatchInfo import BatchInfo
 from core.DTOs.GetBatchStatusResponse import GetBatchStatusResponse
-from core.DTOs.GetStatusResponse import GetStatusResponse
 
 
 class ExpectedResponseInfo(BaseModel):
@@ -95,13 +94,6 @@ class RequestValidator:
             params=params,
             expected_response=expected_response,
             **kwargs)
-
-    def get_batch_status(self, batch_id: int) -> GetStatusResponse:
-        data = self.get(
-            url=f"/collector/status",
-            params={"batch_id": batch_id}
-        )
-        return GetStatusResponse(**data)
 
     def get_batch_statuses(self) -> GetBatchStatusResponse:
         data = self.get(
