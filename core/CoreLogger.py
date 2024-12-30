@@ -10,12 +10,12 @@ from collector_db.DatabaseClient import DatabaseClient
 class CoreLogger:
     def __init__(self, flush_interval=10, db_client: DatabaseClient = DatabaseClient(), batch_size=100):
         self.db_client = db_client
-        self.log_queue = queue.Queue()
-        self.lock = threading.Lock()
         self.flush_interval = flush_interval
         self.batch_size = batch_size
-        self.stop_event = threading.Event()
 
+        self.log_queue = queue.Queue()
+        self.lock = threading.Lock()
+        self.stop_event = threading.Event()
         # Start the flush thread
         self.flush_thread = threading.Thread(target=self._flush_logs)
         self.flush_thread.start()
@@ -46,13 +46,6 @@ class CoreLogger:
             time.sleep(self.flush_interval)
             self.flush()
 
-    def flush_all(self):
-        """
-        Flushes all logs from the queue to the database.
-        """
-        while not self.log_queue.empty():
-            self.flush()
-
     def flush(self):
         """
         Flushes all logs from the queue to the database in batches.
@@ -72,6 +65,13 @@ class CoreLogger:
                 except Exception as e:
                     # Handle logging database errors (e.g., save to fallback storage)
                     print(f"Error while flushing logs: {e}")
+
+    def flush_all(self):
+        """
+        Flushes all logs from the queue to the database.
+        """
+        while not self.log_queue.empty():
+            self.flush()
 
     def shutdown(self):
         """

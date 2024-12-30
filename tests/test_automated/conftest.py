@@ -1,5 +1,3 @@
-import os
-import threading
 
 import pytest
 
@@ -23,7 +21,7 @@ def test_core(db_client_test):
     with CoreLogger() as logger:
         core = SourceCollectorCore(
             db_client=db_client_test,
-            core_logger=logger
+            core_logger=logger,
         )
         yield core
         core.shutdown()
@@ -32,10 +30,3 @@ def test_core(db_client_test):
 def db_data_creator(db_client_test):
     db_data_creator = DBDataCreator(db_client=db_client_test)
     yield db_data_creator
-
-lock = threading.Lock()
-
-@pytest.fixture
-def thread_lock():
-    with lock:
-        yield

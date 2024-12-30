@@ -13,9 +13,10 @@ from core.SourceCollectorCore import SourceCollectorCore
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Initialize shared dependencies
-    core_logger = CoreLogger()  # Replace with actual logger initialization
-    db_client = DatabaseClient()  # Replace with actual DatabaseClient configuration
-    source_collector_core = SourceCollectorCore(core_logger=core_logger, db_client=db_client)
+    source_collector_core = SourceCollectorCore(
+        core_logger=CoreLogger(),
+        db_client=DatabaseClient(),
+    )
 
     # Pass dependencies into the app state
     app.state.core = source_collector_core
@@ -39,10 +40,3 @@ app = FastAPI(
 app.include_router(root_router)
 app.include_router(collector_router)
 app.include_router(batch_router)
-
-# Dependency container
-source_collector_core = None
-
-
-def get_core(app: FastAPI) -> SourceCollectorCore:
-    return app.state.core

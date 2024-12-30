@@ -2,7 +2,6 @@ import time
 
 import pytest
 
-import api.dependencies
 from collector_db.DTOs.BatchInfo import BatchInfo
 from collector_manager.DTOs.ExampleInputDTO import ExampleInputDTO
 from collector_manager.enums import CollectorType, URLOutcome
@@ -18,7 +17,7 @@ def test_example_collector_lifecycle(test_core: SourceCollectorCore):
     and saves them to the database
     """
     core = test_core
-    db_client = api.dependencies.db_client
+    db_client = core.db_client
     dto = ExampleInputDTO(
         example_field="example_value",
         sleep_time=1
