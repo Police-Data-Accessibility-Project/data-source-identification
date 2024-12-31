@@ -2,8 +2,11 @@ import pytest
 from unittest.mock import patch, MagicMock
 from fastapi import HTTPException
 from jwt import InvalidTokenError
+from starlette.testclient import TestClient
+import jwt
 
-from security_manager.SecurityManager import SecurityManager, Permissions, AccessInfo, get_access_info
+from api.main import app
+from security_manager.SecurityManager import SecurityManager, Permissions, AccessInfo, get_access_info, ALGORITHM
 
 SECRET_KEY = "test_secret_key"
 VALID_TOKEN = "valid_token"
@@ -61,9 +64,20 @@ def test_check_access_failure(mock_get_secret_key, mock_jwt_decode):
 
 
 def test_get_access_info(mock_get_secret_key, mock_jwt_decode):
-    mock_credentials = MagicMock()
-    mock_credentials.credentials = VALID_TOKEN
 
-    access_info = get_access_info(credentials=mock_credentials)
+    access_info = get_access_info(token=VALID_TOKEN)
     assert access_info.user_id == 1
     assert Permissions.SOURCE_COLLECTOR in access_info.permissions
+
+def test_api_with_valid_token(mock_get_secret_key):
+
+    token = jwt.encode(FAKE_PAYLOAD, SECRET_KEY, algorithm=ALGORITHM)
+
+    # Create Test Client
+    with TestClient(app) as c:
+        response = c.get(
+            url="/",
+            params={"test": "test"},
+            headers={"Authorization": f"Bearer {token}"})
+
+        assert response.status_code == 200, response.text

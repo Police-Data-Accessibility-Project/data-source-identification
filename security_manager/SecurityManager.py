@@ -1,10 +1,12 @@
 import os
 from enum import Enum
+from typing import Annotated
 
 import dotenv
 import jwt
 from fastapi import HTTPException, Security
-from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from fastapi.params import Depends
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer, OAuth2PasswordBearer
 from jwt import InvalidTokenError
 from pydantic import BaseModel
 from starlette import status
@@ -30,10 +32,9 @@ class SecurityManager:
 
 
     def __init__(
-            self,
-            secret_key = get_secret_key()
+            self
     ):
-        self.secret_key = secret_key
+        self.secret_key = get_secret_key()
 
     def validate_token(self, token: str) -> AccessInfo:
         try:
@@ -68,10 +69,10 @@ class SecurityManager:
                 detail="Access forbidden",
             )
 
-security = HTTPBearer()
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 def get_access_info(
-        credentials: HTTPAuthorizationCredentials = Security(security)
+        token: Annotated[str, Depends(oauth2_scheme)]
 ) -> AccessInfo:
-    token = credentials.credentials
     return SecurityManager().validate_token(token)

@@ -10,7 +10,7 @@ from starlette.testclient import TestClient
 from api.main import app
 from core.SourceCollectorCore import SourceCollectorCore
 from helpers.DBDataCreator import DBDataCreator
-from security_manager.SecurityManager import get_access_info, AccessInfo, Permissions, security
+from security_manager.SecurityManager import get_access_info, AccessInfo, Permissions
 from tests.test_automated.api.helpers.RequestValidator import RequestValidator
 
 
@@ -22,8 +22,8 @@ class APITestHelper:
 
 
 
-def override_access_info(credentials: HTTPAuthorizationCredentials = Security(security)) -> AccessInfo:
-    AccessInfo(user_id=1, permissions=[Permissions.SOURCE_COLLECTOR])
+def override_access_info(token) -> AccessInfo:
+    return AccessInfo(user_id=1, permissions=[Permissions.SOURCE_COLLECTOR])
 
 @pytest.fixture
 def client(db_client_test) -> Generator[TestClient, None, None]:
