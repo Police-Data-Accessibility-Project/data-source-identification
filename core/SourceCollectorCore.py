@@ -8,6 +8,7 @@ from collector_manager.CollectorManager import CollectorManager
 from collector_manager.enums import CollectorType
 from core.CoreLogger import CoreLogger
 from core.DTOs.CollectorStartInfo import CollectorStartInfo
+from core.DTOs.GetBatchLogsResponse import GetBatchLogsResponse
 from core.DTOs.GetBatchStatusResponse import GetBatchStatusResponse
 from core.DTOs.GetDuplicatesByBatchResponse import GetDuplicatesByBatchResponse
 from core.DTOs.GetURLsByBatchResponse import GetURLsByBatchResponse
@@ -75,6 +76,10 @@ class SourceCollectorCore:
             batch_id=batch_id,
             message=f"Started {collector_type.value} collector."
         )
+
+    def get_batch_logs(self, batch_id: int) -> GetBatchLogsResponse:
+        logs = self.db_client.get_logs_by_batch_id(batch_id)
+        return GetBatchLogsResponse(logs=logs)
 
     def shutdown(self):
         self.collector_manager.shutdown_all_collectors()

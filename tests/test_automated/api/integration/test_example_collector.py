@@ -4,6 +4,7 @@ from collector_db.DTOs.BatchInfo import BatchInfo
 from collector_manager.DTOs.ExampleInputDTO import ExampleInputDTO
 from collector_manager.enums import CollectorType
 from core.DTOs.BatchStatusInfo import BatchStatusInfo
+from core.DTOs.GetBatchLogsResponse import GetBatchLogsResponse
 from core.DTOs.GetBatchStatusResponse import GetBatchStatusResponse
 from core.enums import BatchStatus
 
@@ -47,6 +48,14 @@ def test_example_collector(api_test_helper):
     assert bi.total_url_count == 2
     assert bi.parameters == dto.model_dump()
     assert bi.strategy == "example_collector"
+
+    # Flush early to ensure logs are written
+    ath.core.collector_manager.logger.flush_all()
+
+    lr: GetBatchLogsResponse = ath.request_validator.get_batch_logs(batch_id=batch_id)
+
+
+    assert len(lr.logs) > 0
 
 
 

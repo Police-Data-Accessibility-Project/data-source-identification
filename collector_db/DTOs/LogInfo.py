@@ -9,3 +9,8 @@ class LogInfo(BaseModel):
     log: str
     batch_id: int
     created_at: Optional[datetime] = None
+
+class LogOutputInfo(BaseModel):
+    id: Optional[int] = None
+    log: str
+    created_at: Optional[datetime] = None

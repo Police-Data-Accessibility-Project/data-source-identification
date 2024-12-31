@@ -6,6 +6,7 @@ from fastapi.params import Query, Depends
 from api.dependencies import get_core
 from collector_db.DTOs.BatchInfo import BatchInfo
 from collector_manager.enums import CollectorType
+from core.DTOs.GetBatchLogsResponse import GetBatchLogsResponse
 from core.DTOs.GetBatchStatusResponse import GetBatchStatusResponse
 from core.DTOs.GetDuplicatesByBatchResponse import GetDuplicatesByBatchResponse
 from core.DTOs.GetURLsByBatchResponse import GetURLsByBatchResponse
@@ -61,3 +62,14 @@ def get_duplicates_by_batch(
         core: SourceCollectorCore = Depends(get_core)
 ) -> GetDuplicatesByBatchResponse:
     return core.get_duplicate_urls_by_batch(batch_id)
+
+@batch_router.get("/{batch_id}/logs")
+def get_batch_logs(
+        batch_id: int = Path(description="The batch id"),
+        core: SourceCollectorCore = Depends(get_core)
+) -> GetBatchLogsResponse:
+    """
+    Retrieve the logs for a recent batch.
+    Note that for later batches, the logs may not be available.
+    """
+    return core.get_batch_logs(batch_id)

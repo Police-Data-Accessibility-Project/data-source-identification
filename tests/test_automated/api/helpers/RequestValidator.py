@@ -6,6 +6,7 @@ from starlette.testclient import TestClient
 
 from collector_db.DTOs.BatchInfo import BatchInfo
 from collector_manager.DTOs.ExampleInputDTO import ExampleInputDTO
+from core.DTOs.GetBatchLogsResponse import GetBatchLogsResponse
 from core.DTOs.GetBatchStatusResponse import GetBatchStatusResponse
 from core.DTOs.GetDuplicatesByBatchResponse import GetDuplicatesByBatchResponse
 from core.DTOs.GetURLsByBatchResponse import GetURLsByBatchResponse
@@ -128,3 +129,9 @@ class RequestValidator:
             url=f"/batch/{batch_id}/duplicates"
         )
         return GetDuplicatesByBatchResponse(**data)
+
+    def get_batch_logs(self, batch_id: int) -> GetBatchLogsResponse:
+        data = self.get(
+            url=f"/batch/{batch_id}/logs"
+        )
+        return GetBatchLogsResponse(**data)

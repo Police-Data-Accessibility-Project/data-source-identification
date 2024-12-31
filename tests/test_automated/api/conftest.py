@@ -12,6 +12,7 @@ from tests.test_automated.api.helpers.RequestValidator import RequestValidator
 @dataclass
 class APITestHelper:
     request_validator: RequestValidator
+    core: SourceCollectorCore
 
 @pytest.fixture
 def client(db_client_test) -> Generator[TestClient, None, None]:
@@ -23,4 +24,7 @@ def client(db_client_test) -> Generator[TestClient, None, None]:
 
 @pytest.fixture
 def api_test_helper(client: TestClient) -> APITestHelper:
-    return APITestHelper(request_validator=RequestValidator(client=client))
+    return APITestHelper(
+        request_validator=RequestValidator(client=client),
+        core=client.app.state.core
+    )

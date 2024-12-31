@@ -9,7 +9,7 @@ from collector_db.ConfigManager import ConfigManager
 from collector_db.DTOs.BatchInfo import BatchInfo
 from collector_db.DTOs.DuplicateInfo import DuplicateInfo, DuplicateInsertInfo
 from collector_db.DTOs.InsertURLsInfo import InsertURLsInfo
-from collector_db.DTOs.LogInfo import LogInfo
+from collector_db.DTOs.LogInfo import LogInfo, LogOutputInfo
 from collector_db.DTOs.URLMapping import URLMapping
 from collector_db.DTOs.URLInfo import URLInfo
 from collector_db.helper_functions import get_postgres_connection_string
@@ -174,9 +174,9 @@ class DatabaseClient:
             session.add(log)
 
     @session_manager
-    def get_logs_by_batch_id(self, session, batch_id: int) -> List[LogInfo]:
+    def get_logs_by_batch_id(self, session, batch_id: int) -> List[LogOutputInfo]:
         logs = session.query(Log).filter_by(batch_id=batch_id).all()
-        return ([LogInfo(**log.__dict__) for log in logs])
+        return ([LogOutputInfo(**log.__dict__) for log in logs])
 
     @session_manager
     def get_all_logs(self, session) -> List[LogInfo]:

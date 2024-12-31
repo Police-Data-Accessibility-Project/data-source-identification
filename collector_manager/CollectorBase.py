@@ -9,6 +9,7 @@ from typing import Optional
 
 from pydantic import BaseModel
 
+from collector_db.DTOs.InsertURLsInfo import InsertURLsInfo
 from collector_db.DTOs.LogInfo import LogInfo
 from collector_db.DatabaseClient import DatabaseClient
 from collector_manager.DTOs.CollectorCloseInfo import CollectorCloseInfo
@@ -74,7 +75,7 @@ class CollectorBase(ABC):
         self.log(f"URLs processed: {len(url_infos)}")
 
         self.log("Inserting URLs...")
-        insert_urls_info = db_client.insert_urls(
+        insert_urls_info: InsertURLsInfo = db_client.insert_urls(
             url_infos=url_infos,
             batch_id=close_info.batch_id
         )
@@ -87,7 +88,6 @@ class CollectorBase(ABC):
             batch_status=batch_status,
             compute_time=close_info.compute_time
         )
-        db_client.add_duplicate_info(insert_urls_info.duplicates)
         self.log("Done processing collector.")
 
 
