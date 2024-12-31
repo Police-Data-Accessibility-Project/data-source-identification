@@ -10,7 +10,11 @@ def test_read_main(api_test_helper):
 
 
 def test_root_endpoint_with_mocked_dependency(client):
-    response = client.get("/")
+    response = client.get(
+        url="/",
+        params={"test": "test"},
+        headers={"Authorization": "Bearer token"}
+    )
 
-    assert response.status_code == 200
-    assert response.json() == {"message": "Hello World"}
+    assert response.status_code == 200, response.text
+    assert response.json() == {"message": "Hello World"}, response.text

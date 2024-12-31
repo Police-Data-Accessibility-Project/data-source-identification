@@ -8,6 +8,7 @@ from collector_manager.DTOs.ExampleInputDTO import ExampleInputDTO
 from collector_manager.enums import CollectorType
 from core.DTOs.CollectorStartInfo import CollectorStartInfo
 from core.SourceCollectorCore import SourceCollectorCore
+from security_manager.SecurityManager import AccessInfo, get_access_info
 
 collector_router = APIRouter(
     prefix="/collector",
@@ -18,7 +19,8 @@ collector_router = APIRouter(
 @collector_router.post("/example")
 async def start_example_collector(
         dto: ExampleInputDTO,
-        core: SourceCollectorCore = Depends(get_core)
+        core: SourceCollectorCore = Depends(get_core),
+        access_info: AccessInfo = Depends(get_access_info),
 ) -> CollectorStartInfo:
     """
     Start the example collector

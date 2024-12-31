@@ -2,12 +2,13 @@ from dataclasses import dataclass
 from typing import Generator
 
 import pytest
+from fastapi.params import Security
 from fastapi.security import HTTPAuthorizationCredentials
 from starlette.testclient import TestClient
 
 from api.main import app
 from core.SourceCollectorCore import SourceCollectorCore
-from security_manager.SecurityManager import get_access_info, AccessInfo, Permissions
+from security_manager.SecurityManager import get_access_info, AccessInfo, Permissions, security
 from tests.test_automated.api.helpers.RequestValidator import RequestValidator
 
 
@@ -17,7 +18,7 @@ class APITestHelper:
     core: SourceCollectorCore
 
 
-def override_access_info(credentials: HTTPAuthorizationCredentials) -> AccessInfo:
+def override_access_info(credentials: HTTPAuthorizationCredentials = Security(security)) -> AccessInfo:
     AccessInfo(user_id=1, permissions=[Permissions.SOURCE_COLLECTOR])
 
 @pytest.fixture

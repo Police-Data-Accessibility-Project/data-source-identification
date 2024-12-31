@@ -37,7 +37,11 @@ class RequestValidator:
     ) -> dict:
         if params:
             kwargs["params"] = params
-        response = self.client.request(method, url, **kwargs)
+        response = self.client.request(
+            method=method,
+            url=url,
+            headers={"Authorization": "Bearer token"},  # Fake authentication that is overridden during testing
+            **kwargs)
         assert response.status_code == expected_response.status_code, response.text
         return response.json()
 
