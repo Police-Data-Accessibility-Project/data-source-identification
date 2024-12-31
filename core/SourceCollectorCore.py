@@ -12,6 +12,7 @@ from core.DTOs.GetBatchLogsResponse import GetBatchLogsResponse
 from core.DTOs.GetBatchStatusResponse import GetBatchStatusResponse
 from core.DTOs.GetDuplicatesByBatchResponse import GetDuplicatesByBatchResponse
 from core.DTOs.GetURLsByBatchResponse import GetURLsByBatchResponse
+from core.ScheduledTaskManager import ScheduledTaskManager
 from core.enums import BatchStatus
 
 
@@ -25,6 +26,7 @@ class SourceCollectorCore:
         self.collector_manager = CollectorManager(
             logger=core_logger
         )
+        self.scheduled_task_manager = ScheduledTaskManager(db_client=db_client)
 
     def get_batch_info(self, batch_id: int) -> BatchInfo:
         return self.db_client.get_batch_by_id(batch_id)
@@ -84,6 +86,7 @@ class SourceCollectorCore:
     def shutdown(self):
         self.collector_manager.shutdown_all_collectors()
         self.collector_manager.logger.shutdown()
+        self.scheduled_task_manager.shutdown()
 
 
 

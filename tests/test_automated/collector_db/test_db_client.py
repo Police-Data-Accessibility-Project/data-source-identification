@@ -1,3 +1,5 @@
+from datetime import datetime, timedelta
+
 from collector_db.DTOs.BatchInfo import BatchInfo
 from collector_db.DTOs.DuplicateInfo import DuplicateInfo
 from collector_db.DTOs.LogInfo import LogInfo
@@ -68,4 +70,17 @@ def test_insert_logs(db_data_creator: DBDataCreator):
     logs = db_client.get_logs_by_batch_id(batch_id_2)
     assert len(logs) == 1
 
+def test_delete_old_logs(db_data_creator: DBDataCreator):
+    batch_id = db_data_creator.batch()
 
+    old_datetime = datetime.now() - timedelta(days=1)
+    db_client = db_data_creator.db_client
+    log_infos = []
+    for i in range(3):
+        log_infos.append(LogInfo(log="test log", batch_id=batch_id, created_at=old_datetime))
+    db_client.insert_logs(log_infos=log_infos)
+    assert len(db_client.get_all_logs()) == 3
+    db_client.delete_old_logs()
+
+    logs = db_client.get_all_logs()
+    assert len(logs) == 0

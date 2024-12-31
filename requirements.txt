@@ -37,6 +37,7 @@ fastapi[standard]~=0.115.6
 httpx~=0.28.1
 ckanapi~=4.8
 psycopg[binary]~=3.1.20
+APScheduler~=3.11.0
 
 # Security Manager
 PyJWT~=2.10.1

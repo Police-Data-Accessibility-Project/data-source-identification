@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 from functools import wraps
 
 from sqlalchemy import create_engine, Row
@@ -171,6 +172,8 @@ class DatabaseClient:
     def insert_logs(self, session, log_infos: List[LogInfo]):
         for log_info in log_infos:
             log = Log(log=log_info.log, batch_id=log_info.batch_id)
+            if log_info.created_at is not None:
+                log.created_at = log_info.created_at
             session.add(log)
 
     @session_manager
@@ -254,6 +257,15 @@ class DatabaseClient:
     @session_manager
     def delete_all_logs(self, session):
         session.query(Log).delete()
+
+    @session_manager
+    def delete_old_logs(self, session):
+        """
+        Delete logs older than a day
+        """
+        session.query(Log).filter(
+            Log.created_at < datetime.now() - timedelta(days=1)
+        ).delete()
 
 if __name__ == "__main__":
     client = DatabaseClient()
