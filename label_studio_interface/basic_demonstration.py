@@ -104,7 +104,7 @@ data = [
         ]
     }
 ]
-api_manager.import_tasks_into_project(data)
+api_manager.export_tasks_into_project(data)
 
 # Prompt the user to access Label Studio and perform review and annotation tasks
 print(f"Please access the project at {project_url} to perform review and annotation tasks")
@@ -113,8 +113,8 @@ print(f"Please access the project at {project_url} to perform review and annotat
 input("Press Enter when complete...")
 print("Continuing...")
 
-# Export the annotated data from Label Studio and present it to the user
-response = api_manager.export_tasks_from_project(all_tasks=True)
+# Import the annotated data from Label Studio and present it to the user
+response = api_manager.import_tasks_from_project(all_tasks=True)
 print("Presenting annotated data (showing only first results)...")
 results = response.json()
 for result in results:

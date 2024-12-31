@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from typing import Generator
+from unittest.mock import MagicMock
 
 import pytest
 from fastapi.params import Security
@@ -8,6 +9,7 @@ from starlette.testclient import TestClient
 
 from api.main import app
 from core.SourceCollectorCore import SourceCollectorCore
+from helpers.DBDataCreator import DBDataCreator
 from security_manager.SecurityManager import get_access_info, AccessInfo, Permissions, security
 from tests.test_automated.api.helpers.RequestValidator import RequestValidator
 
@@ -16,6 +18,8 @@ from tests.test_automated.api.helpers.RequestValidator import RequestValidator
 class APITestHelper:
     request_validator: RequestValidator
     core: SourceCollectorCore
+    db_data_creator: DBDataCreator
+
 
 
 def override_access_info(credentials: HTTPAuthorizationCredentials = Security(security)) -> AccessInfo:
@@ -31,8 +35,9 @@ def client(db_client_test) -> Generator[TestClient, None, None]:
         core.shutdown()
 
 @pytest.fixture
-def api_test_helper(client: TestClient) -> APITestHelper:
+def api_test_helper(client: TestClient, db_data_creator) -> APITestHelper:
     return APITestHelper(
         request_validator=RequestValidator(client=client),
-        core=client.app.state.core
+        core=client.app.state.core,
+        db_data_creator=db_data_creator
     )

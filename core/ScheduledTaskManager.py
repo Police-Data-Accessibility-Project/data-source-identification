@@ -31,4 +31,5 @@ class ScheduledTaskManager:
         )
 
     def shutdown(self):
-        self.scheduler.shutdown()
+        if self.scheduler.running:
+            self.scheduler.shutdown()

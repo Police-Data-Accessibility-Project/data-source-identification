@@ -10,6 +10,7 @@ from core.DTOs.GetBatchLogsResponse import GetBatchLogsResponse
 from core.DTOs.GetBatchStatusResponse import GetBatchStatusResponse
 from core.DTOs.GetDuplicatesByBatchResponse import GetDuplicatesByBatchResponse
 from core.DTOs.GetURLsByBatchResponse import GetURLsByBatchResponse
+from core.DTOs.LabelStudioExportResponseInfo import LabelStudioExportResponseInfo
 
 
 class ExpectedResponseInfo(BaseModel):
@@ -139,3 +140,9 @@ class RequestValidator:
             url=f"/batch/{batch_id}/logs"
         )
         return GetBatchLogsResponse(**data)
+
+    def export_batch_to_label_studio(self, batch_id: int) -> LabelStudioExportResponseInfo:
+        data = self.post(
+            url=f"/label-studio/export-batch/{batch_id}"
+        )
+        return LabelStudioExportResponseInfo(**data)

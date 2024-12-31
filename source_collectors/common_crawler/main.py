@@ -209,7 +209,7 @@ def get_ls_data() -> list[dict] | None:
     # Retrieve the data from the Labels Studio project
     config = LabelStudioConfig()
     api_manager = LabelStudioAPIManager(config)
-    response = api_manager.export_tasks_from_project(all_tasks=True)
+    response = api_manager.import_tasks_from_project(all_tasks=True)
     remote_results = response.json()
 
     return validate_remote_results(remote_results)

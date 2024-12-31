@@ -202,7 +202,7 @@ def label_studio_upload(batch_id: str, FILENAME: str, record_type: str):
     api_manager = LabelStudioAPIManager(config)
 
     #import tasks
-    label_studio_response = api_manager.import_tasks_into_project(data)
+    label_studio_response = api_manager.export_tasks_into_project(data)
 
     #check import success
     if label_studio_response.status_code == HTTPStatus.CREATED:

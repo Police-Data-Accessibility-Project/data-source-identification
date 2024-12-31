@@ -4,10 +4,13 @@ import os
 import random
 import string
 import sys
+from typing import Annotated
 
 import requests
 from dotenv import load_dotenv
 from enum import Enum
+
+from label_studio_interface.DTOs.LabelStudioTaskExportInfo import LabelStudioTaskExportInfo
 
 # The below code sets the working directory to be the root of the entire repository
 # This is done to solve otherwise quite annoying import issues.
@@ -151,7 +154,7 @@ class LabelStudioAPIManager:
 
     def __init__(
             self,
-            config: LabelStudioConfig,
+            config: LabelStudioConfig = LabelStudioConfig(),
     ):
         """
         This class is responsible for managing the API requests to Label Studio.
@@ -165,7 +168,10 @@ class LabelStudioAPIManager:
         )
 
     # region Task Import/Export
-    def import_tasks_into_project(self, data: list[dict]) -> requests.Response:
+    def export_tasks_into_project(
+            self,
+            data: list[LabelStudioTaskExportInfo]
+    ) -> Annotated[int, "The resultant Label Studio import ID"]:
         """
         This method imports task input data into Label Studio.
         Args:
@@ -174,19 +180,23 @@ class LabelStudioAPIManager:
                 the same keys, representing data for the task
         Returns: requests.Response
         """
+        dict_data = []
+        for task in data:
+            dict_data.append(task.model_dump())
         import_url = self.api_url_constructor.get_import_url()
         response = requests.post(
             url=import_url,
-            data=json.dumps(data),
+            data=json.dumps(dict_data),
             # TODO: Consider extracting header construction
             headers={
                 'Content-Type': 'application/json',
                 'Authorization': self.config.authorization_token
             }
         )
-        return response
+        response.raise_for_status()
+        return response.json()["import"]
 
-    def export_tasks_from_project(self, all_tasks: bool = False) -> requests.Response:
+    def import_tasks_from_project(self, all_tasks: bool = False) -> requests.Response:
         """
         This method exports the data from the project.
         Args:
@@ -201,6 +211,7 @@ class LabelStudioAPIManager:
                 'Authorization': self.config.authorization_token
             }
         )
+        response.raise_for_status()
         return response
 
     # endregion
@@ -250,6 +261,7 @@ class LabelStudioAPIManager:
                 'Authorization': self.config.authorization_token
             }
         )
+        response.raise_for_status()
         return response
 
     def update_member_role(self, user_id: int, role: Role) -> requests.Response:
@@ -299,14 +311,14 @@ if __name__ == "__main__":
     if project_accessible:
         print("Project is accessible")
 
-    # Test import
+    # Test export
     # data = [{"url": f"https://example.com/{generate_random_word(10)}"} for _ in range(10)]
     #
     # response = api_manager.import_data(data)
     # print(response.status_code)
     # print(response.json())
 
-    # Test export
-    response = api_manager.export_tasks_from_project()
+    # Test import
+    response = api_manager.import_tasks_from_project()
     print(response.status_code)
     print(response.json())

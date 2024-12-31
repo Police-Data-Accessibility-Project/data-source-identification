@@ -12,8 +12,11 @@ from core.DTOs.GetBatchLogsResponse import GetBatchLogsResponse
 from core.DTOs.GetBatchStatusResponse import GetBatchStatusResponse
 from core.DTOs.GetDuplicatesByBatchResponse import GetDuplicatesByBatchResponse
 from core.DTOs.GetURLsByBatchResponse import GetURLsByBatchResponse
+from core.DTOs.LabelStudioExportResponseInfo import LabelStudioExportResponseInfo
 from core.ScheduledTaskManager import ScheduledTaskManager
 from core.enums import BatchStatus
+from label_studio_interface.DTOs.LabelStudioTaskExportInfo import LabelStudioTaskExportInfo
+from label_studio_interface.LabelStudioAPIManager import LabelStudioAPIManager
 
 
 class SourceCollectorCore:
@@ -21,12 +24,18 @@ class SourceCollectorCore:
         self,
         core_logger: CoreLogger,
         db_client: DatabaseClient = DatabaseClient(),
+        label_studio_api_manager: LabelStudioAPIManager = LabelStudioAPIManager(),
+        dev_mode: bool = False
     ):
         self.db_client = db_client
         self.collector_manager = CollectorManager(
             logger=core_logger
         )
-        self.scheduled_task_manager = ScheduledTaskManager(db_client=db_client)
+        if not dev_mode:
+            self.scheduled_task_manager = ScheduledTaskManager(db_client=db_client)
+        else:
+            self.scheduled_task_manager = None
+        self.label_studio_api_manager = label_studio_api_manager
 
     def get_batch_info(self, batch_id: int) -> BatchInfo:
         return self.db_client.get_batch_by_id(batch_id)
@@ -83,10 +92,27 @@ class SourceCollectorCore:
         logs = self.db_client.get_logs_by_batch_id(batch_id)
         return GetBatchLogsResponse(logs=logs)
 
+    def export_batch_to_label_studio(self, batch_id: int) -> LabelStudioExportResponseInfo:
+        # TODO: Might this need to be a separate thread?
+        db_url_infos = self.db_client.get_urls_by_batch(batch_id)
+        url_count = len(db_url_infos)
+        export_infos = []
+        for url_info in db_url_infos:
+            export_infos.append(LabelStudioTaskExportInfo(url=url_info.url))
+        import_id = self.label_studio_api_manager.export_tasks_into_project(
+            data=export_infos
+        )
+        return LabelStudioExportResponseInfo(
+            label_studio_import_id=import_id,
+            num_urls_imported=url_count
+        )
+
+
     def shutdown(self):
         self.collector_manager.shutdown_all_collectors()
         self.collector_manager.logger.shutdown()
-        self.scheduled_task_manager.shutdown()
+        if self.scheduled_task_manager is not None:
+            self.scheduled_task_manager.shutdown()
 
 
 

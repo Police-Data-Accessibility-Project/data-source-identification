@@ -1,13 +1,14 @@
 import pytest
 
+from label_studio_interface.DTOs.LabelStudioTaskExportInfo import LabelStudioTaskExportInfo
 from label_studio_interface.LabelStudioConfig import LabelStudioConfig
-from label_studio_interface.LabelStudioAPIManager import LabelStudioAPIManager
+from label_studio_interface.LabelStudioAPIManager import LabelStudioAPIManager, generate_random_word
 
 
 # Setup method
 @pytest.fixture
 def api_manager() -> LabelStudioAPIManager:
-    config = LabelStudioConfig("../../../.env")
+    config = LabelStudioConfig()
     return LabelStudioAPIManager(config)
 
 # Helper methods
@@ -16,10 +17,18 @@ def get_member_role_and_user_id(user_id: str, org_id: str, data: dict) -> tuple[
         if result['organization'] == int(org_id) and result['user']['username'] == user_id:
             return result['role'], result['user']['id']
 
-def test_export_tasks_from_project(api_manager):
-    response = api_manager.export_tasks_from_project()
-    assert response.status_code == 200
+def test_import_tasks_from_project(api_manager):
+    response = api_manager.import_tasks_from_project()
     print(response.json())
+
+def test_export_tasks_into_project(api_manager):
+    data = []
+    for _ in range(10):
+        data.append(
+            LabelStudioTaskExportInfo(url=f"https://example.com/{generate_random_word(10)}")
+        )
+    import_id = api_manager.export_tasks_into_project(data)
+    print("Import ID:", import_id)
 
 
 def test_ping_project(api_manager):
