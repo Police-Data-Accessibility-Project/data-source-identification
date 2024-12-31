@@ -43,6 +43,13 @@ class CollectorBase(ABC):
 
     @abc.abstractmethod
     def run_implementation(self) -> None:
+        """
+        This is the method that will be overridden by each collector
+        No other methods should be modified except for this one.
+        However, in each inherited class, new methods in addition to this one can be created
+        Returns:
+
+        """
         raise NotImplementedError
 
     def start_timer(self) -> None:
