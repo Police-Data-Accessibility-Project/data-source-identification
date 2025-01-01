@@ -22,7 +22,7 @@ class APITestHelper:
 
 
 
-def override_access_info(token) -> AccessInfo:
+def override_access_info() -> AccessInfo:
     return AccessInfo(user_id=1, permissions=[Permissions.SOURCE_COLLECTOR])
 
 @pytest.fixture
