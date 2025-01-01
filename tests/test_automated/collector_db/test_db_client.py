@@ -14,7 +14,8 @@ def test_insert_urls(db_client_test):
     batch_info = BatchInfo(
         strategy="ckan",
         status=BatchStatus.IN_PROCESS,
-        parameters={}
+        parameters={},
+        user_id=1
     )
     batch_id = db_client_test.insert_batch(batch_info)
 

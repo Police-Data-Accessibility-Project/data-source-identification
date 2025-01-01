@@ -21,7 +21,8 @@ class DBDataCreator:
                 strategy="test_batch",
                 status=BatchStatus.IN_PROCESS,
                 total_url_count=1,
-                parameters={"test_key": "test_value"}
+                parameters={"test_key": "test_value"},
+                user_id=1
             )
         )
 

@@ -79,4 +79,4 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 def get_access_info(
         token: Annotated[str, Depends(oauth2_scheme)]
 ) -> AccessInfo:
-    SecurityManager().check_access(token)
+    return SecurityManager().check_access(token)

@@ -24,7 +24,8 @@ def test_example_collector_lifecycle(test_core: SourceCollectorCore):
     )
     csi: CollectorStartInfo = core.initiate_collector(
         collector_type=CollectorType.EXAMPLE,
-        dto=dto
+        dto=dto,
+        user_id=1
     )
     assert csi.message == "Started example_collector collector."
     assert csi.batch_id is not None
@@ -66,7 +67,8 @@ def test_example_collector_lifecycle_multiple_batches(test_core: SourceCollector
         )
         csi: CollectorStartInfo = core.initiate_collector(
             collector_type=CollectorType.EXAMPLE,
-            dto=dto
+            dto=dto,
+            user_id=1
         )
         csis.append(csi)
 

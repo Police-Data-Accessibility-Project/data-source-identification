@@ -11,7 +11,7 @@ from security_manager.SecurityManager import SecurityManager, Permissions, Acces
 SECRET_KEY = "test_secret_key"
 VALID_TOKEN = "valid_token"
 INVALID_TOKEN = "invalid_token"
-FAKE_PAYLOAD = {"user_id": 1, "permissions": [Permissions.SOURCE_COLLECTOR.value]}
+FAKE_PAYLOAD = {"sub": 1, "permissions": [Permissions.SOURCE_COLLECTOR.value]}
 
 PATCH_ROOT = "security_manager.SecurityManager"
 
