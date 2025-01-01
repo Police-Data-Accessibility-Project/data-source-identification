@@ -61,6 +61,7 @@ class DatabaseClient:
         """Insert a new batch into the database and return its ID."""
         batch = Batch(
             strategy=batch_info.strategy,
+            user_id=batch_info.user_id,
             status=batch_info.status.value,
             parameters=batch_info.parameters,
             total_url_count=batch_info.total_url_count,

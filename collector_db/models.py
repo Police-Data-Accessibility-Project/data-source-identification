@@ -20,6 +20,7 @@ class Batch(Base):
 
     id = Column(Integer, primary_key=True)
     strategy = Column(String, nullable=False)
+    user_id = Column(Integer, nullable=False)
     # Gives the status of the batch
     status = Column(String, CheckConstraint(f"status IN ({status_check_string})"), nullable=False)
     # The number of URLs in the batch

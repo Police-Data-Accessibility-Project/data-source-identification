@@ -27,5 +27,6 @@ async def start_example_collector(
     """
     return core.initiate_collector(
         collector_type=CollectorType.EXAMPLE,
-        dto=dto
+        dto=dto,
+        user_id=access_info.user_id
     )

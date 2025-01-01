@@ -48,6 +48,7 @@ def test_example_collector(api_test_helper):
     assert bi.total_url_count == 2
     assert bi.parameters == dto.model_dump()
     assert bi.strategy == "example_collector"
+    assert bi.user_id == 1
 
     # Flush early to ensure logs are written
     ath.core.collector_manager.logger.flush_all()

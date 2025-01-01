@@ -67,7 +67,9 @@ class SourceCollectorCore:
     def initiate_collector(
             self,
             collector_type: CollectorType,
-            dto: Optional[BaseModel] = None,):
+            user_id: int,
+        dto: Optional[BaseModel] = None,
+    ):
         """
         Reserves a batch ID from the database
         and starts the requisite collector
@@ -75,7 +77,8 @@ class SourceCollectorCore:
         batch_info = BatchInfo(
             strategy=collector_type.value,
             status=BatchStatus.IN_PROCESS,
-            parameters=dto.model_dump()
+            parameters=dto.model_dump(),
+            user_id=user_id
         )
         batch_id = self.db_client.insert_batch(batch_info)
         self.collector_manager.start_collector(

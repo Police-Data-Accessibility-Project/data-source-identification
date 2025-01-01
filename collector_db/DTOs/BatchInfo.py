@@ -10,6 +10,7 @@ class BatchInfo(BaseModel):
     strategy: str
     status: BatchStatus
     parameters: dict
+    user_id: int
     total_url_count: int = 0
     original_url_count: int = 0
     duplicate_url_count: int = 0
