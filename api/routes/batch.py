@@ -56,18 +56,26 @@ def get_batch_info(
 @batch_router.get("/{batch_id}/urls")
 def get_urls_by_batch(
         batch_id: int = Path(description="The batch id"),
+        page: int = Query(
+            description="The page number",
+            default=1
+        ),
         core: SourceCollectorCore = Depends(get_core),
         access_info: AccessInfo = Depends(get_access_info),
 ) -> GetURLsByBatchResponse:
-    return core.get_urls_by_batch(batch_id)
+    return core.get_urls_by_batch(batch_id, page=page)
 
 @batch_router.get("/{batch_id}/duplicates")
 def get_duplicates_by_batch(
         batch_id: int = Path(description="The batch id"),
+        page: int = Query(
+            description="The page number",
+            default=1
+        ),
         core: SourceCollectorCore = Depends(get_core),
         access_info: AccessInfo = Depends(get_access_info),
 ) -> GetDuplicatesByBatchResponse:
-    return core.get_duplicate_urls_by_batch(batch_id)
+    return core.get_duplicate_urls_by_batch(batch_id, page=page)
 
 @batch_router.get("/{batch_id}/logs")
 def get_batch_logs(

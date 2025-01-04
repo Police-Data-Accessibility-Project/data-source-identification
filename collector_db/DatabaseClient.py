@@ -159,9 +159,10 @@ class DatabaseClient:
 
 
     @session_manager
-    def get_urls_by_batch(self, session, batch_id: int) -> List[URLInfo]:
+    def get_urls_by_batch(self, session, batch_id: int, page: int = 1) -> List[URLInfo]:
         """Retrieve all URLs associated with a batch."""
-        urls = session.query(URL).filter_by(batch_id=batch_id).all()
+        urls = (session.query(URL).filter_by(batch_id=batch_id)
+                .limit(100).offset((page - 1) * 100).all())
         return ([URLInfo(**url.__dict__) for url in urls])
 
     @session_manager
@@ -192,7 +193,7 @@ class DatabaseClient:
         # TODO: Add test for this method when testing CollectorDatabaseProcessor
         for duplicate_info in duplicate_infos:
             duplicate = Duplicate(
-                batch_id=duplicate_info.batch_id,
+                batch_id=duplicate_info.original_batch_id,
                 original_url_id=duplicate_info.original_url_id,
             )
             session.add(duplicate)
@@ -221,7 +222,7 @@ class DatabaseClient:
         return [BatchStatusInfo(**self.row_to_dict(batch)) for batch in batches]
 
     @session_manager
-    def get_duplicates_by_batch_id(self, session, batch_id: int) -> List[DuplicateInfo]:
+    def get_duplicates_by_batch_id(self, session, batch_id: int, page: int) -> List[DuplicateInfo]:
         original_batch = aliased(Batch)
         duplicate_batch = aliased(Batch)
 
@@ -239,6 +240,8 @@ class DatabaseClient:
             .join(duplicate_batch, Duplicate.batch_id == duplicate_batch.id)
             .join(original_batch, URL.batch_id == original_batch.id)
             .filter(duplicate_batch.id == batch_id)
+            .limit(100)
+            .offset((page - 1) * 100)
         )
         results = query.all()
         final_results = []

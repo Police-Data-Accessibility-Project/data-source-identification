@@ -1,6 +1,7 @@
 from typing import List
 
 from collector_db.DTOs.BatchInfo import BatchInfo
+from collector_db.DTOs.DuplicateInfo import DuplicateInfo, DuplicateInsertInfo
 from collector_db.DTOs.InsertURLsInfo import InsertURLsInfo
 from collector_db.DTOs.URLInfo import URLInfo
 from collector_db.DatabaseClient import DatabaseClient
@@ -37,3 +38,18 @@ class DBDataCreator:
             )
 
         return self.db_client.insert_urls(url_infos=url_infos, batch_id=batch_id)
+
+    def duplicate_urls(self, duplicate_batch_id: int, url_ids: list[int]):
+        """
+        Create duplicates for all given url ids, and associate them
+        with the given batch
+        """
+        duplicate_infos = []
+        for url_id in url_ids:
+            dup_info = DuplicateInsertInfo(
+                duplicate_batch_id=duplicate_batch_id,
+                original_url_id=url_id
+            )
+            duplicate_infos.append(dup_info)
+
+        self.db_client.insert_duplicates(duplicate_infos)

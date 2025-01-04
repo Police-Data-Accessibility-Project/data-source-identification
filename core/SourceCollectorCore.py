@@ -43,12 +43,12 @@ class SourceCollectorCore:
     def get_batch_info(self, batch_id: int) -> BatchInfo:
         return self.db_client.get_batch_by_id(batch_id)
 
-    def get_urls_by_batch(self, batch_id: int) -> GetURLsByBatchResponse:
-        url_infos = self.db_client.get_urls_by_batch(batch_id)
+    def get_urls_by_batch(self, batch_id: int, page: int = 1) -> GetURLsByBatchResponse:
+        url_infos = self.db_client.get_urls_by_batch(batch_id, page)
         return GetURLsByBatchResponse(urls=url_infos)
 
-    def get_duplicate_urls_by_batch(self, batch_id: int) -> GetDuplicatesByBatchResponse:
-        dup_infos = self.db_client.get_duplicates_by_batch_id(batch_id)
+    def get_duplicate_urls_by_batch(self, batch_id: int, page: int = 1) -> GetDuplicatesByBatchResponse:
+        dup_infos = self.db_client.get_duplicates_by_batch_id(batch_id, page=page)
         return GetDuplicatesByBatchResponse(duplicates=dup_infos)
 
     def get_batch_statuses(

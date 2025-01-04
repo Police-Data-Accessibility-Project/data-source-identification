@@ -124,15 +124,17 @@ class RequestValidator:
         )
         return BatchInfo(**data)
 
-    def get_batch_urls(self, batch_id: int) -> GetURLsByBatchResponse:
+    def get_batch_urls(self, batch_id: int, page: int = 1) -> GetURLsByBatchResponse:
         data = self.get(
-            url=f"/batch/{batch_id}/urls"
+            url=f"/batch/{batch_id}/urls",
+            params={"page": page}
         )
         return GetURLsByBatchResponse(**data)
 
-    def get_batch_url_duplicates(self, batch_id: int) -> GetDuplicatesByBatchResponse:
+    def get_batch_url_duplicates(self, batch_id: int, page: int = 1) -> GetDuplicatesByBatchResponse:
         data = self.get(
-            url=f"/batch/{batch_id}/duplicates"
+            url=f"/batch/{batch_id}/duplicates",
+            params={"page": page}
         )
         return GetDuplicatesByBatchResponse(**data)
 
@@ -153,3 +155,4 @@ class RequestValidator:
             url=f"/batch/{batch_id}/abort"
         )
         return MessageResponse(**data)
+
