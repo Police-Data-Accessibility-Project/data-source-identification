@@ -117,6 +117,11 @@ class SourceCollectorCore:
         self.collector_manager.abort_collector(cid=batch_id)
         return MessageResponse(message=f"Batch aborted.")
 
+    def restart(self):
+        self.collector_manager.shutdown_all_collectors()
+        self.collector_manager.restart_executor()
+        self.collector_manager.logger.restart()
+
 
     def shutdown(self):
         self.collector_manager.shutdown_all_collectors()

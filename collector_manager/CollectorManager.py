@@ -4,6 +4,8 @@ Can start, stop, and get info on running collectors
 And manages the retrieval of collector info
 """
 import threading
+import traceback
+from concurrent.futures import Future, ThreadPoolExecutor
 from typing import Dict, List
 
 from pydantic import BaseModel
@@ -24,14 +26,21 @@ class CollectorManager:
             self,
             logger: CoreLogger,
             db_client: DatabaseClient,
-            dev_mode: bool = False
+            dev_mode: bool = False,
+            max_workers: int = 10  # Limit the number of concurrent threads
     ):
         self.collectors: Dict[int, CollectorBase] = {}
+        self.futures: Dict[int, Future] = {}
         self.threads: Dict[int, threading.Thread] = {}
         self.db_client = db_client
         self.logger = logger
         self.lock = threading.Lock()
+        self.max_workers = max_workers
         self.dev_mode = dev_mode
+        self.executor = ThreadPoolExecutor(max_workers=self.max_workers)
+
+    def restart_executor(self):
+        self.executor = ThreadPoolExecutor(max_workers=self.max_workers)
 
     def list_collectors(self) -> List[str]:
         return [cm.value for cm in list(COLLECTOR_MAPPING.keys())]
@@ -43,6 +52,10 @@ class CollectorManager:
             dto: BaseModel
     ) -> None:
         with self.lock:
+            # If executor is shutdown, restart it
+            if self.executor._shutdown:
+                self.restart_executor()
+
             if batch_id in self.collectors:
                 raise ValueError(f"Collector with batch_id {batch_id} is already running.")
             try:
@@ -57,9 +70,13 @@ class CollectorManager:
             except KeyError:
                 raise InvalidCollectorError(f"Collector {collector_type.value} not found.")
             self.collectors[batch_id] = collector
-            thread = threading.Thread(target=collector.run)
-            self.threads[batch_id] = thread
-            thread.start()
+
+            future = self.executor.submit(collector.run)
+            self.futures[batch_id] = future
+
+            # thread = threading.Thread(target=collector.run)
+            # self.threads[batch_id] = thread
+            # thread.start()
 
     def get_info(self, cid: str) -> str:
         collector = self.collectors.get(cid)
@@ -79,16 +96,23 @@ class CollectorManager:
         collector = self.try_getting_collector(cid)
         # Get collector thread
         thread = self.threads.get(cid)
+        future = self.futures.get(cid)
         collector.abort()
-        thread.join(timeout=1)
+        # thread.join(timeout=1)
         self.collectors.pop(cid)
-        self.threads.pop(cid)
+        self.futures.pop(cid)
+        # self.threads.pop(cid)
 
     def shutdown_all_collectors(self) -> None:
         with self.lock:
-            for cid, collector in self.collectors.items():
-                collector.abort()
-            for thread in self.threads.values():
-                thread.join(timeout=1)
+            for cid, future in self.futures.items():
+                if future.done():
+                    try:
+                        future.result()
+                    except Exception as e:
+                        raise e
+                self.collectors[cid].abort()
+
+            self.executor.shutdown(wait=True)
             self.collectors.clear()
-            self.threads.clear()
+            self.futures.clear()

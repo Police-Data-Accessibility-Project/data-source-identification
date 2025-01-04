@@ -27,7 +27,7 @@ def client(db_client_test) -> Generator[TestClient, None, None]:
     with TestClient(app) as c:
         app.dependency_overrides[get_access_info] = override_access_info
         core: SourceCollectorCore = c.app.state.core
-        core.shutdown()
+        # core.shutdown()
         yield c
         core.shutdown()
 

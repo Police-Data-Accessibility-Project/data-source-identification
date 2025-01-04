@@ -3,6 +3,9 @@
 import threading
 import queue
 import time
+from concurrent.futures import Future
+from concurrent.futures.thread import ThreadPoolExecutor
+
 from collector_db.DTOs.LogInfo import LogInfo
 from collector_db.DatabaseClient import DatabaseClient
 
@@ -21,9 +24,9 @@ class CoreLogger:
         self.log_queue = queue.Queue()
         self.lock = threading.Lock()
         self.stop_event = threading.Event()
-        # Start the flush thread
-        self.flush_thread = threading.Thread(target=self._flush_logs)
-        self.flush_thread.start()
+        # Start the periodic flush task
+        self.executor = ThreadPoolExecutor(max_workers=1)
+        self.flush_future: Future = self.executor.submit(self._flush_logs)
 
     def __enter__(self):
         """
@@ -78,10 +81,17 @@ class CoreLogger:
         while not self.log_queue.empty():
             self.flush()
 
+    def restart(self):
+        self.flush_all()
+        self.executor.shutdown(wait=False)
+        self.executor = ThreadPoolExecutor(max_workers=1)
+        self.flush_future = self.executor.submit(self._flush_logs)
+
     def shutdown(self):
         """
         Stops the logger gracefully and flushes any remaining logs.
         """
         self.stop_event.set()
-        self.flush_thread.join(timeout=1)
-        self.flush()  # Flush remaining logs
+        if self.flush_future and not self.flush_future.done():
+            self.flush_future.result(timeout=10)
+        self.flush_all()  # Flush remaining logs

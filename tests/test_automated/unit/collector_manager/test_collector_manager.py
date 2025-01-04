@@ -1,13 +1,14 @@
 import threading
 import time
 from dataclasses import dataclass
-from unittest.mock import Mock
+from unittest.mock import Mock, MagicMock
 
 import pytest
 
 from collector_db.DatabaseClient import DatabaseClient
 from collector_manager.CollectorManager import CollectorManager, InvalidCollectorError
 from collector_manager.DTOs.ExampleInputDTO import ExampleInputDTO
+from collector_manager.ExampleCollector import ExampleCollector
 from collector_manager.enums import CollectorType
 from core.CoreLogger import CoreLogger
 from core.enums import BatchStatus
@@ -42,9 +43,11 @@ def test_start_collector(ecs: ExampleCollectorSetup):
     batch_id = 1
     ecs.start_collector(batch_id)
     assert batch_id in manager.collectors, "Collector not added to manager."
-    thread = manager.threads.get(batch_id)
-    assert thread is not None, "Thread not started for collector."
-    assert thread.is_alive(), "Thread is not running."
+    future = manager.futures.get(batch_id)
+    assert future is not None, "Thread not started for collector."
+    # Check that future is running
+    assert future.running(), "Future is not running."
+
 
     print("Test passed: Collector starts correctly.")
 
@@ -91,7 +94,7 @@ def test_concurrent_collectors(ecs: ExampleCollectorSetup):
         thread.join()
 
     assert all(batch_id in manager.collectors for batch_id in batch_ids), "Not all collectors started."
-    assert all(manager.threads[batch_id].is_alive() for batch_id in batch_ids), "Not all threads are running."
+    assert all(manager.futures[batch_id].running() for batch_id in batch_ids), "Not all threads are running."
 
     print("Test passed: Concurrent collectors managed correctly.")
 
@@ -129,3 +132,24 @@ def test_shutdown_all_collectors(ecs: ExampleCollectorSetup):
     assert not manager.threads, "Not all threads were cleaned up."
 
     print("Test passed: Shutdown cleans up all collectors and threads.")
+
+
+def test_collector_manager_raises_exceptions(monkeypatch):
+    # Mock dependencies
+    logger = MagicMock()
+    db_client = MagicMock()
+    collector_manager = CollectorManager(logger=logger, db_client=db_client)
+
+    dto = ExampleInputDTO(example_field="example_value", sleep_time=1)
+
+    # Mock a collector type and DTO
+    batch_id = 1
+
+    # Patch the example collector run method to raise an exception
+    monkeypatch.setattr(ExampleCollector, 'run', MagicMock(side_effect=RuntimeError("Collector failed!")))
+
+    # Start the collector and expect an exception during shutdown
+    collector_manager.start_collector(CollectorType.EXAMPLE, batch_id, dto)
+
+    with pytest.raises(RuntimeError, match="Collector failed!"):
+        collector_manager.shutdown_all_collectors()
