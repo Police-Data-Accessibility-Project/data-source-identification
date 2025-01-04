@@ -9,10 +9,12 @@ from collector_manager.CollectorBase import CollectorBase
 from collector_manager.DTOs.ExampleInputDTO import ExampleInputDTO
 from collector_manager.DTOs.ExampleOutputDTO import ExampleOutputDTO
 from collector_manager.enums import CollectorType
+from core.preprocessors.ExamplePreprocessor import ExamplePreprocessor
 
 
 class ExampleCollector(CollectorBase):
     collector_type = CollectorType.EXAMPLE
+    preprocessor = ExamplePreprocessor
 
     def run_implementation(self) -> None:
         dto: ExampleInputDTO = self.dto

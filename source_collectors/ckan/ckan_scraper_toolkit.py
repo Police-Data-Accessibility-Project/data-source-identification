@@ -11,8 +11,9 @@ from typing import Any, Optional
 from urllib.parse import urljoin
 
 from bs4 import BeautifulSoup
-from ckanapi import RemoteCKAN
 import requests
+
+from source_collectors.ckan.CKANAPIInterface import CKANAPIInterface
 
 
 @dataclass
@@ -62,15 +63,15 @@ def ckan_package_search(
     :param kwargs: See https://docs.ckan.org/en/2.10/api/index.html#ckan.logic.action.get.package_search for additional arguments.
     :return: List of dictionaries representing the CKAN package search results.
     """
-    remote = RemoteCKAN(base_url, get_only=True)
+    interface = CKANAPIInterface(base_url)
     results = []
     offset = start
     rows_max = 1000  # CKAN's package search has a hard limit of 1000 packages returned at a time by default
 
     while start < rows:
         num_rows = rows - start + offset
-        packages = remote.action.package_search(
-            q=query, rows=num_rows, start=start, **kwargs
+        packages: dict = interface.package_search(
+            query=query, rows=num_rows, start=start, **kwargs
         )
         add_base_url_to_packages(base_url, packages)
         results += packages["results"]
@@ -103,10 +104,8 @@ def ckan_package_search_from_organization(
     :param organization_id: The organization's ID.
     :return: List of dictionaries representing the packages associated with the organization.
     """
-    remote = RemoteCKAN(base_url, get_only=True)
-    organization = remote.action.organization_show(
-        id=organization_id, include_datasets=True
-    )
+    interface = CKANAPIInterface(base_url)
+    organization = interface.get_organization(organization_id)
     packages = organization["packages"]
     results = search_for_results(base_url, packages)
 
@@ -131,8 +130,8 @@ def ckan_group_package_show(
     :param limit: Maximum number of results to return, defaults to maximum integer.
     :return: List of dictionaries representing the packages associated with the group.
     """
-    remote = RemoteCKAN(base_url, get_only=True)
-    results = remote.action.group_package_show(id=id, limit=limit)
+    interface = CKANAPIInterface(base_url)
+    results = interface.get_group_package(group_package_id=id, limit=limit)
     # Add the base_url to each package
     [package.update(base_url=base_url) for package in results]
     return results
@@ -213,20 +212,17 @@ def set_source_last_updated(date, package):
 
 
 def get_data(dataset_soup):
-    date = dataset_soup.find(property="dct:modified").text.strip()
-    return date
+    return dataset_soup.find(property="dct:modified").text.strip()
 
 
 def get_button(resources):
-    button = resources[0].find(class_="btn-group")
-    return button
+    return resources[0].find(class_="btn-group")
 
 
 def get_resources(dataset_soup):
-    resources = dataset_soup.find("section", id="dataset-resources").find_all(
+    return dataset_soup.find("section", id="dataset-resources").find_all(
         class_="resource-item"
     )
-    return resources
 
 
 def set_url_and_data_portal_type(button, joined_url, package, resources):

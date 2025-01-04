@@ -8,7 +8,12 @@ from collector_db.DatabaseClient import DatabaseClient
 
 
 class CoreLogger:
-    def __init__(self, flush_interval=10, db_client: DatabaseClient = DatabaseClient(), batch_size=100):
+    def __init__(
+            self,
+            db_client: DatabaseClient,
+            flush_interval=10,
+            batch_size=100
+    ):
         self.db_client = db_client
         self.flush_interval = flush_interval
         self.batch_size = batch_size

@@ -3,6 +3,9 @@ from typing import Union
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 
+from source_collectors.auto_googler.DTOs import GoogleSearchQueryResultsInnerDTO
+
+
 class QuotaExceededError(Exception):
     pass
 
@@ -53,21 +56,25 @@ class GoogleSearcher:
             If the daily quota is exceeded, None is returned.
         """
         try:
-            raw_results = self.service.cse().list(q=query, cx=self.cse_id).execute()
-            if "items" not in raw_results:
-                return None
-            results = []
-            for result in raw_results['items']:
-                entry = {
-                    'title': result['title'],
-                    'url': result['link'],
-                    'snippet': result['snippet']
-                }
-                results.append(entry)
-            return results
+            return self.get_query_results(query)
             # Process your results
         except HttpError as e:
             if "Quota exceeded" in str(e):
                 raise QuotaExceededError("Quota exceeded for the day")
             else:
                 raise RuntimeError(f"An error occurred: {str(e)}")
+
+    def get_query_results(self, query) -> list[GoogleSearchQueryResultsInnerDTO] or None:
+        results = self.service.cse().list(q=query, cx=self.cse_id).execute()
+        if "items" not in results:
+            return None
+        items = []
+        for item in results["items"]:
+            inner_dto = GoogleSearchQueryResultsInnerDTO(
+                url=item["link"],
+                title=item["title"],
+                snippet=item["snippet"]
+            )
+            items.append(inner_dto)
+
+        return items

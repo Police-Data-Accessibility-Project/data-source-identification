@@ -5,32 +5,35 @@ import abc
 import threading
 import time
 from abc import ABC
-from typing import Optional
+from typing import Optional, Type
 
 from pydantic import BaseModel
 
 from collector_db.DTOs.InsertURLsInfo import InsertURLsInfo
 from collector_db.DTOs.LogInfo import LogInfo
 from collector_db.DatabaseClient import DatabaseClient
-from collector_manager.DTOs.CollectorCloseInfo import CollectorCloseInfo
 from collector_manager.enums import CollectorType
 from core.CoreLogger import CoreLogger
 from core.enums import BatchStatus
-from core.exceptions import InvalidPreprocessorError
 from core.preprocessors.PreprocessorBase import PreprocessorBase
-from core.preprocessors.preprocessor_mapping import PREPROCESSOR_MAPPING
 
+class CollectorAbortException(Exception):
+    pass
 
 class CollectorBase(ABC):
     collector_type: CollectorType = None
+    preprocessor: Type[PreprocessorBase] = None
 
     def __init__(
             self,
             batch_id: int,
             dto: BaseModel,
             logger: CoreLogger,
-            raise_error: bool = False) -> None:
+            db_client: DatabaseClient,
+            raise_error: bool = False,
+    ) -> None:
         self.batch_id = batch_id
+        self.db_client = db_client
         self.dto = dto
         self.data: Optional[BaseModel] = None
         self.logger = logger
@@ -40,6 +43,7 @@ class CollectorBase(ABC):
         self.raise_error = raise_error
         # # TODO: Determine how to update this in some of the other collectors
         self._stop_event = threading.Event()
+        self.abort_ready = False
 
     @abc.abstractmethod
     def run_implementation(self) -> None:
@@ -63,37 +67,25 @@ class CollectorBase(ABC):
             raise e
         self.log(f"Error: {e}")
 
-    @staticmethod
-    def get_preprocessor(
-            collector_type: CollectorType
-    ) -> PreprocessorBase:
-        # TODO: Look into just having the preprocessor in the collector
-        try:
-            return PREPROCESSOR_MAPPING[collector_type]()
-        except KeyError:
-            raise InvalidPreprocessorError(f"Preprocessor for {collector_type} not found.")
-
-    def process(self, close_info: CollectorCloseInfo) -> None:
-        db_client = DatabaseClient()
+    def process(self) -> None:
         self.log("Processing collector...")
-        batch_status = close_info.status
-        preprocessor = self.get_preprocessor(close_info.collector_type)
-        url_infos = preprocessor.preprocess(close_info.data)
+        preprocessor = self.preprocessor()
+        url_infos = preprocessor.preprocess(self.data)
         self.log(f"URLs processed: {len(url_infos)}")
 
         self.log("Inserting URLs...")
-        insert_urls_info: InsertURLsInfo = db_client.insert_urls(
+        insert_urls_info: InsertURLsInfo = self.db_client.insert_urls(
             url_infos=url_infos,
-            batch_id=close_info.batch_id
+            batch_id=self.batch_id
         )
         self.log("Updating batch...")
-        db_client.update_batch_post_collection(
-            batch_id=close_info.batch_id,
+        self.db_client.update_batch_post_collection(
+            batch_id=self.batch_id,
             total_url_count=insert_urls_info.total_count,
             duplicate_url_count=insert_urls_info.duplicate_count,
             original_url_count=insert_urls_info.original_count,
-            batch_status=batch_status,
-            compute_time=close_info.compute_time
+            batch_status=self.status,
+            compute_time=self.compute_time
         )
         self.log("Done processing collector.")
 
@@ -103,41 +95,30 @@ class CollectorBase(ABC):
             self.start_timer()
             self.run_implementation()
             self.stop_timer()
-            self.status = BatchStatus.COMPLETE
             self.log("Collector completed successfully.")
-            self.process(
-                close_info=self.close()
-            )
+            self.close()
+            self.process()
+        except CollectorAbortException:
+            self.stop_timer()
+            self.status = BatchStatus.ABORTED
         except Exception as e:
             self.stop_timer()
             self.status = BatchStatus.ERROR
             self.handle_error(e)
 
     def log(self, message: str) -> None:
+        if self.abort_ready:
+            raise CollectorAbortException
         self.logger.log(LogInfo(
             batch_id=self.batch_id,
             log=message
         ))
 
-    def abort(self) -> CollectorCloseInfo:
-        self._stop_event.set()
-        self.stop_timer()
-        return CollectorCloseInfo(
-            batch_id=self.batch_id,
-            status=BatchStatus.ABORTED,
-            message="Collector aborted.",
-            compute_time=self.compute_time,
-            collector_type=self.collector_type
-        )
+    def abort(self) -> None:
+        self._stop_event.set()  # Signal the thread to stop
+        self.log("Collector was aborted.")
+        self.abort_ready = True
 
-    def close(self):
-        compute_time = self.compute_time
+    def close(self) -> None:
         self._stop_event.set()
-        return CollectorCloseInfo(
-            batch_id=self.batch_id,
-            status=BatchStatus.COMPLETE,
-            data=self.data,
-            message="Collector closed and data harvested successfully.",
-            compute_time=compute_time,
-            collector_type=self.collector_type
-        )
+        self.status = BatchStatus.COMPLETE

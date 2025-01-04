@@ -6,8 +6,6 @@ from core.preprocessors.PreprocessorBase import PreprocessorBase
 
 
 class ExamplePreprocessor(PreprocessorBase):
-    pass
-
 
     def preprocess(self, data: ExampleOutputDTO) -> List[URLInfo]:
         url_infos = []

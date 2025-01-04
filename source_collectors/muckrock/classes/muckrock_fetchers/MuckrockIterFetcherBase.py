@@ -11,14 +11,15 @@ class MuckrockIterFetcherBase(ABC):
     def __init__(self, initial_request: FetchRequest):
         self.initial_request = initial_request
 
-    def get_response(self, url):
+    def get_response(self, url) -> dict:
+        # TODO: POINT OF MOCK
         response = requests.get(url)
         try:
             response.raise_for_status()
         except requests.exceptions.HTTPError as e:
             print(f"Failed to get records on request `{url}`: {e}")
             raise RequestFailureException
-        return response
+        return response.json()
 
     @abstractmethod
     def process_results(self, results: list[dict]):

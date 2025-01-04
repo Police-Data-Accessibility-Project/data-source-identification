@@ -4,17 +4,17 @@ from psycopg.generators import fetch
 
 from collector_manager.CollectorBase import CollectorBase
 from collector_manager.enums import CollectorType
+from core.preprocessors.MuckrockPreprocessor import MuckrockPreprocessor
+from source_collectors.muckrock.DTOs import MuckrockAllFOIARequestsCollectorInputDTO, \
+    MuckrockCountySearchCollectorInputDTO, MuckrockSimpleSearchCollectorInputDTO
 from source_collectors.muckrock.classes.FOIASearcher import FOIASearcher, SearchCompleteException
 from source_collectors.muckrock.classes.muckrock_fetchers.FOIAFetcher import FOIAFetcher
 from source_collectors.muckrock.classes.muckrock_fetchers.FOIALoopFetcher import FOIALoopFetcher
 from source_collectors.muckrock.classes.fetch_requests.FOIALoopFetchRequest import FOIALoopFetchRequest
 from source_collectors.muckrock.classes.muckrock_fetchers.JurisdictionGeneratorFetcher import \
     JurisdictionGeneratorFetcher
-from source_collectors.muckrock.classes.muckrock_fetchers.JurisdictionLoopFetcher import JurisdictionLoopFetcher
 from source_collectors.muckrock.classes.fetch_requests.JurisdictionLoopFetchRequest import JurisdictionLoopFetchRequest
 from source_collectors.muckrock.classes.muckrock_fetchers.MuckrockFetcher import MuckrockNoMoreDataError
-from source_collectors.muckrock.schemas import SimpleSearchCollectorConfigSchema, MuckrockCollectorOutputSchema, \
-    MuckrockCountyLevelCollectorConfigSchema, MuckrockAllFOIARequestsCollectorConfigSchema
 
 
 class MuckrockSimpleSearchCollector(CollectorBase):
@@ -22,9 +22,8 @@ class MuckrockSimpleSearchCollector(CollectorBase):
     Performs searches on MuckRock's database
     by matching a search string to title of request
     """
-    config_schema = SimpleSearchCollectorConfigSchema
-    output_schema = MuckrockCollectorOutputSchema
     collector_type = CollectorType.MUCKROCK_SIMPLE_SEARCH
+    preprocessor = MuckrockPreprocessor
 
     def check_for_count_break(self, count, max_count) -> None:
         if max_count is None:
@@ -34,11 +33,12 @@ class MuckrockSimpleSearchCollector(CollectorBase):
 
     def run_implementation(self) -> None:
         fetcher = FOIAFetcher()
+        dto: MuckrockSimpleSearchCollectorInputDTO = self.dto
         searcher = FOIASearcher(
             fetcher=fetcher,
-            search_term=self.config["search_string"]
+            search_term=dto.search_string
         )
-        max_count = self.config["max_results"]
+        max_count = dto.max_results
         all_results = []
         results_count = 0
         for search_count in itertools.count():
@@ -70,9 +70,8 @@ class MuckrockCountyLevelSearchCollector(CollectorBase):
     """
     Searches for any and all requests in a certain county
     """
-    config_schema = MuckrockCountyLevelCollectorConfigSchema
-    output_schema = MuckrockCollectorOutputSchema
     collector_type = CollectorType.MUCKROCK_COUNTY_SEARCH
+    preprocessor = MuckrockPreprocessor
 
     def run_implementation(self) -> None:
         jurisdiction_ids = self.get_jurisdiction_ids()
@@ -93,6 +92,7 @@ class MuckrockCountyLevelSearchCollector(CollectorBase):
         return formatted_data
 
     def get_foia_records(self, jurisdiction_ids):
+        # TODO: Mock results here and test separately
         all_data = []
         for name, id_ in jurisdiction_ids.items():
             self.log(f"Fetching records for {name}...")
@@ -103,11 +103,13 @@ class MuckrockCountyLevelSearchCollector(CollectorBase):
         return all_data
 
     def get_jurisdiction_ids(self):
-        parent_jurisdiction_id = self.config["parent_jurisdiction_id"]
+        # TODO: Mock results here and test separately
+        dto: MuckrockCountySearchCollectorInputDTO = self.dto
+        parent_jurisdiction_id = dto.parent_jurisdiction_id
         request = JurisdictionLoopFetchRequest(
             level="l",
             parent=parent_jurisdiction_id,
-            town_names=self.config["town_names"]
+            town_names=dto.town_names
         )
         fetcher = JurisdictionGeneratorFetcher(initial_request=request)
         for message in fetcher.generator_fetch():
@@ -120,22 +122,23 @@ class MuckrockAllFOIARequestsCollector(CollectorBase):
     """
     Retrieves urls associated with all Muckrock FOIA requests
     """
-    config_schema = MuckrockAllFOIARequestsCollectorConfigSchema
-    output_schema = MuckrockCollectorOutputSchema
     collector_type = CollectorType.MUCKROCK_ALL_SEARCH
+    preprocessor = MuckrockPreprocessor
 
     def run_implementation(self) -> None:
-        start_page = self.config["start_page"]
+        dto: MuckrockAllFOIARequestsCollectorInputDTO = self.dto
+        start_page = dto.start_page
         fetcher = FOIAFetcher(
             start_page=start_page,
         )
-        total_pages = self.config["pages"]
+        total_pages = dto.total_pages
         all_page_data = self.get_page_data(fetcher, start_page, total_pages)
         all_transformed_data = self.transform_data(all_page_data)
         self.data = {"urls": all_transformed_data}
 
 
     def get_page_data(self, fetcher, start_page, total_pages):
+        # TODO: Mock results here and test separately
         all_page_data = []
         for page in range(start_page, start_page + total_pages):
             self.log(f"Fetching page {fetcher.current_page}")

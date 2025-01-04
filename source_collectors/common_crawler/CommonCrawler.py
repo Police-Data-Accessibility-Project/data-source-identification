@@ -8,6 +8,60 @@ import requests
 from source_collectors.common_crawler.utils import URLWithParameters
 
 
+def make_request(search_url: URLWithParameters) -> requests.Response:
+    """
+    Makes the HTTP GET request to the given search URL.
+    Return the response if successful, None if rate-limited.
+    """
+    try:
+        response = requests.get(str(search_url))
+        response.raise_for_status()
+        return response
+    except requests.exceptions.RequestException as e:
+        if (
+            response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
+            and "SlowDown" in response.text
+        ):
+            return None
+        else:
+            print(f"Failed to get records: {e}")
+            return None
+
+
+def process_response(
+        response: requests.Response, url: str, page: int
+) -> list[str] or None:
+    """Processes the HTTP response and returns the parsed records if successful."""
+    if response.status_code == HTTPStatus.OK:
+        records = response.text.strip().split("\n")
+        print(f"Found {len(records)} records for {url} on page {page}")
+        results = []
+        for record in records:
+            d = json.loads(record)
+            results.append(d["url"])
+        return results
+    if "First Page is 0, Last Page is 0" in response.text:
+        print("No records exist in index matching the url search term")
+        return None
+    print(f"Unexpected response: {response.status_code}")
+    return None
+
+def get_common_crawl_search_results(
+        search_url: URLWithParameters,
+        query_url: str,
+        page: int
+) -> list[str] or None:
+    response = make_request(search_url)
+    processed_data = process_response(
+        response=response,
+        url=query_url,
+        page=page
+    )
+    # TODO: POINT OF MOCK
+    return processed_data
+
+
+
 class CommonCrawler:
 
     def __init__(
@@ -37,37 +91,37 @@ class CommonCrawler:
     def run(self):
         url_results = []
         for page in range(self.start_page, self.start_page + self.num_pages):
-            # Wait 5 seconds before making the next request, to avoid overloading the server
-            time.sleep(5)
-            records = self.search_common_crawl_index(url=self.url, page=page)
+            urls = self.search_common_crawl_index(query_url=self.url, page=page)
 
             # If records were found, filter them and add to results
-            if not records:
+            if not urls:
                 yield f"No records found for {self.url} on page {page}"
                 continue
 
-            keyword_urls = self.get_urls_with_keyword(records, self.keyword)
+            keyword_urls = self.get_urls_with_keyword(urls, self.keyword)
             url_results.extend(keyword_urls)
 
             yield f"Found {len(keyword_urls)} records for {self.url} on page {page}"
+            # Wait 5 seconds before making the next request, to avoid overloading the server
+            time.sleep(5)
 
         yield f"Found {len(url_results)} total records for {self.url}"
         self.url_results = url_results
 
 
     def search_common_crawl_index(
-        self, url: str, page: int = 0, max_retries: int = 20
-    ) -> list[dict]:
+        self, query_url: str, page: int = 0, max_retries: int = 20
+    ) -> list[str] or None:
         """
         This method is used to search the Common Crawl index for a given URL and page number
         Args:
-            url: a URL to search for
+            query_url: a URL to search for
             page: the page number to search
 
         Returns: A list of records (dictionaries) containing the search results
 
         """
-        encoded_url = quote_plus(url)
+        encoded_url = quote_plus(query_url)
         search_url = URLWithParameters(self.root_url)
         search_url.add_parameter("url", encoded_url)
         search_url.add_parameter("output", "json")
@@ -78,9 +132,10 @@ class CommonCrawler:
 
         # put HTTP GET request in re-try loop in case of rate limiting. Once per second is nice enough per common crawl doc.
         while retries < max_retries:
-            response = self.make_request(search_url)
-            if response:
-                return self.process_response(response, url, page)
+            results = get_common_crawl_search_results(
+                search_url=search_url, query_url=query_url, page=page)
+            if results is not None:
+                return results
 
             retries += 1
             print(
@@ -88,46 +143,12 @@ class CommonCrawler:
             )
             time.sleep(delay)
 
-        print(f"Max retries exceeded. Failed to get records for {url} on page {page}.")
+        print(f"Max retries exceeded. Failed to get records for {query_url} on page {page}.")
         return None
 
-    def make_request(self, search_url: str) -> requests.Response:
-        """
-        Makes the HTTP GET request to the given search URL.
-        Return the response if successful, None if rate-limited.
-        """
-        try:
-            response = requests.get(str(search_url))
-            response.raise_for_status()
-            return response
-        except requests.exceptions.RequestException as e:
-            if (
-                response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
-                and "SlowDown" in response.text
-            ):
-                return None
-            else:
-                print(f"Failed to get records: {e}")
-                return None
-
-    def process_response(
-        self, response: requests.Response, url: str, page: int
-    ) -> list[dict]:
-        """Processes the HTTP response and returns the parsed records if successful."""
-        if response.status_code == HTTPStatus.OK:
-            records = response.text.strip().split("\n")
-            print(f"Found {len(records)} records for {url} on page {page}")
-            return [json.loads(record) for record in records]
-        elif "First Page is 0, Last Page is 0" in response.text:
-            print("No records exist in index matching the url search term")
-            return None
-        else:
-            print(f"Unexpected response: {response.status_code}")
-            return None
-
     @staticmethod
-    def get_urls_with_keyword(records: list[dict], keyword) -> list[str]:
+    def get_urls_with_keyword(urls: list[str], keyword) -> list[str]:
         """
         Returns a list of URLs that contain the given keyword
         """
-        return [record["url"] for record in records if keyword in record["url"]]
+        return [url for url in urls if keyword in url]

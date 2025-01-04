@@ -41,3 +41,6 @@ APScheduler~=3.11.0
 
 # Security Manager
 PyJWT~=2.10.1
+
+# Tests
+pytest-timeout~=2.3.1

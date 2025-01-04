@@ -11,18 +11,17 @@ class MuckrockLoopFetcher(MuckrockIterFetcherBase):
         url = self.build_url(self.initial_request)
         while url is not None:
             try:
-                response = self.get_response(url)
+                data = self.get_response(url)
             except RequestFailureException:
                 break
 
-            url = self.process_data(response)
+            url = self.process_data(data)
             sleep(1)
 
-    def process_data(self, response):
+    def process_data(self, data: dict):
         """
         Process data and get next url, if any
         """
-        data = response.json()
         self.process_results(data["results"])
         self.report_progress()
         url = data["next"]

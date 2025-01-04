@@ -1,3 +1,4 @@
+from source_collectors.auto_googler.DTOs import GoogleSearchQueryResultsInnerDTO
 from source_collectors.auto_googler.GoogleSearcher import GoogleSearcher
 from source_collectors.auto_googler.SearchConfig import SearchConfig
 
@@ -11,7 +12,9 @@ class AutoGoogler:
     def __init__(self, search_config: SearchConfig, google_searcher: GoogleSearcher):
         self.search_config = search_config
         self.google_searcher = google_searcher
-        self.data = {query : [] for query in search_config.queries}
+        self.data: dict[str, list[GoogleSearchQueryResultsInnerDTO]] = {
+            query : [] for query in search_config.queries
+        }
 
     def run(self) -> str:
         """

@@ -21,12 +21,11 @@ class MuckrockGeneratorFetcher(MuckrockIterFetcherBase):
         final_message = "No more records found. Exiting..."
         while url is not None:
             try:
-                response = self.get_response(url)
+                data = self.get_response(url)
             except RequestFailureException:
                 final_message = "Request unexpectedly failed. Exiting..."
                 break
 
-            data = response.json()
             yield self.process_results(data["results"])
             url = data["next"]
 

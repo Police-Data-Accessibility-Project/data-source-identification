@@ -29,7 +29,8 @@ class SourceCollectorCore:
     ):
         self.db_client = db_client
         self.collector_manager = CollectorManager(
-            logger=core_logger
+            logger=core_logger,
+            db_client=db_client
         )
         if not dev_mode:
             self.scheduled_task_manager = ScheduledTaskManager(db_client=db_client)

@@ -14,8 +14,11 @@ from core.SourceCollectorCore import SourceCollectorCore
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Initialize shared dependencies
+    db_client = DatabaseClient()
     source_collector_core = SourceCollectorCore(
-        core_logger=CoreLogger(),
+        core_logger=CoreLogger(
+            db_client=db_client
+        ),
         db_client=DatabaseClient(),
     )
 

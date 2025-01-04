@@ -16,14 +16,14 @@ class FOIASearcher:
         self.fetcher = fetcher
         self.search_term = search_term
 
-    def fetch_page(self) -> dict | None:
+    def fetch_page(self) -> list[dict] | None:
         """
         Fetches the next page of results using the fetcher.
         """
         data = self.fetcher.fetch_next_page()
         if data is None or data.get("results") is None:
             return None
-        return data
+        return data.get("results")
 
     def filter_results(self, results: list[dict]) -> list[dict]:
         """
@@ -64,8 +64,8 @@ class FOIASearcher:
         """
         Fetches and processes the next page of results.
         """
-        data = self.fetch_page()
-        if not data:
+        results = self.fetch_page()
+        if not results:
             raise SearchCompleteException
-        return self.filter_results(data["results"])
+        return self.filter_results(results)
 
