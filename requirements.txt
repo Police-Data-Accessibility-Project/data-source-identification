@@ -9,16 +9,7 @@ urllib3~=1.26.18
 psycopg2-binary~=2.9.6
 # common_crawler only
 huggingface-hub~=0.22.2
-# openai-playground only
-openai>=1.14.2
-# hugging_face only
-torch>=2.2.0
-evaluate>=0.4.1
-transformers>=4.38.0
-datasets>=2.17.1
-accelerate>=0.27.2
-numpy>=1.26.4
-multimodal-transformers>=0.3.1
+
 # html_tag_collector_only
 requests_html>=0.10.0
 lxml~=5.1.0
