@@ -81,7 +81,3 @@ def test_example_collector_lifecycle_multiple_batches(test_core: SourceCollector
 
     for csi in csis:
         assert core.get_status(csi.batch_id) == BatchStatus.COMPLETE
-
-
-
-

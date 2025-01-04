@@ -43,7 +43,6 @@ class CollectorBase(ABC):
         self.raise_error = raise_error
         # # TODO: Determine how to update this in some of the other collectors
         self._stop_event = threading.Event()
-        self.abort_ready = False
 
     @abc.abstractmethod
     def run_implementation(self) -> None:
@@ -68,17 +67,17 @@ class CollectorBase(ABC):
         self.log(f"Error: {e}")
 
     def process(self) -> None:
-        self.log("Processing collector...")
+        self.log("Processing collector...", allow_abort=False)
         preprocessor = self.preprocessor()
         url_infos = preprocessor.preprocess(self.data)
-        self.log(f"URLs processed: {len(url_infos)}")
+        self.log(f"URLs processed: {len(url_infos)}", allow_abort=False)
 
-        self.log("Inserting URLs...")
+        self.log("Inserting URLs...", allow_abort=False)
         insert_urls_info: InsertURLsInfo = self.db_client.insert_urls(
             url_infos=url_infos,
             batch_id=self.batch_id
         )
-        self.log("Updating batch...")
+        self.log("Updating batch...", allow_abort=False)
         self.db_client.update_batch_post_collection(
             batch_id=self.batch_id,
             total_url_count=insert_urls_info.total_count,
@@ -87,7 +86,7 @@ class CollectorBase(ABC):
             batch_status=self.status,
             compute_time=self.compute_time
         )
-        self.log("Done processing collector.")
+        self.log("Done processing collector.", allow_abort=False)
 
 
     def run(self) -> None:
@@ -101,13 +100,21 @@ class CollectorBase(ABC):
         except CollectorAbortException:
             self.stop_timer()
             self.status = BatchStatus.ABORTED
+            self.db_client.update_batch_post_collection(
+                batch_id=self.batch_id,
+                batch_status=BatchStatus.ABORTED,
+                compute_time=self.compute_time,
+                total_url_count=0,
+                original_url_count=0,
+                duplicate_url_count=0
+            )
         except Exception as e:
             self.stop_timer()
             self.status = BatchStatus.ERROR
             self.handle_error(e)
 
-    def log(self, message: str) -> None:
-        if self.abort_ready:
+    def log(self, message: str, allow_abort = True) -> None:
+        if self._stop_event.is_set() and allow_abort:
             raise CollectorAbortException
         self.logger.log(LogInfo(
             batch_id=self.batch_id,
@@ -116,8 +123,7 @@ class CollectorBase(ABC):
 
     def abort(self) -> None:
         self._stop_event.set()  # Signal the thread to stop
-        self.log("Collector was aborted.")
-        self.abort_ready = True
+        self.log("Collector was aborted.", allow_abort=False)
 
     def close(self) -> None:
         self._stop_event.set()

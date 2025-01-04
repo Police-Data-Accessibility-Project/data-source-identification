@@ -11,6 +11,7 @@ from core.DTOs.GetBatchStatusResponse import GetBatchStatusResponse
 from core.DTOs.GetDuplicatesByBatchResponse import GetDuplicatesByBatchResponse
 from core.DTOs.GetURLsByBatchResponse import GetURLsByBatchResponse
 from core.DTOs.LabelStudioExportResponseInfo import LabelStudioExportResponseInfo
+from core.DTOs.MessageResponse import MessageResponse
 
 
 class ExpectedResponseInfo(BaseModel):
@@ -146,3 +147,9 @@ class RequestValidator:
             url=f"/label-studio/export-batch/{batch_id}"
         )
         return LabelStudioExportResponseInfo(**data)
+
+    def abort_batch(self, batch_id: int) -> MessageResponse:
+        data = self.post(
+            url=f"/batch/{batch_id}/abort"
+        )
+        return MessageResponse(**data)

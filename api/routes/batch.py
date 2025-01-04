@@ -10,6 +10,7 @@ from core.DTOs.GetBatchLogsResponse import GetBatchLogsResponse
 from core.DTOs.GetBatchStatusResponse import GetBatchStatusResponse
 from core.DTOs.GetDuplicatesByBatchResponse import GetDuplicatesByBatchResponse
 from core.DTOs.GetURLsByBatchResponse import GetURLsByBatchResponse
+from core.DTOs.MessageResponse import MessageResponse
 from core.SourceCollectorCore import SourceCollectorCore
 from core.enums import BatchStatus
 from security_manager.SecurityManager import AccessInfo, get_access_info
@@ -79,3 +80,11 @@ def get_batch_logs(
     Note that for later batches, the logs may not be available.
     """
     return core.get_batch_logs(batch_id)
+
+@batch_router.post("/{batch_id}/abort")
+def abort_batch(
+        batch_id: int = Path(description="The batch id"),
+        core: SourceCollectorCore = Depends(get_core),
+        access_info: AccessInfo = Depends(get_access_info),
+) -> MessageResponse:
+    return core.abort_batch(batch_id)

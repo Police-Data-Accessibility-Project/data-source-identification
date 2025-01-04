@@ -13,6 +13,7 @@ from core.DTOs.GetBatchStatusResponse import GetBatchStatusResponse
 from core.DTOs.GetDuplicatesByBatchResponse import GetDuplicatesByBatchResponse
 from core.DTOs.GetURLsByBatchResponse import GetURLsByBatchResponse
 from core.DTOs.LabelStudioExportResponseInfo import LabelStudioExportResponseInfo
+from core.DTOs.MessageResponse import MessageResponse
 from core.ScheduledTaskManager import ScheduledTaskManager
 from core.enums import BatchStatus
 from label_studio_interface.DTOs.LabelStudioTaskExportInfo import LabelStudioTaskExportInfo
@@ -28,6 +29,7 @@ class SourceCollectorCore:
         dev_mode: bool = False
     ):
         self.db_client = db_client
+        self.core_logger = core_logger
         self.collector_manager = CollectorManager(
             logger=core_logger,
             db_client=db_client
@@ -110,6 +112,10 @@ class SourceCollectorCore:
             label_studio_import_id=import_id,
             num_urls_imported=url_count
         )
+
+    def abort_batch(self, batch_id: int) -> MessageResponse:
+        self.collector_manager.abort_collector(cid=batch_id)
+        return MessageResponse(message=f"Batch aborted.")
 
 
     def shutdown(self):
