@@ -15,4 +15,4 @@ jobs:
                   compose-file: "docker-compose-test.yml"
             - name: Execute tests in the running service
               run: |
-                  docker exec app pytest /app/tests/test_automated
+                  docker exec data-source-identification-app-1 pytest /app/tests/test_automated
