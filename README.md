@@ -33,6 +33,14 @@ Thank you for your interest in contributing to this project! Please follow these
 - If you want to work on something, create an issue first so the broader community can discuss it.
 - If you make a utility, script, app, or other useful bit of code: put it in a top-level directory with an appropriate name and dedicated README and add it to the index.
 
+# Testing
+
+Tests can be run by spinning up the `docker-compose-test.yml` file in the root directory. This will start a two-container setup, consisting of the FastAPI Web App and a clean Postgres Database. To run tests on the container, run:
+
+```bash
+docker compose up -d
+docker exec data-source-identification-app-1 pytest /app/tests/test_automated
+```
 
 # Diagrams
 

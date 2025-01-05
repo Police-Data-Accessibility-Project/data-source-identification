@@ -12,7 +12,7 @@ jobs:
             - name: Run docker-compose
               uses: hoverkraft-tech/compose-action@v2.0.1
               with:
-                  compose-file: "docker-compose-test.yml"
+                  compose-file: "docker-compose.yml"
             - name: Execute tests in the running service
               run: |
                   docker exec data-source-identification-app-1 pytest /app/tests/test_automated
