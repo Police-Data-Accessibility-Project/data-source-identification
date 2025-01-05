@@ -12,7 +12,10 @@ services:
       - POSTGRES_USER=test_source_collector_user
       - POSTGRES_PASSWORD=HanviliciousHamiltonHilltops
       - POSTGRES_DB=source_collector_test_db
-      - POSTGRES_HOST=host.docker.internal
+#     For local development
+#      - POSTGRES_HOST=host.docker.internal
+#     For GitHub Actions
+      - POSTGRES_HOST=172.17.0.1
       - POSTGRES_PORT=5432
     depends_on:
       - test_db
