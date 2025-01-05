@@ -1,0 +1,25 @@
+# This is the docker-compose file for running the API in test mode
+# It will spin up both the Fast API and the test database
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - POSTGRES_USER=test_source_collector_user
+      - POSTGRES_PASSWORD=HanviliciousHamiltonHilltops
+      - POSTGRES_DB=source_collector_test_db
+      - POSTGRES_HOST=host.docker.internal
+      - POSTGRES_PORT=5432
+    depends_on:
+      - test_db
+
+  test_db:
+    extends:
+      file: local_database/docker-compose.yml
+      service: postgres
+volumes:
+  dbscripts:

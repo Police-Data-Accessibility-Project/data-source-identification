@@ -1,3 +1,6 @@
+# This is the docker compose file for creating
+#  a local database for testing
+
 services:
   postgres:
     image: postgres:15
