@@ -4,7 +4,7 @@ from collector_db.DTOs.InsertURLsInfo import InsertURLsInfo
 from core.DTOs.LabelStudioExportResponseInfo import LabelStudioExportResponseInfo
 from label_studio_interface.DTOs.LabelStudioTaskExportInfo import LabelStudioTaskExportInfo
 from label_studio_interface.LabelStudioAPIManager import LabelStudioAPIManager
-from test_automated.integration.api.conftest import APITestHelper
+from tests.test_automated.integration.api.conftest import APITestHelper
 
 
 def test_export_batch_to_label_studio(

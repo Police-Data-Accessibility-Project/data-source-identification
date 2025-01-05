@@ -1,5 +1,3 @@
-from collector_db.DatabaseClient import DatabaseClient
-from core.CoreLogger import CoreLogger
 from core.SourceCollectorCore import SourceCollectorCore
 
 

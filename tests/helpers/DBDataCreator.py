@@ -6,7 +6,7 @@ from collector_db.DTOs.InsertURLsInfo import InsertURLsInfo
 from collector_db.DTOs.URLInfo import URLInfo
 from collector_db.DatabaseClient import DatabaseClient
 from core.enums import BatchStatus
-from helpers.simple_test_data_functions import generate_test_urls
+from tests.helpers.simple_test_data_functions import generate_test_urls
 
 
 class DBDataCreator:
