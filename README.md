@@ -42,6 +42,8 @@ docker compose up -d
 docker exec data-source-identification-app-1 pytest /app/tests/test_automated
 ```
 
+Be sure to inspect the `docker-compose.yml` file in the root directory -- some environment variables are dependant upon the Operating System you are using.
+
 # Diagrams
 
 ## Identification pipeline plan
