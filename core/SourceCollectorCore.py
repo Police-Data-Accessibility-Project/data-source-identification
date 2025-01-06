@@ -55,12 +55,12 @@ class SourceCollectorCore:
             self,
             collector_type: Optional[CollectorType],
             status: Optional[BatchStatus],
-            limit: int
+            page: int
     ) -> GetBatchStatusResponse:
         results = self.db_client.get_recent_batch_status_info(
             collector_type=collector_type,
             status=status,
-            limit=limit
+            page=page
         )
         return GetBatchStatusResponse(results=results)
 

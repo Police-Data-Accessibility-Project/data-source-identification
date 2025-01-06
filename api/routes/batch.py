@@ -32,9 +32,9 @@ def get_batch_status(
             description="Filter by status",
             default=None
         ),
-        limit: int = Query(
-            description="The number of results to return",
-            default=10
+        page: int = Query(
+            description="The page number",
+            default=1
         ),
         core: SourceCollectorCore = Depends(get_core),
         access_info: AccessInfo = Depends(get_access_info),
@@ -42,7 +42,7 @@ def get_batch_status(
     """
     Get the status of recent batches
     """
-    return core.get_batch_statuses(collector_type=collector_type, status=status, limit=limit)
+    return core.get_batch_statuses(collector_type=collector_type, status=status, page=page)
 
 
 @batch_router.get("/{batch_id}")

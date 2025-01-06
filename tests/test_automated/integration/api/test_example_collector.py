@@ -29,7 +29,7 @@ def test_example_collector(api_test_helper):
     bsi: BatchStatusInfo = bsr.results[0]
 
     assert bsi.id == batch_id
-    assert bsi.strategy == CollectorType.EXAMPLE
+    assert bsi.strategy == CollectorType.EXAMPLE.value
     assert bsi.status == BatchStatus.IN_PROCESS
 
     time.sleep(2)
@@ -40,7 +40,7 @@ def test_example_collector(api_test_helper):
     bsi: BatchStatusInfo = csr.results[0]
 
     assert bsi.id == batch_id
-    assert bsi.strategy == CollectorType.EXAMPLE
+    assert bsi.strategy == CollectorType.EXAMPLE.value
     assert bsi.status == BatchStatus.COMPLETE
 
     bi: BatchInfo = ath.request_validator.get_batch_info(batch_id=batch_id)

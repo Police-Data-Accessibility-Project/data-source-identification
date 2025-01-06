@@ -7,6 +7,7 @@ from core.enums import BatchStatus
 
 
 class BatchInfo(BaseModel):
+    id: Optional[int] = None
     strategy: str
     status: BatchStatus
     parameters: dict

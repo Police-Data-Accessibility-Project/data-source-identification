@@ -207,19 +207,22 @@ class DatabaseClient:
     def get_recent_batch_status_info(
         self,
         session,
-        limit: int,
+        page: int,
         collector_type: Optional[CollectorType] = None,
         status: Optional[BatchStatus] = None,
-    ) -> List[BatchStatusInfo]:
+    ) -> List[BatchInfo]:
         # Get only the batch_id, collector_type, status, and created_at
-        query = session.query(Batch).order_by(Batch.date_generated.desc()).limit(limit)
-        query = query.with_entities(Batch.id, Batch.strategy, Batch.status, Batch.date_generated)
+        limit = 100
+        query = (session.query(Batch)
+                 .order_by(Batch.date_generated.desc())
+                 .limit(limit)
+                 .offset((page - 1) * limit))
         if collector_type:
             query = query.filter(Batch.strategy == collector_type.value)
         if status:
             query = query.filter(Batch.status == status.value)
         batches = query.all()
-        return [BatchStatusInfo(**self.row_to_dict(batch)) for batch in batches]
+        return [BatchInfo(**batch.__dict__) for batch in batches]
 
     @session_manager
     def get_duplicates_by_batch_id(self, session, batch_id: int, page: int) -> List[DuplicateInfo]:

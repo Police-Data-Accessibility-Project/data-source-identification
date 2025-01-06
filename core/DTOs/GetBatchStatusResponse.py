@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 
-from core.DTOs.BatchStatusInfo import BatchStatusInfo
+from collector_db.DTOs.BatchInfo import BatchInfo
 
 
 class GetBatchStatusResponse(BaseModel):
-    results: list[BatchStatusInfo]
+    results: list[BatchInfo]
