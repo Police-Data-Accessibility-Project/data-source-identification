@@ -45,6 +45,8 @@ docker compose up -d
 
 Note that while the container may mention the web app running on `0.0.0.0:8000`, the actual host may be `127.0.0.1:8000`.
 
+To access the API documentation, visit `http://{host}:8000/docs`.
+
 To run tests on the container, run:
 
 ```bash
