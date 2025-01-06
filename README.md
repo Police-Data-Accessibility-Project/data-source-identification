@@ -45,6 +45,12 @@ This can be done via the following command:
 docker compose up -d
 ```
 
+Following that, you will need to set up the uvicorn server using the following command:
+
+```bash
+docker exec data-source-identification-app-1 uvicorn api.main:app --host 0.0.0.0 --port 80
+```
+
 Note that while the container may mention the web app running on `0.0.0.0:8000`, the actual host may be `127.0.0.1:8000`.
 
 To access the API documentation, visit `http://{host}:8000/docs`.
