@@ -18,3 +18,8 @@ def get_from_env(key: str):
 
 def base_model_list_dump(model_list: list[BaseModel]) -> list[dict]:
     return [model.model_dump() for model in model_list]
+
+def update_if_not_none(target: dict, source: dict):
+    for key, value in source.items():
+        if value is not None:
+            target[key] = value

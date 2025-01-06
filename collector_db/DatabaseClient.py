@@ -214,13 +214,13 @@ class DatabaseClient:
         # Get only the batch_id, collector_type, status, and created_at
         limit = 100
         query = (session.query(Batch)
-                 .order_by(Batch.date_generated.desc())
-                 .limit(limit)
-                 .offset((page - 1) * limit))
+                 .order_by(Batch.date_generated.desc()))
         if collector_type:
             query = query.filter(Batch.strategy == collector_type.value)
         if status:
             query = query.filter(Batch.status == status.value)
+        query = (query.limit(limit)
+                 .offset((page - 1) * limit))
         batches = query.all()
         return [BatchInfo(**batch.__dict__) for batch in batches]
 
