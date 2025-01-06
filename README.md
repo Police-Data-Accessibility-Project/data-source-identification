@@ -43,6 +43,8 @@ This can be done via the following command:
 docker compose up -d
 ```
 
+Note that while the container may mention the web app running on `0.0.0.0:8000`, the actual host may be `127.0.0.1:8000`.
+
 To run tests on the container, run:
 
 ```bash
