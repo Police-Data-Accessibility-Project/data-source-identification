@@ -35,6 +35,8 @@ Thank you for your interest in contributing to this project! Please follow these
 
 # Testing
 
+Note that prior to running tests, you need to install [Docker](https://docs.docker.com/get-started/get-docker/) and have the Docker engine running.
+
 Tests can be run by spinning up the `docker-compose-test.yml` file in the root directory. This will start a two-container setup, consisting of the FastAPI Web App and a clean Postgres Database. 
 
 This can be done via the following command:

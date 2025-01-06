@@ -7,15 +7,15 @@ services:
       context: .
       dockerfile: Dockerfile
     ports:
-      - "8000:8000"
+      - "8000:80"
     environment:
       - POSTGRES_USER=test_source_collector_user
       - POSTGRES_PASSWORD=HanviliciousHamiltonHilltops
       - POSTGRES_DB=source_collector_test_db
 #     For local development in non-Linux environment
-#      - POSTGRES_HOST=host.docker.internal
+      - POSTGRES_HOST=host.docker.internal
 #     For GitHub Actions (which use Linux Docker
-      - POSTGRES_HOST=172.17.0.1
+#      - POSTGRES_HOST=172.17.0.1
       - POSTGRES_PORT=5432
       - GOOGLE_API_KEY=TEST
       - GOOGLE_CSE_ID=TEST
