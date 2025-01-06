@@ -1,0 +1,18 @@
+# This workflow will test the Source Collector App
+# Utilizing the docker-compose file in the root directory
+name: Test Source Collector App
+on: pull_request
+
+jobs:
+    build:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v4
+            - name: Run docker-compose
+              uses: hoverkraft-tech/compose-action@v2.0.1
+              with:
+                  compose-file: "docker-compose.yml"
+            - name: Execute tests in the running service
+              run: |
+                  docker exec data-source-identification-app-1 pytest /app/tests/test_automated

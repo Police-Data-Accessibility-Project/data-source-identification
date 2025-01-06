@@ -56,8 +56,6 @@ pip install -r requirements.txt
 
 ### 2. Clone Muckrock database & search locally
 
-~~- `download_muckrock_foia.py` `search_local_foia_json.py`~~ (deprecated)
-
 - scripts to clone the MuckRock foia requests collection for fast local querying (total size <2GB at present)
 
 - `create_foia_data_db.py` creates and populates a SQLite database (`foia_data.db`) with all MuckRock foia requests. Various errors outside the scope of this script may occur; a counter (`last_page_fetched.txt`) is created to keep track of the most recent page fetched and inserted into the database. If the program exits prematurely, simply run `create_foia_data_db.py` again to continue where you left off. A log file is created to capture errors for later reference.

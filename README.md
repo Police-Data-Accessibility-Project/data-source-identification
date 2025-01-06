@@ -14,6 +14,9 @@ openai-playground | Scripts for accessing the openai API on PDAP's shared accoun
 source_collectors| Tools for extracting metadata from different sources, including CKAN data portals and Common Crawler
 collector_db | Database for storing data from source collectors
 collector_manager | A module which provides a unified interface for interacting with source collectors and relevant data
+core | A module which integrates other components, such as collector_manager and collector_db
+api | API for interacting with collector_manager, core, and collector_db
+local_database | Resources for setting up a test database for local development
 
 ## How to use
 
@@ -30,6 +33,29 @@ Thank you for your interest in contributing to this project! Please follow these
 - If you want to work on something, create an issue first so the broader community can discuss it.
 - If you make a utility, script, app, or other useful bit of code: put it in a top-level directory with an appropriate name and dedicated README and add it to the index.
 
+# Testing
+
+Note that prior to running tests, you need to install [Docker](https://docs.docker.com/get-started/get-docker/) and have the Docker engine running.
+
+Tests can be run by spinning up the `docker-compose-test.yml` file in the root directory. This will start a two-container setup, consisting of the FastAPI Web App and a clean Postgres Database. 
+
+This can be done via the following command:
+
+```bash
+docker compose up -d
+```
+
+Note that while the container may mention the web app running on `0.0.0.0:8000`, the actual host may be `127.0.0.1:8000`.
+
+To access the API documentation, visit `http://{host}:8000/docs`.
+
+To run tests on the container, run:
+
+```bash
+docker exec data-source-identification-app-1 pytest /app/tests/test_automated
+```
+
+Be sure to inspect the `docker-compose.yml` file in the root directory -- some environment variables are dependant upon the Operating System you are using.
 
 # Diagrams
 
