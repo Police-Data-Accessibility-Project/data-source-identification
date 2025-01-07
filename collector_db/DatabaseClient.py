@@ -1,6 +1,8 @@
 from datetime import datetime, timedelta
 from functools import wraps
 
+from alembic import command
+from alembic.config import Config
 from sqlalchemy import create_engine, Row
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import sessionmaker, scoped_session, aliased
@@ -32,9 +34,15 @@ class DatabaseClient:
             url=db_url,
             echo=ConfigManager.get_sqlalchemy_echo(),
         )
-        Base.metadata.create_all(self.engine)
         self.session_maker = scoped_session(sessionmaker(bind=self.engine))
         self.session = None
+
+    def init_db(self):
+        Base.metadata.create_all(self.engine)
+
+    def apply_migrations(self):
+        alembic_config = Config("alembic.ini")
+        command.upgrade(alembic_config, "head")
 
     def session_manager(method):
         @wraps(method)
