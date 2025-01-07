@@ -18,7 +18,7 @@ class CKANSchema(Schema):
     source_last_updated = fields.String()
 
 
-def test_ckan_collector():
+def test_ckan_collector_default():
     collector = CKANCollector(
         batch_id=1,
         dto=CKANInputDTO(
@@ -32,6 +32,48 @@ def test_ckan_collector():
         db_client=MagicMock(spec=DatabaseClient),
         raise_error=True
 
+    )
+    collector.run()
+    schema = CKANSchema(many=True)
+    schema.load(collector.data["results"])
+
+def test_ckan_collector_custom():
+    collector = CKANCollector(
+        batch_id=1,
+        dto=CKANInputDTO(
+            **{
+              "package_search": [
+                {
+                  "url": "https://catalog.data.gov/",
+                  "terms": [
+                    "police",
+                    "crime",
+                    "tags:(court courts court-cases criminal-justice-system law-enforcement law-enforcement-agencies)"
+                  ]
+                }
+              ],
+              "group_search": [
+                {
+                  "url": "https://catalog.data.gov/",
+                  "ids": [
+                    "3c648d96-0a29-4deb-aa96-150117119a23",
+                    "92654c61-3a7d-484f-a146-257c0f6c55aa"
+                  ]
+                }
+              ],
+              "organization_search": [
+                {
+                  "url": "https://data.houstontx.gov/",
+                  "ids": [
+                    "https://data.houstontx.gov/"
+                  ]
+                }
+              ]
+            }
+        ),
+        logger=MagicMock(spec=CoreLogger),
+        db_client=MagicMock(spec=DatabaseClient),
+        raise_error=True
     )
     collector.run()
     schema = CKANSchema(many=True)
