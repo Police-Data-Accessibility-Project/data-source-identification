@@ -1,7 +1,9 @@
 import time
+from unittest.mock import MagicMock
 
 from collector_db.DTOs.BatchInfo import BatchInfo
 from collector_manager.DTOs.ExampleInputDTO import ExampleInputDTO
+from collector_manager.ExampleCollector import ExampleCollector
 from collector_manager.enums import CollectorType
 from core.DTOs.BatchStatusInfo import BatchStatusInfo
 from core.DTOs.GetBatchLogsResponse import GetBatchLogsResponse
@@ -57,6 +59,41 @@ def test_example_collector(api_test_helper):
 
 
     assert len(lr.logs) > 0
+
+def test_example_collector_error(api_test_helper, monkeypatch):
+    """
+    Test that when an error occurs in a collector, the batch is properly update
+    """
+    ath = api_test_helper
+
+    # Patch the collector to raise an exception during run_implementation
+    mock = MagicMock()
+    mock.side_effect = Exception("Collector failed!")
+    monkeypatch.setattr(ExampleCollector, 'run_implementation', mock)
+
+    dto = ExampleInputDTO(
+            sleep_time=1
+    )
+
+    data = ath.request_validator.example_collector(
+        dto=dto
+    )
+    batch_id = data["batch_id"]
+    assert batch_id is not None
+    assert data["message"] == "Started example_collector collector."
+
+    time.sleep(1)
+
+    bi: BatchInfo = ath.request_validator.get_batch_info(batch_id=batch_id)
+
+    assert bi.status == BatchStatus.ERROR
+
+
+    ath.core.core_logger.flush_all()
+
+    gbl: GetBatchLogsResponse = ath.request_validator.get_batch_logs(batch_id=batch_id)
+    assert gbl.logs[-1].log == "Error: Collector failed!"
+
 
 
 
