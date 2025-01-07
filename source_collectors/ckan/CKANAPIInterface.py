@@ -20,7 +20,11 @@ class CKANAPIInterface:
         return self.remote.action.package_search(q=query, rows=rows, start=start, **kwargs)
 
     def get_organization(self, organization_id: str):
-        return self.remote.action.organization_show(id=organization_id, include_datasets=True)
+        try:
+            return self.remote.action.organization_show(id=organization_id, include_datasets=True)
+        except NotFound as e:
+            raise CKANAPIError(f"Organization {organization_id} not found"
+                               f" for url {self.base_url}. Original error: {e}")
 
     def get_group_package(self, group_package_id: str, limit: Optional[int]):
         try:
