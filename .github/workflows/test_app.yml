@@ -45,7 +45,7 @@ jobs:
           pytest tests/test_automated
         env:
           POSTGRES_PASSWORD: postgres
-          POSTGRES_USER: test_source_collector_user
-          POSTGRES_DB: source_collector_test_db
+          POSTGRES_USER: postgres
+          POSTGRES_DB: postgres
           POSTGRES_HOST: postgres
           POSTGRES_PORT: 5432
