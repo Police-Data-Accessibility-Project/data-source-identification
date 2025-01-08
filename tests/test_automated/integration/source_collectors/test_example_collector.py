@@ -14,7 +14,7 @@ def test_live_example_collector_abort(test_core: SourceCollectorCore):
     core = test_core
     db_client = core.db_client
 
-    db_client.insert_batch(
+    batch_id = db_client.insert_batch(
         BatchInfo(
             strategy="example",
             status=BatchStatus.IN_PROCESS,
@@ -29,7 +29,7 @@ def test_live_example_collector_abort(test_core: SourceCollectorCore):
     )
 
     collector = ExampleCollector(
-        batch_id=1,
+        batch_id=batch_id,
         dto=dto,
         logger=core.core_logger,
         db_client=db_client,
@@ -43,5 +43,5 @@ def test_live_example_collector_abort(test_core: SourceCollectorCore):
     thread.join()
 
 
-    assert db_client.get_batch_status(1) == BatchStatus.ABORTED
+    assert db_client.get_batch_status(batch_id) == BatchStatus.ABORTED
 

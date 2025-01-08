@@ -64,13 +64,11 @@ def alembic_runner(connection, alembic_config) -> AlembicRunner:
         connection=connection,
         session=scoped_session(sessionmaker(bind=connection)),
     )
-    try:
-        runner.downgrade("base")
-    except Exception as e:
-        # Drop tables and stamp base revision
-        Base.metadata.drop_all(connection)
-        runner.stamp("base")
+    Base.metadata.drop_all(connection)
+    connection.commit()
+    runner.stamp("base")
     yield runner
+    runner.upgrade("head")
 
 
 

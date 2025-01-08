@@ -92,6 +92,6 @@ class CoreLogger:
         Stops the logger gracefully and flushes any remaining logs.
         """
         self.stop_event.set()
-        if self.flush_future and not self.flush_future.done():
-            self.flush_future.result(timeout=10)
+        # if self.flush_future and not self.flush_future.done():
+        self.flush_future.result(timeout=10)
         self.flush_all()  # Flush remaining logs
