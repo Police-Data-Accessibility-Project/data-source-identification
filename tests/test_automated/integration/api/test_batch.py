@@ -32,7 +32,7 @@ def test_get_batch_urls(api_test_helper):
     batch_id = ath.db_data_creator.batch()
     iui: InsertURLsInfo = ath.db_data_creator.urls(batch_id=batch_id, url_count=101)
 
-    response = ath.request_validator.get_batch_urls(batch_id=1, page=1)
+    response = ath.request_validator.get_batch_urls(batch_id=batch_id, page=1)
     assert len(response.urls) == 100
     # Check that the first url corresponds to the first url inserted
     assert response.urls[0].url == iui.url_mappings[0].url
@@ -41,7 +41,7 @@ def test_get_batch_urls(api_test_helper):
 
 
     # Check that a more limited set of urls exist
-    response = ath.request_validator.get_batch_urls(batch_id=1, page=2)
+    response = ath.request_validator.get_batch_urls(batch_id=batch_id, page=2)
     assert len(response.urls) == 1
     # Check that this url corresponds to the last url inserted
     assert response.urls[0].url == iui.url_mappings[-1].url

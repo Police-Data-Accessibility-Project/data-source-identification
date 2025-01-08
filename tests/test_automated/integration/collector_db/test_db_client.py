@@ -39,16 +39,12 @@ def test_insert_urls(db_client_test):
         batch_id=batch_id
     )
 
-    assert insert_urls_info.url_mappings == [
-        URLMapping(
-            url="https://example.com/1",
-            url_id=1
-        ),
-        URLMapping(
-            url="https://example.com/2",
-            url_id=2
-        )
-    ]
+    url_mappings = insert_urls_info.url_mappings
+    assert len(url_mappings) == 2
+    assert url_mappings[0].url == "https://example.com/1"
+    assert url_mappings[1].url == "https://example.com/2"
+
+
     assert insert_urls_info.original_count == 2
     assert insert_urls_info.duplicate_count == 1
 
@@ -81,10 +77,11 @@ def test_delete_old_logs(db_data_creator: DBDataCreator):
     for i in range(3):
         log_infos.append(LogInfo(log="test log", batch_id=batch_id, created_at=old_datetime))
     db_client.insert_logs(log_infos=log_infos)
-    assert len(db_client.get_all_logs()) == 3
+    logs = db_client.get_logs_by_batch_id(batch_id=batch_id)
+    assert len(logs) == 3
     db_client.delete_old_logs()
 
-    logs = db_client.get_all_logs()
+    logs = db_client.get_logs_by_batch_id(batch_id=batch_id)
     assert len(logs) == 0
 
 def test_delete_url_updated_at(db_data_creator: DBDataCreator):

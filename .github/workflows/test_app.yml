@@ -3,16 +3,52 @@
 name: Test Source Collector App
 on: pull_request
 
+#jobs:
+#    build:
+#        runs-on: ubuntu-latest
+#        steps:
+#            - name: Checkout repository
+#              uses: actions/checkout@v4
+#            - name: Run docker-compose
+#              uses: hoverkraft-tech/compose-action@v2.0.1
+#              with:
+#                  compose-file: "docker-compose.yml"
+#            - name: Execute tests in the running service
+#              run: |
+#                  docker ps -a && docker exec data-source-identification-app-1 pytest /app/tests/test_automated
+
 jobs:
-    build:
-        runs-on: ubuntu-latest
-        steps:
-            - name: Checkout repository
-              uses: actions/checkout@v4
-            - name: Run docker-compose
-              uses: hoverkraft-tech/compose-action@v2.0.1
-              with:
-                  compose-file: "docker-compose.yml"
-            - name: Execute tests in the running service
-              run: |
-                  docker ps -a && docker exec data-source-identification-app-1 pytest /app/tests/test_automated
+  container-job:
+    runs-on: ubuntu-latest
+    container: python:3.12.8
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      - name: Run tests
+        run: |
+          pytest tests/test_automated
+          pytest tests/test_alembic
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+          POSTGRES_DB: postgres
+          POSTGRES_HOST: postgres
+          POSTGRES_PORT: 5432
+          GOOGLE_API_KEY: TEST
+          GOOGLE_CSE_ID: TEST
