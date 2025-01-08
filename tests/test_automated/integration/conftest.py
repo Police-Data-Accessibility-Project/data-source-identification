@@ -22,6 +22,7 @@ def setup_and_teardown():
         get_postgres_connection_string()
     )
     command.upgrade(alembic_cfg, "head")
+    engine.dispose()
     yield
 
 @pytest.fixture
@@ -49,7 +50,6 @@ def db_client_test() -> DatabaseClient:
 
     db_client = DatabaseClient(db_url=conn)
     yield db_client
-    db_client.engine.connect().commit()
     db_client.engine.dispose()
 
 @pytest.fixture
