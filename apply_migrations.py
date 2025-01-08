@@ -1,7 +1,7 @@
 from alembic import command
 from alembic.config import Config
 
-from ..helper_functions import get_postgres_connection_string
+from collector_db.helper_functions import get_postgres_connection_string
 
 if __name__ == "__main__":
     print("Applying migrations...")
