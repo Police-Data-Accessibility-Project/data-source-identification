@@ -15,11 +15,14 @@ from core.SourceCollectorCore import SourceCollectorCore
 @pytest.fixture
 def db_client_test() -> DatabaseClient:
     conn = get_postgres_connection_string()
+    db_client = DatabaseClient(db_url=conn)
     alembic_cfg = Config("alembic.ini")
     alembic_cfg.set_main_option(
         "sqlalchemy.url",
         get_postgres_connection_string()
     )
+    Base.metadata.drop_all(db_client.engine)
+    command.stamp(alembic_cfg, "base")
 
     engine = create_engine(conn)
 
