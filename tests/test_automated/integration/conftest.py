@@ -21,6 +21,7 @@ def setup_and_teardown():
         "sqlalchemy.url",
         get_postgres_connection_string()
     )
+    command.stamp(alembic_cfg, "base")
 
     command.upgrade(alembic_cfg, "head")
     yield
