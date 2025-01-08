@@ -49,6 +49,7 @@ def db_client_test() -> DatabaseClient:
 
     db_client = DatabaseClient(db_url=conn)
     yield db_client
+    db_client.engine.connect().commit()
     db_client.engine.dispose()
 
 @pytest.fixture
