@@ -13,3 +13,5 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Expose the application port
 EXPOSE 80
+
+RUN chmod +x execute.sh
