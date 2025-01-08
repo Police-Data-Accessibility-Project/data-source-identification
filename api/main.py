@@ -42,7 +42,7 @@ async def setup_database(db_client):
         get_from_env("DEV")
         db_client.init_db()
     except Exception as e:
-        db_client.apply_migrations()
+        return
 
 
 app = FastAPI(
