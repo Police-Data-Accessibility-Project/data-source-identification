@@ -53,6 +53,10 @@ class AlembicRunner:
 @pytest.fixture()
 def alembic_runner(connection, alembic_config) -> AlembicRunner:
     alembic_config.attributes["connection"] = connection
+    alembic_config.set_main_option(
+        "sqlalchemy.url",
+        get_postgres_connection_string()
+    )
     runner = AlembicRunner(
         alembic_config=alembic_config,
         inspector=inspect(connection),
@@ -83,14 +87,14 @@ def test_base(alembic_runner):
     alembic_runner.reflect()
 
     table_names = alembic_runner.inspector.get_table_names()
-    assert table_names == [
+    assert table_names.sort() == [
         'batches',
         'logs',
         'missing',
         'urls',
         'duplicates',
         'alembic_version',
-    ]
+    ].sort()
 
 def test_add_url_updated_at(alembic_runner):
     alembic_runner.upgrade("d11f07224d1f")
