@@ -15,7 +15,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 EXPOSE 80
 
 # Run Alembic migrations
-CMD ["alembic", "upgrade", "head"]
+CMD ["python", "collector_db/alembic/apply_migrations.py"]
 
 ## Run FastAPI app with uvicorn
 #CMD ["uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "80"]
