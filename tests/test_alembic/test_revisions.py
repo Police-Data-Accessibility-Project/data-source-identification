@@ -4,6 +4,7 @@ from dataclasses import dataclass
 import pytest
 from alembic import command
 from alembic.config import Config
+
 from sqlalchemy import create_engine, Inspector, inspect, MetaData, Connection, Engine
 from sqlalchemy.orm import Session, sessionmaker, scoped_session
 

@@ -11,6 +11,19 @@ from tests.helpers.DBDataCreator import DBDataCreator
 from collector_db.DatabaseClient import DatabaseClient
 from core.SourceCollectorCore import SourceCollectorCore
 
+@pytest.fixture(autouse=True, scope="session")
+def setup_and_teardown():
+    conn = get_postgres_connection_string()
+    engine = create_engine(conn)
+    alembic_cfg = Config("alembic.ini")
+    alembic_cfg.attributes["connection"] = engine.connect()
+    alembic_cfg.set_main_option(
+        "sqlalchemy.url",
+        get_postgres_connection_string()
+    )
+
+    command.upgrade(alembic_cfg, "head")
+    yield
 
 @pytest.fixture
 def db_client_test() -> DatabaseClient:
@@ -22,18 +35,18 @@ def db_client_test() -> DatabaseClient:
             connection.execute(table.delete())
         connection.commit()
 
-    # # Run alembic to set at base
-    alembic_cfg = Config("alembic.ini")
-    alembic_cfg.attributes["connection"] = engine.connect()
-    alembic_cfg.set_main_option(
-        "sqlalchemy.url",
-        get_postgres_connection_string()
-    )
-    # command.stamp(alembic_cfg, "base")
-
-
-    # Then upgrade to head
-    command.upgrade(alembic_cfg, "head")
+    # # # Run alembic to set at base
+    # alembic_cfg = Config("alembic.ini")
+    # alembic_cfg.attributes["connection"] = engine.connect()
+    # alembic_cfg.set_main_option(
+    #     "sqlalchemy.url",
+    #     get_postgres_connection_string()
+    # )
+    # # command.stamp(alembic_cfg, "base")
+    #
+    #
+    # # Then upgrade to head
+    # command.upgrade(alembic_cfg, "head")
 
     db_client = DatabaseClient(db_url=conn)
     yield db_client
