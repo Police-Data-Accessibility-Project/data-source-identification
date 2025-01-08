@@ -1,8 +1,6 @@
 from datetime import datetime, timedelta
 from functools import wraps
 
-from alembic import command
-from alembic.config import Config
 from sqlalchemy import create_engine, Row
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import sessionmaker, scoped_session, aliased
@@ -18,7 +16,6 @@ from collector_db.DTOs.URLInfo import URLInfo
 from collector_db.helper_functions import get_postgres_connection_string
 from collector_db.models import Base, Batch, URL, Log, Duplicate
 from collector_manager.enums import CollectorType
-from core.DTOs.BatchStatusInfo import BatchStatusInfo
 from core.enums import BatchStatus
 
 
@@ -39,10 +36,6 @@ class DatabaseClient:
 
     def init_db(self):
         Base.metadata.create_all(self.engine)
-
-    def apply_migrations(self):
-        alembic_config = Config("alembic.ini")
-        command.upgrade(alembic_config, "head")
 
     def session_manager(method):
         @wraps(method)
@@ -281,6 +274,11 @@ class DatabaseClient:
         session.query(Log).filter(
             Log.created_at < datetime.now() - timedelta(days=1)
         ).delete()
+
+    @session_manager
+    def update_url(self, session, url_info: URLInfo):
+        url = session.query(URL).filter_by(id=url_info.id).first()
+        url.url_metadata = url_info.url_metadata
 
 if __name__ == "__main__":
     client = DatabaseClient()
