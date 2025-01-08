@@ -53,6 +53,10 @@ class AlembicRunner:
 @pytest.fixture()
 def alembic_runner(connection, alembic_config) -> AlembicRunner:
     alembic_config.attributes["connection"] = connection
+    alembic_config.set_main_option(
+        "sqlalchemy.url",
+        get_postgres_connection_string()
+    )
     runner = AlembicRunner(
         alembic_config=alembic_config,
         inspector=inspect(connection),
