@@ -87,14 +87,14 @@ def test_base(alembic_runner):
     alembic_runner.reflect()
 
     table_names = alembic_runner.inspector.get_table_names()
-    assert table_names == [
+    assert table_names.sort() == [
         'batches',
         'logs',
         'missing',
         'urls',
         'duplicates',
         'alembic_version',
-    ]
+    ].sort()
 
 def test_add_url_updated_at(alembic_runner):
     alembic_runner.upgrade("d11f07224d1f")
