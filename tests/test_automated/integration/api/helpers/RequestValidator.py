@@ -6,12 +6,15 @@ from starlette.testclient import TestClient
 
 from collector_db.DTOs.BatchInfo import BatchInfo
 from collector_manager.DTOs.ExampleInputDTO import ExampleInputDTO
+from collector_manager.enums import CollectorType
 from core.DTOs.GetBatchLogsResponse import GetBatchLogsResponse
 from core.DTOs.GetBatchStatusResponse import GetBatchStatusResponse
 from core.DTOs.GetDuplicatesByBatchResponse import GetDuplicatesByBatchResponse
 from core.DTOs.GetURLsByBatchResponse import GetURLsByBatchResponse
 from core.DTOs.LabelStudioExportResponseInfo import LabelStudioExportResponseInfo
 from core.DTOs.MessageResponse import MessageResponse
+from core.enums import BatchStatus
+from util.helper_functions import update_if_not_none
 
 
 class ExpectedResponseInfo(BaseModel):
@@ -105,9 +108,18 @@ class RequestValidator:
             expected_response=expected_response,
             **kwargs)
 
-    def get_batch_statuses(self) -> GetBatchStatusResponse:
+    def get_batch_statuses(self, collector_type: Optional[CollectorType] = None, status: Optional[BatchStatus] = None) -> GetBatchStatusResponse:
+        params = {}
+        update_if_not_none(
+            target=params,
+            source={
+                "collector_type": collector_type.value if collector_type else None,
+                "status": status.value if status else None
+            }
+        )
         data = self.get(
-            url=f"/batch"
+            url=f"/batch",
+            params=params
         )
         return GetBatchStatusResponse(**data)
 

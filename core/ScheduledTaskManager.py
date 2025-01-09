@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
@@ -26,7 +26,7 @@ class ScheduledTaskManager:
             self.db_client.delete_old_logs,
             trigger=IntervalTrigger(
                 days=1,
-                start_date=datetime.now()
+                start_date=datetime.now() + timedelta(minutes=10)
             )
         )
 

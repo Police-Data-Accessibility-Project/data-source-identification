@@ -6,6 +6,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    command: pytest /app/tests/test_automated
     ports:
       - "8000:80"
     environment:
@@ -14,7 +15,7 @@ services:
       - POSTGRES_DB=source_collector_test_db
 #     For local development in non-Linux environment
 #      - POSTGRES_HOST=host.docker.internal
-#     For GitHub Actions (which use Linux Docker
+#     For GitHub Actions (which use Linux Docker)
       - POSTGRES_HOST=172.17.0.1
       - POSTGRES_PORT=5432
       - GOOGLE_API_KEY=TEST

@@ -24,6 +24,8 @@ def perform_search(
 
     :param search_func: The search function to execute.
     :param search_terms: The list of urls and search terms.
+        In the package search template, this is "url", "terms"
+        In the group and organization search template, this is "url", "ids"
     :param results: The list of results.
     :return: Updated list of results.
     """

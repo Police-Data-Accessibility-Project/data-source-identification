@@ -63,6 +63,7 @@ class URL(Base):
     # The outcome of the URL: submitted, human_labeling, rejected, duplicate, etc.
     outcome = Column(String)
     created_at = Column(TIMESTAMP, nullable=False, server_default=CURRENT_TIME_SERVER_DEFAULT)
+    updated_at = Column(TIMESTAMP, nullable=False, server_default=CURRENT_TIME_SERVER_DEFAULT)
 
     batch = relationship("Batch", back_populates="urls")
     duplicates = relationship("Duplicate", back_populates="original_url")

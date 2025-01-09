@@ -65,6 +65,14 @@ class CollectorBase(ABC):
         if self.raise_error:
             raise e
         self.log(f"Error: {e}")
+        self.db_client.update_batch_post_collection(
+            batch_id=self.batch_id,
+            batch_status=self.status,
+            compute_time=self.compute_time,
+            total_url_count=0,
+            original_url_count=0,
+            duplicate_url_count=0
+        )
 
     def process(self) -> None:
         self.log("Processing collector...", allow_abort=False)

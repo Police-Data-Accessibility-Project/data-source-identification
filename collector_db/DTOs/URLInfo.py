@@ -1,3 +1,4 @@
+import datetime
 from typing import Optional
 
 from pydantic import BaseModel
@@ -11,3 +12,4 @@ class URLInfo(BaseModel):
     url: str
     url_metadata: Optional[dict] = None
     outcome: URLOutcome = URLOutcome.PENDING
+    updated_at: Optional[datetime.datetime] = None

@@ -9,12 +9,14 @@ from api.routes.root import root_router
 from collector_db.DatabaseClient import DatabaseClient
 from core.CoreLogger import CoreLogger
 from core.SourceCollectorCore import SourceCollectorCore
+from util.helper_functions import get_from_env
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Initialize shared dependencies
     db_client = DatabaseClient()
+    await setup_database(db_client)
     source_collector_core = SourceCollectorCore(
         core_logger=CoreLogger(
             db_client=db_client
@@ -32,6 +34,15 @@ async def lifespan(app: FastAPI):
     app.state.core.shutdown()
     # Clean up resources, close connections, etc.
     pass
+
+
+async def setup_database(db_client):
+    # Initialize database if dev environment, otherwise apply migrations
+    try:
+        get_from_env("DEV")
+        db_client.init_db()
+    except Exception as e:
+        return
 
 
 app = FastAPI(

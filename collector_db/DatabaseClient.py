@@ -16,7 +16,6 @@ from collector_db.DTOs.URLInfo import URLInfo
 from collector_db.helper_functions import get_postgres_connection_string
 from collector_db.models import Base, Batch, URL, Log, Duplicate
 from collector_manager.enums import CollectorType
-from core.DTOs.BatchStatusInfo import BatchStatusInfo
 from core.enums import BatchStatus
 
 
@@ -32,9 +31,11 @@ class DatabaseClient:
             url=db_url,
             echo=ConfigManager.get_sqlalchemy_echo(),
         )
-        Base.metadata.create_all(self.engine)
         self.session_maker = scoped_session(sessionmaker(bind=self.engine))
         self.session = None
+
+    def init_db(self):
+        Base.metadata.create_all(self.engine)
 
     def session_manager(method):
         @wraps(method)
@@ -214,13 +215,13 @@ class DatabaseClient:
         # Get only the batch_id, collector_type, status, and created_at
         limit = 100
         query = (session.query(Batch)
-                 .order_by(Batch.date_generated.desc())
-                 .limit(limit)
-                 .offset((page - 1) * limit))
+                 .order_by(Batch.date_generated.desc()))
         if collector_type:
             query = query.filter(Batch.strategy == collector_type.value)
         if status:
             query = query.filter(Batch.status == status.value)
+        query = (query.limit(limit)
+                 .offset((page - 1) * limit))
         batches = query.all()
         return [BatchInfo(**batch.__dict__) for batch in batches]
 
@@ -273,6 +274,11 @@ class DatabaseClient:
         session.query(Log).filter(
             Log.created_at < datetime.now() - timedelta(days=1)
         ).delete()
+
+    @session_manager
+    def update_url(self, session, url_info: URLInfo):
+        url = session.query(URL).filter_by(id=url_info.id).first()
+        url.url_metadata = url_info.url_metadata
 
 if __name__ == "__main__":
     client = DatabaseClient()
