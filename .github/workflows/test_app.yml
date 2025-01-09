@@ -43,6 +43,7 @@ jobs:
       - name: Run tests
         run: |
           pytest tests/test_automated
+          pytest tests/test_alembic
         env:
           POSTGRES_PASSWORD: postgres
           POSTGRES_USER: postgres
