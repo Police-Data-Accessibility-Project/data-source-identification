@@ -54,9 +54,9 @@ def test_ckan_collector(mock_ckan_collector_methods):
     assert len(url_infos) == 2560
     first_url_info = url_infos[0]
     assert first_url_info.url == 'https://catalog.data.gov/dataset/crash-reporting-drivers-data'
-    assert first_url_info.url_metadata['submitted_name'] == 'Crash Reporting - Drivers Data'
+    assert first_url_info.collector_metadata['submitted_name'] == 'Crash Reporting - Drivers Data'
 
     last_url_info = url_infos[-1]
     assert last_url_info.url == 'https://data.houstontx.gov/dataset/houston-police-department-crime-statistics'
-    assert last_url_info.url_metadata["description"] == 'Multiple datasets related to Houston Police Department Crime Stats'
+    assert last_url_info.collector_metadata["description"] == 'Multiple datasets related to Houston Police Department Crime Stats'
 

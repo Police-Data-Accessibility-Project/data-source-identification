@@ -13,7 +13,7 @@ class AutoGooglerPreprocessor(PreprocessorBase):
         for qr in query_results:
             url_infos.append(URLInfo(
                 url=qr["url"],
-                url_metadata={
+                collector_metadata={
                     "query": query,
                     "snippet": qr["snippet"],
                     "title": qr["title"]

@@ -23,7 +23,7 @@ def test_insert_urls(db_client_test):
     urls = [
         URLInfo(
             url="https://example.com/1",
-            url_metadata={"name": "example_1"},
+            collector_metadata={"name": "example_1"},
         ),
         URLInfo(
             url="https://example.com/2",
@@ -31,7 +31,7 @@ def test_insert_urls(db_client_test):
         # Duplicate
         URLInfo(
             url="https://example.com/1",
-            url_metadata={"name": "example_duplicate"},
+            collector_metadata={"name": "example_duplicate"},
         )
     ]
     insert_urls_info = db_client_test.insert_urls(
@@ -98,7 +98,7 @@ def test_delete_url_updated_at(db_data_creator: DBDataCreator):
         url_info=URLInfo(
             id=url_id,
             url="dg",
-            url_metadata={"test_metadata": "test_metadata"},
+            collector_metadata={"test_metadata": "test_metadata"},
         )
     )
 

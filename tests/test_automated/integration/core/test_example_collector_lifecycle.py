@@ -27,7 +27,7 @@ def test_example_collector_lifecycle(test_core: SourceCollectorCore):
         dto=dto,
         user_id=1
     )
-    assert csi.message == "Started example_collector collector."
+    assert csi.message == "Started example collector."
     assert csi.batch_id is not None
 
     batch_id = csi.batch_id
@@ -39,7 +39,7 @@ def test_example_collector_lifecycle(test_core: SourceCollectorCore):
     assert core.get_status(batch_id) == BatchStatus.COMPLETE
 
     batch_info: BatchInfo = db_client.get_batch_by_id(batch_id)
-    assert batch_info.strategy == "example_collector"
+    assert batch_info.strategy == "example"
     assert batch_info.status == BatchStatus.COMPLETE
     assert batch_info.total_url_count == 2
     assert batch_info.parameters == dto.model_dump()

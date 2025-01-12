@@ -1,7 +1,7 @@
 from enum import Enum
 
 class CollectorType(Enum):
-    EXAMPLE = "example_collector"
+    EXAMPLE = "example"
     AUTO_GOOGLER = "auto_googler"
     COMMON_CRAWLER = "common_crawler"
     MUCKROCK_SIMPLE_SEARCH = "muckrock_simple_search"

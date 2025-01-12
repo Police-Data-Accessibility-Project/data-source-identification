@@ -5,6 +5,7 @@ from collector_db.DTOs.DuplicateInfo import DuplicateInfo, DuplicateInsertInfo
 from collector_db.DTOs.InsertURLsInfo import InsertURLsInfo
 from collector_db.DTOs.URLInfo import URLInfo
 from collector_db.DatabaseClient import DatabaseClient
+from collector_manager.enums import CollectorType
 from core.enums import BatchStatus
 from tests.helpers.simple_test_data_functions import generate_test_urls
 
@@ -19,7 +20,7 @@ class DBDataCreator:
     def batch(self):
         return self.db_client.insert_batch(
             BatchInfo(
-                strategy="test_batch",
+                strategy=CollectorType.EXAMPLE.value,
                 status=BatchStatus.IN_PROCESS,
                 total_url_count=1,
                 parameters={"test_key": "test_value"},

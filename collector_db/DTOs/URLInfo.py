@@ -10,6 +10,6 @@ class URLInfo(BaseModel):
     id: Optional[int] = None
     batch_id: Optional[int] = None
     url: str
-    url_metadata: Optional[dict] = None
+    collector_metadata: Optional[dict] = None
     outcome: URLOutcome = URLOutcome.PENDING
     updated_at: Optional[datetime.datetime] = None

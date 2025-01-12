@@ -14,7 +14,7 @@ class CKANPreprocessor:
             entry["source_last_updated"] = entry["source_last_updated"].strftime("%Y-%m-%d") if isinstance(entry["source_last_updated"], datetime) else entry["source_last_updated"]
             url_info = URLInfo(
                 url=url,
-                url_metadata=entry,
+                collector_metadata=entry,
             )
             url_infos.append(url_info)
         return url_infos

@@ -150,7 +150,7 @@ class DatabaseClient:
         url_entry = URL(
             batch_id=url_info.batch_id,
             url=url_info.url,
-            url_metadata=url_info.url_metadata,
+            collector_metadata=url_info.collector_metadata,
             outcome=url_info.outcome.value
         )
         session.add(url_entry)
@@ -278,7 +278,7 @@ class DatabaseClient:
     @session_manager
     def update_url(self, session, url_info: URLInfo):
         url = session.query(URL).filter_by(id=url_info.id).first()
-        url.url_metadata = url_info.url_metadata
+        url.collector_metadata = url_info.collector_metadata
 
 if __name__ == "__main__":
     client = DatabaseClient()

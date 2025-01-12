@@ -55,11 +55,11 @@ def test_muckrock_simple_collector(patch_muckrock_fetcher):
         url_infos=[
             URLInfo(
                 url='https://include.com/1',
-                url_metadata={'absolute_url': 'https://include.com/1', 'title': 'keyword'},
+                collector_metadata={'absolute_url': 'https://include.com/1', 'title': 'keyword'},
             ),
             URLInfo(
                 url='https://include.com/2',
-                url_metadata={'absolute_url': 'https://include.com/2', 'title': 'keyword'},
+                collector_metadata={'absolute_url': 'https://include.com/2', 'title': 'keyword'},
             )
         ],
         batch_id=1
@@ -110,15 +110,15 @@ def test_muckrock_county_search_collector(patch_muckrock_county_level_search_col
         url_infos=[
             URLInfo(
                 url='https://include.com/1',
-                url_metadata={'absolute_url': 'https://include.com/1', 'title': 'keyword'},
+                collector_metadata={'absolute_url': 'https://include.com/1', 'title': 'keyword'},
             ),
             URLInfo(
                 url='https://include.com/2',
-                url_metadata={'absolute_url': 'https://include.com/2', 'title': 'keyword'},
+                collector_metadata={'absolute_url': 'https://include.com/2', 'title': 'keyword'},
             ),
             URLInfo(
                 url='https://include.com/3',
-                url_metadata={'absolute_url': 'https://include.com/3', 'title': 'lemon'},
+                collector_metadata={'absolute_url': 'https://include.com/3', 'title': 'lemon'},
             ),
         ],
         batch_id=1
@@ -177,15 +177,15 @@ def test_muckrock_all_foia_requests_collector(patch_muckrock_full_search_collect
         url_infos=[
             URLInfo(
                 url='https://include.com/1',
-                url_metadata={'absolute_url': 'https://include.com/1', 'title': 'keyword'},
+                collector_metadata={'absolute_url': 'https://include.com/1', 'title': 'keyword'},
             ),
             URLInfo(
                 url='https://include.com/2',
-                url_metadata={'absolute_url': 'https://include.com/2', 'title': 'keyword'},
+                collector_metadata={'absolute_url': 'https://include.com/2', 'title': 'keyword'},
             ),
             URLInfo(
                 url='https://include.com/3',
-                url_metadata={'absolute_url': 'https://include.com/3', 'title': 'lemon'},
+                collector_metadata={'absolute_url': 'https://include.com/3', 'title': 'lemon'},
             ),
         ],
         batch_id=1

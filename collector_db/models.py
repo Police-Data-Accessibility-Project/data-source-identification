@@ -1,12 +1,14 @@
 """
 SQLAlchemy ORM models
 """
-from sqlalchemy import func, Column, Integer, String, CheckConstraint, TIMESTAMP, Float, JSON, ForeignKey, Text
+from sqlalchemy import func, Column, Integer, String, CheckConstraint, TIMESTAMP, Float, JSON, ForeignKey, Text, Enum, \
+    UniqueConstraint
+from sqlalchemy.dialects import postgresql
 from sqlalchemy.orm import declarative_base, relationship
 
 from core.enums import BatchStatus
 from util.helper_functions import get_enum_values
-
+from enum import Enum as PyEnum
 # Base class for SQLAlchemy ORM models
 Base = declarative_base()
 
@@ -19,10 +21,19 @@ class Batch(Base):
     __tablename__ = 'batches'
 
     id = Column(Integer, primary_key=True)
-    strategy = Column(String, nullable=False)
+    strategy = Column(
+        postgresql.ENUM(
+            'example', 'ckan', 'muckrock_county_search', 'auto_googler', 'muckrock_all_search', 'muckrock_simple_search', 'common_crawler',
+            name='batch_strategy'),
+        nullable=False)
     user_id = Column(Integer, nullable=False)
     # Gives the status of the batch
-    status = Column(String, CheckConstraint(f"status IN ({status_check_string})"), nullable=False)
+    status = Column(
+        postgresql.ENUM(
+            'complete', 'error', 'in-process', 'aborted',
+            name='batch_status'),
+        nullable=False
+    )
     # The number of URLs in the batch
     # TODO: Add means to update after execution
     total_url_count = Column(Integer, nullable=False)
@@ -58,17 +69,64 @@ class URL(Base):
     # The batch this URL is associated with
     batch_id = Column(Integer, ForeignKey('batches.id'), nullable=False)
     url = Column(Text, unique=True)
-    # The metadata associated with the URL
-    url_metadata = Column(JSON)
+    # The metadata from the collector
+    collector_metadata = Column(JSON)
     # The outcome of the URL: submitted, human_labeling, rejected, duplicate, etc.
-    outcome = Column(String)
+    outcome = Column(
+        postgresql.ENUM('pending', 'submitted', 'human_labeling', 'rejected', 'duplicate', name='url_outcome'),
+        nullable=False
+    )
     created_at = Column(TIMESTAMP, nullable=False, server_default=CURRENT_TIME_SERVER_DEFAULT)
     updated_at = Column(TIMESTAMP, nullable=False, server_default=CURRENT_TIME_SERVER_DEFAULT)
 
     batch = relationship("Batch", back_populates="urls")
     duplicates = relationship("Duplicate", back_populates="original_url")
+    url_metadata = relationship("URLMetadata", back_populates="url", cascade="all, delete-orphan")
 
 
+class URLAttributeType(PyEnum):
+    RECORD_TYPE = "record_type"
+    AGENCY = "agency"
+    RELEVANT = "relevant"
+
+class ValidationStatus(PyEnum):
+    PENDING_LABEL_STUDIO = "Pending Label Studio"
+    VALIDATED = "Validated"
+
+class ValidationSource(PyEnum):
+    MACHINE_LEARNING = "Machine Learning"
+    LABEL_STUDIO = "Label Studio"
+    MANUAL = "Manual"
+
+# URL Metadata table definition
+class URLMetadata(Base):
+    __tablename__ = 'url_metadata'
+    __table_args__ = (UniqueConstraint(
+        "url_id",
+        "attribute",
+        name="model_num2_key"),
+    )
+
+    id = Column(Integer, primary_key=True)
+    url_id = Column(Integer, ForeignKey('urls.id'), nullable=False)
+    attribute = Column(
+        postgresql.ENUM('Record Type', 'Agency', 'Relevant', name='url_attribute'),
+        nullable=False)
+    value = Column(Text, nullable=False)
+    validation_status = Column(
+        postgresql.ENUM('Pending Label Studio', 'Validated', name='validation_status'),
+        nullable=False)
+    validation_source = Column(
+        postgresql.ENUM('Machine Learning', 'Label Studio', 'Manual', name='validation_source'),
+        nullable=False
+    )
+
+    # Timestamps
+    created_at = Column(TIMESTAMP, nullable=False, server_default=func.now())
+    updated_at = Column(TIMESTAMP, nullable=False, server_default=func.now(), onupdate=func.now())
+
+    # Relationships
+    url = relationship("URL", back_populates="url_metadata")
 
 
 class Duplicate(Base):

@@ -37,8 +37,8 @@ def test_auto_googler_collector_lifecycle(test_core):
 
     url_infos = db_client.get_urls_by_batch(1)
     assert len(url_infos) == 20
-    q1_urls = [url_info.url for url_info in url_infos if url_info.url_metadata["query"] == "Disco Elysium"]
-    q2_urls = [url_info.url for url_info in url_infos if url_info.url_metadata["query"] == "Dune"]
+    q1_urls = [url_info.url for url_info in url_infos if url_info.collector_metadata["query"] == "Disco Elysium"]
+    q2_urls = [url_info.url for url_info in url_infos if url_info.collector_metadata["query"] == "Dune"]
 
     assert len(q1_urls) == len(q2_urls) == 10
 

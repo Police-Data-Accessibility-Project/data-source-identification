@@ -11,7 +11,7 @@ class MuckrockPreprocessor(PreprocessorBase):
         for entry in data["urls"]:
             url_info = URLInfo(
                 url=entry["url"],
-                url_metadata=entry["metadata"],
+                collector_metadata=entry["metadata"],
             )
             url_infos.append(url_info)
 
