@@ -12,6 +12,7 @@ from core.DTOs.GetBatchStatusResponse import GetBatchStatusResponse
 from core.DTOs.GetDuplicatesByBatchResponse import GetDuplicatesByBatchResponse
 from core.DTOs.GetURLsByBatchResponse import GetURLsByBatchResponse
 from core.DTOs.LabelStudioExportResponseInfo import LabelStudioExportResponseInfo
+from core.DTOs.MessageCountResponse import MessageCountResponse
 from core.DTOs.MessageResponse import MessageResponse
 from core.enums import BatchStatus
 from util.helper_functions import update_if_not_none
@@ -167,4 +168,10 @@ class RequestValidator:
             url=f"/batch/{batch_id}/abort"
         )
         return MessageResponse(**data)
+
+    def process_relevancy(self) -> MessageCountResponse:
+        data = self.post(
+            url=f"process/relevancy"
+        )
+        return MessageCountResponse(**data)
 

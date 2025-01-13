@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from typing import Generator
+from unittest.mock import MagicMock
 
 import pytest
 from starlette.testclient import TestClient
@@ -16,6 +17,8 @@ class APITestHelper:
     request_validator: RequestValidator
     core: SourceCollectorCore
     db_data_creator: DBDataCreator
+    mock_huggingface_interface: MagicMock
+    mock_label_studio_interface: MagicMock
 
 
 
@@ -32,7 +35,8 @@ def client(db_client_test) -> Generator[TestClient, None, None]:
         core.shutdown()
 
 @pytest.fixture
-def api_test_helper(client: TestClient, db_data_creator) -> APITestHelper:
+def api_test_helper(client: TestClient, db_data_creator, monkeypatch) -> APITestHelper:
+
     return APITestHelper(
         request_validator=RequestValidator(client=client),
         core=client.app.state.core,
