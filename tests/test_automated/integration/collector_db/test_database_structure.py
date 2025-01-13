@@ -54,8 +54,8 @@ from sqlalchemy.exc import DataError
 
 from collector_db.DTOs.InsertURLsInfo import InsertURLsInfo
 from collector_db.helper_functions import get_postgres_connection_string
-from collector_db.models import Base
-from collector_manager.enums import CollectorType, URLOutcome
+from collector_db.models import Base, URLHTMLContentType
+from collector_manager.enums import CollectorType, URLStatus
 from core.enums import BatchStatus
 from helpers.DBDataCreator import DBDataCreator
 from util.helper_functions import get_enum_values
@@ -261,7 +261,7 @@ def test_url(db_data_creator: DBDataCreator):
             ColumnTester(
                 column_name="outcome",
                 type_=postgresql.ENUM,
-                allowed_values=get_enum_values(URLOutcome)
+                allowed_values=get_enum_values(URLStatus)
             )
         ],
         engine=db_data_creator.db_client.engine
@@ -301,6 +301,60 @@ def test_url_metadata(db_data_creator: DBDataCreator):
                 column_name="validation_source",
                 type_=postgresql.ENUM,
                 allowed_values=["Machine Learning", "Label Studio", "Manual"]
+            )
+        ],
+        engine=db_data_creator.db_client.engine
+    )
+
+    table_tester.run_column_tests()
+
+def test_html_content(db_data_creator: DBDataCreator):
+    batch_id = db_data_creator.batch()
+    iui: InsertURLsInfo = db_data_creator.urls(batch_id=batch_id, url_count=1)
+
+    table_tester = TableTester(
+        table_name="url_html_content",
+        columns=[
+            ColumnTester(
+                column_name="url_id",
+                type_=sa.Integer,
+                allowed_values=[iui.url_mappings[0].url_id]
+            ),
+            ColumnTester(
+                column_name="content_type",
+                type_=postgresql.ENUM,
+                allowed_values=get_enum_values(URLHTMLContentType)
+            ),
+            ColumnTester(
+                column_name="content",
+                type_=sa.Text,
+                allowed_values=["Text"]
+            )
+        ],
+        engine=db_data_creator.db_client.engine
+    )
+
+    table_tester.run_column_tests()
+
+def test_root_url(db_data_creator: DBDataCreator):
+
+    table_tester = TableTester(
+        table_name="root_urls",
+        columns=[
+            ColumnTester(
+                column_name="url",
+                type_=sa.String,
+                allowed_values=["https://example.com"]
+            ),
+            ColumnTester(
+                column_name="page_title",
+                type_=sa.String,
+                allowed_values=["Text"]
+            ),
+            ColumnTester(
+                column_name="page_description",
+                type_=sa.String,
+                allowed_values=["Text"]
             )
         ],
         engine=db_data_creator.db_client.engine
