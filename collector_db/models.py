@@ -67,7 +67,7 @@ class URL(Base):
 
     id = Column(Integer, primary_key=True)
     # The batch this URL is associated with
-    batch_id = Column(Integer, ForeignKey('batches.id'), nullable=False)
+    batch_id = Column(Integer, ForeignKey('batches.id', name='fk_url_batch_id'), nullable=False)
     url = Column(Text, unique=True)
     # The metadata from the collector
     collector_metadata = Column(JSON)
