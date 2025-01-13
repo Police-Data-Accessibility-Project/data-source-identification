@@ -2,7 +2,7 @@
 SQLAlchemy ORM models
 """
 from sqlalchemy import func, Column, Integer, String, CheckConstraint, TIMESTAMP, Float, JSON, ForeignKey, Text, Enum, \
-    UniqueConstraint
+    UniqueConstraint, TypeDecorator
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.orm import declarative_base, relationship
 
@@ -16,6 +16,14 @@ status_check_string = ", ".join([f"'{status}'" for status in get_enum_values(Bat
 
 CURRENT_TIME_SERVER_DEFAULT = func.now()
 
+class PGEnum(TypeDecorator):
+    impl = postgresql.ENUM
+
+    def process_bind_param(self, value: PyEnum, dialect):
+        # Convert Python Enum to its value before binding to the DB
+        if isinstance(value, PyEnum):
+            return value.value
+        return value
 
 class Batch(Base):
     __tablename__ = 'batches'
@@ -56,6 +64,7 @@ class Batch(Base):
     # The parameters used to generate the batch
     parameters = Column(JSON)
 
+    # Relationships
     urls = relationship("URL", back_populates="batch")
     missings = relationship("Missing", back_populates="batch")
     logs = relationship("Log", back_populates="batch")
@@ -79,15 +88,17 @@ class URL(Base):
     created_at = Column(TIMESTAMP, nullable=False, server_default=CURRENT_TIME_SERVER_DEFAULT)
     updated_at = Column(TIMESTAMP, nullable=False, server_default=CURRENT_TIME_SERVER_DEFAULT)
 
+    # Relationships
     batch = relationship("Batch", back_populates="urls")
     duplicates = relationship("Duplicate", back_populates="original_url")
     url_metadata = relationship("URLMetadata", back_populates="url", cascade="all, delete-orphan")
+    html_content = relationship("URLHTMLContent", back_populates="url", cascade="all, delete-orphan")
 
 
 class URLAttributeType(PyEnum):
-    RECORD_TYPE = "record_type"
-    AGENCY = "agency"
-    RELEVANT = "relevant"
+    RECORD_TYPE = "Record Type"
+    AGENCY = "Agency"
+    RELEVANT = "Relevant"
 
 class ValidationStatus(PyEnum):
     PENDING_LABEL_STUDIO = "Pending Label Studio"
@@ -110,14 +121,14 @@ class URLMetadata(Base):
     id = Column(Integer, primary_key=True)
     url_id = Column(Integer, ForeignKey('urls.id'), nullable=False)
     attribute = Column(
-        postgresql.ENUM('Record Type', 'Agency', 'Relevant', name='url_attribute'),
+        PGEnum('Record Type', 'Agency', 'Relevant', name='url_attribute'),
         nullable=False)
     value = Column(Text, nullable=False)
     validation_status = Column(
-        postgresql.ENUM('Pending Label Studio', 'Validated', name='validation_status'),
+        PGEnum('Pending Label Studio', 'Validated', name='validation_status'),
         nullable=False)
     validation_source = Column(
-        postgresql.ENUM('Machine Learning', 'Label Studio', 'Manual', name='validation_source'),
+        PGEnum('Machine Learning', 'Label Studio', 'Manual', name='validation_source'),
         nullable=False
     )
 
@@ -128,6 +139,50 @@ class URLMetadata(Base):
     # Relationships
     url = relationship("URL", back_populates="url_metadata")
 
+class RootURL(Base):
+    __tablename__ = 'root_urls'
+    __table_args__ = (
+        UniqueConstraint(
+        "url",
+        name="uq_root_url_url"),
+    )
+
+    id = Column(Integer, primary_key=True)
+    url = Column(String, nullable=False)
+    page_title = Column(String, nullable=False)
+    page_description = Column(String, nullable=True)
+    updated_at = Column(TIMESTAMP, nullable=False, server_default=func.now(), onupdate=func.now())
+
+class URLHTMLContentType(PyEnum):
+    TITLE = "Title"
+    DESCRIPTION = "Description"
+    H1 = "H1"
+    H2 = "H2"
+    H3 = "H3"
+    H4 = "H4"
+    H5 = "H5"
+    H6 = "H6"
+    DIV = "Div"
+
+class URLHTMLContent(Base):
+    __tablename__ = 'url_html_content'
+    __table_args__ = (UniqueConstraint(
+        "url_id",
+        "content_type",
+        name="uq_url_id_content_type"),
+    )
+
+    id = Column(Integer, primary_key=True)
+    url_id = Column(Integer, ForeignKey('urls.id'), nullable=False)
+    content_type = Column(
+        PGEnum('Title', 'Description', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'Div', name='url_html_content_type'),
+        nullable=False)
+    content = Column(Text, nullable=False)
+
+    updated_at = Column(TIMESTAMP, nullable=False, server_default=func.now(), onupdate=func.now())
+
+    # Relationships
+    url = relationship("URL", back_populates="html_content")
 
 class Duplicate(Base):
     """
@@ -149,6 +204,7 @@ class Duplicate(Base):
         doc="The original URL ID"
     )
 
+    # Relationships
     batch = relationship("Batch", back_populates="duplicates")
     original_url = relationship("URL", back_populates="duplicates")
 
@@ -162,6 +218,7 @@ class Log(Base):
     log = Column(Text, nullable=False)
     created_at = Column(TIMESTAMP, nullable=False, server_default=CURRENT_TIME_SERVER_DEFAULT)
 
+    # Relationships
     batch = relationship("Batch", back_populates="logs")
 
 class Missing(Base):
@@ -174,4 +231,5 @@ class Missing(Base):
     strategy_used = Column(Text, nullable=False)
     date_searched = Column(TIMESTAMP, nullable=False, server_default=CURRENT_TIME_SERVER_DEFAULT)
 
+    # Relationships
     batch = relationship("Batch", back_populates="missings")

@@ -340,3 +340,14 @@ def test_convert_url_outcome_to_enum(alembic_runner):
             )).scalar()
 
             assert result == outcome
+
+def test_create_htmlcontent_and_rooturl_tables(alembic_runner):
+    alembic_runner.upgrade('e27c5f8409a3')
+    assert 'url_html_content' not in alembic_runner.inspector.get_table_names()
+    assert 'root_urls' not in alembic_runner.inspector.get_table_names()
+
+    alembic_runner.upgrade('9afd8a5633c9')
+    alembic_runner.reflect()
+
+    assert 'url_html_content' in alembic_runner.inspector.get_table_names()
+    assert 'root_urls' in alembic_runner.inspector.get_table_names()
