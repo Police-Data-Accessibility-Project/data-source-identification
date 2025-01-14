@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 
 @dataclass
-class Tags:
+class ResponseHTMLInfo:
     index: int = None
     url: str = ""
     url_path: str = ""

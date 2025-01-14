@@ -28,9 +28,9 @@ import bs4
 from bs4 import BeautifulSoup
 import polars as pl
 
-from html_tag_collector.DataClassTags import Tags
+from html_tag_collector.DataClassTags import ResponseHTMLInfo
 from html_tag_collector.ResponseFetcher import ResponseFetcher
-from html_tag_collector.ResponseParser import ResponseParser
+from html_tag_collector.ResponseParser import ResponseParser, HTMLResponseParser
 from html_tag_collector.RootURLCache import RootURLCache
 from html_tag_collector.constants import USER_AGENT, HEADER_TAGS
 from html_tag_collector.url_adjustment_functions import standardize_url_prefixes, remove_json_suffix, \
@@ -263,7 +263,7 @@ def parse_response(url_response):
     )
     return rp.parse()
 
-    tags = Tags()
+    tags = ResponseHTMLInfo()
     # TODO: Convert URL Response to a class
     res = url_response["response"]
     tags.index = url_response["index"]
@@ -410,11 +410,11 @@ def get_header_tags(tags, soup):
     """Updates the Tags DataClass with the header tags.
 
     Args:
-        tags (Tags): DataClass for relevant HTML tags.
+        tags (ResponseHTMLInfo): DataClass for relevant HTML tags.
         soup (BeautifulSoup): BeautifulSoup object to pull the header tags from.
 
     Returns:
-        Tags: DataClass with updated header tags.
+        ResponseHTMLInfo: DataClass with updated header tags.
     """
     for header_tag in HEADER_TAGS:
         headers = soup.find_all(header_tag)

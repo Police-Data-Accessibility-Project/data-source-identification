@@ -1,6 +1,10 @@
 import polars as pl
 import pytest
 
+from collector_db.AsyncDatabaseClient import AsyncDatabaseClient
+from core.AsyncCore import URLHTMLCycler
+from html_tag_collector.ResponseParser import HTMLResponseParser
+from html_tag_collector.RootURLCache import RootURLCache
 from html_tag_collector.URLRequestInterface import URLRequestInterface
 from html_tag_collector.collector import process_in_batches
 
@@ -49,3 +53,16 @@ async def test_get_response_with_javascript():
     uri = URLRequestInterface()
     results = await uri.make_requests(URLS, render_javascript=True)
     print(results)
+
+@pytest.mark.asyncio
+async def test_url_html_cycle(
+    wipe_database
+):
+    cycler = URLHTMLCycler(
+        adb_client=AsyncDatabaseClient(),
+        url_request_interface=URLRequestInterface(),
+        html_parser=HTMLResponseParser(
+            root_url_cache=RootURLCache()
+        )
+    )
+    await cycler.cycle()

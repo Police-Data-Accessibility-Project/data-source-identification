@@ -6,6 +6,7 @@ from sqlalchemy.orm import sessionmaker
 
 from collector_db.ConfigManager import ConfigManager
 from collector_db.DTOs.URLErrorInfos import URLErrorPydanticInfo
+from collector_db.DTOs.URLHTMLContentInfo import URLHTMLContentInfo
 from collector_db.DTOs.URLMetadataInfo import URLMetadataInfo
 from collector_db.helper_functions import get_postgres_connection_string
 from collector_db.models import URLMetadata, URL, URLErrorInfo
@@ -48,6 +49,12 @@ class AsyncDatabaseClient:
         session.add(url_metadata)
 
     @session_manager
+    async def add_url_metadatas(self, session: AsyncSession, url_metadata_infos: list[URLMetadataInfo]):
+        for url_metadata_info in url_metadata_infos:
+            url_metadata = URLMetadata(**url_metadata_info.model_dump())
+            session.add(url_metadata)
+
+    @session_manager
     async def add_url_error_infos(self, session: AsyncSession, url_error_infos: list[URLErrorPydanticInfo]):
         for url_error_info in url_error_infos:
             statement = select(URL).where(URL.id == url_error_info.url_id)
@@ -68,5 +75,13 @@ class AsyncDatabaseClient:
             final_results.append(URLErrorPydanticInfo(url_id=url.id, error=error, updated_at=updated_at))
 
         return final_results
+
+    @session_manager
+    async def add_html_content_infos(self, session: AsyncSession, html_content_infos: list[URLHTMLContentInfo]):
+        for html_content_info in html_content_infos:
+            # Add HTML Content Info to database
+            db_html_content_info = URLHTMLContentInfo(**html_content_info.model_dump())
+            session.add(db_html_content_info)
+
 
 
