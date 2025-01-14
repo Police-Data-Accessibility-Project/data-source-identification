@@ -9,9 +9,10 @@ class CollectorType(Enum):
     MUCKROCK_ALL_SEARCH = "muckrock_all_search"
     CKAN = "ckan"
 
-class URLOutcome(Enum):
+class URLStatus(Enum):
     PENDING = "pending"
     SUBMITTED = "submitted"
     HUMAN_LABELING = "human_labeling"
     REJECTED = "rejected"
     DUPLICATE = "duplicate"
+    ERROR = "error"

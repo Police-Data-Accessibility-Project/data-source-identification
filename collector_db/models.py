@@ -82,7 +82,7 @@ class URL(Base):
     collector_metadata = Column(JSON)
     # The outcome of the URL: submitted, human_labeling, rejected, duplicate, etc.
     outcome = Column(
-        postgresql.ENUM('pending', 'submitted', 'human_labeling', 'rejected', 'duplicate', name='url_outcome'),
+        postgresql.ENUM('pending', 'submitted', 'human_labeling', 'rejected', 'duplicate', 'error', name='url_status'),
         nullable=False
     )
     created_at = Column(TIMESTAMP, nullable=False, server_default=CURRENT_TIME_SERVER_DEFAULT)
@@ -93,6 +93,7 @@ class URL(Base):
     duplicates = relationship("Duplicate", back_populates="original_url")
     url_metadata = relationship("URLMetadata", back_populates="url", cascade="all, delete-orphan")
     html_content = relationship("URLHTMLContent", back_populates="url", cascade="all, delete-orphan")
+    error_info = relationship("URLErrorInfo", back_populates="url", cascade="all, delete-orphan")
 
 
 class URLAttributeType(PyEnum):
@@ -163,6 +164,17 @@ class URLHTMLContentType(PyEnum):
     H5 = "H5"
     H6 = "H6"
     DIV = "Div"
+
+class URLErrorInfo(Base):
+    __tablename__ = 'url_error_info'
+
+    id = Column(Integer, primary_key=True)
+    url_id = Column(Integer, ForeignKey('urls.id'), nullable=False)
+    error = Column(Text, nullable=False)
+    updated_at = Column(TIMESTAMP, nullable=False, server_default=CURRENT_TIME_SERVER_DEFAULT)
+
+    # Relationships
+    url = relationship("URL", back_populates="error_info")
 
 class URLHTMLContent(Base):
     __tablename__ = 'url_html_content'

@@ -351,3 +351,22 @@ def test_create_htmlcontent_and_rooturl_tables(alembic_runner):
 
     assert 'url_html_content' in alembic_runner.inspector.get_table_names()
     assert 'root_urls' in alembic_runner.inspector.get_table_names()
+
+def test_create_url_error_info_table_and_url_error_status(alembic_runner):
+    def get_enum_values(enum_name: str) -> list[str]:
+        with alembic_runner.session() as session:
+            return session.execute(text(f"SELECT enum_range(NULL::{enum_name})")).scalar()
+
+    alembic_runner.upgrade('9afd8a5633c9')
+
+    result = get_enum_values("url_outcome")
+    assert "error" not in result
+
+    alembic_runner.upgrade("5a5ca06f36fa")
+
+    result = get_enum_values("url_status")
+    assert "error" in result
+
+
+
+

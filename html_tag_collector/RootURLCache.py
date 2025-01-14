@@ -6,7 +6,7 @@ import json
 import os
 import ssl
 
-from common import get_user_agent
+from html_tag_collector.constants import USER_AGENT
 
 DEBUG = False
 
@@ -38,7 +38,7 @@ class RootURLCache:
         parsed_url = urlparse(url)
         root_url = f"{parsed_url.scheme}://{parsed_url.netloc}"
         headers = {
-            "User-Agent": get_user_agent(),
+            "User-Agent": USER_AGENT,
         }
 
         if root_url not in self.cache:

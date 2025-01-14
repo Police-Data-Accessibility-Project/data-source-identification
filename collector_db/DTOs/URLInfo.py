@@ -3,7 +3,7 @@ from typing import Optional
 
 from pydantic import BaseModel
 
-from collector_manager.enums import URLOutcome
+from collector_manager.enums import URLStatus
 
 
 class URLInfo(BaseModel):
@@ -11,5 +11,5 @@ class URLInfo(BaseModel):
     batch_id: Optional[int] = None
     url: str
     collector_metadata: Optional[dict] = None
-    outcome: URLOutcome = URLOutcome.PENDING
+    outcome: URLStatus = URLStatus.PENDING
     updated_at: Optional[datetime.datetime] = None

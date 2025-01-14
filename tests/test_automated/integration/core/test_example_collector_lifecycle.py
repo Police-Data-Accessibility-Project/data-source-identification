@@ -4,7 +4,7 @@ import pytest
 
 from collector_db.DTOs.BatchInfo import BatchInfo
 from collector_manager.DTOs.ExampleInputDTO import ExampleInputDTO
-from collector_manager.enums import CollectorType, URLOutcome
+from collector_manager.enums import CollectorType, URLStatus
 from core.DTOs.CollectorStartInfo import CollectorStartInfo
 from core.SourceCollectorCore import SourceCollectorCore
 from core.enums import BatchStatus
@@ -47,8 +47,8 @@ def test_example_collector_lifecycle(test_core: SourceCollectorCore):
 
     url_infos = db_client.get_urls_by_batch(batch_id)
     assert len(url_infos) == 2
-    assert url_infos[0].outcome == URLOutcome.PENDING
-    assert url_infos[1].outcome == URLOutcome.PENDING
+    assert url_infos[0].outcome == URLStatus.PENDING
+    assert url_infos[1].outcome == URLStatus.PENDING
 
     assert url_infos[0].url == "https://example.com"
     assert url_infos[1].url == "https://example.com/2"

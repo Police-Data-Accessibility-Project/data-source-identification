@@ -1,31 +1,24 @@
 import polars as pl
 import pytest
 
+from html_tag_collector.URLRequestInterface import URLRequestInterface
 from html_tag_collector.collector import process_in_batches
 
-sample_json_data = [{
-    "id": 1,
-    "url": "https://pdap.io",
-    "label": "Label"
-}, {
-    "id": 2,
-    "url": "https://pdapio.io",
-    "label": "Label"
-}, {
-    "id": 3,
-    "url": "https://pdap.dev",
-    "label": "Label"
-}, {
-    "id": 4,
-    "url": "https://pdap.io/404test",
-    "label": "Label"
-}, {
-    "id": 5,
-    "url": "https://books.toscrape.com/catalogue/category/books/womens-fiction_9/index.html",
-    "label": "Label"
-}
+URLS = [
+    "https://pdap.io",
+    "https://pdapio.io",
+    "https://pdap.dev",
+    "https://pdap.io/404test",
+    "https://books.toscrape.com/catalogue/category/books/womens-fiction_9/index.html"
 ]
 
+sample_json_data = [
+    {
+        "id": idx,
+        "url": url,
+        "label": "Label"
+    } for idx, url in enumerate(URLS)
+]
 
 def test_collector_main():
     """
@@ -44,3 +37,15 @@ def test_collector_main():
     for i in range(len(cumulative_df)):
         for col in cumulative_df.columns:
             print(f"{col}: {cumulative_df[col][i]}")
+
+@pytest.mark.asyncio
+async def test_get_response():
+    uri = URLRequestInterface()
+    results = await uri.make_requests(URLS)
+    print(results)
+
+@pytest.mark.asyncio
+async def test_get_response_with_javascript():
+    uri = URLRequestInterface()
+    results = await uri.make_requests(URLS, render_javascript=True)
+    print(results)

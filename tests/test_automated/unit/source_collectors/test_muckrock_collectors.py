@@ -5,7 +5,7 @@ import pytest
 
 from collector_db.DTOs.URLInfo import URLInfo
 from collector_db.DatabaseClient import DatabaseClient
-from collector_manager.enums import URLOutcome
+from collector_manager.enums import URLStatus
 from core.CoreLogger import CoreLogger
 from source_collectors.muckrock.DTOs import MuckrockSimpleSearchCollectorInputDTO, \
     MuckrockCountySearchCollectorInputDTO, MuckrockAllFOIARequestsCollectorInputDTO
