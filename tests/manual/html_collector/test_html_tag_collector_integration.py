@@ -2,7 +2,7 @@ import polars as pl
 import pytest
 
 from collector_db.AsyncDatabaseClient import AsyncDatabaseClient
-from core.AsyncCore import URLHTMLCycler
+from core.classes.URLHTMLCycler import URLHTMLCycler
 from html_tag_collector.ResponseParser import HTMLResponseParser
 from html_tag_collector.RootURLCache import RootURLCache
 from html_tag_collector.URLRequestInterface import URLRequestInterface
