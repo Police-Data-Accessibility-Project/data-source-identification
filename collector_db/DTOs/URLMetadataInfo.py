@@ -3,15 +3,16 @@ from typing import Optional
 
 from pydantic import BaseModel
 
-from collector_db.models import URLAttributeType, ValidationStatus, ValidationSource
+from collector_db.enums import URLMetadataAttributeType, ValidationStatus, ValidationSource
 
 
 class URLMetadataInfo(BaseModel):
-    url_id: int
-    attribute: URLAttributeType
+    id: Optional[int] = None
+    url_id: Optional[int] = None
+    attribute: Optional[URLMetadataAttributeType] = None
     # TODO: May need to add validation here depending on the type of attribute
-    value: str
-    validation_status: ValidationStatus
-    validation_source: ValidationSource
+    value: Optional[str] = None
+    validation_status: Optional[ValidationStatus] = None
+    validation_source: Optional[ValidationSource] = None
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None

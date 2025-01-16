@@ -1,4 +1,5 @@
 from enum import Enum
+from typing import Optional
 
 from pydantic import BaseModel
 
@@ -14,6 +15,6 @@ class HTMLContentType(Enum):
     DIV = "Div"
 
 class URLHTMLContentInfo(BaseModel):
-    url_id: int
+    url_id: Optional[int] = None
     content_type: HTMLContentType
-    content: HTMLContentType
+    content: str

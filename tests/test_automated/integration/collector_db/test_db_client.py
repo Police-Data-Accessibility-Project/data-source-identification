@@ -9,7 +9,8 @@ from collector_db.DTOs.LogInfo import LogInfo
 from collector_db.DTOs.URLErrorInfos import URLErrorPydanticInfo
 from collector_db.DTOs.URLInfo import URLInfo
 from collector_db.DTOs.URLMetadataInfo import URLMetadataInfo
-from collector_db.models import URLMetadata, URLAttributeType, ValidationStatus, ValidationSource, URLErrorInfo
+from collector_db.models import URLMetadata, URLErrorInfo
+from collector_db.enums import URLMetadataAttributeType, ValidationStatus, ValidationSource
 from collector_manager.enums import URLStatus
 from core.enums import BatchStatus
 from tests.helpers.DBDataCreator import DBDataCreator
@@ -120,9 +121,9 @@ async def test_get_url_metadata(db_data_creator: DBDataCreator):
     await adb_client.add_url_metadata(
         url_metadata_info=URLMetadataInfo(
             url_id=url_id,
-            attribute=URLAttributeType.RELEVANT,
+            attribute=URLMetadataAttributeType.RELEVANT,
             value="False",
-            validation_status=ValidationStatus.PENDING_LABEL_STUDIO,
+            validation_status=ValidationStatus.PENDING_VALIDATION,
             validation_source=ValidationSource.MACHINE_LEARNING,
         )
     )
@@ -158,3 +159,36 @@ async def test_add_url_error_info(db_data_creator: DBDataCreator):
     for result in results:
         assert result.url_id in url_ids
         assert result.error == "test error"
+
+@pytest.mark.asyncio
+async def test_get_urls_with_html_data_and_no_relevancy_metadata(
+    db_data_creator: DBDataCreator,
+):
+    batch_id = db_data_creator.batch()
+    url_mappings = db_data_creator.urls(batch_id=batch_id, url_count=3).url_mappings
+    url_ids = [url_info.url_id for url_info in url_mappings]
+    await db_data_creator.html_data(url_ids)
+    await db_data_creator.metadata([url_ids[0]])
+    results = await db_data_creator.adb_client.get_urls_with_html_data_and_no_relevancy_metadata()
+
+    permitted_url_ids = [url_id for url_id in url_ids if url_id != url_ids[0]]
+    assert len(results) == 2
+    for result in results:
+        assert result.url_id in permitted_url_ids
+        assert len(result.html_infos) == 2
+
+@pytest.mark.asyncio
+async def test_get_urls_with_metadata(db_data_creator: DBDataCreator):
+    batch_id = db_data_creator.batch()
+    url_mappings = db_data_creator.urls(batch_id=batch_id, url_count=3).url_mappings
+    url_ids = [url_info.url_id for url_info in url_mappings]
+    await db_data_creator.metadata([url_ids[0]])
+    # Neither of these two URLs should be picked up
+    await db_data_creator.metadata([url_ids[1]], attribute=URLMetadataAttributeType.RECORD_TYPE)
+    await db_data_creator.metadata([url_ids[2]], validation_status=ValidationStatus.VALIDATED)
+    results = await db_data_creator.adb_client.get_urls_with_metadata(
+        attribute=URLMetadataAttributeType.RELEVANT,
+        validation_status=ValidationStatus.PENDING_VALIDATION
+    )
+    assert len(results) == 1
+

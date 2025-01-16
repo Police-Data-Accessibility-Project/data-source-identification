@@ -2,7 +2,7 @@ from pathlib import Path
 
 import huggingface_hub
 
-class HuggingfaceInterface:
+class HuggingFaceAPIManager:
     """
     A class to manage the HuggingFace API.
     """

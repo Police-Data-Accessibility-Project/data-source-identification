@@ -1,10 +1,15 @@
+import asyncio
 from typing import List
 
+from collector_db.AsyncDatabaseClient import AsyncDatabaseClient
 from collector_db.DTOs.BatchInfo import BatchInfo
 from collector_db.DTOs.DuplicateInfo import DuplicateInfo, DuplicateInsertInfo
 from collector_db.DTOs.InsertURLsInfo import InsertURLsInfo
+from collector_db.DTOs.URLHTMLContentInfo import URLHTMLContentInfo, HTMLContentType
 from collector_db.DTOs.URLInfo import URLInfo
+from collector_db.DTOs.URLMetadataInfo import URLMetadataInfo
 from collector_db.DatabaseClient import DatabaseClient
+from collector_db.enums import URLMetadataAttributeType, ValidationStatus, ValidationSource
 from collector_manager.enums import CollectorType
 from core.enums import BatchStatus
 from tests.helpers.simple_test_data_functions import generate_test_urls
@@ -16,6 +21,7 @@ class DBDataCreator:
     """
     def __init__(self, db_client: DatabaseClient = DatabaseClient()):
         self.db_client = db_client
+        self.adb_client = AsyncDatabaseClient()
 
     def batch(self):
         return self.db_client.insert_batch(
@@ -54,3 +60,42 @@ class DBDataCreator:
             duplicate_infos.append(dup_info)
 
         self.db_client.insert_duplicates(duplicate_infos)
+
+    async def html_data(self, url_ids: list[int]):
+        html_content_infos = []
+        for url_id in url_ids:
+            html_content_infos.append(
+                URLHTMLContentInfo(
+                    url_id=url_id,
+                    content_type=HTMLContentType.TITLE,
+                    content="test html content"
+                )
+            )
+            html_content_infos.append(
+                URLHTMLContentInfo(
+                    url_id=url_id,
+                    content_type=HTMLContentType.DESCRIPTION,
+                    content="test description"
+                )
+            )
+        await self.adb_client.add_html_content_infos(html_content_infos)
+
+    async def metadata(
+            self,
+            url_ids: list[int],
+            attribute: URLMetadataAttributeType = URLMetadataAttributeType.RELEVANT,
+            value: str = "False",
+            validation_status: ValidationStatus = ValidationStatus.PENDING_VALIDATION,
+            validation_source: ValidationSource = ValidationSource.MACHINE_LEARNING
+    ):
+        for url_id in url_ids:
+            await self.adb_client.add_url_metadata(
+                URLMetadataInfo(
+                    url_id=url_id,
+                    attribute=attribute,
+                    value=value,
+                    validation_status=validation_status,
+                    validation_source=validation_source,
+                )
+            )
+

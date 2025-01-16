@@ -12,7 +12,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 import collector_db
-from collector_db.models import PGEnum
+from collector_db.enums import PGEnum
 
 # revision identifiers, used by Alembic.
 revision: str = '9afd8a5633c9'

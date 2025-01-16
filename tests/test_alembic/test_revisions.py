@@ -11,99 +11,13 @@ They do not test the overall integrity of the schema;
 
 """
 
-
-from dataclasses import dataclass
 from itertools import product
 
+from sqlalchemy import text
 
-import pytest
-from alembic import command
-from alembic.config import Config
+from test_alembic.conftest import alembic_runner
 
-from sqlalchemy import create_engine, Inspector, inspect, MetaData, Connection, text
-
-from sqlalchemy.orm import sessionmaker, scoped_session
-
-from collector_db.helper_functions import get_postgres_connection_string
-from collector_db.models import Batch
-
-import sqlalchemy as sa
-
-@pytest.fixture()
-def alembic_config():
-    alembic_cfg = Config("alembic.ini")
-    yield alembic_cfg
-
-@pytest.fixture()
-def db_engine():
-    engine = create_engine(get_postgres_connection_string())
-    yield engine
-    engine.dispose()
-
-@pytest.fixture()
-def connection(db_engine):
-    connection = db_engine.connect()
-    yield connection
-    connection.close()
-
-@dataclass
-class AlembicRunner:
-    connection: Connection
-    alembic_config: Config
-    inspector: Inspector
-    metadata: MetaData
-    session: scoped_session
-
-    def reflect(self):
-        self.metadata.clear()
-        self.metadata.reflect(bind=self.connection)
-        self.inspector = inspect(self.connection)
-
-    def upgrade(self, revision: str):
-        command.upgrade(self.alembic_config, revision)
-
-    def downgrade(self, revision: str):
-        print("Downgrading...")
-        command.downgrade(self.alembic_config, revision)
-
-    def stamp(self, revision: str):
-        command.stamp(self.alembic_config, revision)
-
-    def reset_schema(self):
-        self.connection.exec_driver_sql("DROP SCHEMA public CASCADE;")
-        self.connection.exec_driver_sql("CREATE SCHEMA public;")
-        self.connection.commit()
-
-@pytest.fixture()
-def alembic_runner(connection, alembic_config) -> AlembicRunner:
-    alembic_config.attributes["connection"] = connection
-    alembic_config.set_main_option(
-        "sqlalchemy.url",
-        get_postgres_connection_string()
-    )
-    runner = AlembicRunner(
-        alembic_config=alembic_config,
-        inspector=inspect(connection),
-        metadata=MetaData(),
-        connection=connection,
-        session=scoped_session(sessionmaker(bind=connection)),
-    )
-    try:
-        runner.downgrade("base")
-    except Exception as e:
-        runner.reset_schema()
-        runner.stamp("base")
-    print("Running test")
-    yield runner
-    print("Test complete")
-    runner.session.close()
-    try:
-        runner.downgrade("base")
-    except Exception as e:
-        runner.reset_schema()
-        runner.stamp("base")
-
-
+from test_alembic.helpers import get_enum_values, table_creation_check
 
 
 def test_base(alembic_runner):
@@ -352,21 +266,41 @@ def test_create_htmlcontent_and_rooturl_tables(alembic_runner):
     assert 'url_html_content' in alembic_runner.inspector.get_table_names()
     assert 'root_urls' in alembic_runner.inspector.get_table_names()
 
+
 def test_create_url_error_info_table_and_url_error_status(alembic_runner):
-    def get_enum_values(enum_name: str) -> list[str]:
-        with alembic_runner.session() as session:
-            return session.execute(text(f"SELECT enum_range(NULL::{enum_name})")).scalar()
-
     alembic_runner.upgrade('9afd8a5633c9')
+    alembic_runner.reflect()
 
-    result = get_enum_values("url_outcome")
+    with alembic_runner.session() as session:
+        result = get_enum_values("url_outcome", session)
     assert "error" not in result
 
     alembic_runner.upgrade("5a5ca06f36fa")
+    alembic_runner.reflect()
 
-    result = get_enum_values("url_status")
+    with alembic_runner.session() as session:
+        result = get_enum_values("url_status", session)
     assert "error" in result
 
 
+def test_add_in_label_studio_metadata_status(alembic_runner):
+    alembic_runner.upgrade("5a5ca06f36fa")
+    alembic_runner.reflect()
 
+    with alembic_runner.session() as session:
+        result = get_enum_values("validation_status", session)
+    assert "Pending Validation" not in result
 
+    alembic_runner.upgrade("108dac321086")
+    alembic_runner.reflect()
+    with alembic_runner.session() as session:
+        result = get_enum_values("metadata_validation_status", session)
+    assert "Pending Validation" in result
+
+def test_create_metadata_annotation_table(alembic_runner):
+    table_creation_check(
+        alembic_runner,
+        "metadata_annotations",
+        start_revision="108dac321086",
+        end_revision="dcd158092de0"
+    )

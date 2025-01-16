@@ -18,7 +18,6 @@ class URLHTMLCycler:
         self.url_request_interface = url_request_interface
         self.adb_client = adb_client
         self.html_parser = html_parser
-        self.cycle_infos: list[URLHTMLCycleInfo] = []
 
     async def cycle(self):
         cycle_infos = await self.get_pending_urls_without_html_data()
@@ -44,7 +43,7 @@ class URLHTMLCycler:
     async def get_raw_html_data_for_urls(self, cycle_infos: list[URLHTMLCycleInfo]):
         just_urls = await self.get_just_urls(cycle_infos)
         url_response_infos = await self.url_request_interface.make_requests(just_urls)
-        for cycle_info, url_response_info in zip(self.cycle_infos, url_response_infos):
+        for cycle_info, url_response_info in zip(cycle_infos, url_response_infos):
             cycle_info.url_response_info = url_response_info
 
     async def separate_success_and_error_cycles(
@@ -68,7 +67,7 @@ class URLHTMLCycler:
         for errored_cycle_info in errored_cycle_infos:
             error_info = URLErrorPydanticInfo(
                 url_id=errored_cycle_info.url_info.id,
-                error=errored_cycle_info.url_response_info.response,
+                error=str(errored_cycle_info.url_response_info.response),
             )
             error_infos.append(error_info)
         await self.adb_client.add_url_error_infos(error_infos)

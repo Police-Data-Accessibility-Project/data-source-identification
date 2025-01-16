@@ -17,7 +17,7 @@ from source_collectors.common_crawler.csv_manager import CSVManager
 # This is done to solve otherwise quite annoying import issues.
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from util.huggingface_api_manager import HuggingfaceInterface
+from util.huggingface_api_manager import HuggingFaceAPIManager
 from util.miscellaneous_functions import get_filename_friendly_timestamp
 from label_studio_interface.LabelStudioConfig import LabelStudioConfig
 from label_studio_interface.LabelStudioAPIManager import LabelStudioAPIManager
@@ -102,7 +102,7 @@ def main():
             "https://huggingface.co/settings/tokens and ensure you have write access to "
             "https://huggingface.co/PDAP. Then include in .env file in root directory."
         )
-    huggingface_api_manager = HuggingfaceInterface(
+    huggingface_api_manager = HuggingFaceAPIManager(
         access_token=hf_access_token, repo_id=args.huggingface_repo_id
     )
     ls_access_token = os.getenv("LABEL_STUDIO_ACCESS_TOKEN")
@@ -285,7 +285,7 @@ def remove_remote_duplicates(
 
 def handle_csv_and_upload(
     common_crawl_result: CommonCrawlResult,
-    huggingface_api_manager: HuggingfaceInterface,
+    huggingface_api_manager: HuggingFaceAPIManager,
     args: argparse.Namespace,
     last_page: int,
 ):
@@ -317,7 +317,7 @@ def handle_csv_and_upload(
 def process_crawl_and_upload(
     args: argparse.Namespace,
     last_page: int,
-    huggingface_api_manager: HuggingfaceInterface,
+    huggingface_api_manager: HuggingFaceAPIManager,
     label_studio_data: list[dict],
 ) -> CommonCrawlResult:
     """

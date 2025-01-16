@@ -49,10 +49,10 @@ class HTMLResponseParser:
             markup=response.html.html,
             features=parser_type.value,
         )
-        html_info.html_title = self.get_html_title(soup)
-        html_info.meta_description = self.get_meta_description(soup)
+        html_info.title = self.get_html_title(soup)
+        html_info.description = self.get_meta_description(soup)
         self.add_header_tags(html_info, soup)
-        html_info.div_text = self.get_div_text(soup)
+        html_info.div = self.get_div_text(soup)
         # Prevents most bs4 memory leaks
         if soup.html is not None:
             soup.html.decompose()
@@ -90,6 +90,8 @@ class HTMLResponseParser:
             # Retrieves and drops headers containing links to reduce training bias
             header_content = [header.get_text(" ", strip=True) for header in headers if not header.a]
             tag_content = json.dumps(header_content, ensure_ascii=False)
+            if tag_content == "[]":
+                continue
             setattr(html_info, header_tag, tag_content)
 
     def get_html_title(self, soup: BeautifulSoup) -> Optional[str]:
@@ -201,13 +203,13 @@ class ResponseParser:
         except (bs4.builder.ParserRejectedMarkup, AssertionError, AttributeError):
             return asdict(self.tags)
 
-        self.tags.html_title = self.get_html_title(soup)
+        self.tags.title = self.get_html_title(soup)
 
-        self.tags.meta_description = self.get_meta_description(soup)
+        self.tags.description = self.get_meta_description(soup)
 
         self.tags = self.get_header_tags(soup)
 
-        self.tags.div_text = self.get_div_text(soup)
+        self.tags.div = self.get_div_text(soup)
 
         # Prevents most bs4 memory leaks
         if soup.html:

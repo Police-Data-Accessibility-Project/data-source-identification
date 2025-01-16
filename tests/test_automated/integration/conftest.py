@@ -13,13 +13,6 @@ from core.SourceCollectorCore import SourceCollectorCore
 
 
 
-@pytest.fixture
-def db_client_test(wipe_database) -> DatabaseClient:
-    # Drop pre-existing table
-    conn = get_postgres_connection_string()
-    db_client = DatabaseClient(db_url=conn)
-    yield db_client
-    db_client.engine.dispose()
 
 @pytest.fixture
 def test_core(db_client_test):
@@ -34,7 +27,3 @@ def test_core(db_client_test):
         yield core
         core.shutdown()
 
-@pytest.fixture
-def db_data_creator(db_client_test):
-    db_data_creator = DBDataCreator(db_client=db_client_test)
-    yield db_data_creator

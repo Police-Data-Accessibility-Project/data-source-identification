@@ -20,10 +20,11 @@ class APITestHelper:
     mock_huggingface_interface: MagicMock
     mock_label_studio_interface: MagicMock
 
+MOCK_USER_ID = 1
 
 
 def override_access_info() -> AccessInfo:
-    return AccessInfo(user_id=1, permissions=[Permissions.SOURCE_COLLECTOR])
+    return AccessInfo(user_id=MOCK_USER_ID, permissions=[Permissions.SOURCE_COLLECTOR])
 
 @pytest.fixture
 def client(db_client_test) -> Generator[TestClient, None, None]:
@@ -40,5 +41,7 @@ def api_test_helper(client: TestClient, db_data_creator, monkeypatch) -> APITest
     return APITestHelper(
         request_validator=RequestValidator(client=client),
         core=client.app.state.core,
-        db_data_creator=db_data_creator
+        db_data_creator=db_data_creator,
+        mock_huggingface_interface=MagicMock(),
+        mock_label_studio_interface=MagicMock()
     )

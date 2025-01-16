@@ -6,3 +6,7 @@ class BatchStatus(Enum):
     IN_PROCESS = "in-process"
     ERROR = "error"
     ABORTED = "aborted"
+
+class LabelStudioTaskStatus(Enum):
+    PENDING = "pending"
+    COMPLETED = "completed"

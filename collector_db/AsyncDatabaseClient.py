@@ -1,16 +1,24 @@
 from functools import wraps
+from typing import Optional
 
-from sqlalchemy import select
+from sqlalchemy import select, exists
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
-from sqlalchemy.orm import sessionmaker
 
 from collector_db.ConfigManager import ConfigManager
+from collector_db.DTOs.MetadataAnnotationInfo import MetadataAnnotationInfo
+from collector_db.DTOs.RelevanceLabelStudioInputCycleInfo import RelevanceLabelStudioInputCycleInfo
+from collector_db.DTOs.URLAnnotationInfo import URLAnnotationInfo
 from collector_db.DTOs.URLErrorInfos import URLErrorPydanticInfo
 from collector_db.DTOs.URLHTMLContentInfo import URLHTMLContentInfo
 from collector_db.DTOs.URLMetadataInfo import URLMetadataInfo
+from collector_db.DTOs.URLWithHTML import URLWithHTML
 from collector_db.helper_functions import get_postgres_connection_string
-from collector_db.models import URLMetadata, URL, URLErrorInfo
+from collector_db.models import URLMetadata, URL, URLErrorInfo, URLHTMLContent, Base, MetadataAnnotation
+from collector_db.enums import URLMetadataAttributeType, ValidationStatus
 from collector_manager.enums import URLStatus
+from core.DTOs.LabelStudioTaskInfo import LabelStudioTaskInfo
+from core.DTOs.RelevanceAnnotationInfo import RelevanceAnnotationPostInfo
+from core.DTOs.RelevanceAnnotationRequestInfo import RelevanceAnnotationRequestInfo
 
 
 class AsyncDatabaseClient:
@@ -80,8 +88,236 @@ class AsyncDatabaseClient:
     async def add_html_content_infos(self, session: AsyncSession, html_content_infos: list[URLHTMLContentInfo]):
         for html_content_info in html_content_infos:
             # Add HTML Content Info to database
-            db_html_content_info = URLHTMLContentInfo(**html_content_info.model_dump())
+            db_html_content_info = URLHTMLContent(**html_content_info.model_dump())
             session.add(db_html_content_info)
 
+    @session_manager
+    async def get_pending_urls_without_html_data(self, session: AsyncSession):
+        # TODO: Add test that includes some urls WITH html data. Check they're not returned
+        statement = (select(URL).
+                     outerjoin(URLHTMLContent).
+                     where(URLHTMLContent.id == None).
+                     where(URL.outcome == URLStatus.PENDING.value))
+        scalar_result = await session.scalars(statement)
+        return scalar_result.all()
 
+    @session_manager
+    async def get_urls_with_html_data_and_no_relevancy_metadata(
+            self,
+            session: AsyncSession
+    ) -> list[URLWithHTML]:
+        # Get URLs with no relevancy metadata
+        statement = (select(URL.id, URL.url, URLHTMLContent).
+                     join(URLHTMLContent).
+                     where(URL.outcome == URLStatus.PENDING.value)
+                    # No relevancy metadata
+                    .where(
+                        ~exists(
+                            select(URLMetadata.id).
+                            where(
+                                URLMetadata.url_id == URL.id,
+                                URLMetadata.attribute == URLMetadataAttributeType.RELEVANT.value
+                            )
+                        )
+                    )
+        )
+        raw_result = await session.execute(statement)
+        result = raw_result.all()
+        url_ids_to_urls = {url_id: url for url_id, url, _ in result}
+        url_ids_to_html_info = {url_id: [] for url_id, _, _ in result}
+
+        for url_id, _, html_info in result:
+            url_ids_to_html_info[url_id].append(
+                URLHTMLContentInfo(**html_info.__dict__)
+            )
+
+        final_results = []
+        for url_id, url in url_ids_to_urls.items():
+            url_with_html = URLWithHTML(
+                url_id=url_id,
+                url=url,
+                html_infos=url_ids_to_html_info[url_id]
+            )
+            final_results.append(url_with_html)
+
+
+        return final_results
+
+    @session_manager
+    async def get_urls_with_metadata(
+            self,
+            session: AsyncSession,
+            attribute: URLMetadataAttributeType,
+            validation_status: ValidationStatus,
+    ) -> list[URLMetadataInfo]:
+        statement = (select(URL.id, URLMetadata.id).
+                     join(URLMetadata).
+                     where(URLMetadata.attribute == attribute.value).
+                     where(URLMetadata.validation_status == validation_status.value))
+
+        raw_result = await session.execute(statement)
+        result = raw_result.all()
+        final_results = []
+        for url_id, url_metadata_id in result:
+            info = URLMetadataInfo(
+                url_id=url_id,
+                id=url_metadata_id,
+            )
+            final_results.append(info)
+
+        return final_results
+
+
+    @session_manager
+    async def add_label_studio_task_infos(self, session: AsyncSession, task_infos: list[LabelStudioTaskInfo]):
+        for task_info in task_infos:
+            url_metadata = LabelStudioTask(
+                task_id=task_info.task_id,
+                url_metadata_id=task_info.metadata_id,
+                status=task_info.task_status
+            )
+            session.add(url_metadata)
+
+    @session_manager
+    async def update_url_metadata_status(self, session: AsyncSession, metadata_ids: list[int], validation_status: ValidationStatus):
+        for metadata_id in metadata_ids:
+            statement = select(URLMetadata).where(URLMetadata.id == metadata_id)
+            scalar_result = await session.scalars(statement)
+            url_metadata = scalar_result.first()
+            url_metadata.validation_status = validation_status
+
+    @session_manager
+    async def get_info_for_relevance_label_studio_input_cycle(
+            self,
+            session: AsyncSession,
+    ) -> Optional[list[RelevanceLabelStudioInputCycleInfo]]:
+        statement = (
+                    select(
+                        URL.url,
+                        URLMetadata.id,
+                        URLHTMLContent
+                    )
+                    .join(URLMetadata)
+                    .join(URLHTMLContent)
+                    .where(URLMetadata.attribute == URLMetadataAttributeType.RELEVANT.value))
+
+        raw_result = await session.execute(statement)
+        result = raw_result.all()
+
+        d = {}
+        for url, url_metadata_id, db_html_info in result:
+            html_info = URLHTMLContentInfo(**db_html_info.__dict__)
+            if url not in d:
+                d[url] = RelevanceLabelStudioInputCycleInfo(url=url, metadata_id=url_metadata_id, html_content_info=[html_info])
+            else:
+                d[url].html_content_info.append(html_info)
+        return list(d.values())
+
+    @session_manager
+    async def get_next_url_for_relevance_annotation(
+            self,
+            session: AsyncSession,
+            user_id: int
+    ) -> URLAnnotationInfo:
+        # Get a URL, its relevancy metadata ID, and HTML data
+        # For a URL which has not yet been annotated by this user id
+        # First, subquery retrieving URL and its metadata ID where its relevant metadata
+        #  does not have an annotation for that user
+        subquery = (
+            select(
+                URL.id.label("url_id"),
+                URL.url,
+                URLMetadata.id.label("metadata_id"),
+            )
+            .join(URLMetadata)
+            # Metadata must be relevant
+            .where(URLMetadata.attribute == URLMetadataAttributeType.RELEVANT.value)
+            # Metadata must not be validated
+            .where(URLMetadata.validation_status == ValidationStatus.PENDING_VALIDATION.value)
+            # URL must have HTML content entries
+            .where(exists(select(URLHTMLContent).where(URLHTMLContent.url_id == URL.id)))
+            # URL must not have been annotated by the user
+            .where(~exists(
+                select(MetadataAnnotation).
+                where(
+                    MetadataAnnotation.metadata_id == URLMetadata.id,
+                    MetadataAnnotation.user_id == user_id
+                )
+            ))
+            .limit(1)
+        )
+
+        raw_result = await session.execute(subquery)
+        result = raw_result.all()
+
+        # Next, get all HTML content for the URL
+
+        statement = (
+            select(
+                subquery.c.url,
+                subquery.c.metadata_id,
+                URLHTMLContent.content_type,
+                URLHTMLContent.content,
+            )
+            .join(URLHTMLContent)
+            .where(subquery.c.url_id == URLHTMLContent.url_id)
+        )
+
+        raw_result = await session.execute(statement)
+        result = raw_result.all()
+
+        if len(result) == 0:
+            # No available URLs to annotate
+            return None
+
+        annotation_info = URLAnnotationInfo(
+            url=result[0][0],
+            metadata_id=result[0][1],
+            html_infos=[]
+        )
+        for _, _, content_type, content in result:
+            html_info = URLHTMLContentInfo(
+                content_type=content_type,
+                content=content
+            )
+            annotation_info.html_infos.append(html_info)
+        return annotation_info
+
+    @session_manager
+    async def add_relevance_annotation(
+            self,
+            session: AsyncSession,
+            user_id: int,
+            metadata_id: int,
+            annotation_info: RelevanceAnnotationPostInfo):
+        annotation = MetadataAnnotation(
+            metadata_id=metadata_id,
+            user_id=user_id,
+            value=str(annotation_info.is_relevant)
+        )
+        session.add(annotation)
+
+    @session_manager
+    async def get_annotations_for_metadata_id(
+            self,
+            session: AsyncSession,
+            metadata_id: int
+    ) -> list[MetadataAnnotation]:
+        statement = (select(MetadataAnnotation).
+                     where(MetadataAnnotation.metadata_id == metadata_id))
+        scalar_result = await session.scalars(statement)
+        all_results = scalar_result.all()
+        return [MetadataAnnotationInfo(**result.__dict__) for result in all_results]
+
+
+
+    @session_manager
+    async def get_all(self, session, model: Base):
+        """
+        Get all records of a model
+        Used primarily in testing
+        """
+        statement = select(model)
+        result = await session.execute(statement)
+        return result.scalars().all()
 

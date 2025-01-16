@@ -1,14 +1,14 @@
 """
 SQLAlchemy ORM models
 """
-from sqlalchemy import func, Column, Integer, String, CheckConstraint, TIMESTAMP, Float, JSON, ForeignKey, Text, Enum, \
-    UniqueConstraint, TypeDecorator
+from sqlalchemy import func, Column, Integer, String, TIMESTAMP, Float, JSON, ForeignKey, Text, UniqueConstraint
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.orm import declarative_base, relationship
 
+from collector_db.enums import PGEnum
 from core.enums import BatchStatus
 from util.helper_functions import get_enum_values
-from enum import Enum as PyEnum
+
 # Base class for SQLAlchemy ORM models
 Base = declarative_base()
 
@@ -16,14 +16,6 @@ status_check_string = ", ".join([f"'{status}'" for status in get_enum_values(Bat
 
 CURRENT_TIME_SERVER_DEFAULT = func.now()
 
-class PGEnum(TypeDecorator):
-    impl = postgresql.ENUM
-
-    def process_bind_param(self, value: PyEnum, dialect):
-        # Convert Python Enum to its value before binding to the DB
-        if isinstance(value, PyEnum):
-            return value.value
-        return value
 
 class Batch(Base):
     __tablename__ = 'batches'
@@ -96,20 +88,6 @@ class URL(Base):
     error_info = relationship("URLErrorInfo", back_populates="url", cascade="all, delete-orphan")
 
 
-class URLAttributeType(PyEnum):
-    RECORD_TYPE = "Record Type"
-    AGENCY = "Agency"
-    RELEVANT = "Relevant"
-
-class ValidationStatus(PyEnum):
-    PENDING_LABEL_STUDIO = "Pending Label Studio"
-    VALIDATED = "Validated"
-
-class ValidationSource(PyEnum):
-    MACHINE_LEARNING = "Machine Learning"
-    LABEL_STUDIO = "Label Studio"
-    MANUAL = "Manual"
-
 # URL Metadata table definition
 class URLMetadata(Base):
     __tablename__ = 'url_metadata'
@@ -126,7 +104,7 @@ class URLMetadata(Base):
         nullable=False)
     value = Column(Text, nullable=False)
     validation_status = Column(
-        PGEnum('Pending Label Studio', 'Validated', name='validation_status'),
+        PGEnum('Pending Validation', 'Validated', name='metadata_validation_status'),
         nullable=False)
     validation_source = Column(
         PGEnum('Machine Learning', 'Label Studio', 'Manual', name='validation_source'),
@@ -139,6 +117,24 @@ class URLMetadata(Base):
 
     # Relationships
     url = relationship("URL", back_populates="url_metadata")
+    annotations = relationship("MetadataAnnotation", back_populates="url_metadata")
+
+class MetadataAnnotation(Base):
+    __tablename__ = 'metadata_annotations'
+    __table_args__ = (UniqueConstraint(
+        "user_id",
+        "metadata_id",
+        name="metadata_annotations_uq_user_id_metadata_id"),
+    )
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, nullable=False)
+    metadata_id = Column(Integer, ForeignKey('url_metadata.id'), nullable=False)
+    value = Column(Text, nullable=False)
+    created_at = Column(TIMESTAMP, nullable=False, server_default=func.now())
+
+    # Relationships
+    url_metadata = relationship("URLMetadata", back_populates="annotations")
 
 class RootURL(Base):
     __tablename__ = 'root_urls'
@@ -154,16 +150,6 @@ class RootURL(Base):
     page_description = Column(String, nullable=True)
     updated_at = Column(TIMESTAMP, nullable=False, server_default=func.now(), onupdate=func.now())
 
-class URLHTMLContentType(PyEnum):
-    TITLE = "Title"
-    DESCRIPTION = "Description"
-    H1 = "H1"
-    H2 = "H2"
-    H3 = "H3"
-    H4 = "H4"
-    H5 = "H5"
-    H6 = "H6"
-    DIV = "Div"
 
 class URLErrorInfo(Base):
     __tablename__ = 'url_error_info'

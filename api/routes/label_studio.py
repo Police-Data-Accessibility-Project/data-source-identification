@@ -11,6 +11,7 @@ label_studio_router = APIRouter(
     responses={404: {"description": "Not found"}},
 )
 
+# TODO: Delete
 @label_studio_router.post("/export-batch/{batch_id}")
 def export_batch_to_label_studio(
         batch_id: int = Path(description="The batch id"),

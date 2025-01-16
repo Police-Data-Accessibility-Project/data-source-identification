@@ -92,6 +92,7 @@ class LabelStudioAPIURLConstructor:
                 .add_path_segment('projects')
                 .add_path_segment(self.project_id)
                 .add_path_segment('import')
+                .add_query_param('return_task_ids', 'true')
                 .build()
                 )
 
@@ -171,9 +172,10 @@ class LabelStudioAPIManager:
     def export_tasks_into_project(
             self,
             data: list[LabelStudioTaskExportInfo]
-    ) -> Annotated[int, "The resultant Label Studio import ID"]:
+    ) -> Annotated[list[int], "The task IDs"]:
         """
         This method imports task input data into Label Studio.
+        https://labelstud.io/api#tag/Import/operation/api_projects_import_create
         Args:
             data: dict - The data to import into Label Studio.
                 This should be a list of dictionaries, each containing
@@ -194,7 +196,7 @@ class LabelStudioAPIManager:
             }
         )
         response.raise_for_status()
-        return response.json()["import"]
+        return response.json()["task_ids"]
 
     def import_tasks_from_project(self, all_tasks: bool = False) -> requests.Response:
         """

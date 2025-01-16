@@ -286,13 +286,13 @@ def parse_response(url_response):
     except (bs4.builder.ParserRejectedMarkup, AssertionError, AttributeError):
         return asdict(tags)
 
-    tags.html_title = get_html_title(soup)
+    tags.title = get_html_title(soup)
 
-    tags.meta_description = get_meta_description(soup)
+    tags.description = get_meta_description(soup)
 
     tags = get_header_tags(tags, soup)
 
-    tags.div_text = get_div_text(soup)
+    tags.div = get_div_text(soup)
 
     # Prevents most bs4 memory leaks
     if soup.html:
