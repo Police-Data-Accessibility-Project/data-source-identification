@@ -1,0 +1,16 @@
+
+services:
+  pg_dump:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: pg_dump_container
+    volumes:
+      - ./dump:/dump
+    environment:
+      DB_HOST: ${PROD_HOST:-postgres}
+      DB_USER: ${PROD_USER:-test_source_collector_user}
+      DB_PASSWORD: ${PROD_PASSWORD:-HanviliciousHamiltonHilltops}
+      DB_NAME: ${PROD_DB:-source_collector_test_db}
+      DB_PORT: ${PROD_PORT:-5432}
+    entrypoint: [ "bash", "/usr/local/bin/dump.sh" ]
