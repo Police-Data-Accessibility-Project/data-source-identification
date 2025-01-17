@@ -7,45 +7,9 @@ This includes testing that:
 * Column types are correct
 """
 
-# with alembic_runner.session() as session:
-#     batch = Batch()
-#     url = URL(batch_id=1, url="https://example.com", url_metadata={}, outcome="success")
-#
-# URLMetadataTester = TableTester(
-#     table_name="url_metadata",
-#     columns=[
-#         ColumnTester(
-#             column_name="url_id",
-#             type_=sa.Integer,
-#             allowed_values=[1]
-#         ),
-#         ColumnTester(
-#             column_name="attribute",
-#             type_=postgresql.ENUM,
-#             allowed_values=["Record Type", "Agency", "Relevant"]
-#         ),
-#         ColumnTester(
-#             column_name="value",
-#             type_=sa.Text,
-#             allowed_values=["Text"]
-#         ),
-#         ColumnTester(
-#             column_name="validation_status",
-#             type_=postgresql.ENUM,
-#             allowed_values=["Pending Label Studio", "Validated"]
-#         ),
-#         ColumnTester(
-#             column_name="validation_source",
-#             type_=postgresql.ENUM,
-#             allowed_values=["Machine Learning", "Label Studio", "Manual"]
-#         )
-#     ],
-#     engine=alembic_runner.connection.engine
-# )
 from dataclasses import dataclass
 from typing import TypeAlias, Optional, Any
 
-import psycopg2.errors
 import pytest
 import sqlalchemy as sa
 from sqlalchemy import create_engine
@@ -58,7 +22,7 @@ from collector_db.models import Base
 from collector_db.enums import URLHTMLContentType
 from collector_manager.enums import CollectorType, URLStatus
 from core.enums import BatchStatus
-from helpers.DBDataCreator import DBDataCreator
+from tests.helpers.DBDataCreator import DBDataCreator
 from util.helper_functions import get_enum_values
 
 SATypes: TypeAlias = sa.Integer or sa.String or postgresql.ENUM or sa.TIMESTAMP or sa.Text
@@ -296,7 +260,7 @@ def test_url_metadata(db_data_creator: DBDataCreator):
             ColumnTester(
                 column_name="validation_status",
                 type_=postgresql.ENUM,
-                allowed_values=["Pending Label Studio", "Validated"]
+                allowed_values=["Pending Validation", "Validated"]
             ),
             ColumnTester(
                 column_name="validation_source",

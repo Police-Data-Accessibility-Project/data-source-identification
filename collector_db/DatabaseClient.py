@@ -163,7 +163,7 @@ class DatabaseClient:
     def get_urls_by_batch(self, session, batch_id: int, page: int = 1) -> List[URLInfo]:
         """Retrieve all URLs associated with a batch."""
         urls = (session.query(URL).filter_by(batch_id=batch_id)
-                .limit(100).offset((page - 1) * 100).all())
+                .limit(100).offset((page - 1) * 100).order_by(URL.id).all())
         return ([URLInfo(**url.__dict__) for url in urls])
 
     @session_manager
@@ -181,7 +181,7 @@ class DatabaseClient:
 
     @session_manager
     def get_logs_by_batch_id(self, session, batch_id: int) -> List[LogOutputInfo]:
-        logs = session.query(Log).filter_by(batch_id=batch_id).all()
+        logs = session.query(Log).filter_by(batch_id=batch_id).order_by(Log.created_at.asc()).all()
         return ([LogOutputInfo(**log.__dict__) for log in logs])
 
     @session_manager

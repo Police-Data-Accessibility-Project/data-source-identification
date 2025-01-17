@@ -1,12 +1,10 @@
 from functools import wraps
-from typing import Optional
 
 from sqlalchemy import select, exists
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 
 from collector_db.ConfigManager import ConfigManager
 from collector_db.DTOs.MetadataAnnotationInfo import MetadataAnnotationInfo
-from collector_db.DTOs.RelevanceLabelStudioInputCycleInfo import RelevanceLabelStudioInputCycleInfo
 from collector_db.DTOs.URLAnnotationInfo import URLAnnotationInfo
 from collector_db.DTOs.URLErrorInfos import URLErrorPydanticInfo
 from collector_db.DTOs.URLHTMLContentInfo import URLHTMLContentInfo
@@ -16,9 +14,7 @@ from collector_db.helper_functions import get_postgres_connection_string
 from collector_db.models import URLMetadata, URL, URLErrorInfo, URLHTMLContent, Base, MetadataAnnotation
 from collector_db.enums import URLMetadataAttributeType, ValidationStatus
 from collector_manager.enums import URLStatus
-from core.DTOs.LabelStudioTaskInfo import LabelStudioTaskInfo
 from core.DTOs.RelevanceAnnotationInfo import RelevanceAnnotationPostInfo
-from core.DTOs.RelevanceAnnotationRequestInfo import RelevanceAnnotationRequestInfo
 
 
 class AsyncDatabaseClient:
@@ -45,8 +41,18 @@ class AsyncDatabaseClient:
         return wrapper
 
     @session_manager
-    async def get_url_metadata_by_status(self, session: AsyncSession, url_status: URLStatus):
-        statement = select(URLMetadata).join(URL).where(URL.outcome == url_status.value)
+    async def get_url_metadata_by_status(
+            self,
+            session: AsyncSession,
+            url_status: URLStatus,
+            offset: int = 0
+    ):
+        statement = (select(URLMetadata)
+                     .join(URL)
+                     .where(URL.outcome == url_status.value)
+                     .limit(100)
+                     .offset(offset)
+                     .order_by(URLMetadata.id))
         scalar_result = await session.scalars(statement)
         model_result = scalar_result.all()
         return [URLMetadataInfo(**url_metadata.__dict__) for url_metadata in model_result]
@@ -75,7 +81,10 @@ class AsyncDatabaseClient:
 
     @session_manager
     async def get_urls_with_errors(self, session: AsyncSession) -> list[URLErrorPydanticInfo]:
-        statement = select(URL, URLErrorInfo.error, URLErrorInfo.updated_at).join(URLErrorInfo).where(URL.outcome == URLStatus.ERROR.value)
+        statement = (select(URL, URLErrorInfo.error, URLErrorInfo.updated_at)
+                     .join(URLErrorInfo)
+                     .where(URL.outcome == URLStatus.ERROR.value)
+                     .order_by(URL.id))
         scalar_result = await session.execute(statement)
         results = scalar_result.all()
         final_results = []
@@ -97,7 +106,9 @@ class AsyncDatabaseClient:
         statement = (select(URL).
                      outerjoin(URLHTMLContent).
                      where(URLHTMLContent.id == None).
-                     where(URL.outcome == URLStatus.PENDING.value))
+                     where(URL.outcome == URLStatus.PENDING.value).
+                     limit(100).
+                     order_by(URL.id))
         scalar_result = await session.scalars(statement)
         return scalar_result.all()
 
@@ -120,6 +131,8 @@ class AsyncDatabaseClient:
                             )
                         )
                     )
+                    .limit(100)
+                    .order_by(URL.id)
         )
         raw_result = await session.execute(statement)
         result = raw_result.all()
@@ -149,11 +162,16 @@ class AsyncDatabaseClient:
             session: AsyncSession,
             attribute: URLMetadataAttributeType,
             validation_status: ValidationStatus,
+            offset: int = 0
     ) -> list[URLMetadataInfo]:
         statement = (select(URL.id, URLMetadata.id).
                      join(URLMetadata).
                      where(URLMetadata.attribute == attribute.value).
-                     where(URLMetadata.validation_status == validation_status.value))
+                     where(URLMetadata.validation_status == validation_status.value).
+                     limit(100).
+                     offset(offset).
+                     order_by(URL.id)
+                     )
 
         raw_result = await session.execute(statement)
         result = raw_result.all()
@@ -167,17 +185,6 @@ class AsyncDatabaseClient:
 
         return final_results
 
-
-    @session_manager
-    async def add_label_studio_task_infos(self, session: AsyncSession, task_infos: list[LabelStudioTaskInfo]):
-        for task_info in task_infos:
-            url_metadata = LabelStudioTask(
-                task_id=task_info.task_id,
-                url_metadata_id=task_info.metadata_id,
-                status=task_info.task_status
-            )
-            session.add(url_metadata)
-
     @session_manager
     async def update_url_metadata_status(self, session: AsyncSession, metadata_ids: list[int], validation_status: ValidationStatus):
         for metadata_id in metadata_ids:
@@ -185,33 +192,6 @@ class AsyncDatabaseClient:
             scalar_result = await session.scalars(statement)
             url_metadata = scalar_result.first()
             url_metadata.validation_status = validation_status
-
-    @session_manager
-    async def get_info_for_relevance_label_studio_input_cycle(
-            self,
-            session: AsyncSession,
-    ) -> Optional[list[RelevanceLabelStudioInputCycleInfo]]:
-        statement = (
-                    select(
-                        URL.url,
-                        URLMetadata.id,
-                        URLHTMLContent
-                    )
-                    .join(URLMetadata)
-                    .join(URLHTMLContent)
-                    .where(URLMetadata.attribute == URLMetadataAttributeType.RELEVANT.value))
-
-        raw_result = await session.execute(statement)
-        result = raw_result.all()
-
-        d = {}
-        for url, url_metadata_id, db_html_info in result:
-            html_info = URLHTMLContentInfo(**db_html_info.__dict__)
-            if url not in d:
-                d[url] = RelevanceLabelStudioInputCycleInfo(url=url, metadata_id=url_metadata_id, html_content_info=[html_info])
-            else:
-                d[url].html_content_info.append(html_info)
-        return list(d.values())
 
     @session_manager
     async def get_next_url_for_relevance_annotation(

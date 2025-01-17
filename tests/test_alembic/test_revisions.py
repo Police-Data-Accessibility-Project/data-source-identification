@@ -15,9 +15,8 @@ from itertools import product
 
 from sqlalchemy import text
 
-from test_alembic.conftest import alembic_runner
 
-from test_alembic.helpers import get_enum_values, table_creation_check
+from tests.test_alembic.helpers import get_enum_values, table_creation_check
 
 
 def test_base(alembic_runner):

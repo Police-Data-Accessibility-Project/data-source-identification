@@ -6,7 +6,7 @@ from sqlalchemy import create_engine
 from collector_db.DatabaseClient import DatabaseClient
 from collector_db.helper_functions import get_postgres_connection_string
 from collector_db.models import Base
-from helpers.DBDataCreator import DBDataCreator
+from tests.helpers.DBDataCreator import DBDataCreator
 
 
 @pytest.fixture(autouse=True, scope="session")

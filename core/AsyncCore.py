@@ -6,11 +6,10 @@ from core.DTOs.RelevanceAnnotationInfo import RelevanceAnnotationPostInfo
 from core.DTOs.RelevanceAnnotationRequestInfo import RelevanceAnnotationRequestInfo
 from core.classes.URLHTMLCycler import URLHTMLCycler
 from core.classes.URLRelevanceHuggingfaceCycler import URLRelevanceHuggingfaceCycler
-from html_tag_collector.DataClassTags import ResponseHTMLInfo, convert_to_response_html_info
+from html_tag_collector.DataClassTags import convert_to_response_html_info
 from html_tag_collector.ResponseParser import HTMLResponseParser
 from html_tag_collector.URLRequestInterface import URLRequestInterface
 from hugging_face.HuggingFaceInterface import HuggingFaceInterface
-from label_studio_interface.LabelStudioAPIManager import LabelStudioAPIManager
 
 
 class AsyncCore:
@@ -79,16 +78,3 @@ class AsyncCore:
             metadata_id=metadata_id,
             annotation_info=annotation)
         return await self.get_next_url_for_relevance_annotation(user_id=user_id)
-
-    async def process(self):
-        await self.relevant_to_label_studio()
-
-    async def relevant_to_label_studio(self):
-        """
-        Pipelines url relevancy scores to Huggingface,
-        then label studio,
-        adding URL metadata to database
-        """
-        url_metadata = await self.adb_client.get_url_metadata_by_status(
-            url_status=URLStatus.PENDING
-        )
