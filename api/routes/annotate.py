@@ -4,7 +4,6 @@ from api.dependencies import get_async_core
 from core.AsyncCore import AsyncCore
 from core.DTOs.GetNextURLForRelevanceAnnotationResponse import GetNextURLForRelevanceAnnotationResponse
 from core.DTOs.RelevanceAnnotationInfo import RelevanceAnnotationPostInfo
-from core.DTOs.RelevanceAnnotationRequestInfo import RelevanceAnnotationRequestInfo
 from security_manager.SecurityManager import get_access_info, AccessInfo
 
 annotate_router = APIRouter(

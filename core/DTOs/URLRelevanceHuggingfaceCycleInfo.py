@@ -2,7 +2,6 @@ from typing import Optional
 
 from pydantic import BaseModel
 
-from collector_db.DTOs.URLInfo import URLInfo
 from collector_db.DTOs.URLWithHTML import URLWithHTML
 
 

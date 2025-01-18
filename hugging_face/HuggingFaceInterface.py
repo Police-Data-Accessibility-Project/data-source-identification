@@ -1,6 +1,5 @@
 from transformers import pipeline
 
-from collector_db.DTOs.URLRelevancyInfo import URLRelevancyInfo
 from collector_db.DTOs.URLWithHTML import URLWithHTML
 
 

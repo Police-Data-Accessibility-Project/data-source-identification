@@ -8,6 +8,7 @@ from source_collectors.ckan.CKANCollector import CKANCollector
 from source_collectors.ckan.DTOs import CKANInputDTO
 from source_collectors.ckan.search_terms import package_search, group_search, organization_search
 
+
 class CKANSchema(Schema):
     submitted_name = fields.String()
     agency_name = fields.String()

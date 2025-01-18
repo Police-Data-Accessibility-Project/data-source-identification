@@ -1,8 +1,6 @@
 from dataclasses import dataclass
 from typing import Optional
 
-from pydantic import BaseModel
-
 from collector_db.DTOs.URLInfo import URLInfo
 from html_tag_collector.DataClassTags import ResponseHTMLInfo
 from html_tag_collector.URLRequestInterface import URLResponseInfo

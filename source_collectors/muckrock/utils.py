@@ -7,8 +7,8 @@ Functions:
     - format_filename_json_to_csv()
 """
 
-import re
 import json
+import re
 
 
 def format_filename_json_to_csv(json_filename: str) -> str:

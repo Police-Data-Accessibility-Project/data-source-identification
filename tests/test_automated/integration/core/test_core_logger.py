@@ -1,11 +1,7 @@
-import logging
 import threading
 import time
 
-import pytest
-
 from collector_db.DTOs.LogInfo import LogInfo
-from collector_db.DatabaseClient import DatabaseClient
 from core.CoreLogger import CoreLogger
 from tests.helpers.DBDataCreator import DBDataCreator
 

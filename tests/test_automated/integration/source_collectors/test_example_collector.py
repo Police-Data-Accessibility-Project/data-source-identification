@@ -2,10 +2,8 @@ import threading
 import time
 
 from collector_db.DTOs.BatchInfo import BatchInfo
-from collector_db.DatabaseClient import DatabaseClient
 from collector_manager.DTOs.ExampleInputDTO import ExampleInputDTO
 from collector_manager.ExampleCollector import ExampleCollector
-from core.CoreLogger import CoreLogger
 from core.SourceCollectorCore import SourceCollectorCore
 from core.enums import BatchStatus
 

@@ -1,11 +1,12 @@
-import requests
 import os
-import polars as pl
 import sys
-from html_tag_collector.collector import collector_main
-from agency_identifier.identifier import match_urls_to_agencies_and_clean_data
-from datetime import datetime as dt
+
+import polars as pl
+import requests
 from dotenv import load_dotenv
+
+from agency_identifier.identifier import match_urls_to_agencies_and_clean_data
+from html_tag_collector.collector import collector_main
 
 load_dotenv()
 

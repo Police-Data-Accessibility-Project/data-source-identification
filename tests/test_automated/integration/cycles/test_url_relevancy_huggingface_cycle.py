@@ -4,8 +4,8 @@ import pytest
 
 from collector_db.AsyncDatabaseClient import AsyncDatabaseClient
 from collector_db.DTOs.URLWithHTML import URLWithHTML
-from collector_db.models import URLMetadata
 from collector_db.enums import ValidationStatus, ValidationSource
+from collector_db.models import URLMetadata
 from core.classes.URLRelevanceHuggingfaceCycler import URLRelevanceHuggingfaceCycler
 from hugging_face.HuggingFaceInterface import HuggingFaceInterface
 

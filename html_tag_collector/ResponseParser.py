@@ -10,9 +10,9 @@ from requests import Response
 
 from html_tag_collector.DataClassTags import ResponseHTMLInfo
 from html_tag_collector.RootURLCache import RootURLCache
-from html_tag_collector.util import remove_excess_whitespace
 from html_tag_collector.constants import HEADER_TAGS
 from html_tag_collector.url_adjustment_functions import drop_hostname, remove_trailing_backslash, add_https
+from html_tag_collector.util import remove_excess_whitespace
 
 VerifiedResponse = namedtuple("VerifiedResponse", "verified http_response")
 

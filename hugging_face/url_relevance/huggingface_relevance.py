@@ -1,13 +1,13 @@
-from datasets import load_dataset
-from datasets import concatenate_datasets
-from transformers import TrainingArguments, Trainer
-from transformers import AutoTokenizer
-from multimodal_transformers.model import AutoModelWithTabular, TabularConfig
-from transformers import AutoConfig
-from multimodal_transformers.data import load_data
+import evaluate
 import numpy as np
 import pandas as pd
-import evaluate
+from datasets import concatenate_datasets
+from datasets import load_dataset
+from multimodal_transformers.data import load_data
+from multimodal_transformers.model import AutoModelWithTabular, TabularConfig
+from transformers import AutoConfig
+from transformers import AutoTokenizer
+from transformers import TrainingArguments, Trainer
 
 from hugging_face.url_relevance.constants import EMPTY_TEXT_VALUES, DATASET_TEXT_COLS, URL_RELEVANCE_DATASET
 

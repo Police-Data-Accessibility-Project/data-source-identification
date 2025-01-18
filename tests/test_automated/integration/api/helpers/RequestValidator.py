@@ -1,4 +1,4 @@
-from http import HTTPMethod, HTTPStatus
+from http import HTTPStatus
 from typing import Optional, Annotated
 
 from pydantic import BaseModel
@@ -16,7 +16,6 @@ from core.DTOs.LabelStudioExportResponseInfo import LabelStudioExportResponseInf
 from core.DTOs.MessageCountResponse import MessageCountResponse
 from core.DTOs.MessageResponse import MessageResponse
 from core.DTOs.RelevanceAnnotationInfo import RelevanceAnnotationPostInfo
-from core.DTOs.RelevanceAnnotationRequestInfo import RelevanceAnnotationRequestInfo
 from core.enums import BatchStatus
 from util.helper_functions import update_if_not_none
 

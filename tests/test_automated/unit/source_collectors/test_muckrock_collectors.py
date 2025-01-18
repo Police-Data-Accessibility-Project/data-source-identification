@@ -5,14 +5,12 @@ import pytest
 
 from collector_db.DTOs.URLInfo import URLInfo
 from collector_db.DatabaseClient import DatabaseClient
-from collector_manager.enums import URLStatus
 from core.CoreLogger import CoreLogger
 from source_collectors.muckrock.DTOs import MuckrockSimpleSearchCollectorInputDTO, \
     MuckrockCountySearchCollectorInputDTO, MuckrockAllFOIARequestsCollectorInputDTO
 from source_collectors.muckrock.classes.MuckrockCollector import MuckrockSimpleSearchCollector, \
     MuckrockCountyLevelSearchCollector, MuckrockAllFOIARequestsCollector
-from source_collectors.muckrock.classes.fetch_requests.FetchRequestBase import FetchRequest
-from source_collectors.muckrock.classes.muckrock_fetchers.FOIAFetcher import FOIAFetchRequest, FOIAFetcher
+from source_collectors.muckrock.classes.muckrock_fetchers.FOIAFetcher import FOIAFetchRequest
 
 
 @pytest.fixture

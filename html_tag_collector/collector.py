@@ -10,27 +10,27 @@
 """
 
 
-from dataclasses import asdict
-from collections import namedtuple
+import asyncio
 import json
-import urllib3
+import multiprocessing
 import sys
 import traceback
-import multiprocessing
+from collections import namedtuple
+from dataclasses import asdict
 
-import requests
-from requests_html import AsyncHTMLSession
-import asyncio
+import bs4
+import polars as pl
 import pyppeteer
+import requests
+import urllib3
+from bs4 import BeautifulSoup
+from requests_html import AsyncHTMLSession
 from tqdm import tqdm
 from tqdm.asyncio import tqdm
-import bs4
-from bs4 import BeautifulSoup
-import polars as pl
 
 from html_tag_collector.DataClassTags import ResponseHTMLInfo
 from html_tag_collector.ResponseFetcher import ResponseFetcher
-from html_tag_collector.ResponseParser import ResponseParser, HTMLResponseParser
+from html_tag_collector.ResponseParser import ResponseParser
 from html_tag_collector.RootURLCache import RootURLCache
 from html_tag_collector.constants import USER_AGENT, HEADER_TAGS
 from html_tag_collector.url_adjustment_functions import standardize_url_prefixes, remove_json_suffix, \

@@ -1,14 +1,11 @@
 import time
 
-import pytest
-
 from collector_db.DTOs.BatchInfo import BatchInfo
 from collector_manager.DTOs.ExampleInputDTO import ExampleInputDTO
 from collector_manager.enums import CollectorType, URLStatus
 from core.DTOs.CollectorStartInfo import CollectorStartInfo
 from core.SourceCollectorCore import SourceCollectorCore
 from core.enums import BatchStatus
-
 
 
 def test_example_collector_lifecycle(test_core: SourceCollectorCore):

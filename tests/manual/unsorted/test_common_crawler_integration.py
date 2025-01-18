@@ -1,16 +1,16 @@
 import csv
+import datetime
 import json
 import os
 import shutil
 import tempfile
-import datetime
 from unittest.mock import patch
 
 import pytest
-
+from common_crawler.cache import CommonCrawlerCacheManager
 from common_crawler.csv_manager import CSVManager
 from common_crawler.main import main, BATCH_HEADERS
-from common_crawler.cache import CommonCrawlerCacheManager
+
 
 class CSVData:
 

@@ -1,7 +1,10 @@
-import pytest
 from unittest.mock import patch
-from util.huggingface_api_manager import HuggingFaceAPIManager
+
 import huggingface_hub
+import pytest
+
+from util.huggingface_api_manager import HuggingFaceAPIManager
+
 
 def test_init_success():
     with patch.object(huggingface_hub, 'login') as login_mock, \

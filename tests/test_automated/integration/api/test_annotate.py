@@ -4,7 +4,6 @@ from collector_db.DTOs.InsertURLsInfo import InsertURLsInfo
 from collector_db.enums import URLMetadataAttributeType, ValidationStatus, ValidationSource
 from core.DTOs.GetNextURLForRelevanceAnnotationResponse import GetNextURLForRelevanceAnnotationResponse
 from core.DTOs.RelevanceAnnotationInfo import RelevanceAnnotationPostInfo
-from core.DTOs.RelevanceAnnotationRequestInfo import RelevanceAnnotationRequestInfo
 from tests.test_automated.integration.api.conftest import MOCK_USER_ID
 
 

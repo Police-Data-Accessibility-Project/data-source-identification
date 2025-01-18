@@ -1,8 +1,7 @@
 import ast
 import csv
-import sys
 import os
-
+import sys
 
 """ This script cleans up raw website data from the tag collector 
     so that it may be used for effective training.

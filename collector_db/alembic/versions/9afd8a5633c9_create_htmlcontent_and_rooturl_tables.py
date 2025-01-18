@@ -7,11 +7,9 @@ Create Date: 2025-01-13 15:11:14.736665
 """
 from typing import Sequence, Union
 
-from alembic import op
 import sqlalchemy as sa
-from sqlalchemy.dialects import postgresql
+from alembic import op
 
-import collector_db
 from collector_db.enums import PGEnum
 
 # revision identifiers, used by Alembic.

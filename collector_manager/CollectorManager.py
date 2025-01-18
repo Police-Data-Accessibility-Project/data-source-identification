@@ -4,7 +4,6 @@ Can start, stop, and get info on running collectors
 And manages the retrieval of collector info
 """
 import threading
-import traceback
 from concurrent.futures import Future, ThreadPoolExecutor
 from typing import Dict, List
 

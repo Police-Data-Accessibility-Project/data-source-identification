@@ -1,9 +1,9 @@
 import argparse
 import collections
 import dataclasses
+import os
 import re
 import sys
-import os
 from datetime import datetime
 
 from dotenv import load_dotenv

@@ -4,11 +4,10 @@ import os
 import random
 import string
 import sys
+from enum import Enum
 from typing import Annotated
 
 import requests
-from dotenv import load_dotenv
-from enum import Enum
 
 from label_studio_interface.DTOs.LabelStudioTaskExportInfo import LabelStudioTaskExportInfo
 

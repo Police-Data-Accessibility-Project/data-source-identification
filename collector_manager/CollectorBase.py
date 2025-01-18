@@ -17,6 +17,7 @@ from core.CoreLogger import CoreLogger
 from core.enums import BatchStatus
 from core.preprocessors.PreprocessorBase import PreprocessorBase
 
+
 class CollectorAbortException(Exception):
     pass
 

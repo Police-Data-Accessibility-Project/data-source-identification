@@ -7,8 +7,8 @@ from starlette.testclient import TestClient
 
 from api.main import app
 from core.SourceCollectorCore import SourceCollectorCore
-from tests.helpers.DBDataCreator import DBDataCreator
 from security_manager.SecurityManager import get_access_info, AccessInfo, Permissions
+from tests.helpers.DBDataCreator import DBDataCreator
 from tests.test_automated.integration.api.helpers.RequestValidator import RequestValidator
 
 

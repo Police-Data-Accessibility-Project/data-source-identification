@@ -17,9 +17,9 @@ from sqlalchemy.dialects import postgresql
 from sqlalchemy.exc import DataError
 
 from collector_db.DTOs.InsertURLsInfo import InsertURLsInfo
+from collector_db.enums import URLHTMLContentType
 from collector_db.helper_functions import get_postgres_connection_string
 from collector_db.models import Base
-from collector_db.enums import URLHTMLContentType
 from collector_manager.enums import CollectorType, URLStatus
 from core.enums import BatchStatus
 from tests.helpers.DBDataCreator import DBDataCreator

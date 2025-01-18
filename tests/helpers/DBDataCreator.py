@@ -1,9 +1,8 @@
-import asyncio
 from typing import List
 
 from collector_db.AsyncDatabaseClient import AsyncDatabaseClient
 from collector_db.DTOs.BatchInfo import BatchInfo
-from collector_db.DTOs.DuplicateInfo import DuplicateInfo, DuplicateInsertInfo
+from collector_db.DTOs.DuplicateInfo import DuplicateInsertInfo
 from collector_db.DTOs.InsertURLsInfo import InsertURLsInfo
 from collector_db.DTOs.URLHTMLContentInfo import URLHTMLContentInfo, HTMLContentType
 from collector_db.DTOs.URLInfo import URLInfo

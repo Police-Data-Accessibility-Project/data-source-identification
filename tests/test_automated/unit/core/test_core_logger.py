@@ -1,6 +1,6 @@
 import threading
-from unittest.mock import MagicMock
 import time
+from unittest.mock import MagicMock
 
 from collector_db.DTOs.LogInfo import LogInfo
 from core.CoreLogger import CoreLogger

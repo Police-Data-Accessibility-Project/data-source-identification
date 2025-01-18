@@ -10,9 +10,9 @@ from collector_db.DTOs.URLErrorInfos import URLErrorPydanticInfo
 from collector_db.DTOs.URLHTMLContentInfo import URLHTMLContentInfo
 from collector_db.DTOs.URLMetadataInfo import URLMetadataInfo
 from collector_db.DTOs.URLWithHTML import URLWithHTML
+from collector_db.enums import URLMetadataAttributeType, ValidationStatus
 from collector_db.helper_functions import get_postgres_connection_string
 from collector_db.models import URLMetadata, URL, URLErrorInfo, URLHTMLContent, Base, MetadataAnnotation
-from collector_db.enums import URLMetadataAttributeType, ValidationStatus
 from collector_manager.enums import URLStatus
 from core.DTOs.RelevanceAnnotationInfo import RelevanceAnnotationPostInfo
 

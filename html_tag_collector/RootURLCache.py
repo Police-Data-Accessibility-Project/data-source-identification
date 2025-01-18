@@ -1,10 +1,10 @@
+import json
+import os
+import ssl
 from urllib.parse import urlparse
 
 import requests
 from bs4 import BeautifulSoup
-import json
-import os
-import ssl
 
 from html_tag_collector.constants import USER_AGENT
 

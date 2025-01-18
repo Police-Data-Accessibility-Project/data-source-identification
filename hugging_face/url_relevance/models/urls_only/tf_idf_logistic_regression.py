@@ -2,10 +2,11 @@ import pandas as pd
 from datasets import load_dataset, Dataset
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
-from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report
+from sklearn.model_selection import train_test_split
 
 from hugging_face.url_relevance.constants import TRAINING_URLS_DATASET
+
 
 def main():
     dataset: Dataset = load_dataset(TRAINING_URLS_DATASET)['train']

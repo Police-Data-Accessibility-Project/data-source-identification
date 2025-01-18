@@ -1,6 +1,4 @@
-from typing import Optional
-
-from fastapi import APIRouter, Query
+from fastapi import APIRouter
 from fastapi.params import Depends
 
 from api.dependencies import get_core

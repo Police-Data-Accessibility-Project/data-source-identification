@@ -1,7 +1,7 @@
-import api.dependencies
 from tests.automated.core.helpers.common_test_procedures import run_collector_and_wait_for_completion
 from tests.automated.core.helpers.constants import ALLEGHENY_COUNTY_TOWN_NAMES, ALLEGHENY_COUNTY_MUCKROCK_ID
 
+import api.dependencies
 from collector_db.DTOs.BatchInfo import BatchInfo
 from collector_manager.enums import CollectorType
 from core.enums import BatchStatus

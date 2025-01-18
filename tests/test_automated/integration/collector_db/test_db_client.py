@@ -1,4 +1,3 @@
-import time
 from datetime import datetime, timedelta
 
 import pytest
@@ -9,7 +8,6 @@ from collector_db.DTOs.LogInfo import LogInfo
 from collector_db.DTOs.URLErrorInfos import URLErrorPydanticInfo
 from collector_db.DTOs.URLInfo import URLInfo
 from collector_db.DTOs.URLMetadataInfo import URLMetadataInfo
-from collector_db.models import URLMetadata, URLErrorInfo
 from collector_db.enums import URLMetadataAttributeType, ValidationStatus, ValidationSource
 from collector_manager.enums import URLStatus
 from core.enums import BatchStatus

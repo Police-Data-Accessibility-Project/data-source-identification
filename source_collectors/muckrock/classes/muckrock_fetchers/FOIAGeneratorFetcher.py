@@ -1,5 +1,5 @@
-from source_collectors.muckrock.classes.muckrock_fetchers.FOIAFetchManager import FOIAFetchManager
 from source_collectors.muckrock.classes.fetch_requests.FOIALoopFetchRequest import FOIALoopFetchRequest
+from source_collectors.muckrock.classes.muckrock_fetchers.FOIAFetchManager import FOIAFetchManager
 from source_collectors.muckrock.classes.muckrock_fetchers.MuckrockNextFetcher import MuckrockGeneratorFetcher
 
 

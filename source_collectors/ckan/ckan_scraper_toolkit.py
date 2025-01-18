@@ -1,17 +1,16 @@
 """Toolkit of functions that use ckanapi to retrieve packages from CKAN data portals"""
 
+import math
+import sys
+import time
 from concurrent.futures import as_completed, ThreadPoolExecutor
 from dataclasses import dataclass, field
 from datetime import datetime
-import math
-import sys
-
-import time
 from typing import Any, Optional
 from urllib.parse import urljoin
 
-from bs4 import BeautifulSoup
 import requests
+from bs4 import BeautifulSoup
 
 from source_collectors.ckan.CKANAPIInterface import CKANAPIInterface
 

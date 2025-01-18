@@ -1,6 +1,5 @@
 from pydantic import BaseModel
 
-from collector_db.DTOs.DuplicateInfo import DuplicateInfo
 from collector_db.DTOs.URLMapping import URLMapping
 
 

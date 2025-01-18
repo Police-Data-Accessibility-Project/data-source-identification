@@ -1,23 +1,22 @@
 from datetime import datetime, timedelta
 from functools import wraps
+from typing import Optional, List
 
 from sqlalchemy import create_engine, Row
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import sessionmaker, scoped_session, aliased
-from typing import Optional, List
 
 from collector_db.ConfigManager import ConfigManager
 from collector_db.DTOs.BatchInfo import BatchInfo
 from collector_db.DTOs.DuplicateInfo import DuplicateInfo, DuplicateInsertInfo
 from collector_db.DTOs.InsertURLsInfo import InsertURLsInfo
 from collector_db.DTOs.LogInfo import LogInfo, LogOutputInfo
-from collector_db.DTOs.URLMapping import URLMapping
 from collector_db.DTOs.URLInfo import URLInfo
+from collector_db.DTOs.URLMapping import URLMapping
 from collector_db.helper_functions import get_postgres_connection_string
 from collector_db.models import Base, Batch, URL, Log, Duplicate
 from collector_manager.enums import CollectorType
 from core.enums import BatchStatus
-
 
 
 # SQLAlchemy ORM models
@@ -163,7 +162,7 @@ class DatabaseClient:
     def get_urls_by_batch(self, session, batch_id: int, page: int = 1) -> List[URLInfo]:
         """Retrieve all URLs associated with a batch."""
         urls = (session.query(URL).filter_by(batch_id=batch_id)
-                .limit(100).offset((page - 1) * 100).order_by(URL.id).all())
+                .order_by(URL.id).limit(100).offset((page - 1) * 100).all())
         return ([URLInfo(**url.__dict__) for url in urls])
 
     @session_manager
