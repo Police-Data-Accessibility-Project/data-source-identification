@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 
@@ -42,7 +43,7 @@ class AsyncScheduledTaskManager:
         self.async_core = async_core
 
         # Main objects
-        self.scheduler = BackgroundScheduler()
+        self.scheduler = AsyncIOScheduler()
         self.scheduler.start()
         self.add_scheduled_tasks()
 
@@ -51,7 +52,7 @@ class AsyncScheduledTaskManager:
 
     def add_scheduled_tasks(self):
         self.run_cycles_job = self.scheduler.add_job(
-            self.async_core.run_cycles(),
+            self.async_core.run_cycles,
             trigger=IntervalTrigger(
                 hours=1,
                 start_date=datetime.now() + timedelta(minutes=1)

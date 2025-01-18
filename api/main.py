@@ -11,6 +11,7 @@ from collector_db.AsyncDatabaseClient import AsyncDatabaseClient
 from collector_db.DatabaseClient import DatabaseClient
 from core.AsyncCore import AsyncCore
 from core.CoreLogger import CoreLogger
+from core.ScheduledTaskManager import AsyncScheduledTaskManager
 from core.SourceCollectorCore import SourceCollectorCore
 from html_tag_collector.ResponseParser import HTMLResponseParser
 from html_tag_collector.RootURLCache import RootURLCache
@@ -38,10 +39,12 @@ async def lifespan(app: FastAPI):
             root_url_cache=RootURLCache()
         )
     )
+    async_scheduled_task_manager = AsyncScheduledTaskManager(async_core=async_core)
 
     # Pass dependencies into the app state
     app.state.core = source_collector_core
     app.state.async_core = async_core
+    app.state.async_scheduled_task_manager = async_scheduled_task_manager
 
     # Startup logic
     yield  # Code here runs before shutdown
