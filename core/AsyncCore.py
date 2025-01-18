@@ -1,6 +1,7 @@
+import logging
+
 from collector_db.AsyncDatabaseClient import AsyncDatabaseClient
 from collector_db.DTOs.URLAnnotationInfo import URLAnnotationInfo
-from collector_manager.enums import URLStatus
 from core.DTOs.GetNextURLForRelevanceAnnotationResponse import GetNextURLForRelevanceAnnotationResponse
 from core.DTOs.RelevanceAnnotationInfo import RelevanceAnnotationPostInfo
 from core.DTOs.RelevanceAnnotationRequestInfo import RelevanceAnnotationRequestInfo
@@ -25,8 +26,10 @@ class AsyncCore:
         self.huggingface_interface = huggingface_interface
         self.url_request_interface = url_request_interface
         self.html_parser = html_parser
+        self.logger = logging.getLogger(__name__)
 
     async def run_url_html_cycle(self):
+        self.logger.info("Running URL HTML Cycle")
         cycler = URLHTMLCycler(
             adb_client=self.adb_client,
             url_request_interface=self.url_request_interface,
@@ -35,11 +38,12 @@ class AsyncCore:
         await cycler.cycle()
 
     async def run_url_relevance_huggingface_cycle(self):
+        self.logger.info("Running URL Relevance Huggingface Cycle")
         cycler = URLRelevanceHuggingfaceCycler(
             adb_client=self.adb_client,
             huggingface_interface=self.huggingface_interface
         )
-        cycler.cycle()
+        await cycler.cycle()
 
     async def run_cycles(self):
         await self.run_url_html_cycle()
