@@ -27,6 +27,7 @@ class AsyncCore:
         self.url_request_interface = url_request_interface
         self.html_parser = html_parser
         self.logger = logging.getLogger(__name__)
+        self.logger.setLevel(logging.INFO)
 
     async def run_url_html_cycle(self):
         self.logger.info("Running URL HTML Cycle")
