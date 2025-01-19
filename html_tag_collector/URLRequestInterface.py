@@ -45,7 +45,11 @@ class URLRequestInterface:
             async with session.get(url, timeout=20) as response:
                 response.raise_for_status()
                 text = await response.text()
-                return URLResponseInfo(success=True, html=text, content_type=response.headers.get("content-type"))
+                return URLResponseInfo(
+                    success=True,
+                    html=text,
+                    content_type=response.headers.get("content-type")
+                )
         except Exception as e:
             print(f"An error occurred while fetching {url}: {e}")
             return URLResponseInfo(success=False, exception=e)

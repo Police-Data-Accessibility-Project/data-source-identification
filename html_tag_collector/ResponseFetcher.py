@@ -29,7 +29,12 @@ class ResponseFetcher:
             print(s)
 
     async def fetch(self, verify_ssl=True):
-        return await self.session.get(self.url, headers=self.headers, timeout=120, verify=verify_ssl)
+        return await self.session.get(
+            self.url,
+            headers=self.headers,
+            timeout=120,
+            verify=verify_ssl
+        )
 
     async def get_response(self):
         response = None
