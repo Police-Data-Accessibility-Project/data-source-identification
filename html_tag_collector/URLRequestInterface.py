@@ -1,74 +1,93 @@
-PYPPETEER_CHROMIUM_REVISION = '1263111'
-# This is needed in order to render javascript
-# (the arender method uses Pypeteer under the hood)
-import os
-os.environ['PYPPETEER_CHROMIUM_REVISION'] = PYPPETEER_CHROMIUM_REVISION
+import asyncio
+import subprocess
+from typing import Optional
+
+from aiohttp import ClientSession
+from playwright.async_api import async_playwright
+
 from dataclasses import dataclass
 
-from datasets import tqdm
 from requests import Response
-from requests_html import AsyncHTMLSession
+from tqdm.asyncio import tqdm
 
-from html_tag_collector.constants import USER_AGENT
+MAX_CONCURRENCY = 5
 
+@dataclass
+class URLResponseInfoOld:
+    success: bool
+    response: Response or Exception
 
 @dataclass
 class URLResponseInfo:
     success: bool
-    response: Response or Exception
+    html: Optional[str] = None
+    content_type: Optional[str] = None
+    exception: Optional[Exception] = None
+
+@dataclass
+class RequestResources:
+    session: ClientSession
+    browser: async_playwright
+    semaphore: asyncio.Semaphore = asyncio.Semaphore(MAX_CONCURRENCY)
+
+def ensure_browsers_installed():
+    print("Installing browsers...")
+    result = subprocess.run("playwright install", shell=True, capture_output=True, text=True)
+    print(result.stdout)
+    print(result.stderr)
+
+HTML_CONTENT_TYPE = "text/html"
 
 class URLRequestInterface:
 
-    def __init__(self):
-        self.session = AsyncHTMLSession(workers=100, browser_args=["--no-sandbox", f"--user-agent={USER_AGENT}"])
-
-    async def get_response(self, url: str):
+    async def get_response(self, session: ClientSession, url: str) -> URLResponseInfo:
         try:
-            response = await self.session.get(url)
+            async with session.get(url, timeout=20) as response:
+                response.raise_for_status()
+                text = await response.text()
+                return URLResponseInfo(success=True, html=text, content_type=response.headers.get("content-type"))
         except Exception as e:
-            response = e
-        return response
+            print(f"An error occurred while fetching {url}: {e}")
+            return URLResponseInfo(success=False, exception=e)
 
-    async def fetch(self, url: str):
-        response = await self.get_response(url)
-        return response
+    async def fetch_and_render(self, rr: RequestResources, url: str) -> URLResponseInfo:
+        simple_response = await self.get_response(rr.session, url)
+        if not simple_response.success:
+            return simple_response
 
-    async def fetch_and_render(self, url: str):
-        response = await self.get_response(url)
-        if isinstance(response, Exception):
-            return response
-        await response.html.arender(timeout=10, sleep=2)
-        return response
+        if simple_response.content_type != HTML_CONTENT_TYPE:
+            return simple_response
 
-    async def fetch_urls(self, urls: list[str], render_javascript: bool):
-        if render_javascript:
-            tasks = [self.fetch_and_render(url) for url in urls]
-        else:
-            tasks = [self.fetch(url) for url in urls]
+        # For HTML responses, attempt to load the page to check for dynamic html content
+        async with rr.semaphore:
+            page = await rr.browser.new_page()
+            try:
+                await page.goto(url)
+                await page.wait_for_load_state("networkidle")
+                html_content = await page.content()
+                return URLResponseInfo(success=True, html=html_content, content_type=HTML_CONTENT_TYPE)
+            except Exception as e:
+                return URLResponseInfo(success=False, exception=e)
+            finally:
+                await page.close()
 
-        return await tqdm.gather(*tasks)
-
-    async def process_results(self, results) -> list[URLResponseInfo]:
-        uris = []
-        for result in results:
-            if isinstance(result, Exception):
-                uris.append(URLResponseInfo(success=False, response=result))
-            else:
-                uris.append(URLResponseInfo(success=True, response=result))
-        return uris
+    async def fetch_urls(self, urls: list[str]) -> list[URLResponseInfo]:
+        async with ClientSession() as session:
+            async with async_playwright() as playwright:
+                browser = await playwright.chromium.launch(headless=True)
+                request_resources = RequestResources(session=session, browser=browser)
+                tasks = [self.fetch_and_render(request_resources, url) for url in urls]
+                results = await tqdm.gather(*tasks)
+                return results
 
     async def make_requests(
             self,
             urls: list[str],
-            render_javascript: bool = False
     ) -> list[URLResponseInfo]:
         try:
-            results = await self.fetch_urls(urls, render_javascript)
+            ensure_browsers_installed()
+            return await self.fetch_urls(urls)
         except Exception as e:
-            print(f"An error occurred while making the requests: {e}")
-            results = []
-        finally:
-            await self.session.close()
-            return await self.process_results(results)
+            return []
 
 

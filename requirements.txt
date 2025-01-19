@@ -35,6 +35,9 @@ alembic~=1.14.0
 asyncpg~=0.30.0
 pytest-asyncio~=0.25.2
 
+# HTML Collector
+playwright~=1.49.1
+
 # Security Manager
 PyJWT~=2.10.1
 

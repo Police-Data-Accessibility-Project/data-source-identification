@@ -24,17 +24,17 @@ class HTMLResponseParser:
     def __init__(self, root_url_cache: RootURLCache):
         self.root_url_cache = root_url_cache
 
-    async def parse(self, url_response: Response) -> ResponseHTMLInfo:
+    async def parse(self, url: str, html_content: str, content_type: str) -> ResponseHTMLInfo:
         html_info = ResponseHTMLInfo()
-        self.add_url_and_path(html_info, url_response)
+        self.add_url_and_path(html_info, html_content=html_content, url=url)
         self.add_root_page_titles(html_info)
-        parser_type = self.get_parser_type(url_response)
+        parser_type = self.get_parser_type(content_type)
         if parser_type is None:
             return html_info
         self.add_html_from_beautiful_soup(
             html_info=html_info,
             parser_type=parser_type,
-            response=url_response
+            html_content=html_content
         )
         return html_info
 
@@ -42,11 +42,10 @@ class HTMLResponseParser:
             self,
             html_info: ResponseHTMLInfo,
             parser_type: ParserTypeEnum,
-            response: Response
+            html_content: str
     ):
-        # TODO: Check type on Response and update type hinting accordingly
         soup = BeautifulSoup(
-            markup=response.html.html,
+            markup=html_content,
             features=parser_type.value,
         )
         html_info.title = self.get_html_title(soup)
@@ -102,8 +101,7 @@ class HTMLResponseParser:
         return remove_excess_whitespace(soup.title.string)
 
 
-    def add_url_and_path(self, html_info: ResponseHTMLInfo, response: Response):
-        url = response.url
+    def add_url_and_path(self, html_info: ResponseHTMLInfo, html_content: str, url: str):
         url = add_https(url)
         html_info.url = url
 
@@ -116,9 +114,8 @@ class HTMLResponseParser:
             self.root_url_cache.get_title(html_info.url)
         )
 
-    def get_parser_type(self, response: Response) -> ParserTypeEnum or None:
+    def get_parser_type(self, content_type: str) -> ParserTypeEnum or None:
         try:
-            content_type = response.headers["content-type"]
             # If content type does not contain "html" or "xml" then we can assume that the content is unreadable
             if "html" in content_type:
                 return ParserTypeEnum.LXML

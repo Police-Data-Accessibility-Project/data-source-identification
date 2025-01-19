@@ -20,6 +20,7 @@ class URLHTMLCycler:
         self.html_parser = html_parser
 
     async def cycle(self):
+        print("Running URL HTML Cycle...")
         cycle_infos = await self.get_pending_urls_without_html_data()
         await self.get_raw_html_data_for_urls(cycle_infos)
         success_cycles, error_cycles = await self.separate_success_and_error_cycles(cycle_infos)
@@ -67,7 +68,7 @@ class URLHTMLCycler:
         for errored_cycle_info in errored_cycle_infos:
             error_info = URLErrorPydanticInfo(
                 url_id=errored_cycle_info.url_info.id,
-                error=str(errored_cycle_info.url_response_info.response),
+                error=str(errored_cycle_info.url_response_info.exception),
             )
             error_infos.append(error_info)
         await self.adb_client.add_url_error_infos(error_infos)
@@ -75,7 +76,9 @@ class URLHTMLCycler:
     async def process_html_data(self, cycle_infos: list[URLHTMLCycleInfo]):
         for cycle_info in cycle_infos:
             html_tag_info = await self.html_parser.parse(
-                cycle_info.url_response_info.response
+                url=cycle_info.url_info.url,
+                html_content=cycle_info.url_response_info.html,
+                content_type=cycle_info.url_response_info.content_type
             )
             cycle_info.html_tag_info = html_tag_info
 
