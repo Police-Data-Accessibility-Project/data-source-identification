@@ -8,7 +8,6 @@ from helpers.DBDataCreator import DBDataCreator
 from html_tag_collector.ResponseParser import HTMLResponseParser
 from html_tag_collector.RootURLCache import RootURLCache
 from html_tag_collector.URLRequestInterface import URLRequestInterface
-from html_tag_collector.collector import process_in_batches
 
 URLS = [
     "https://pdap.io",
@@ -25,24 +24,6 @@ sample_json_data = [
         "label": "Label"
     } for idx, url in enumerate(URLS)
 ]
-
-def test_collector_main():
-    """
-    Test main function from collector module for manual inspection
-    Involves live connection to and pulling of internet data
-    """
-    df = pl.DataFrame(sample_json_data)
-
-    cumulative_df = process_in_batches(
-        df=df,
-        render_javascript=False
-    )
-
-    print(cumulative_df)
-    # print data from each row, for each column
-    for i in range(len(cumulative_df)):
-        for col in cumulative_df.columns:
-            print(f"{col}: {cumulative_df[col][i]}")
 
 @pytest.mark.asyncio
 async def test_get_response():
