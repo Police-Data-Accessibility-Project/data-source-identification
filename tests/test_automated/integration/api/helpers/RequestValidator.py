@@ -12,6 +12,7 @@ from core.DTOs.GetBatchStatusResponse import GetBatchStatusResponse
 from core.DTOs.GetDuplicatesByBatchResponse import GetDuplicatesByBatchResponse
 from core.DTOs.GetNextURLForRelevanceAnnotationResponse import GetNextURLForRelevanceAnnotationResponse
 from core.DTOs.GetURLsByBatchResponse import GetURLsByBatchResponse
+from core.DTOs.GetURLsResponseInfo import GetURLsResponseInfo
 from core.DTOs.LabelStudioExportResponseInfo import LabelStudioExportResponseInfo
 from core.DTOs.MessageCountResponse import MessageCountResponse
 from core.DTOs.MessageResponse import MessageResponse
@@ -194,3 +195,10 @@ class RequestValidator:
             json=relevance_annotation_post_info.model_dump()
         )
         return GetNextURLForRelevanceAnnotationResponse(**data)
+
+    def get_urls(self, page: int = 1, errors: bool = False) -> GetURLsResponseInfo:
+        data = self.get(
+            url=f"/url",
+            params={"page": page, "errors": errors}
+        )
+        return GetURLsResponseInfo(**data)

@@ -4,6 +4,7 @@ from collector_db.AsyncDatabaseClient import AsyncDatabaseClient
 from collector_db.DTOs.BatchInfo import BatchInfo
 from collector_db.DTOs.DuplicateInfo import DuplicateInsertInfo
 from collector_db.DTOs.InsertURLsInfo import InsertURLsInfo
+from collector_db.DTOs.URLErrorInfos import URLErrorPydanticInfo
 from collector_db.DTOs.URLHTMLContentInfo import URLHTMLContentInfo, HTMLContentType
 from collector_db.DTOs.URLInfo import URLInfo
 from collector_db.DTOs.URLMetadataInfo import URLMetadataInfo
@@ -97,4 +98,14 @@ class DBDataCreator:
                     validation_source=validation_source,
                 )
             )
+
+    async def error_info(self, url_ids: list[int]):
+        error_infos = []
+        for url_id in url_ids:
+            url_error_info = URLErrorPydanticInfo(
+                url_id=url_id,
+                error="test error",
+            )
+            error_infos.append(url_error_info)
+        await self.adb_client.add_url_error_infos(error_infos)
 

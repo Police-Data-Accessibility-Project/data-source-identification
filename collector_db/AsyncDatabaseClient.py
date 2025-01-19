@@ -2,6 +2,7 @@ from functools import wraps
 
 from sqlalchemy import select, exists
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
+from sqlalchemy.orm import selectinload
 
 from collector_db.ConfigManager import ConfigManager
 from collector_db.DTOs.MetadataAnnotationInfo import MetadataAnnotationInfo
@@ -10,12 +11,18 @@ from collector_db.DTOs.URLErrorInfos import URLErrorPydanticInfo
 from collector_db.DTOs.URLHTMLContentInfo import URLHTMLContentInfo
 from collector_db.DTOs.URLMetadataInfo import URLMetadataInfo
 from collector_db.DTOs.URLWithHTML import URLWithHTML
-from collector_db.enums import URLMetadataAttributeType, ValidationStatus
+from collector_db.enums import URLMetadataAttributeType, ValidationStatus, ValidationSource
 from collector_db.helper_functions import get_postgres_connection_string
-from collector_db.models import URLMetadata, URL, URLErrorInfo, URLHTMLContent, Base, MetadataAnnotation
+from collector_db.models import URLMetadata, URL, URLErrorInfo, URLHTMLContent, Base, MetadataAnnotation, \
+    RootURL
 from collector_manager.enums import URLStatus
+from core.DTOs.GetURLsResponseInfo import GetURLsResponseInfo, GetURLsResponseMetadataInfo, GetURLsResponseErrorInfo, \
+    GetURLsResponseInnerInfo
 from core.DTOs.RelevanceAnnotationInfo import RelevanceAnnotationPostInfo
 
+def add_standard_limit_and_offset(statement, page, limit=100):
+    offset = (page - 1) * limit
+    return statement.limit(limit).offset(offset)
 
 class AsyncDatabaseClient:
     def __init__(self, db_url: str = get_postgres_connection_string(is_async=True)):
@@ -289,8 +296,6 @@ class AsyncDatabaseClient:
         all_results = scalar_result.all()
         return [MetadataAnnotationInfo(**result.__dict__) for result in all_results]
 
-
-
     @session_manager
     async def get_all(self, session, model: Base):
         """
@@ -300,4 +305,77 @@ class AsyncDatabaseClient:
         statement = select(model)
         result = await session.execute(statement)
         return result.scalars().all()
+
+    @session_manager
+    async def load_root_url_cache(self, session: AsyncSession) -> dict[str, str]:
+        statement = select(RootURL)
+        scalar_result = await session.scalars(statement)
+        model_result = scalar_result.all()
+        d = {}
+        for result in model_result:
+            d[result.url] = result.page_title
+        return d
+
+    @session_manager
+    async def add_to_root_url_cache(self, session: AsyncSession, url: str, page_title: str) -> None:
+        cache = RootURL(url=url, page_title=page_title)
+        session.add(cache)
+
+    @session_manager
+    async def get_urls(self, session: AsyncSession, page: int, errors: bool) -> GetURLsResponseInfo:
+        statement = select(URL).options(
+            selectinload(URL.url_metadata), selectinload(URL.error_info)
+        )
+        if errors:
+            # Only return URLs with errors
+            statement = statement.where(
+                exists(
+                    select(URLErrorInfo).where(URLErrorInfo.url_id == URL.id)
+                )
+            )
+        add_standard_limit_and_offset(statement, page)
+        execute_result = await session.execute(statement)
+        all_results = execute_result.scalars().all()
+        final_results = []
+        for result in all_results:
+            metadata_results = []
+            for metadata in result.url_metadata:
+                metadata_result = GetURLsResponseMetadataInfo(
+                    id=metadata.id,
+                    attribute=URLMetadataAttributeType(metadata.attribute),
+                    value=metadata.value,
+                    validation_status=ValidationStatus(metadata.validation_status),
+                    validation_source=ValidationSource(metadata.validation_source),
+                    created_at=metadata.created_at,
+                    updated_at=metadata.updated_at
+                )
+                metadata_results.append(metadata_result)
+            error_results = []
+            for error in result.error_info:
+                error_result = GetURLsResponseErrorInfo(
+                    id=error.id,
+                    error=error.error,
+                    updated_at=error.updated_at
+                )
+                error_results.append(error_result)
+            final_results.append(
+                GetURLsResponseInnerInfo(
+                    id=result.id,
+                    batch_id=result.batch_id,
+                    url=result.url,
+                    status=URLStatus(result.outcome),
+                    collector_metadata=result.collector_metadata,
+                    updated_at=result.updated_at,
+                    created_at=result.created_at,
+                    errors=error_results,
+                    metadata=metadata_results
+                )
+            )
+
+        return GetURLsResponseInfo(
+            urls=final_results,
+            count=len(final_results)
+        )
+
+
 

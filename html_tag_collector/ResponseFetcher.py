@@ -11,11 +11,6 @@ from html_tag_collector.constants import REQUEST_HEADERS
 from html_tag_collector.url_adjustment_functions import http_to_https
 
 
-@dataclass
-class ResponseInfo:
-    url: str
-    response: Optional[requests.Response]
-
 class ResponseFetcher:
 
     def __init__(self, session: AsyncHTMLSession, url: str, debug=False):

@@ -6,6 +6,7 @@ from api.routes.annotate import annotate_router
 from api.routes.batch import batch_router
 from api.routes.collector import collector_router
 from api.routes.root import root_router
+from api.routes.url import url_router
 from collector_db.AsyncDatabaseClient import AsyncDatabaseClient
 from collector_db.DatabaseClient import DatabaseClient
 from core.AsyncCore import AsyncCore
@@ -74,3 +75,4 @@ app.include_router(root_router)
 app.include_router(collector_router)
 app.include_router(batch_router)
 app.include_router(annotate_router)
+app.include_router(url_router)

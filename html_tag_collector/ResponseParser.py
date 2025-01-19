@@ -25,7 +25,7 @@ class HTMLResponseParser:
     async def parse(self, url: str, html_content: str, content_type: str) -> ResponseHTMLInfo:
         html_info = ResponseHTMLInfo()
         self.add_url_and_path(html_info, html_content=html_content, url=url)
-        self.add_root_page_titles(html_info)
+        await self.add_root_page_titles(html_info)
         parser_type = self.get_parser_type(content_type)
         if parser_type is None:
             return html_info
@@ -107,9 +107,10 @@ class HTMLResponseParser:
         url_path = remove_trailing_backslash(url_path)
         html_info.url_path = url_path
 
-    def add_root_page_titles(self, html_info: ResponseHTMLInfo):
+    async def add_root_page_titles(self, html_info: ResponseHTMLInfo):
+        root_page_title = await self.root_url_cache.get_title(html_info.url)
         html_info.root_page_title = remove_excess_whitespace(
-            self.root_url_cache.get_title(html_info.url)
+            root_page_title
         )
 
     def get_parser_type(self, content_type: str) -> ParserTypeEnum or None:

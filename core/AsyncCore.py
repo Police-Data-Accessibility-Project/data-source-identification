@@ -3,6 +3,7 @@ import logging
 from collector_db.AsyncDatabaseClient import AsyncDatabaseClient
 from collector_db.DTOs.URLAnnotationInfo import URLAnnotationInfo
 from core.DTOs.GetNextURLForRelevanceAnnotationResponse import GetNextURLForRelevanceAnnotationResponse
+from core.DTOs.GetURLsResponseInfo import GetURLsResponseInfo
 from core.DTOs.RelevanceAnnotationInfo import RelevanceAnnotationPostInfo
 from core.DTOs.RelevanceAnnotationRequestInfo import RelevanceAnnotationRequestInfo
 from core.classes.URLHTMLCycler import URLHTMLCycler
@@ -83,3 +84,6 @@ class AsyncCore:
             metadata_id=metadata_id,
             annotation_info=annotation)
         return await self.get_next_url_for_relevance_annotation(user_id=user_id)
+
+    async def get_urls(self, page: int, errors: bool) -> GetURLsResponseInfo:
+        return await self.adb_client.get_urls(page=page, errors=errors)

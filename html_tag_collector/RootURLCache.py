@@ -1,73 +1,79 @@
-import json
-import os
-import ssl
+from dataclasses import dataclass
+from typing import Optional
 from urllib.parse import urlparse
 
-import requests
+from aiohttp import ClientSession
 from bs4 import BeautifulSoup
 
-from html_tag_collector.constants import USER_AGENT, REQUEST_HEADERS
+from collector_db.AsyncDatabaseClient import AsyncDatabaseClient
+from html_tag_collector.constants import REQUEST_HEADERS
 
 DEBUG = False
 
+@dataclass
+class RootURLCacheResponseInfo:
+    text: Optional[str] = None
+    exception: Optional[Exception] = None
+
 class RootURLCache:
-    def __init__(self, cache_file='url_cache.json'):
-        self.cache_file = cache_file
-        self.cache = self.load_cache()
+    def __init__(self, adb_client: AsyncDatabaseClient = AsyncDatabaseClient()):
+        self.adb_client = adb_client
+        self.cache = None
 
-    def load_cache(self):
-        if not os.path.exists(self.cache_file):
-            return {}
-        with open(self.cache_file, 'r') as f:
-            # Check if the file is empty
-            content = f.read()
-            if not content:
-                # Return an empty dictionary if the file is empty
-                return {}
-            # If the file is not empty, return its JSON content
-            return json.loads(content)
+    async def save_to_cache(self, url: str, title: str):
+        if url in self.cache:
+            return
+        self.cache[url] = title
+        await self.adb_client.add_to_root_url_cache(url=url, page_title=title)
 
-    def save_cache(self):
-        with open(self.cache_file, 'w') as f:
-            json.dump(self.cache, f, indent=4)
+    async def get_from_cache(self, url: str):
+        if self.cache is None:
+            self.cache = await self.adb_client.load_root_url_cache()
 
-    def get_title(self, url) -> str:
+        if url in self.cache:
+            return self.cache[url]
+        return None
+
+    async def get_request(self, url: str) -> RootURLCacheResponseInfo:
+        async with ClientSession() as session:
+            try:
+                async with session.get(url, headers=REQUEST_HEADERS, timeout=120) as response:
+                    response.raise_for_status()
+                    text = await response.text()
+                    return RootURLCacheResponseInfo(text=text)
+            except Exception as e:
+                return RootURLCacheResponseInfo(exception=e)
+
+    async def get_title(self, url) -> str:
         if not url.startswith('http'):
             url = "https://" + url
 
         parsed_url = urlparse(url)
         root_url = f"{parsed_url.scheme}://{parsed_url.netloc}"
 
-        if root_url in self.cache:
-            return self.cache[root_url]
+        title = await self.get_from_cache(root_url)
+        if title is not None:
+            return title
 
-        # TODO: Separate the logic in these two sections
-        try:
-            response = requests.get(root_url, headers=REQUEST_HEADERS, timeout=120)
-        except (requests.exceptions.SSLError, ssl.SSLError):
-            # This error is raised when the website uses a legacy SSL version, which is not supported by requests
-            # Retry without SSL verification
-            try:
-                response = requests.get(root_url, headers=REQUEST_HEADERS, timeout=120, verify=False)
-            except Exception as e:
-                return self.handle_exception(e)
-        except Exception as e:
-            return self.handle_exception(e)
+        response_info = await self.get_request(root_url)
+        if response_info.exception is not None:
+            return self.handle_exception(response_info.exception)
 
-        # TODO: Separate logic in these two sections
-        soup = BeautifulSoup(response.text, 'html.parser')
+        title = await self.get_title_from_soup(response_info.text)
+
+        await self.save_to_cache(url=root_url, title=title)
+
+        return title
+
+    async def get_title_from_soup(self, text: str) -> str:
+        soup = BeautifulSoup(text, 'html.parser')
         try:
             title = soup.find('title').text
         except AttributeError:
             title = ""
-
-        self.cache[root_url] = title
-        self.save_cache()
-
         # Prevents most bs4 memory leaks
         if soup.html:
             soup.html.decompose()
-
         return title
 
     def handle_exception(self, e):
