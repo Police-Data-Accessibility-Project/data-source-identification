@@ -53,8 +53,23 @@ async def test_get_response():
 @pytest.mark.asyncio
 async def test_get_response_with_javascript():
     uri = URLRequestInterface()
-    results = await uri.make_requests(URLS, render_javascript=True)
+    results = await uri.make_requests(URLS)
     print(results)
+
+@pytest.mark.asyncio
+async def test_url_html_cycle_live_data(
+):
+    """
+    Tests the cycle on whatever exists in the DB
+    """
+    cycler = URLHTMLCycler(
+        adb_client=AsyncDatabaseClient(),
+        url_request_interface=URLRequestInterface(),
+        html_parser=HTMLResponseParser(
+            root_url_cache=RootURLCache()
+        )
+    )
+    await cycler.cycle()
 
 @pytest.mark.asyncio
 async def test_url_html_cycle(
