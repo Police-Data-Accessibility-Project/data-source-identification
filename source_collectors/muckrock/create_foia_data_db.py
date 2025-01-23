@@ -19,9 +19,9 @@ Errors encountered during API requests or database operations are logged to an `
 and/or printed to the console.
 """
 
+import json
 import logging
 import os
-import json
 import time
 from typing import List, Tuple, Dict, Any
 

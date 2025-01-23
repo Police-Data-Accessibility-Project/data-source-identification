@@ -1,7 +1,7 @@
 from enum import Enum
 
 class CollectorType(Enum):
-    EXAMPLE = "example_collector"
+    EXAMPLE = "example"
     AUTO_GOOGLER = "auto_googler"
     COMMON_CRAWLER = "common_crawler"
     MUCKROCK_SIMPLE_SEARCH = "muckrock_simple_search"
@@ -9,9 +9,10 @@ class CollectorType(Enum):
     MUCKROCK_ALL_SEARCH = "muckrock_all_search"
     CKAN = "ckan"
 
-class URLOutcome(Enum):
+class URLStatus(Enum):
     PENDING = "pending"
     SUBMITTED = "submitted"
     HUMAN_LABELING = "human_labeling"
     REJECTED = "rejected"
     DUPLICATE = "duplicate"
+    ERROR = "error"

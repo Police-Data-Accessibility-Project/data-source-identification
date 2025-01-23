@@ -2,6 +2,7 @@ from typing import Optional
 
 from ckanapi import RemoteCKAN, NotFound
 
+
 class CKANAPIError(Exception):
     pass
 

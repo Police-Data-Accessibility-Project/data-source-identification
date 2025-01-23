@@ -1,8 +1,8 @@
 import pytest
 
 from label_studio_interface.DTOs.LabelStudioTaskExportInfo import LabelStudioTaskExportInfo
-from label_studio_interface.LabelStudioConfig import LabelStudioConfig
 from label_studio_interface.LabelStudioAPIManager import LabelStudioAPIManager, generate_random_word
+from label_studio_interface.LabelStudioConfig import LabelStudioConfig
 
 
 # Setup method

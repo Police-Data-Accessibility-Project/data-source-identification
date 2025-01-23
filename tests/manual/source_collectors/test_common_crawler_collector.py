@@ -7,6 +7,7 @@ from core.CoreLogger import CoreLogger
 from source_collectors.common_crawler.CommonCrawlerCollector import CommonCrawlerCollector
 from source_collectors.common_crawler.DTOs import CommonCrawlerInputDTO
 
+
 class CommonCrawlerSchema(Schema):
     urls = fields.List(fields.String())
 

@@ -1,9 +1,10 @@
-import pytest
 from unittest.mock import patch
+
+import pytest
 from fastapi import HTTPException
 from jwt import InvalidTokenError
 
-from security_manager.SecurityManager import SecurityManager, Permissions, AccessInfo, get_access_info, ALGORITHM
+from security_manager.SecurityManager import SecurityManager, Permissions, AccessInfo, get_access_info
 
 SECRET_KEY = "test_secret_key"
 VALID_TOKEN = "valid_token"

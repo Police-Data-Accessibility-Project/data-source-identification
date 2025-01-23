@@ -18,10 +18,11 @@ Error Handling:
 Errors encountered during database operations, JSON parsing, or file writing are printed to the console.
 """
 
-import pandas as pd
-import json
 import argparse
+import json
 from typing import Union, List, Dict
+
+import pandas as pd
 
 from source_collectors.muckrock.classes.FOIADBSearcher import FOIADBSearcher
 

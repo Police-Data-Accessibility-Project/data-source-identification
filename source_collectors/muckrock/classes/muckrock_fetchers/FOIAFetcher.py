@@ -1,5 +1,5 @@
-from source_collectors.muckrock.classes.muckrock_fetchers.MuckrockFetcher import MuckrockFetcher
 from source_collectors.muckrock.classes.fetch_requests.FetchRequestBase import FetchRequest
+from source_collectors.muckrock.classes.muckrock_fetchers.MuckrockFetcher import MuckrockFetcher
 from source_collectors.muckrock.constants import BASE_MUCKROCK_URL
 
 FOIA_BASE_URL = f"{BASE_MUCKROCK_URL}/foia"

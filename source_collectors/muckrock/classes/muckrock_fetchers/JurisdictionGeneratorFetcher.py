@@ -1,5 +1,5 @@
-from source_collectors.muckrock.classes.muckrock_fetchers.JurisdictionFetchManager import JurisdictionFetchManager
 from source_collectors.muckrock.classes.fetch_requests.JurisdictionLoopFetchRequest import JurisdictionLoopFetchRequest
+from source_collectors.muckrock.classes.muckrock_fetchers.JurisdictionFetchManager import JurisdictionFetchManager
 from source_collectors.muckrock.classes.muckrock_fetchers.MuckrockNextFetcher import MuckrockGeneratorFetcher
 
 

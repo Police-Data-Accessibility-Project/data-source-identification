@@ -1,0 +1,27 @@
+
+services:
+  pg_dump:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: pg_dump_container
+    volumes:
+      - ./dump:/dump
+    environment:
+      DUMP_HOST: ${DUMP_HOST:-postgres}
+      DUMP_USER: ${DUMP_USER:-test_source_collector_user}
+      DUMP_PASSWORD: ${DUMP_PASSWORD:-HanviliciousHamiltonHilltops}
+      DUMP_NAME: ${DUMP_DB_NAME:-source_collector_test_db}
+      DUMP_PORT: ${DUMP_PORT:-5432}
+      RESTORE_HOST: ${RESTORE_HOST:-postgres}
+      RESTORE_USER: ${RESTORE_USER:-test_source_collector_user}
+      RESTORE_PORT: ${RESTORE_PORT:-5432}
+      RESTORE_DB_NAME: ${RESTORE_DB_NAME:-source_collector_test_db}
+      RESTORE_PASSWORD: ${RESTORE_PASSWORD:-HanviliciousHamiltonHilltops}
+      DUMP_FILE: /dump/db_dump.sql
+    entrypoint: [
+      "bash",
+      # Comment out one of the following lines depending on your needs
+#      "/usr/local/bin/dump.sh"
+      "/usr/local/bin/restore.sh"
+    ]

@@ -4,10 +4,10 @@ and save them to a JSON file
 
 """
 
-from source_collectors.muckrock.classes.muckrock_fetchers.FOIALoopFetcher import FOIALoopFetcher
 from source_collectors.muckrock.classes.fetch_requests.FOIALoopFetchRequest import FOIALoopFetchRequest
 from source_collectors.muckrock.classes.muckrock_fetchers import JurisdictionLoopFetchRequest, \
     JurisdictionLoopFetcher
+from source_collectors.muckrock.classes.muckrock_fetchers.FOIALoopFetcher import FOIALoopFetcher
 from source_collectors.muckrock.utils import save_json_file
 
 

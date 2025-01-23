@@ -5,14 +5,15 @@ formatting the data as Label Studio tasks,
 and uploading them to Label Studio for annotation.
 """
 
-from huggingface_hub import hf_hub_download
-from http import HTTPStatus
-import pandas as pd
+import argparse
+import configparser
+import os
 import subprocess
 import sys
-import os
-import configparser
-import argparse
+from http import HTTPStatus
+
+import pandas as pd
+from huggingface_hub import hf_hub_download
 
 # The below code sets the working directory to be the root of the entire repository for module imports
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))

@@ -1,19 +1,17 @@
 import itertools
 
-from psycopg.generators import fetch
-
 from collector_manager.CollectorBase import CollectorBase
 from collector_manager.enums import CollectorType
 from core.preprocessors.MuckrockPreprocessor import MuckrockPreprocessor
 from source_collectors.muckrock.DTOs import MuckrockAllFOIARequestsCollectorInputDTO, \
     MuckrockCountySearchCollectorInputDTO, MuckrockSimpleSearchCollectorInputDTO
 from source_collectors.muckrock.classes.FOIASearcher import FOIASearcher, SearchCompleteException
+from source_collectors.muckrock.classes.fetch_requests.FOIALoopFetchRequest import FOIALoopFetchRequest
+from source_collectors.muckrock.classes.fetch_requests.JurisdictionLoopFetchRequest import JurisdictionLoopFetchRequest
 from source_collectors.muckrock.classes.muckrock_fetchers.FOIAFetcher import FOIAFetcher
 from source_collectors.muckrock.classes.muckrock_fetchers.FOIALoopFetcher import FOIALoopFetcher
-from source_collectors.muckrock.classes.fetch_requests.FOIALoopFetchRequest import FOIALoopFetchRequest
 from source_collectors.muckrock.classes.muckrock_fetchers.JurisdictionGeneratorFetcher import \
     JurisdictionGeneratorFetcher
-from source_collectors.muckrock.classes.fetch_requests.JurisdictionLoopFetchRequest import JurisdictionLoopFetchRequest
 from source_collectors.muckrock.classes.muckrock_fetchers.MuckrockFetcher import MuckrockNoMoreDataError
 
 

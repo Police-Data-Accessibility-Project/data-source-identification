@@ -1,7 +1,8 @@
 from typing import Optional
 
-from source_collectors.muckrock.classes.muckrock_fetchers import FOIAFetcher
 from tqdm import tqdm
+
+from source_collectors.muckrock.classes.muckrock_fetchers import FOIAFetcher
 
 
 class SearchCompleteException(Exception):

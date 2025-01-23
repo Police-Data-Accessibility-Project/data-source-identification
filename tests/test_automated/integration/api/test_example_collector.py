@@ -23,7 +23,7 @@ def test_example_collector(api_test_helper):
     )
     batch_id = data["batch_id"]
     assert batch_id is not None
-    assert data["message"] == "Started example_collector collector."
+    assert data["message"] == "Started example collector."
 
     bsr: GetBatchStatusResponse = ath.request_validator.get_batch_statuses(status=BatchStatus.IN_PROCESS)
 
@@ -49,7 +49,7 @@ def test_example_collector(api_test_helper):
     assert bi.status == BatchStatus.COMPLETE
     assert bi.total_url_count == 2
     assert bi.parameters == dto.model_dump()
-    assert bi.strategy == "example_collector"
+    assert bi.strategy == CollectorType.EXAMPLE.value
     assert bi.user_id is not None
 
     # Flush early to ensure logs are written
@@ -80,7 +80,7 @@ def test_example_collector_error(api_test_helper, monkeypatch):
     )
     batch_id = data["batch_id"]
     assert batch_id is not None
-    assert data["message"] == "Started example_collector collector."
+    assert data["message"] == "Started example collector."
 
     time.sleep(1)
 

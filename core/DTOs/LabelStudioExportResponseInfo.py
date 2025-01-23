@@ -1,7 +1,7 @@
 from typing import Annotated
 
-from pydantic import BaseModel
 from fastapi.param_functions import Doc
+from pydantic import BaseModel
 
 
 class LabelStudioExportResponseInfo(BaseModel):

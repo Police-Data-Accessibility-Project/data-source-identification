@@ -1,13 +1,12 @@
 import json
 import time
-from urllib.parse import quote_plus
+from dataclasses import dataclass
 from http import HTTPStatus
+from urllib.parse import quote_plus
 
 import requests
 
 from .utils import URLWithParameters
-from dataclasses import dataclass
-from collections import namedtuple
 
 """
 This module contains classes for managing a cache of Common Crawl search results
