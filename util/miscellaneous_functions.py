@@ -32,7 +32,7 @@ def get_project_root() -> Path:
 
     """
     # Define the root markers that signify the root directory of the project
-    root_markers = ['.git']  # Add more markers as needed
+    root_markers = ['execute.sh']  # Add more markers as needed
     # Start from the current file's directory
     current_dir = Path(__file__).resolve().parent
     while current_dir != current_dir.parent:  # Check if we've reached the root of the filesystem
