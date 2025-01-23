@@ -226,4 +226,3 @@ flycheck_*.el
 *.json
 *.csv
 /csv
-last_page_fetched.txt
