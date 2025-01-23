@@ -33,8 +33,7 @@ APScheduler~=3.11.0
 alembic~=1.14.0
 asyncpg~=0.30.0
 pytest-asyncio~=0.25.2
-transformers~=4.40.2
-tf-keras~=2.18.0
+transformers[torch]~=4.40.2
 
 # HTML Collector
 playwright~=1.49.1
