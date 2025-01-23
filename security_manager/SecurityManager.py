@@ -4,9 +4,9 @@ from typing import Annotated
 
 import dotenv
 import jwt
-from fastapi import HTTPException, Security
+from fastapi import HTTPException
 from fastapi.params import Depends
-from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer, OAuth2PasswordBearer
+from fastapi.security import OAuth2PasswordBearer
 from jwt import InvalidTokenError
 from pydantic import BaseModel
 from starlette import status

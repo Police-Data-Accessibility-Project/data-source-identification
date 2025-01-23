@@ -11,7 +11,6 @@ from collector_manager.DTOs.ExampleInputDTO import ExampleInputDTO
 from collector_manager.ExampleCollector import ExampleCollector
 from collector_manager.enums import CollectorType
 from core.CoreLogger import CoreLogger
-from core.enums import BatchStatus
 
 
 @dataclass

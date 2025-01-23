@@ -2,8 +2,8 @@ from abc import ABC, abstractmethod
 
 import requests
 
-from source_collectors.muckrock.classes.fetch_requests.FetchRequestBase import FetchRequest
 from source_collectors.muckrock.classes.exceptions.RequestFailureException import RequestFailureException
+from source_collectors.muckrock.classes.fetch_requests.FetchRequestBase import FetchRequest
 
 
 class MuckrockIterFetcherBase(ABC):

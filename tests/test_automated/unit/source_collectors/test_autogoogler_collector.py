@@ -35,6 +35,6 @@ def test_auto_googler_collector(patch_get_query_results):
     mock.assert_called_once_with("keyword")
 
     collector.db_client.insert_urls.assert_called_once_with(
-        url_infos=[URLInfo(url="https://include.com/1", url_metadata={"query": "keyword", "title": "keyword", "snippet": "snippet 1"})],
+        url_infos=[URLInfo(url="https://include.com/1", collector_metadata={"query": "keyword", "title": "keyword", "snippet": "snippet 1"})],
         batch_id=1
     )

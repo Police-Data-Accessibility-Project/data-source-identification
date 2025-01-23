@@ -1,11 +1,11 @@
 """Retrieves packages from CKAN data portals and parses relevant information then outputs to a CSV file"""
 
-from itertools import chain
 import sys
+from itertools import chain
 from typing import Any, Callable, Optional
 
-from from_root import from_root
 import pandas as pd
+from from_root import from_root
 from tqdm import tqdm
 
 from source_collectors.ckan.ckan_scraper_toolkit import Package, ckan_collection_search

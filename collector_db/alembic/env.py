@@ -1,9 +1,8 @@
 from logging.config import fileConfig
 
+from alembic import context
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
-
-from alembic import context
 
 from collector_db.helper_functions import get_postgres_connection_string
 from collector_db.models import Base

@@ -1,10 +1,9 @@
 # Test Cases
 import json
 from unittest.mock import patch
-from urllib.parse import quote_plus
 
-from common_crawler.crawler import CommonCrawlerManager
 from common_crawler.argparser import valid_common_crawl_id
+from common_crawler.crawler import CommonCrawlerManager
 
 # region CommonCrawler
 

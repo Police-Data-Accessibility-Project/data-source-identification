@@ -1,23 +1,22 @@
 from datetime import datetime, timedelta
 from functools import wraps
+from typing import Optional, List
 
 from sqlalchemy import create_engine, Row
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import sessionmaker, scoped_session, aliased
-from typing import Optional, List
 
 from collector_db.ConfigManager import ConfigManager
 from collector_db.DTOs.BatchInfo import BatchInfo
 from collector_db.DTOs.DuplicateInfo import DuplicateInfo, DuplicateInsertInfo
 from collector_db.DTOs.InsertURLsInfo import InsertURLsInfo
 from collector_db.DTOs.LogInfo import LogInfo, LogOutputInfo
-from collector_db.DTOs.URLMapping import URLMapping
 from collector_db.DTOs.URLInfo import URLInfo
+from collector_db.DTOs.URLMapping import URLMapping
 from collector_db.helper_functions import get_postgres_connection_string
 from collector_db.models import Base, Batch, URL, Log, Duplicate
 from collector_manager.enums import CollectorType
 from core.enums import BatchStatus
-
 
 
 # SQLAlchemy ORM models
@@ -150,7 +149,7 @@ class DatabaseClient:
         url_entry = URL(
             batch_id=url_info.batch_id,
             url=url_info.url,
-            url_metadata=url_info.url_metadata,
+            collector_metadata=url_info.collector_metadata,
             outcome=url_info.outcome.value
         )
         session.add(url_entry)
@@ -163,7 +162,7 @@ class DatabaseClient:
     def get_urls_by_batch(self, session, batch_id: int, page: int = 1) -> List[URLInfo]:
         """Retrieve all URLs associated with a batch."""
         urls = (session.query(URL).filter_by(batch_id=batch_id)
-                .limit(100).offset((page - 1) * 100).all())
+                .order_by(URL.id).limit(100).offset((page - 1) * 100).all())
         return ([URLInfo(**url.__dict__) for url in urls])
 
     @session_manager
@@ -181,7 +180,7 @@ class DatabaseClient:
 
     @session_manager
     def get_logs_by_batch_id(self, session, batch_id: int) -> List[LogOutputInfo]:
-        logs = session.query(Log).filter_by(batch_id=batch_id).all()
+        logs = session.query(Log).filter_by(batch_id=batch_id).order_by(Log.created_at.asc()).all()
         return ([LogOutputInfo(**log.__dict__) for log in logs])
 
     @session_manager
@@ -278,7 +277,7 @@ class DatabaseClient:
     @session_manager
     def update_url(self, session, url_info: URLInfo):
         url = session.query(URL).filter_by(id=url_info.id).first()
-        url.url_metadata = url_info.url_metadata
+        url.collector_metadata = url_info.collector_metadata
 
 if __name__ == "__main__":
     client = DatabaseClient()

@@ -2,10 +2,11 @@
 Utilizes a fine-tuned model to label a dataset of URLs.
 """
 
-from transformers import AutoTokenizer, AutoModelForSequenceClassification
-import torch
-import pandas as pd
 import argparse
+
+import pandas as pd
+import torch
+from transformers import AutoTokenizer, AutoModelForSequenceClassification
 
 
 def load_dataset_from_command_line() -> pd.DataFrame:

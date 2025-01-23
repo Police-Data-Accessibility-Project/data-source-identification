@@ -20,6 +20,7 @@ on: pull_request
 jobs:
   container-job:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     container: python:3.12.8
 
     services:

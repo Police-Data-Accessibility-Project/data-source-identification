@@ -15,7 +15,6 @@ huggingface-hub~=0.22.2
 # html_tag_collector_only
 requests_html>=0.10.0
 lxml~=5.1.0
-pyppeteer>=2.0.0
 beautifulsoup4>=4.12.3
 
 # CKAN Collector
@@ -32,9 +31,18 @@ ckanapi~=4.8
 psycopg[binary]~=3.1.20
 APScheduler~=3.11.0
 alembic~=1.14.0
+asyncpg~=0.30.0
+pytest-asyncio~=0.25.2
+transformers~=4.40.2
+tf-keras~=2.18.0
+
+# HTML Collector
+playwright~=1.49.1
 
 # Security Manager
 PyJWT~=2.10.1
 
 # Tests
 pytest-timeout~=2.3.1
+
+

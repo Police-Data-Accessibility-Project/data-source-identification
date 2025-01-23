@@ -1,12 +1,11 @@
-from datasets import load_dataset
-from datasets import ClassLabel
-from transformers import pipeline
-from transformers import AutoModelForSequenceClassification
-from transformers import TrainingArguments, Trainer
-from transformers import AutoTokenizer
-import numpy as np
 import evaluate
-
+import numpy as np
+from datasets import ClassLabel
+from datasets import load_dataset
+from transformers import AutoModelForSequenceClassification
+from transformers import AutoTokenizer
+from transformers import TrainingArguments, Trainer
+from transformers import pipeline
 
 MODEL = "distilbert-base-uncased"
 MAX_STEPS = 500

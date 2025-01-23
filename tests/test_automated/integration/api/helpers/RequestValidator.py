@@ -1,4 +1,4 @@
-from http import HTTPMethod, HTTPStatus
+from http import HTTPStatus
 from typing import Optional, Annotated
 
 from pydantic import BaseModel
@@ -10,9 +10,13 @@ from collector_manager.enums import CollectorType
 from core.DTOs.GetBatchLogsResponse import GetBatchLogsResponse
 from core.DTOs.GetBatchStatusResponse import GetBatchStatusResponse
 from core.DTOs.GetDuplicatesByBatchResponse import GetDuplicatesByBatchResponse
+from core.DTOs.GetNextURLForRelevanceAnnotationResponse import GetNextURLForRelevanceAnnotationResponse
 from core.DTOs.GetURLsByBatchResponse import GetURLsByBatchResponse
+from core.DTOs.GetURLsResponseInfo import GetURLsResponseInfo
 from core.DTOs.LabelStudioExportResponseInfo import LabelStudioExportResponseInfo
+from core.DTOs.MessageCountResponse import MessageCountResponse
 from core.DTOs.MessageResponse import MessageResponse
+from core.DTOs.RelevanceAnnotationInfo import RelevanceAnnotationPostInfo
 from core.enums import BatchStatus
 from util.helper_functions import update_if_not_none
 
@@ -168,3 +172,33 @@ class RequestValidator:
         )
         return MessageResponse(**data)
 
+    def process_relevancy(self) -> MessageCountResponse:
+        # TODO: Delete
+        data = self.post(
+            url=f"process/relevancy"
+        )
+        return MessageCountResponse(**data)
+
+    def get_next_relevance_annotation(self) -> GetNextURLForRelevanceAnnotationResponse:
+        data = self.get(
+            url=f"/annotate/relevance"
+        )
+        return GetNextURLForRelevanceAnnotationResponse(**data)
+
+    def post_relevance_annotation_and_get_next(
+            self,
+            metadata_id: int,
+            relevance_annotation_post_info: RelevanceAnnotationPostInfo
+    ) -> GetNextURLForRelevanceAnnotationResponse:
+        data = self.post(
+            url=f"/annotate/relevance/{metadata_id}",
+            json=relevance_annotation_post_info.model_dump()
+        )
+        return GetNextURLForRelevanceAnnotationResponse(**data)
+
+    def get_urls(self, page: int = 1, errors: bool = False) -> GetURLsResponseInfo:
+        data = self.get(
+            url=f"/url",
+            params={"page": page, "errors": errors}
+        )
+        return GetURLsResponseInfo(**data)
