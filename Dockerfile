@@ -9,7 +9,7 @@ COPY requirements.txt ./requirements.txt
 
 # Install dependencies
 RUN pip install --no-cache-dir -r requirements.txt
-RUN playwright install
+RUN playwright install chromium
 RUN playwright install-deps
 
 # Copy project files
@@ -32,5 +32,7 @@ COPY .project-root ./.project-root
 # Expose the application port
 EXPOSE 80
 
-#COPY .env ./.env
 RUN chmod +x execute.sh
+# Use the below for ease of local development, but remove when pushing to GitHub
+# Because there is no .env file in the repository (for security reasons)
+#COPY .env ./.env

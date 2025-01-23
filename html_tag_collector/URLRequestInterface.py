@@ -31,10 +31,8 @@ class RequestResources:
     semaphore: asyncio.Semaphore = asyncio.Semaphore(MAX_CONCURRENCY)
 
 def ensure_browsers_installed():
-    print("Installing browsers...")
-    result = subprocess.run("playwright install", shell=True, capture_output=True, text=True)
-    print(result.stdout)
-    print(result.stderr)
+    # TODO: Slated for destruction
+    pass
 
 HTML_CONTENT_TYPE = "text/html"
 
