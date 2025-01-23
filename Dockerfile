@@ -32,5 +32,5 @@ COPY .project-root ./.project-root
 # Expose the application port
 EXPOSE 80
 
-COPY .env ./.env
+#COPY .env ./.env
 RUN chmod +x execute.sh
