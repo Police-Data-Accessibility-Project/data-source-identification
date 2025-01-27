@@ -1,3 +1,4 @@
+import json
 import os
 
 from openai import AsyncOpenAI
@@ -91,4 +92,7 @@ class DeepSeekRecordClassifier:
                 'type': 'json_object'
             }
         )
-        return RecordType(response["choices"][0]["message"]["content"]["record_type"])
+        result_str = response.choices[0].message.content
+
+        result_dict = json.loads(result_str)
+        return result_dict["record_type"]
