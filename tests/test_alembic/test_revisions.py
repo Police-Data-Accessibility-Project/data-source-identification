@@ -298,7 +298,19 @@ def test_add_in_label_studio_metadata_status(alembic_runner):
 def test_create_metadata_annotation_table(alembic_runner):
     table_creation_check(
         alembic_runner,
-        "metadata_annotations",
+        ["metadata_annotations"],
         start_revision="108dac321086",
         end_revision="dcd158092de0"
+    )
+
+def test_add_task_tables_and_linking_logic(alembic_runner):
+    table_creation_check(
+        alembic_runner,
+        tables=[
+            "tasks",
+            "task_errors",
+            "link_task_urls"
+        ],
+        start_revision="dcd158092de0",
+        end_revision="b0e34cec732a"
     )

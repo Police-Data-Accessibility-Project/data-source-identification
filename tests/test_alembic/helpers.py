@@ -9,12 +9,14 @@ def get_enum_values(enum_name: str, session: Session) -> list[str]:
 
 def table_creation_check(
         alembic_runner: AlembicRunner,
-        table_name: str,
+        tables: list[str],
         start_revision: str,
         end_revision: str
 ):
         alembic_runner.upgrade(start_revision)
-        assert table_name not in alembic_runner.inspector.get_table_names()
+        for table_name in tables:
+                assert table_name not in alembic_runner.inspector.get_table_names()
         alembic_runner.upgrade(end_revision)
         alembic_runner.reflect()
-        assert table_name in alembic_runner.inspector.get_table_names()
+        for table_name in tables:
+                assert table_name in alembic_runner.inspector.get_table_names()

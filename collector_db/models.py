@@ -86,6 +86,11 @@ class URL(Base):
     url_metadata = relationship("URLMetadata", back_populates="url", cascade="all, delete-orphan")
     html_content = relationship("URLHTMLContent", back_populates="url", cascade="all, delete-orphan")
     error_info = relationship("URLErrorInfo", back_populates="url", cascade="all, delete-orphan")
+    tasks = relationship(
+        "Task",
+        secondary="link_task_urls",
+        back_populates="url",
+    )
 
 
 # URL Metadata table definition
@@ -158,10 +163,11 @@ class URLErrorInfo(Base):
     url_id = Column(Integer, ForeignKey('urls.id'), nullable=False)
     error = Column(Text, nullable=False)
     updated_at = Column(TIMESTAMP, nullable=False, server_default=CURRENT_TIME_SERVER_DEFAULT)
-    # TODO: Add Info on Cycle the task occurred in
+    task_id = Column(Integer, ForeignKey('tasks.id'), nullable=True)
 
     # Relationships
     url = relationship("URL", back_populates="error_info")
+    task = relationship("Task", back_populates="errored_urls")
 
 class URLHTMLContent(Base):
     __tablename__ = 'url_html_content'
@@ -232,3 +238,52 @@ class Missing(Base):
 
     # Relationships
     batch = relationship("Batch", back_populates="missings")
+
+class Task(Base):
+    __tablename__ = 'tasks'
+    __table_args__ = (UniqueConstraint(
+        "task_type",
+        "task_id",
+        name="uq_task_type_task_id"),
+    )
+
+    id = Column(Integer, primary_key=True)
+    task_type = Column(String, nullable=False)
+    task_id = Column(String, nullable=False)
+    task_status = Column(String, nullable=False)
+    updated_at = Column(TIMESTAMP, nullable=False, server_default=CURRENT_TIME_SERVER_DEFAULT)
+
+    # Relationships
+    urls = relationship(
+        "URL",
+        secondary="link_task_urls",
+        back_populates="task"
+    )
+    task_errors = relationship("TaskError", back_populates="task")
+    errored_urls = relationship("URLErrorInfo", back_populates="task")
+
+class LinkTaskURL(Base):
+    __tablename__ = 'link_task_urls'
+    __table_args__ = (UniqueConstraint(
+        "task_id",
+        "url_id",
+        name="uq_task_id_url_id"),
+    )
+
+    task_id = Column(Integer, ForeignKey('tasks.id', ondelete="CASCADE"), primary_key=True)
+    url_id = Column(Integer, ForeignKey('urls.id', ondelete="CASCADE"), primary_key=True)
+
+    # Relationships
+    task = relationship("Task", back_populates="link_task_urls")
+    url = relationship("URL", back_populates="link_task_urls")
+
+class TaskError(Base):
+    __tablename__ = 'task_errors'
+
+    id = Column(Integer, primary_key=True)
+    task_id = Column(Integer, ForeignKey('tasks.id', ondelete="CASCADE"), nullable=False)
+    error = Column(Text, nullable=False)
+    updated_at = Column(TIMESTAMP, nullable=False, server_default=CURRENT_TIME_SERVER_DEFAULT)
+
+    # Relationships
+    task = relationship("Task", back_populates="task_errors")
