@@ -6,7 +6,7 @@ from collector_db.AsyncDatabaseClient import AsyncDatabaseClient
 from collector_db.DTOs.URLWithHTML import URLWithHTML
 from collector_db.enums import ValidationStatus, ValidationSource
 from collector_db.models import URLMetadata
-from core.classes.URLRelevanceHuggingfaceCycler import URLRelevanceHuggingfaceCycler
+from core.classes.URLRelevanceHuggingfaceTaskOperator import URLRelevanceHuggingfaceTaskOperator
 from hugging_face.HuggingFaceInterface import HuggingFaceInterface
 
 
@@ -38,11 +38,11 @@ async def test_url_relevancy_huggingface_cycle(db_data_creator):
     mock_hf_interface = MagicMock(spec=HuggingFaceInterface)
     mock_hf_interface.get_url_relevancy = mock_get_url_relevancy
 
-    cycler = URLRelevanceHuggingfaceCycler(
+    cycler = URLRelevanceHuggingfaceTaskOperator(
         adb_client=AsyncDatabaseClient(),
         huggingface_interface=mock_hf_interface
     )
-    await cycler.cycle()
+    await cycler.run_task()
 
     results = await db_data_creator.adb_client.get_all(URLMetadata)
 

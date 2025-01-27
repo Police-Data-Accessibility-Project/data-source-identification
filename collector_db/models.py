@@ -158,6 +158,7 @@ class URLErrorInfo(Base):
     url_id = Column(Integer, ForeignKey('urls.id'), nullable=False)
     error = Column(Text, nullable=False)
     updated_at = Column(TIMESTAMP, nullable=False, server_default=CURRENT_TIME_SERVER_DEFAULT)
+    # TODO: Add Info on Cycle the task occurred in
 
     # Relationships
     url = relationship("URL", back_populates="error_info")

@@ -120,10 +120,58 @@ class AsyncDatabaseClient:
         return scalar_result.all()
 
     @session_manager
+    async def get_urls_with_html_data_and_without_metadata_type(
+            self,
+            session: AsyncSession,
+            without_metadata_type: URLMetadataAttributeType = URLMetadataAttributeType.RELEVANT
+    ):
+
+        # TODO: Generalize this so that it can exclude based on other attributes
+        # Get URLs with no relevancy metadata
+        statement = (select(URL.id, URL.url, URLHTMLContent).
+                     join(URLHTMLContent).
+                     where(URL.outcome == URLStatus.PENDING.value)
+                    # No relevancy metadata
+                    .where(
+                        ~exists(
+                            select(URLMetadata.id).
+                            where(
+                                URLMetadata.url_id == URL.id,
+                                URLMetadata.attribute == without_metadata_type.value
+                            )
+                        )
+                    )
+                    .limit(100)
+                    .order_by(URL.id)
+        )
+        raw_result = await session.execute(statement)
+        result = raw_result.all()
+        url_ids_to_urls = {url_id: url for url_id, url, _ in result}
+        url_ids_to_html_info = {url_id: [] for url_id, _, _ in result}
+
+        for url_id, _, html_info in result:
+            url_ids_to_html_info[url_id].append(
+                URLHTMLContentInfo(**html_info.__dict__)
+            )
+
+        final_results = []
+        for url_id, url in url_ids_to_urls.items():
+            url_with_html = URLWithHTML(
+                url_id=url_id,
+                url=url,
+                html_infos=url_ids_to_html_info[url_id]
+            )
+            final_results.append(url_with_html)
+
+
+        return final_results
+
+    @session_manager
     async def get_urls_with_html_data_and_no_relevancy_metadata(
             self,
             session: AsyncSession
     ) -> list[URLWithHTML]:
+        # TODO: Generalize this so that it can exclude based on other attributes
         # Get URLs with no relevancy metadata
         statement = (select(URL.id, URL.url, URLHTMLContent).
                      join(URLHTMLContent).

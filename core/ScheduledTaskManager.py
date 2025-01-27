@@ -52,7 +52,7 @@ class AsyncScheduledTaskManager:
 
     def add_scheduled_tasks(self):
         self.run_cycles_job = self.scheduler.add_job(
-            self.async_core.run_cycles,
+            self.async_core.run_tasks,
             trigger=IntervalTrigger(
                 hours=1,
                 start_date=datetime.now() + timedelta(minutes=1)

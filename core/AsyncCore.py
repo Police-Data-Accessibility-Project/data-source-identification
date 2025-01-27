@@ -6,8 +6,8 @@ from core.DTOs.GetNextURLForRelevanceAnnotationResponse import GetNextURLForRele
 from core.DTOs.GetURLsResponseInfo import GetURLsResponseInfo
 from core.DTOs.RelevanceAnnotationInfo import RelevanceAnnotationPostInfo
 from core.DTOs.RelevanceAnnotationRequestInfo import RelevanceAnnotationRequestInfo
-from core.classes.URLHTMLCycler import URLHTMLCycler
-from core.classes.URLRelevanceHuggingfaceCycler import URLRelevanceHuggingfaceCycler
+from core.classes.URLHTMLTaskOperator import URLHTMLTaskOperator
+from core.classes.URLRelevanceHuggingfaceTaskOperator import URLRelevanceHuggingfaceTaskOperator
 from html_tag_collector.DataClassTags import convert_to_response_html_info
 from html_tag_collector.ResponseParser import HTMLResponseParser
 from html_tag_collector.URLRequestInterface import URLRequestInterface
@@ -30,26 +30,26 @@ class AsyncCore:
         self.logger = logging.getLogger(__name__)
         self.logger.setLevel(logging.INFO)
 
-    async def run_url_html_cycle(self):
-        self.logger.info("Running URL HTML Cycle")
-        cycler = URLHTMLCycler(
+    async def run_url_html_task(self):
+        self.logger.info("Running URL HTML Task")
+        operator = URLHTMLTaskOperator(
             adb_client=self.adb_client,
             url_request_interface=self.url_request_interface,
             html_parser=self.html_parser
         )
-        await cycler.cycle()
+        await operator.run_task()
 
-    async def run_url_relevance_huggingface_cycle(self):
-        self.logger.info("Running URL Relevance Huggingface Cycle")
-        cycler = URLRelevanceHuggingfaceCycler(
+    async def run_url_relevance_huggingface_task(self):
+        self.logger.info("Running URL Relevance Huggingface Task")
+        operator = URLRelevanceHuggingfaceTaskOperator(
             adb_client=self.adb_client,
             huggingface_interface=self.huggingface_interface
         )
-        await cycler.cycle()
+        await operator.run_task()
 
-    async def run_cycles(self):
-        await self.run_url_html_cycle()
-        await self.run_url_relevance_huggingface_cycle()
+    async def run_tasks(self):
+        await self.run_url_html_task()
+        await self.run_url_relevance_huggingface_task()
 
     async def convert_to_relevance_annotation_request_info(self, url_info: URLAnnotationInfo) -> RelevanceAnnotationRequestInfo:
         response_html_info = convert_to_response_html_info(
