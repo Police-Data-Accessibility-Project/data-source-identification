@@ -1,9 +1,8 @@
 import os
 
-from openai import OpenAI
+from openai import AsyncOpenAI
 
 from collector_db.DTOs.URLHTMLContentInfo import URLHTMLContentInfo
-from collector_db.DTOs.URLWithHTML import URLWithHTML
 from core.enums import RecordType
 
 QUERY_CONTENT = """
@@ -56,20 +55,22 @@ QUERY_CONTENT = """
     }    
     """
 
-def dictify_html_info(html_info: URLHTMLContentInfo) -> dict:
-
-
+def dictify_html_info(html_infos: list[URLHTMLContentInfo]) -> dict[str, str]:
+    d = {}
+    for html_info in html_infos:
+        d[html_info.content_type.value] = html_info.content
+    return d
 
 class DeepSeekRecordClassifier:
 
     def __init__(self):
-        self.client = OpenAI(
+        self.client = AsyncOpenAI(
             api_key=os.getenv("DEEPSEEK_API_KEY"),
             base_url="https://api.deepseek.com"
         )
 
-    def build_query_messages(self, html_info: URLHTMLContentInfo) -> list[dict[str, str]]:
-        insert_content = dictify_html_info(html_info)
+    def build_query_messages(self, content_infos: list[URLHTMLContentInfo]) -> list[dict[str, str]]:
+        insert_content = dictify_html_info(content_infos)
         return [
             {
                 "role": "system",
@@ -81,12 +82,13 @@ class DeepSeekRecordClassifier:
             }
         ]
 
-    def classify_url(self, url_with_html: URLWithHTML) -> RecordType:
-        response = self.client.chat.completions.create(
+    async def classify_url(self, content_infos: list[URLHTMLContentInfo]) -> RecordType:
+        response = await self.client.chat.completions.create(
             model="deepseek-chat",
-            messages=self.build_query_messages(url_with_html.html_infos[0]),
+            messages=self.build_query_messages(content_infos),
             stream=False,
             response_format={
                 'type': 'json_object'
             }
         )
+        return RecordType(response["choices"][0]["message"]["content"]["record_type"])
