@@ -37,7 +37,6 @@ class TaskType(PyEnum):
     RELEVANCY = "Relevancy"
     RECORD_TYPE = "Record Type"
 
-
 class PGEnum(TypeDecorator):
     impl = postgresql.ENUM
 

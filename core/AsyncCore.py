@@ -1,17 +1,23 @@
 import logging
 
 from collector_db.AsyncDatabaseClient import AsyncDatabaseClient
+from collector_db.DTOs.TaskInfo import TaskInfo
 from collector_db.DTOs.URLAnnotationInfo import URLAnnotationInfo
+from collector_db.enums import TaskType
 from core.DTOs.GetNextURLForRelevanceAnnotationResponse import GetNextURLForRelevanceAnnotationResponse
+from core.DTOs.GetTasksResponse import GetTasksResponse
 from core.DTOs.GetURLsResponseInfo import GetURLsResponseInfo
 from core.DTOs.RelevanceAnnotationInfo import RelevanceAnnotationPostInfo
 from core.DTOs.RelevanceAnnotationRequestInfo import RelevanceAnnotationRequestInfo
 from core.classes.URLHTMLTaskOperator import URLHTMLTaskOperator
+from core.classes.URLRecordTypeTaskOperator import URLRecordTypeTaskOperator
 from core.classes.URLRelevanceHuggingfaceTaskOperator import URLRelevanceHuggingfaceTaskOperator
+from core.enums import BatchStatus
 from html_tag_collector.DataClassTags import convert_to_response_html_info
 from html_tag_collector.ResponseParser import HTMLResponseParser
 from html_tag_collector.URLRequestInterface import URLRequestInterface
 from hugging_face.HuggingFaceInterface import HuggingFaceInterface
+from llm_api_logic.DeepSeekRecordClassifier import DeepSeekRecordClassifier
 
 
 class AsyncCore:
@@ -47,9 +53,18 @@ class AsyncCore:
         )
         await operator.run_task()
 
+    async def run_url_record_type_task(self):
+        self.logger.info("Running URL Record Type Task")
+        operator = URLRecordTypeTaskOperator(
+            adb_client=self.adb_client,
+            classifier=DeepSeekRecordClassifier()
+        )
+        await operator.run_task()
+
     async def run_tasks(self):
         await self.run_url_html_task()
         await self.run_url_relevance_huggingface_task()
+        await self.run_url_record_type_task()
 
     async def convert_to_relevance_annotation_request_info(self, url_info: URLAnnotationInfo) -> RelevanceAnnotationRequestInfo:
         response_html_info = convert_to_response_html_info(
@@ -87,3 +102,9 @@ class AsyncCore:
 
     async def get_urls(self, page: int, errors: bool) -> GetURLsResponseInfo:
         return await self.adb_client.get_urls(page=page, errors=errors)
+
+    async def get_task_info(self, task_id: int) -> TaskInfo:
+        return await self.adb_client.get_task_info(task_id=task_id)
+
+    async def get_tasks(self, page: int, task_type: TaskType, task_status: BatchStatus) -> GetTasksResponse:
+        return await self.adb_client.get_tasks(page=page, task_type=task_type, task_status=task_status)

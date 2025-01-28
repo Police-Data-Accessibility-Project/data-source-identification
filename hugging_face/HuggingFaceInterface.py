@@ -1,14 +1,12 @@
 from transformers import pipeline
 
 from collector_db.DTOs.URLWithHTML import URLWithHTML
-from hugging_face.URLClassifier import URLClassifier
 
 
 class HuggingFaceInterface:
 
     def __init__(self):
         self.relevance_pipe = pipeline("text-classification", model="PDAP/url-relevance")
-        self.url_classifier = URLClassifier()
 
     def get_url_relevancy(
             self,

@@ -136,12 +136,14 @@ async def test_add_url_error_info(db_data_creator: DBDataCreator):
     url_ids = [url_mapping.url_id for url_mapping in url_mappings]
 
     adb_client = AsyncDatabaseClient()
+    task_id = await db_data_creator.task()
 
     error_infos = []
     for url_mapping in url_mappings:
         uei = URLErrorPydanticInfo(
             url_id=url_mapping.url_id,
             error="test error",
+            task_id=task_id
         )
 
         error_infos.append(uei)
@@ -167,7 +169,9 @@ async def test_get_urls_with_html_data_and_no_relevancy_metadata(
     url_ids = [url_info.url_id for url_info in url_mappings]
     await db_data_creator.html_data(url_ids)
     await db_data_creator.metadata([url_ids[0]])
-    results = await db_data_creator.adb_client.get_urls_with_html_data_and_no_relevancy_metadata()
+    results = await db_data_creator.adb_client.get_urls_with_html_data_and_without_metadata_type(
+        without_metadata_type=URLMetadataAttributeType.RELEVANT
+    )
 
     permitted_url_ids = [url_id for url_id in url_ids if url_id != url_ids[0]]
     assert len(results) == 2

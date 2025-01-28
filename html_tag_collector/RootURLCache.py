@@ -26,7 +26,7 @@ class RootURLCache:
         self.cache[url] = title
         await self.adb_client.add_to_root_url_cache(url=url, page_title=title)
 
-    async def get_from_cache(self, url: str):
+    async def get_from_cache(self, url: str) -> Optional[str]:
         if self.cache is None:
             self.cache = await self.adb_client.load_root_url_cache()
 

@@ -326,10 +326,3 @@ def test_root_url(db_data_creator: DBDataCreator):
     )
 
     table_tester.run_column_tests()
-
-def test_task_url_links(db_data_creator: DBDataCreator):
-    # Create URLs
-
-    # Create task
-
-    # Associate URLs with task

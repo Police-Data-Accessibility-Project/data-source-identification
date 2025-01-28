@@ -16,6 +16,7 @@ status_check_string = ", ".join([f"'{status}'" for status in get_enum_values(Bat
 
 CURRENT_TIME_SERVER_DEFAULT = func.now()
 
+batch_status_enum = PGEnum('complete', 'error', 'in-process', 'aborted', name='batch_status')
 
 class Batch(Base):
     __tablename__ = 'batches'
@@ -29,9 +30,7 @@ class Batch(Base):
     user_id = Column(Integer, nullable=False)
     # Gives the status of the batch
     status = Column(
-        postgresql.ENUM(
-            'complete', 'error', 'in-process', 'aborted',
-            name='batch_status'),
+        batch_status_enum,
         nullable=False
     )
     # The number of URLs in the batch
@@ -89,7 +88,7 @@ class URL(Base):
     tasks = relationship(
         "Task",
         secondary="link_task_urls",
-        back_populates="url",
+        back_populates="urls",
     )
 
 
@@ -158,12 +157,17 @@ class RootURL(Base):
 
 class URLErrorInfo(Base):
     __tablename__ = 'url_error_info'
+    __table_args__ = (UniqueConstraint(
+        "url_id",
+        "task_id",
+        name="uq_url_id_error"),
+    )
 
     id = Column(Integer, primary_key=True)
     url_id = Column(Integer, ForeignKey('urls.id'), nullable=False)
     error = Column(Text, nullable=False)
     updated_at = Column(TIMESTAMP, nullable=False, server_default=CURRENT_TIME_SERVER_DEFAULT)
-    task_id = Column(Integer, ForeignKey('tasks.id'), nullable=True)
+    task_id = Column(Integer, ForeignKey('tasks.id'), nullable=False)
 
     # Relationships
     url = relationship("URL", back_populates="error_info")
@@ -241,25 +245,22 @@ class Missing(Base):
 
 class Task(Base):
     __tablename__ = 'tasks'
-    __table_args__ = (UniqueConstraint(
-        "task_type",
-        "task_id",
-        name="uq_task_type_task_id"),
-    )
 
     id = Column(Integer, primary_key=True)
-    task_type = Column(String, nullable=False)
-    task_id = Column(String, nullable=False)
-    task_status = Column(String, nullable=False)
+    task_type = Column(
+        PGEnum(
+            'HTML', 'Relevancy', 'Record Type', name='task_type'
+        ), nullable=False)
+    task_status = Column(batch_status_enum, nullable=False)
     updated_at = Column(TIMESTAMP, nullable=False, server_default=CURRENT_TIME_SERVER_DEFAULT)
 
     # Relationships
     urls = relationship(
         "URL",
         secondary="link_task_urls",
-        back_populates="task"
+        back_populates="tasks"
     )
-    task_errors = relationship("TaskError", back_populates="task")
+    error = relationship("TaskError", back_populates="task")
     errored_urls = relationship("URLErrorInfo", back_populates="task")
 
 class LinkTaskURL(Base):
@@ -273,10 +274,6 @@ class LinkTaskURL(Base):
     task_id = Column(Integer, ForeignKey('tasks.id', ondelete="CASCADE"), primary_key=True)
     url_id = Column(Integer, ForeignKey('urls.id', ondelete="CASCADE"), primary_key=True)
 
-    # Relationships
-    task = relationship("Task", back_populates="link_task_urls")
-    url = relationship("URL", back_populates="link_task_urls")
-
 class TaskError(Base):
     __tablename__ = 'task_errors'
 
@@ -286,4 +283,10 @@ class TaskError(Base):
     updated_at = Column(TIMESTAMP, nullable=False, server_default=CURRENT_TIME_SERVER_DEFAULT)
 
     # Relationships
-    task = relationship("Task", back_populates="task_errors")
+    task = relationship("Task", back_populates="error")
+
+    __table_args__ = (UniqueConstraint(
+        "task_id",
+        "error",
+        name="uq_task_id_error"),
+    )
