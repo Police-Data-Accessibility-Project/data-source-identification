@@ -63,12 +63,12 @@ def upgrade() -> None:
 
     op.add_column('url_error_info', sa.Column('task_id', sa.Integer(), nullable=False))
     op.create_unique_constraint('uq_url_id_error', 'url_error_info', ['url_id', 'task_id'])
-    op.create_foreign_key("fk_url_error_info_task", 'url_error_info', 'tasks', ['task_id'], ['id'])
+    op.create_foreign_key("url_error_info_task_id_fkey", 'url_error_info', 'tasks', ['task_id'], ['id'])
 
 
 def downgrade() -> None:
 
-    op.drop_constraint("fk_url_error_info_task", 'url_error_info', type_='foreignkey')
+    op.drop_constraint("url_error_info_task_id_fkey", 'url_error_info', type_='foreignkey')
     op.drop_constraint('uq_url_id_error', 'url_error_info', type_='unique')
     op.drop_column('url_error_info', 'task_id')
     op.drop_table('link_task_urls')
