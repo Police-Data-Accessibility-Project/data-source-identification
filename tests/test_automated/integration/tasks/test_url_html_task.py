@@ -5,11 +5,10 @@ import pytest
 
 from collector_db.AsyncDatabaseClient import AsyncDatabaseClient
 from collector_db.enums import TaskType
-from collector_db.models import Task
 from core.classes.URLHTMLTaskOperator import URLHTMLTaskOperator
 from core.enums import BatchStatus
-from helpers.DBDataCreator import DBDataCreator
-from helpers.assert_functions import assert_database_has_no_tasks
+from tests.helpers.DBDataCreator import DBDataCreator
+from tests.helpers.assert_functions import assert_database_has_no_tasks
 from html_tag_collector.DataClassTags import ResponseHTMLInfo
 from html_tag_collector.ResponseParser import HTMLResponseParser
 from html_tag_collector.RootURLCache import RootURLCache
