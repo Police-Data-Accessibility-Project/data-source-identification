@@ -7,7 +7,7 @@ from collector_db.DTOs.URLWithHTML import URLWithHTML
 from collector_db.enums import ValidationStatus, ValidationSource
 from collector_db.models import URLMetadata, Task
 from core.classes.URLRelevanceHuggingfaceTaskOperator import URLRelevanceHuggingfaceTaskOperator
-from helpers.assert_functions import assert_database_has_no_tasks
+from tests.helpers.assert_functions import assert_database_has_no_tasks
 from hugging_face.HuggingFaceInterface import HuggingFaceInterface
 
 
