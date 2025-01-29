@@ -29,6 +29,7 @@ COPY apply_migrations.py ./apply_migrations.py
 COPY security_manager ./security_manager
 COPY execute.sh ./execute.sh
 COPY .project-root ./.project-root
+COPY tests ./tests
 COPY llm_api_logic ./llm_api_logic
 
 # Expose the application port
