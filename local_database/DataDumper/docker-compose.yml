@@ -22,6 +22,6 @@ services:
     entrypoint: [
       "bash",
       # Comment out one of the following lines depending on your needs
-      "/usr/local/bin/dump.sh"
-#      "/usr/local/bin/restore.sh"
+#      "/usr/local/bin/dump.sh"
+      "/usr/local/bin/restore.sh"
     ]

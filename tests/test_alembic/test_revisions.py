@@ -311,6 +311,11 @@ def test_add_task_tables_and_linking_logic(alembic_runner):
         table_name="url_error_info",
         columns_to_check=["task_id"],
     )
+    assert not columns_in_table(
+        alembic_runner,
+        table_name="url_metadata",
+        columns_to_check=["notes"],
+    )
     table_creation_check(
         alembic_runner,
         tables=[
@@ -324,4 +329,9 @@ def test_add_task_tables_and_linking_logic(alembic_runner):
         alembic_runner,
         table_name="url_error_info",
         columns_to_check=["task_id"],
+    )
+    assert columns_in_table(
+        alembic_runner,
+        table_name="url_metadata",
+        columns_to_check=["notes"],
     )

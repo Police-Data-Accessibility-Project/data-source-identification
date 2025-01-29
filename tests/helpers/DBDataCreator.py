@@ -21,7 +21,7 @@ class DBDataCreator:
     """
     def __init__(self, db_client: DatabaseClient = DatabaseClient()):
         self.db_client = db_client
-        self.adb_client = AsyncDatabaseClient()
+        self.adb_client: AsyncDatabaseClient = AsyncDatabaseClient()
 
     def batch(self):
         return self.db_client.insert_batch(

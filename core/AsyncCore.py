@@ -17,7 +17,7 @@ from html_tag_collector.DataClassTags import convert_to_response_html_info
 from html_tag_collector.ResponseParser import HTMLResponseParser
 from html_tag_collector.URLRequestInterface import URLRequestInterface
 from hugging_face.HuggingFaceInterface import HuggingFaceInterface
-from llm_api_logic.DeepSeekRecordClassifier import DeepSeekRecordClassifier
+from llm_api_logic.OpenAIRecordClassifier import OpenAIRecordClassifier
 
 
 class AsyncCore:
@@ -57,7 +57,7 @@ class AsyncCore:
         self.logger.info("Running URL Record Type Task")
         operator = URLRecordTypeTaskOperator(
             adb_client=self.adb_client,
-            classifier=DeepSeekRecordClassifier()
+            classifier=OpenAIRecordClassifier()
         )
         await operator.run_task()
 

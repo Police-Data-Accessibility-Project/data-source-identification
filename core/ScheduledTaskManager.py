@@ -56,7 +56,8 @@ class AsyncScheduledTaskManager:
             trigger=IntervalTrigger(
                 hours=1,
                 start_date=datetime.now() + timedelta(minutes=1)
-            )
+            ),
+            misfire_grace_time=60
         )
 
     def shutdown(self):

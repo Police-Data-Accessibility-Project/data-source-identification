@@ -5,7 +5,7 @@ from collector_db.enums import URLMetadataAttributeType, TaskType, ValidationSta
 from core.DTOs.task_data_objects.URLRecordTypeTDO import URLRecordTypeTDO
 from core.classes.TaskOperatorBase import TaskOperatorBase
 from core.enums import RecordType
-from llm_api_logic.DeepSeekRecordClassifier import DeepSeekRecordClassifier
+from llm_api_logic.OpenAIRecordClassifier import OpenAIRecordClassifier
 
 
 class URLRecordTypeTaskOperator(TaskOperatorBase):
@@ -13,7 +13,7 @@ class URLRecordTypeTaskOperator(TaskOperatorBase):
     def __init__(
             self,
             adb_client: AsyncDatabaseClient,
-            classifier: DeepSeekRecordClassifier
+            classifier: OpenAIRecordClassifier
     ):
         super().__init__(adb_client)
         self.classifier = classifier
@@ -63,13 +63,13 @@ class URLRecordTypeTaskOperator(TaskOperatorBase):
             url_metadata = URLMetadataInfo(
                 url_id=tdo.url_with_html.url_id,
                 attribute=URLMetadataAttributeType.RECORD_TYPE,
-                value=str(tdo.record_type),
+                value=str(tdo.record_type.value),
                 validation_status=ValidationStatus.PENDING_VALIDATION,
-                validation_source=ValidationSource.MACHINE_LEARNING
+                validation_source=ValidationSource.MACHINE_LEARNING,
+                notes=self.classifier.model_name
             )
             url_metadatas.append(url_metadata)
         await self.adb_client.add_url_metadatas(url_metadatas)
-
 
     async def separate_success_and_error_subsets(self, tdos: list[URLRecordTypeTDO]):
         success_subset = [tdo for tdo in tdos if not tdo.is_errored()]

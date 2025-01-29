@@ -12,6 +12,7 @@ class URLMetadataInfo(BaseModel):
     attribute: Optional[URLMetadataAttributeType] = None
     # TODO: May need to add validation here depending on the type of attribute
     value: Optional[str] = None
+    notes: Optional[str] = None
     validation_status: Optional[ValidationStatus] = None
     validation_source: Optional[ValidationSource] = None
     created_at: Optional[datetime] = None

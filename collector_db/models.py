@@ -114,6 +114,8 @@ class URLMetadata(Base):
         PGEnum('Machine Learning', 'Label Studio', 'Manual', name='validation_source'),
         nullable=False
     )
+    notes = Column(Text, nullable=True)
+
 
     # Timestamps
     created_at = Column(TIMESTAMP, nullable=False, server_default=func.now())

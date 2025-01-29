@@ -29,6 +29,7 @@ COPY apply_migrations.py ./apply_migrations.py
 COPY security_manager ./security_manager
 COPY execute.sh ./execute.sh
 COPY .project-root ./.project-root
+COPY llm_api_logic ./llm_api_logic
 
 # Expose the application port
 EXPOSE 80
@@ -36,4 +37,4 @@ EXPOSE 80
 RUN chmod +x execute.sh
 # Use the below for ease of local development, but remove when pushing to GitHub
 # Because there is no .env file in the repository (for security reasons)
-#COPY .env ./.env
+COPY .env ./.env

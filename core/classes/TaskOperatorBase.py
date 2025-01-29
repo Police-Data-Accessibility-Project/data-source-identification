@@ -1,5 +1,5 @@
-from abc import ABC, abstractmethod
 
+from abc import ABC, abstractmethod
 from collector_db.AsyncDatabaseClient import AsyncDatabaseClient
 from collector_db.enums import TaskType
 from core.enums import BatchStatus
