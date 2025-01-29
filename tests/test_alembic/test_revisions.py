@@ -15,6 +15,7 @@ from itertools import product
 
 from sqlalchemy import text
 
+from tests.test_alembic.helpers import columns_in_table
 from tests.test_alembic.helpers import get_enum_values, table_creation_check
 
 
@@ -298,7 +299,39 @@ def test_add_in_label_studio_metadata_status(alembic_runner):
 def test_create_metadata_annotation_table(alembic_runner):
     table_creation_check(
         alembic_runner,
-        "metadata_annotations",
+        ["metadata_annotations"],
         start_revision="108dac321086",
         end_revision="dcd158092de0"
+    )
+
+def test_add_task_tables_and_linking_logic(alembic_runner):
+    alembic_runner.upgrade("dcd158092de0")
+    assert not columns_in_table(
+        alembic_runner,
+        table_name="url_error_info",
+        columns_to_check=["task_id"],
+    )
+    assert not columns_in_table(
+        alembic_runner,
+        table_name="url_metadata",
+        columns_to_check=["notes"],
+    )
+    table_creation_check(
+        alembic_runner,
+        tables=[
+            "tasks",
+            "task_errors",
+            "link_task_urls"
+        ],
+        end_revision="072b32a45b1c"
+    )
+    assert columns_in_table(
+        alembic_runner,
+        table_name="url_error_info",
+        columns_to_check=["task_id"],
+    )
+    assert columns_in_table(
+        alembic_runner,
+        table_name="url_metadata",
+        columns_to_check=["notes"],
     )

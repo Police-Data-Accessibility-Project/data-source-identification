@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 
 from collector_db.AsyncDatabaseClient import AsyncDatabaseClient
 from collector_db.DTOs.BatchInfo import BatchInfo
@@ -9,7 +9,7 @@ from collector_db.DTOs.URLHTMLContentInfo import URLHTMLContentInfo, HTMLContent
 from collector_db.DTOs.URLInfo import URLInfo
 from collector_db.DTOs.URLMetadataInfo import URLMetadataInfo
 from collector_db.DatabaseClient import DatabaseClient
-from collector_db.enums import URLMetadataAttributeType, ValidationStatus, ValidationSource
+from collector_db.enums import URLMetadataAttributeType, ValidationStatus, ValidationSource, TaskType
 from collector_manager.enums import CollectorType
 from core.enums import BatchStatus
 from tests.helpers.simple_test_data_functions import generate_test_urls
@@ -21,7 +21,7 @@ class DBDataCreator:
     """
     def __init__(self, db_client: DatabaseClient = DatabaseClient()):
         self.db_client = db_client
-        self.adb_client = AsyncDatabaseClient()
+        self.adb_client: AsyncDatabaseClient = AsyncDatabaseClient()
 
     def batch(self):
         return self.db_client.insert_batch(
@@ -33,6 +33,12 @@ class DBDataCreator:
                 user_id=1
             )
         )
+
+    async def task(self, url_ids: Optional[list[int]] = None) -> int:
+        task_id = await self.adb_client.initiate_task(task_type=TaskType.HTML)
+        if url_ids is not None:
+            await self.adb_client.link_urls_to_task(task_id=task_id, url_ids=url_ids)
+        return task_id
 
     def urls(self, batch_id: int, url_count: int) -> InsertURLsInfo:
         raw_urls = generate_test_urls(url_count)
@@ -99,12 +105,19 @@ class DBDataCreator:
                 )
             )
 
-    async def error_info(self, url_ids: list[int]):
+    async def error_info(
+            self,
+            url_ids: list[int],
+            task_id: Optional[int] = None
+    ):
+        if task_id is None:
+            task_id = await self.task()
         error_infos = []
         for url_id in url_ids:
             url_error_info = URLErrorPydanticInfo(
                 url_id=url_id,
                 error="test error",
+                task_id=task_id
             )
             error_infos.append(url_error_info)
         await self.adb_client.add_url_error_infos(error_infos)

@@ -18,4 +18,4 @@ class HTMLContentType(Enum):
 class URLHTMLContentInfo(BaseModel):
     url_id: Optional[int] = None
     content_type: HTMLContentType
-    content: str
+    content: str | list[str]

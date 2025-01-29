@@ -1,24 +1,31 @@
 from functools import wraps
+from typing import Optional
 
-from sqlalchemy import select, exists
+from sqlalchemy import select, exists, func
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.orm import selectinload
 
 from collector_db.ConfigManager import ConfigManager
 from collector_db.DTOs.MetadataAnnotationInfo import MetadataAnnotationInfo
+from collector_db.DTOs.TaskInfo import TaskInfo
 from collector_db.DTOs.URLAnnotationInfo import URLAnnotationInfo
 from collector_db.DTOs.URLErrorInfos import URLErrorPydanticInfo
 from collector_db.DTOs.URLHTMLContentInfo import URLHTMLContentInfo
+from collector_db.DTOs.URLInfo import URLInfo
 from collector_db.DTOs.URLMetadataInfo import URLMetadataInfo
 from collector_db.DTOs.URLWithHTML import URLWithHTML
-from collector_db.enums import URLMetadataAttributeType, ValidationStatus, ValidationSource
+from collector_db.StatementComposer import StatementComposer
+from collector_db.enums import URLMetadataAttributeType, ValidationStatus, ValidationSource, TaskType
 from collector_db.helper_functions import get_postgres_connection_string
 from collector_db.models import URLMetadata, URL, URLErrorInfo, URLHTMLContent, Base, MetadataAnnotation, \
-    RootURL
+    RootURL, Task, TaskError, LinkTaskURL
 from collector_manager.enums import URLStatus
+from core.DTOs.GetTasksResponse import GetTasksResponse, GetTasksResponseTaskInfo
 from core.DTOs.GetURLsResponseInfo import GetURLsResponseInfo, GetURLsResponseMetadataInfo, GetURLsResponseErrorInfo, \
     GetURLsResponseInnerInfo
 from core.DTOs.RelevanceAnnotationInfo import RelevanceAnnotationPostInfo
+from core.enums import BatchStatus
+
 
 def add_standard_limit_and_offset(statement, page, limit=100):
     offset = (page - 1) * limit
@@ -31,6 +38,14 @@ class AsyncDatabaseClient:
             echo=ConfigManager.get_sqlalchemy_echo(),
         )
         self.session_maker = async_sessionmaker(bind=self.engine, expire_on_commit=False)
+        self.statement_composer = StatementComposer()
+
+    @staticmethod
+    def _add_models(session: AsyncSession, model_class, models):
+        for model in models:
+            instance = model_class(**model.model_dump())
+            session.add(instance)
+
 
     @staticmethod
     def session_manager(method):
@@ -66,14 +81,11 @@ class AsyncDatabaseClient:
 
     @session_manager
     async def add_url_metadata(self, session: AsyncSession, url_metadata_info: URLMetadataInfo):
-        url_metadata = URLMetadata(**url_metadata_info.model_dump())
-        session.add(url_metadata)
+        self._add_models(session, URLMetadata, [url_metadata_info])
 
     @session_manager
     async def add_url_metadatas(self, session: AsyncSession, url_metadata_infos: list[URLMetadataInfo]):
-        for url_metadata_info in url_metadata_infos:
-            url_metadata = URLMetadata(**url_metadata_info.model_dump())
-            session.add(url_metadata)
+        self._add_models(session, URLMetadata, url_metadata_infos)
 
     @session_manager
     async def add_url_error_infos(self, session: AsyncSession, url_error_infos: list[URLErrorPydanticInfo]):
@@ -88,59 +100,58 @@ class AsyncDatabaseClient:
 
     @session_manager
     async def get_urls_with_errors(self, session: AsyncSession) -> list[URLErrorPydanticInfo]:
-        statement = (select(URL, URLErrorInfo.error, URLErrorInfo.updated_at)
+        statement = (select(URL, URLErrorInfo.error, URLErrorInfo.updated_at, URLErrorInfo.task_id)
                      .join(URLErrorInfo)
                      .where(URL.outcome == URLStatus.ERROR.value)
                      .order_by(URL.id))
         scalar_result = await session.execute(statement)
         results = scalar_result.all()
         final_results = []
-        for url, error, updated_at in results:
-            final_results.append(URLErrorPydanticInfo(url_id=url.id, error=error, updated_at=updated_at))
+        for url, error, updated_at, task_id in results:
+            final_results.append(URLErrorPydanticInfo(
+                url_id=url.id,
+                error=error,
+                updated_at=updated_at,
+                task_id=task_id
+            ))
 
         return final_results
 
     @session_manager
     async def add_html_content_infos(self, session: AsyncSession, html_content_infos: list[URLHTMLContentInfo]):
-        for html_content_info in html_content_infos:
-            # Add HTML Content Info to database
-            db_html_content_info = URLHTMLContent(**html_content_info.model_dump())
-            session.add(db_html_content_info)
+        self._add_models(session, URLHTMLContent, html_content_infos)
+
+    @session_manager
+    async def has_pending_urls_without_html_data(self, session: AsyncSession) -> bool:
+        statement = self.statement_composer.pending_urls_without_html_data()
+        statement = statement.limit(1)
+        scalar_result = await session.scalars(statement)
+        return bool(scalar_result.first())
 
     @session_manager
     async def get_pending_urls_without_html_data(self, session: AsyncSession):
         # TODO: Add test that includes some urls WITH html data. Check they're not returned
-        statement = (select(URL).
-                     outerjoin(URLHTMLContent).
-                     where(URLHTMLContent.id == None).
-                     where(URL.outcome == URLStatus.PENDING.value).
-                     limit(100).
-                     order_by(URL.id))
+        statement = self.statement_composer.pending_urls_without_html_data()
+        statement = statement.limit(100).order_by(URL.id)
         scalar_result = await session.scalars(statement)
         return scalar_result.all()
 
     @session_manager
-    async def get_urls_with_html_data_and_no_relevancy_metadata(
+    async def get_urls_with_html_data_and_without_metadata_type(
             self,
-            session: AsyncSession
+            session: AsyncSession,
+            without_metadata_type: URLMetadataAttributeType = URLMetadataAttributeType.RELEVANT
     ) -> list[URLWithHTML]:
+
         # Get URLs with no relevancy metadata
         statement = (select(URL.id, URL.url, URLHTMLContent).
                      join(URLHTMLContent).
-                     where(URL.outcome == URLStatus.PENDING.value)
-                    # No relevancy metadata
-                    .where(
-                        ~exists(
-                            select(URLMetadata.id).
-                            where(
-                                URLMetadata.url_id == URL.id,
-                                URLMetadata.attribute == URLMetadataAttributeType.RELEVANT.value
-                            )
-                        )
-                    )
-                    .limit(100)
-                    .order_by(URL.id)
+                     where(URL.outcome == URLStatus.PENDING.value))
+        statement = self.statement_composer.exclude_urls_with_select_metadata(
+            statement=statement,
+            attribute=without_metadata_type
         )
+        statement = statement.limit(100).order_by(URL.id)
         raw_result = await session.execute(statement)
         result = raw_result.all()
         url_ids_to_urls = {url_id: url for url_id, url, _ in result}
@@ -162,6 +173,26 @@ class AsyncDatabaseClient:
 
 
         return final_results
+
+    @session_manager
+    async def has_pending_urls_with_html_data_and_without_metadata_type(
+        self,
+        session: AsyncSession,
+        without_metadata_type: URLMetadataAttributeType = URLMetadataAttributeType.RELEVANT
+    ) -> bool:
+        # TODO: Generalize this so that it can exclude based on other attributes
+        # Get URLs with no relevancy metadata
+        statement = (select(URL.id, URL.url, URLHTMLContent).
+                     join(URLHTMLContent).
+                     where(URL.outcome == URLStatus.PENDING.value))
+        statement = self.statement_composer.exclude_urls_with_select_metadata(
+            statement=statement,
+            attribute=without_metadata_type
+        )
+        statement = statement.limit(1)
+        raw_result = await session.execute(statement)
+        result = raw_result.all()
+        return len(result) > 0
 
     @session_manager
     async def get_urls_with_metadata(
@@ -377,5 +408,156 @@ class AsyncDatabaseClient:
             count=len(final_results)
         )
 
+    @session_manager
+    async def initiate_task(
+            self,
+            session: AsyncSession,
+            task_type: TaskType
+    ) -> int:
+        # Create Task
+        task = Task(
+            task_type=task_type,
+            task_status=BatchStatus.IN_PROCESS.value
+        )
+        session.add(task)
+        # Return Task ID
+        await session.flush()
+        await session.refresh(task)
+        return task.id
+
+    @session_manager
+    async def update_task_status(self, session: AsyncSession, task_id: int, status: BatchStatus):
+        task = await session.get(Task, task_id)
+        task.task_status = status.value
+        await session.commit()
+
+    @session_manager
+    async def add_task_error(self, session: AsyncSession, task_id: int, error: str):
+        task_error = TaskError(
+            task_id=task_id,
+            error=error
+        )
+        session.add(task_error)
+        await session.commit()
+
+    @session_manager
+    async def get_task_info(self, session: AsyncSession, task_id: int) -> TaskInfo:
+        # Get Task
+        result = await session.execute(
+            select(Task)
+            .where(Task.id == task_id)
+            .options(
+                selectinload(Task.urls),
+                selectinload(Task.error),
+                selectinload(Task.errored_urls)
+            )
+        )
+        task = result.scalars().first()
+        error = task.error[0].error if len(task.error) > 0 else None
+        # Get error info if any
+        # Get URLs
+        urls = task.urls
+        url_infos = []
+        for url in urls:
+            url_info = URLInfo(
+                id=url.id,
+                batch_id=url.batch_id,
+                url=url.url,
+                collector_metadata=url.collector_metadata,
+                outcome=URLStatus(url.outcome),
+                updated_at=url.updated_at
+            )
+            url_infos.append(url_info)
+
+        errored_urls = []
+        for url in task.errored_urls:
+            url_error_info = URLErrorPydanticInfo(
+                task_id=url.task_id,
+                url_id=url.url_id,
+                error=url.error,
+                updated_at=url.updated_at
+            )
+            errored_urls.append(url_error_info)
+        return TaskInfo(
+            task_type=TaskType(task.task_type),
+            task_status=BatchStatus(task.task_status),
+            error_info=error,
+            updated_at=task.updated_at,
+            urls=url_infos,
+            url_errors=errored_urls
+        )
+
+    @session_manager
+    async def get_html_content_info(self, session: AsyncSession, url_id: int) -> list[URLHTMLContentInfo]:
+        session_result = await session.execute(
+            select(URLHTMLContent)
+            .where(URLHTMLContent.url_id == url_id)
+        )
+        results = session_result.scalars().all()
+        return [URLHTMLContentInfo(**result.__dict__) for result in results]
 
 
+
+    @session_manager
+    async def link_urls_to_task(self, session: AsyncSession, task_id: int, url_ids: list[int]):
+        for url_id in url_ids:
+            link = LinkTaskURL(
+                url_id=url_id,
+                task_id=task_id
+            )
+            session.add(link)
+
+    @session_manager
+    async def get_tasks(
+            self,
+            session: AsyncSession,
+            task_type: Optional[TaskType] = None,
+            task_status: Optional[BatchStatus] = None,
+            page: int = 1
+    ) -> GetTasksResponse:
+        url_count_subquery = self.statement_composer.simple_count_subquery(
+            LinkTaskURL,
+            'task_id',
+            'url_count'
+        )
+
+        url_error_count_subquery = self.statement_composer.simple_count_subquery(
+            URLErrorInfo,
+            'task_id',
+            'url_error_count'
+        )
+
+        statement = select(
+            Task,
+            url_count_subquery.c.url_count,
+            url_error_count_subquery.c.url_error_count
+        ).outerjoin(
+            url_count_subquery,
+            Task.id == url_count_subquery.c.task_id
+        ).outerjoin(
+            url_error_count_subquery,
+            Task.id == url_error_count_subquery.c.task_id
+        )
+        if task_type is not None:
+            statement = statement.where(Task.task_type == task_type.value)
+        if task_status is not None:
+            statement = statement.where(Task.task_status == task_status.value)
+        add_standard_limit_and_offset(statement, page)
+
+        execute_result = await session.execute(statement)
+        all_results = execute_result.all()
+        final_results = []
+        for task, url_count, url_error_count in all_results:
+            final_results.append(
+                GetTasksResponseTaskInfo(
+                    task_id=task.id,
+                    type=TaskType(task.task_type),
+                    status=BatchStatus(task.task_status),
+                    url_count=url_count if url_count is not None else 0,
+                    url_error_count=url_error_count if url_error_count is not None else 0,
+                    updated_at=task.updated_at
+                )
+            )
+        return GetTasksResponse(
+            tasks=final_results
+        )

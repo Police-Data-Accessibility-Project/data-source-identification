@@ -5,18 +5,15 @@ import pytest
 from collector_db.AsyncDatabaseClient import AsyncDatabaseClient
 from collector_db.DTOs.URLWithHTML import URLWithHTML
 from collector_db.enums import ValidationStatus, ValidationSource
-from collector_db.models import URLMetadata
-from core.classes.URLRelevanceHuggingfaceCycler import URLRelevanceHuggingfaceCycler
+from collector_db.models import URLMetadata, Task
+from core.classes.URLRelevanceHuggingfaceTaskOperator import URLRelevanceHuggingfaceTaskOperator
+from tests.helpers.assert_functions import assert_database_has_no_tasks
 from hugging_face.HuggingFaceInterface import HuggingFaceInterface
 
 
 @pytest.mark.asyncio
-async def test_url_relevancy_huggingface_cycle(db_data_creator):
-    batch_id = db_data_creator.batch()
-    url_mappings = db_data_creator.urls(batch_id=batch_id, url_count=3).url_mappings
-    url_ids = [url_info.url_id for url_info in url_mappings]
-    await db_data_creator.html_data(url_ids)
-    await db_data_creator.metadata([url_ids[0]])
+async def test_url_relevancy_huggingface_task(db_data_creator):
+
 
     def num_to_bool(num: int) -> bool:
         if num == 0:
@@ -38,11 +35,21 @@ async def test_url_relevancy_huggingface_cycle(db_data_creator):
     mock_hf_interface = MagicMock(spec=HuggingFaceInterface)
     mock_hf_interface.get_url_relevancy = mock_get_url_relevancy
 
-    cycler = URLRelevanceHuggingfaceCycler(
+    task_operator = URLRelevanceHuggingfaceTaskOperator(
         adb_client=AsyncDatabaseClient(),
         huggingface_interface=mock_hf_interface
     )
-    await cycler.cycle()
+    await task_operator.run_task()
+
+    await assert_database_has_no_tasks(db_data_creator.adb_client)
+
+    batch_id = db_data_creator.batch()
+    url_mappings = db_data_creator.urls(batch_id=batch_id, url_count=3).url_mappings
+    url_ids = [url_info.url_id for url_info in url_mappings]
+    await db_data_creator.html_data(url_ids)
+    await db_data_creator.metadata([url_ids[0]])
+
+    await task_operator.run_task()
 
     results = await db_data_creator.adb_client.get_all(URLMetadata)
 

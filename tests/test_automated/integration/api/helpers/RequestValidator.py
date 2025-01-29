@@ -5,15 +5,17 @@ from pydantic import BaseModel
 from starlette.testclient import TestClient
 
 from collector_db.DTOs.BatchInfo import BatchInfo
+from collector_db.DTOs.TaskInfo import TaskInfo
+from collector_db.enums import TaskType
 from collector_manager.DTOs.ExampleInputDTO import ExampleInputDTO
 from collector_manager.enums import CollectorType
 from core.DTOs.GetBatchLogsResponse import GetBatchLogsResponse
 from core.DTOs.GetBatchStatusResponse import GetBatchStatusResponse
 from core.DTOs.GetDuplicatesByBatchResponse import GetDuplicatesByBatchResponse
 from core.DTOs.GetNextURLForRelevanceAnnotationResponse import GetNextURLForRelevanceAnnotationResponse
+from core.DTOs.GetTasksResponse import GetTasksResponse
 from core.DTOs.GetURLsByBatchResponse import GetURLsByBatchResponse
 from core.DTOs.GetURLsResponseInfo import GetURLsResponseInfo
-from core.DTOs.LabelStudioExportResponseInfo import LabelStudioExportResponseInfo
 from core.DTOs.MessageCountResponse import MessageCountResponse
 from core.DTOs.MessageResponse import MessageResponse
 from core.DTOs.RelevanceAnnotationInfo import RelevanceAnnotationPostInfo
@@ -160,12 +162,6 @@ class RequestValidator:
         )
         return GetBatchLogsResponse(**data)
 
-    def export_batch_to_label_studio(self, batch_id: int) -> LabelStudioExportResponseInfo:
-        data = self.post(
-            url=f"/label-studio/export-batch/{batch_id}"
-        )
-        return LabelStudioExportResponseInfo(**data)
-
     def abort_batch(self, batch_id: int) -> MessageResponse:
         data = self.post(
             url=f"/batch/{batch_id}/abort"
@@ -202,3 +198,29 @@ class RequestValidator:
             params={"page": page, "errors": errors}
         )
         return GetURLsResponseInfo(**data)
+
+    def get_task_info(self, task_id: int) -> TaskInfo:
+        data = self.get(
+            url=f"/task/{task_id}"
+        )
+        return TaskInfo(**data)
+
+    def get_tasks(
+            self,
+            page: int = 1,
+            task_type: Optional[TaskType] = None,
+            task_status: Optional[BatchStatus] = None
+    ) -> GetTasksResponse:
+        params = {"page": page}
+        update_if_not_none(
+            target=params,
+            source={
+                "task_type": task_type.value if task_type else None,
+                "task_status": task_status.value if task_status else None
+            }
+        )
+        data = self.get(
+            url=f"/task",
+            params=params
+        )
+        return GetTasksResponse(**data)

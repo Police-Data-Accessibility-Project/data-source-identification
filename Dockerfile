@@ -20,6 +20,7 @@ COPY collector_manager ./collector_manager
 COPY core ./core
 COPY html_tag_collector ./html_tag_collector
 COPY hugging_face/url_relevance ./hugging_face/url_relevance
+COPY hugging_face/url_record_type_labeling ./hugging_face/url_record_type_labeling
 COPY hugging_face/HuggingFaceInterface.py ./hugging_face/HuggingFaceInterface.py
 COPY source_collectors ./source_collectors
 COPY util ./util
@@ -28,6 +29,8 @@ COPY apply_migrations.py ./apply_migrations.py
 COPY security_manager ./security_manager
 COPY execute.sh ./execute.sh
 COPY .project-root ./.project-root
+COPY tests ./tests
+COPY llm_api_logic ./llm_api_logic
 
 # Expose the application port
 EXPOSE 80
@@ -35,4 +38,4 @@ EXPOSE 80
 RUN chmod +x execute.sh
 # Use the below for ease of local development, but remove when pushing to GitHub
 # Because there is no .env file in the repository (for security reasons)
-#COPY .env ./.env
+COPY .env ./.env

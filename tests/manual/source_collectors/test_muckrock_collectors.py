@@ -7,7 +7,7 @@ from source_collectors.muckrock.DTOs import MuckrockSimpleSearchCollectorInputDT
 from source_collectors.muckrock.classes.MuckrockCollector import MuckrockSimpleSearchCollector, \
     MuckrockCountyLevelSearchCollector, MuckrockAllFOIARequestsCollector
 from source_collectors.muckrock.schemas import MuckrockURLInfoSchema
-from test_automated.integration.core.helpers import ALLEGHENY_COUNTY_MUCKROCK_ID, ALLEGHENY_COUNTY_TOWN_NAMES
+from test_automated.integration.core.helpers.constants import ALLEGHENY_COUNTY_MUCKROCK_ID, ALLEGHENY_COUNTY_TOWN_NAMES
 
 
 def test_muckrock_simple_search_collector():

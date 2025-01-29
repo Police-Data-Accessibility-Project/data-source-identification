@@ -32,6 +32,10 @@ class URLHTMLContentType(PyEnum):
     H6 = "H6"
     DIV = "Div"
 
+class TaskType(PyEnum):
+    HTML = "HTML"
+    RELEVANCY = "Relevancy"
+    RECORD_TYPE = "Record Type"
 
 class PGEnum(TypeDecorator):
     impl = postgresql.ENUM

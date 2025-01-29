@@ -3,7 +3,7 @@ import pytest
 
 from collector_db.AsyncDatabaseClient import AsyncDatabaseClient
 from collector_db.DTOs.URLInfo import URLInfo
-from core.classes.URLHTMLCycler import URLHTMLCycler
+from core.classes.URLHTMLTaskOperator import URLHTMLTaskOperator
 from helpers.DBDataCreator import DBDataCreator
 from html_tag_collector.ResponseParser import HTMLResponseParser
 from html_tag_collector.RootURLCache import RootURLCache
@@ -43,14 +43,14 @@ async def test_url_html_cycle_live_data(
     """
     Tests the cycle on whatever exists in the DB
     """
-    cycler = URLHTMLCycler(
+    operator = URLHTMLTaskOperator(
         adb_client=AsyncDatabaseClient(),
         url_request_interface=URLRequestInterface(),
         html_parser=HTMLResponseParser(
             root_url_cache=RootURLCache()
         )
     )
-    await cycler.cycle()
+    await operator.run_task()
 
 @pytest.mark.asyncio
 async def test_url_html_cycle(
@@ -64,11 +64,11 @@ async def test_url_html_cycle(
     db_client.insert_urls(url_infos=url_infos, batch_id=batch_id)
 
 
-    cycler = URLHTMLCycler(
+    operator = URLHTMLTaskOperator(
         adb_client=AsyncDatabaseClient(),
         url_request_interface=URLRequestInterface(),
         html_parser=HTMLResponseParser(
             root_url_cache=RootURLCache()
         )
     )
-    await cycler.cycle()
+    await operator.run_task()

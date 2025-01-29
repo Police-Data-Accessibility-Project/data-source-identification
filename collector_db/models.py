@@ -16,6 +16,7 @@ status_check_string = ", ".join([f"'{status}'" for status in get_enum_values(Bat
 
 CURRENT_TIME_SERVER_DEFAULT = func.now()
 
+batch_status_enum = PGEnum('complete', 'error', 'in-process', 'aborted', name='batch_status')
 
 class Batch(Base):
     __tablename__ = 'batches'
@@ -29,9 +30,7 @@ class Batch(Base):
     user_id = Column(Integer, nullable=False)
     # Gives the status of the batch
     status = Column(
-        postgresql.ENUM(
-            'complete', 'error', 'in-process', 'aborted',
-            name='batch_status'),
+        batch_status_enum,
         nullable=False
     )
     # The number of URLs in the batch
@@ -86,6 +85,11 @@ class URL(Base):
     url_metadata = relationship("URLMetadata", back_populates="url", cascade="all, delete-orphan")
     html_content = relationship("URLHTMLContent", back_populates="url", cascade="all, delete-orphan")
     error_info = relationship("URLErrorInfo", back_populates="url", cascade="all, delete-orphan")
+    tasks = relationship(
+        "Task",
+        secondary="link_task_urls",
+        back_populates="urls",
+    )
 
 
 # URL Metadata table definition
@@ -110,6 +114,8 @@ class URLMetadata(Base):
         PGEnum('Machine Learning', 'Label Studio', 'Manual', name='validation_source'),
         nullable=False
     )
+    notes = Column(Text, nullable=True)
+
 
     # Timestamps
     created_at = Column(TIMESTAMP, nullable=False, server_default=func.now())
@@ -153,14 +159,21 @@ class RootURL(Base):
 
 class URLErrorInfo(Base):
     __tablename__ = 'url_error_info'
+    __table_args__ = (UniqueConstraint(
+        "url_id",
+        "task_id",
+        name="uq_url_id_error"),
+    )
 
     id = Column(Integer, primary_key=True)
     url_id = Column(Integer, ForeignKey('urls.id'), nullable=False)
     error = Column(Text, nullable=False)
     updated_at = Column(TIMESTAMP, nullable=False, server_default=CURRENT_TIME_SERVER_DEFAULT)
+    task_id = Column(Integer, ForeignKey('tasks.id'), nullable=False)
 
     # Relationships
     url = relationship("URL", back_populates="error_info")
+    task = relationship("Task", back_populates="errored_urls")
 
 class URLHTMLContent(Base):
     __tablename__ = 'url_html_content'
@@ -231,3 +244,51 @@ class Missing(Base):
 
     # Relationships
     batch = relationship("Batch", back_populates="missings")
+
+class Task(Base):
+    __tablename__ = 'tasks'
+
+    id = Column(Integer, primary_key=True)
+    task_type = Column(
+        PGEnum(
+            'HTML', 'Relevancy', 'Record Type', name='task_type'
+        ), nullable=False)
+    task_status = Column(batch_status_enum, nullable=False)
+    updated_at = Column(TIMESTAMP, nullable=False, server_default=CURRENT_TIME_SERVER_DEFAULT)
+
+    # Relationships
+    urls = relationship(
+        "URL",
+        secondary="link_task_urls",
+        back_populates="tasks"
+    )
+    error = relationship("TaskError", back_populates="task")
+    errored_urls = relationship("URLErrorInfo", back_populates="task")
+
+class LinkTaskURL(Base):
+    __tablename__ = 'link_task_urls'
+    __table_args__ = (UniqueConstraint(
+        "task_id",
+        "url_id",
+        name="uq_task_id_url_id"),
+    )
+
+    task_id = Column(Integer, ForeignKey('tasks.id', ondelete="CASCADE"), primary_key=True)
+    url_id = Column(Integer, ForeignKey('urls.id', ondelete="CASCADE"), primary_key=True)
+
+class TaskError(Base):
+    __tablename__ = 'task_errors'
+
+    id = Column(Integer, primary_key=True)
+    task_id = Column(Integer, ForeignKey('tasks.id', ondelete="CASCADE"), nullable=False)
+    error = Column(Text, nullable=False)
+    updated_at = Column(TIMESTAMP, nullable=False, server_default=CURRENT_TIME_SERVER_DEFAULT)
+
+    # Relationships
+    task = relationship("Task", back_populates="error")
+
+    __table_args__ = (UniqueConstraint(
+        "task_id",
+        "error",
+        name="uq_task_id_error"),
+    )
