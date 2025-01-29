@@ -6,8 +6,8 @@ from collector_db.enums import TaskType
 from collector_db.models import URLMetadata
 from core.classes.URLRecordTypeTaskOperator import URLRecordTypeTaskOperator
 from core.enums import RecordType, BatchStatus
-from helpers.DBDataCreator import DBDataCreator
-from helpers.assert_functions import assert_database_has_no_tasks
+from tests.helpers.DBDataCreator import DBDataCreator
+from tests.helpers.assert_functions import assert_database_has_no_tasks
 from llm_api_logic.DeepSeekRecordClassifier import DeepSeekRecordClassifier
 
 @pytest.mark.asyncio
