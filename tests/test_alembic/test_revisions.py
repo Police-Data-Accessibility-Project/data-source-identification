@@ -15,7 +15,7 @@ from itertools import product
 
 from sqlalchemy import text
 
-from test_alembic.helpers import columns_in_table
+from tests.test_alembic.helpers import columns_in_table
 from tests.test_alembic.helpers import get_enum_values, table_creation_check
 
 
