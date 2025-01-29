@@ -1,6 +1,6 @@
 # Dockerfile for Source Collector FastAPI app
 
-FROM python:3.12.8
+FROM python:3.12.8-slim
 
 # Set working directory
 WORKDIR /app
