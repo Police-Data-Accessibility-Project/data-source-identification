@@ -1,5 +1,4 @@
 requests~=2.31.0
-polars~=0.20.10
 python-dotenv~=1.0.1
 bs4~=0.0.2
 tqdm>=4.64.1
@@ -13,7 +12,6 @@ datasets~=2.19.1
 huggingface-hub~=0.22.2
 
 # html_tag_collector_only
-requests_html>=0.10.0
 lxml~=5.1.0
 beautifulsoup4>=4.12.3
 
