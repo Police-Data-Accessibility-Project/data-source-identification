@@ -8,7 +8,7 @@ WORKDIR /app
 COPY requirements.txt ./requirements.txt
 
 # Install dependencies
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir --prefer-binary -r requirements.txt
 RUN playwright install chromium
 RUN playwright install-deps
 
@@ -29,7 +29,13 @@ COPY apply_migrations.py ./apply_migrations.py
 COPY security_manager ./security_manager
 COPY execute.sh ./execute.sh
 COPY .project-root ./.project-root
-COPY tests ./tests
+
+COPY tests/conftest.py ./tests/conftest.py
+COPY tests/__init__.py ./tests/__init__.py
+COPY tests/test_automated ./tests/test_automated
+COPY tests/test_alembic ./tests/test_alembic
+COPY tests/helpers ./tests/helpers
+
 COPY llm_api_logic ./llm_api_logic
 
 # Expose the application port
