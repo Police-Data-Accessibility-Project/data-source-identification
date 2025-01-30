@@ -1,6 +1,6 @@
 # Dockerfile for Source Collector FastAPI app
 
-FROM python:3.12.8-slim
+FROM python:3.11.9-slim
 
 # Set working directory
 WORKDIR /app
@@ -10,7 +10,7 @@ COPY requirements.txt ./requirements.txt
 # Install dependencies
 RUN pip install --no-cache-dir --prefer-binary -r requirements.txt
 RUN playwright install chromium
-RUN playwright install-deps
+RUN playwright install-deps chromium
 
 # Copy project files
 COPY agency_identifier ./agency_identifier
