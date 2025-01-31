@@ -195,7 +195,7 @@ class RequestValidator:
     ) -> GetNextURLForAnnotationResponse:
         data = self.post(
             url=f"/annotate/record-type/{metadata_id}",
-            json=record_type_annotation_post_info.model_dump()
+            json=record_type_annotation_post_info.model_dump(mode='json')
         )
         return GetNextURLForAnnotationResponse(**data)
 
@@ -206,7 +206,7 @@ class RequestValidator:
     ) -> GetNextURLForAnnotationResponse:
         data = self.post(
             url=f"/annotate/relevance/{metadata_id}",
-            json=relevance_annotation_post_info.model_dump()
+            json=relevance_annotation_post_info.model_dump(mode='json')
         )
         return GetNextURLForAnnotationResponse(**data)
 
