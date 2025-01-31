@@ -3,12 +3,11 @@ import logging
 from collector_db.AsyncDatabaseClient import AsyncDatabaseClient
 from collector_db.DTOs.TaskInfo import TaskInfo
 from collector_db.DTOs.URLAnnotationInfo import URLAnnotationInfo
-from collector_db.enums import TaskType
-from core.DTOs.GetNextURLForRelevanceAnnotationResponse import GetNextURLForRelevanceAnnotationResponse
+from collector_db.enums import TaskType, URLMetadataAttributeType
+from core.DTOs.GetNextURLForAnnotationResponse import GetNextURLForAnnotationResponse
 from core.DTOs.GetTasksResponse import GetTasksResponse
 from core.DTOs.GetURLsResponseInfo import GetURLsResponseInfo
-from core.DTOs.RelevanceAnnotationInfo import RelevanceAnnotationPostInfo
-from core.DTOs.RelevanceAnnotationRequestInfo import RelevanceAnnotationRequestInfo
+from core.DTOs.AnnotationRequestInfo import AnnotationRequestInfo
 from core.classes.URLHTMLTaskOperator import URLHTMLTaskOperator
 from core.classes.URLRecordTypeTaskOperator import URLRecordTypeTaskOperator
 from core.classes.URLRelevanceHuggingfaceTaskOperator import URLRelevanceHuggingfaceTaskOperator
@@ -66,39 +65,62 @@ class AsyncCore:
         await self.run_url_relevance_huggingface_task()
         await self.run_url_record_type_task()
 
-    async def convert_to_relevance_annotation_request_info(self, url_info: URLAnnotationInfo) -> RelevanceAnnotationRequestInfo:
+    async def convert_to_annotation_request_info(self, url_info: URLAnnotationInfo) -> AnnotationRequestInfo:
         response_html_info = convert_to_response_html_info(
             html_content_infos=url_info.html_infos
         )
 
-        return RelevanceAnnotationRequestInfo(
+        return AnnotationRequestInfo(
             url=url_info.url,
             metadata_id=url_info.metadata_id,
-            html_info=response_html_info
+            html_info=response_html_info,
+            suggested_value=url_info.suggested_value
         )
 
-    async def get_next_url_for_relevance_annotation(self, user_id: int) -> GetNextURLForRelevanceAnnotationResponse:
-        response = GetNextURLForRelevanceAnnotationResponse()
-        ua_info: URLAnnotationInfo = await self.adb_client.get_next_url_for_relevance_annotation(user_id=user_id)
+    async def get_next_url_for_annotation(self, user_id: int, metadata_type: URLMetadataAttributeType) -> GetNextURLForAnnotationResponse:
+        response = GetNextURLForAnnotationResponse()
+        ua_info: URLAnnotationInfo = await self.adb_client.get_next_url_for_annotation(
+            user_id=user_id,
+            metadata_type=metadata_type
+        )
         if ua_info is None:
             return response
         # Format result
-        result = await self.convert_to_relevance_annotation_request_info(url_info=ua_info)
+        result = await self.convert_to_annotation_request_info(url_info=ua_info)
         response.next_annotation = result
         return response
 
-
-    async def submit_url_relevance_annotation(
+    async def submit_and_get_next_url_for_annotation(
             self,
             user_id: int,
             metadata_id: int,
-            annotation: RelevanceAnnotationPostInfo
-    ) -> GetNextURLForRelevanceAnnotationResponse:
+            annotation: str,
+            metadata_type: URLMetadataAttributeType
+    ) -> GetNextURLForAnnotationResponse:
+        await self.submit_url_annotation(
+            user_id=user_id,
+            metadata_id=metadata_id,
+            annotation=annotation,
+            metadata_type=metadata_type
+        )
+        result = await self.get_next_url_for_annotation(
+            user_id=user_id,
+            metadata_type=metadata_type
+        )
+        return result
+
+    async def submit_url_annotation(
+            self,
+            user_id: int,
+            metadata_id: int,
+            annotation: str,
+            metadata_type: URLMetadataAttributeType
+    ) -> GetNextURLForAnnotationResponse:
         await self.adb_client.add_relevance_annotation(
             user_id=user_id,
             metadata_id=metadata_id,
-            annotation_info=annotation)
-        return await self.get_next_url_for_relevance_annotation(user_id=user_id)
+            annotation=annotation)
+        return await self.get_next_url_for_annotation(user_id=user_id, metadata_type=metadata_type)
 
     async def get_urls(self, page: int, errors: bool) -> GetURLsResponseInfo:
         return await self.adb_client.get_urls(page=page, errors=errors)

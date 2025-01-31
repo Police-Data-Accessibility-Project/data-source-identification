@@ -23,7 +23,7 @@ from collector_manager.enums import URLStatus
 from core.DTOs.GetTasksResponse import GetTasksResponse, GetTasksResponseTaskInfo
 from core.DTOs.GetURLsResponseInfo import GetURLsResponseInfo, GetURLsResponseMetadataInfo, GetURLsResponseErrorInfo, \
     GetURLsResponseInnerInfo
-from core.DTOs.RelevanceAnnotationInfo import RelevanceAnnotationPostInfo
+from core.DTOs.RelevanceAnnotationPostInfo import RelevanceAnnotationPostInfo
 from core.enums import BatchStatus
 
 
@@ -232,10 +232,11 @@ class AsyncDatabaseClient:
             url_metadata.validation_status = validation_status
 
     @session_manager
-    async def get_next_url_for_relevance_annotation(
+    async def get_next_url_for_annotation(
             self,
             session: AsyncSession,
-            user_id: int
+            user_id: int,
+            metadata_type: URLMetadataAttributeType
     ) -> URLAnnotationInfo:
         # Get a URL, its relevancy metadata ID, and HTML data
         # For a URL which has not yet been annotated by this user id
@@ -246,10 +247,11 @@ class AsyncDatabaseClient:
                 URL.id.label("url_id"),
                 URL.url,
                 URLMetadata.id.label("metadata_id"),
+                URLMetadata.value,
             )
             .join(URLMetadata)
             # Metadata must be relevant
-            .where(URLMetadata.attribute == URLMetadataAttributeType.RELEVANT.value)
+            .where(URLMetadata.attribute == metadata_type.value)
             # Metadata must not be validated
             .where(URLMetadata.validation_status == ValidationStatus.PENDING_VALIDATION.value)
             # URL must have HTML content entries
@@ -274,6 +276,7 @@ class AsyncDatabaseClient:
             select(
                 subquery.c.url,
                 subquery.c.metadata_id,
+                subquery.c.value,
                 URLHTMLContent.content_type,
                 URLHTMLContent.content,
             )
@@ -291,9 +294,10 @@ class AsyncDatabaseClient:
         annotation_info = URLAnnotationInfo(
             url=result[0][0],
             metadata_id=result[0][1],
+            suggested_value=result[0][2],
             html_infos=[]
         )
-        for _, _, content_type, content in result:
+        for _, _, _, content_type, content in result:
             html_info = URLHTMLContentInfo(
                 content_type=content_type,
                 content=content
@@ -307,11 +311,12 @@ class AsyncDatabaseClient:
             session: AsyncSession,
             user_id: int,
             metadata_id: int,
-            annotation_info: RelevanceAnnotationPostInfo):
+            annotation: str
+    ):
         annotation = MetadataAnnotation(
             metadata_id=metadata_id,
             user_id=user_id,
-            value=str(annotation_info.is_relevant)
+            value=annotation
         )
         session.add(annotation)
 

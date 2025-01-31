@@ -12,13 +12,14 @@ from collector_manager.enums import CollectorType
 from core.DTOs.GetBatchLogsResponse import GetBatchLogsResponse
 from core.DTOs.GetBatchStatusResponse import GetBatchStatusResponse
 from core.DTOs.GetDuplicatesByBatchResponse import GetDuplicatesByBatchResponse
-from core.DTOs.GetNextURLForRelevanceAnnotationResponse import GetNextURLForRelevanceAnnotationResponse
+from core.DTOs.GetNextURLForAnnotationResponse import GetNextURLForAnnotationResponse
 from core.DTOs.GetTasksResponse import GetTasksResponse
 from core.DTOs.GetURLsByBatchResponse import GetURLsByBatchResponse
 from core.DTOs.GetURLsResponseInfo import GetURLsResponseInfo
 from core.DTOs.MessageCountResponse import MessageCountResponse
 from core.DTOs.MessageResponse import MessageResponse
-from core.DTOs.RelevanceAnnotationInfo import RelevanceAnnotationPostInfo
+from core.DTOs.RecordTypeAnnotationPostInfo import RecordTypeAnnotationPostInfo
+from core.DTOs.RelevanceAnnotationPostInfo import RelevanceAnnotationPostInfo
 from core.enums import BatchStatus
 from util.helper_functions import update_if_not_none
 
@@ -175,22 +176,39 @@ class RequestValidator:
         )
         return MessageCountResponse(**data)
 
-    def get_next_relevance_annotation(self) -> GetNextURLForRelevanceAnnotationResponse:
+    def get_next_relevance_annotation(self) -> GetNextURLForAnnotationResponse:
         data = self.get(
             url=f"/annotate/relevance"
         )
-        return GetNextURLForRelevanceAnnotationResponse(**data)
+        return GetNextURLForAnnotationResponse(**data)
+
+    def get_next_record_type_annotation(self) -> GetNextURLForAnnotationResponse:
+        data = self.get(
+            url=f"/annotate/record-type"
+        )
+        return GetNextURLForAnnotationResponse(**data)
+
+    def post_record_type_annotation_and_get_next(
+            self,
+            metadata_id: int,
+            record_type_annotation_post_info: RecordTypeAnnotationPostInfo
+    ) -> GetNextURLForAnnotationResponse:
+        data = self.post(
+            url=f"/annotate/record-type/{metadata_id}",
+            json=record_type_annotation_post_info.model_dump(mode='json')
+        )
+        return GetNextURLForAnnotationResponse(**data)
 
     def post_relevance_annotation_and_get_next(
             self,
             metadata_id: int,
             relevance_annotation_post_info: RelevanceAnnotationPostInfo
-    ) -> GetNextURLForRelevanceAnnotationResponse:
+    ) -> GetNextURLForAnnotationResponse:
         data = self.post(
             url=f"/annotate/relevance/{metadata_id}",
-            json=relevance_annotation_post_info.model_dump()
+            json=relevance_annotation_post_info.model_dump(mode='json')
         )
-        return GetNextURLForRelevanceAnnotationResponse(**data)
+        return GetNextURLForAnnotationResponse(**data)
 
     def get_urls(self, page: int = 1, errors: bool = False) -> GetURLsResponseInfo:
         data = self.get(
