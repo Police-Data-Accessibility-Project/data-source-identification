@@ -1,8 +1,8 @@
 
 from sqlalchemy import Select, select, exists, Table, func, Subquery
 
-from collector_db.enums import URLMetadataAttributeType
-from collector_db.models import URL, URLHTMLContent, URLMetadata
+from collector_db.enums import URLMetadataAttributeType, ValidationStatus
+from collector_db.models import URL, URLHTMLContent, URLMetadata, MetadataAnnotation
 from collector_manager.enums import URLStatus
 
 
@@ -32,6 +32,22 @@ class StatementComposer:
                             )
                         )
                     ))
+
+    @staticmethod
+    def exclude_url_annotated_by_user(
+            statement: Select,
+            user_id: int
+    ) -> Select:
+        return (statement.where(
+                        ~exists(
+                            select(MetadataAnnotation.id).
+                            where(
+                                MetadataAnnotation.metadata_id == URLMetadata.id,
+                                MetadataAnnotation.user_id == user_id
+                            )
+                        )
+                    ))
+
 
     @staticmethod
     def simple_count_subquery(model, attribute: str, label: str) -> Subquery:
