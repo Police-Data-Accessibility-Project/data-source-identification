@@ -90,6 +90,7 @@ class URL(Base):
         secondary="link_task_urls",
         back_populates="urls",
     )
+    agency_suggestions = relationship("URLAgencySuggestion", back_populates="url", cascade="all, delete-orphan")
 
 
 # URL Metadata table definition
@@ -98,11 +99,11 @@ class URLMetadata(Base):
     __table_args__ = (UniqueConstraint(
         "url_id",
         "attribute",
-        name="model_num2_key"),
+        name="uq_url_id_attribute"),
     )
 
     id = Column(Integer, primary_key=True)
-    url_id = Column(Integer, ForeignKey('urls.id'), nullable=False)
+    url_id = Column(Integer, ForeignKey('urls.id', name='url_metadata_url_id_fkey'), nullable=False)
     attribute = Column(
         PGEnum('Record Type', 'Agency', 'Relevant', name='url_attribute'),
         nullable=False)
@@ -143,7 +144,7 @@ class MetadataAnnotation(Base):
     url_metadata = relationship("URLMetadata", back_populates="annotations")
 
 class RootURL(Base):
-    __tablename__ = 'root_urls'
+    __tablename__ = 'root_url_cache'
     __table_args__ = (
         UniqueConstraint(
         "url",
@@ -276,6 +277,8 @@ class LinkTaskURL(Base):
     task_id = Column(Integer, ForeignKey('tasks.id', ondelete="CASCADE"), primary_key=True)
     url_id = Column(Integer, ForeignKey('urls.id', ondelete="CASCADE"), primary_key=True)
 
+
+
 class TaskError(Base):
     __tablename__ = 'task_errors'
 
@@ -292,3 +295,28 @@ class TaskError(Base):
         "error",
         name="uq_task_id_error"),
     )
+
+class URLAgencySuggestion(Base):
+    __tablename__ = 'url_agency_suggestions'
+
+    id = Column(Integer, primary_key=True)
+    url_id = Column(Integer, ForeignKey('urls.id'), nullable=False)
+    suggestion_type = Column(
+        PGEnum(
+            'Suggestion',
+            'Unknown',
+            'New Agency',
+            'Confirmed',
+            name='url_agency_suggestion_type'
+        ),
+        nullable=False
+    )
+    agency_id = Column(Integer, nullable=True)
+    agency_name = Column(String, nullable=False)
+    state = Column(String, nullable=True)
+    county = Column(String, nullable=True)
+    locality = Column(String, nullable=True)
+    updated_at = Column(TIMESTAMP, nullable=False, server_default=CURRENT_TIME_SERVER_DEFAULT)
+
+    # Relationships
+    url = relationship("URL", back_populates="agency_suggestions")
