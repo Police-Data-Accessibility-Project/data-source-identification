@@ -2,7 +2,7 @@
 from sqlalchemy import Select, select, exists, Table, func, Subquery
 
 from collector_db.enums import URLMetadataAttributeType, ValidationStatus
-from collector_db.models import URL, URLHTMLContent, URLMetadata, MetadataAnnotation
+from collector_db.models import URL, URLHTMLContent, URLMetadata, MetadataAnnotation, URLAgencySuggestion
 from collector_manager.enums import URLStatus
 
 
@@ -57,3 +57,11 @@ class StatementComposer:
             func.count(attr_value).label(label)
         ).group_by(attr_value).subquery()
 
+    @staticmethod
+    def exclude_urls_with_agency_suggestions(
+            statement: Select
+    ):
+        return (statement.where(~exists(
+                select(URLAgencySuggestion.id).
+                where(URLAgencySuggestion.url_id == URL.id)
+            )))

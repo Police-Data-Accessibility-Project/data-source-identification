@@ -1,13 +1,18 @@
 from enum import Enum
 from http import HTTPStatus
-from typing import Optional
+from typing import Optional, List
 
 from pydantic import BaseModel
 
+from pdap_api_client.enums import MatchAgencyResponseStatus
+
 
 class MatchAgencyInfo(BaseModel):
+    id: int
     submitted_name: str
-    id: str
+    state: Optional[str] = None
+    county: Optional[str] = None
+    locality: Optional[str] = None
 
 class ApprovalStatus(Enum):
     APPROVED = "approved"
@@ -48,7 +53,22 @@ class RequestInfo(BaseModel):
     params: Optional[dict] = None
     timeout: Optional[int] = 10
 
+    def kwargs(self) -> dict:
+        d = {
+            "url": self.url,
+        }
+        if self.json is not None:
+            d['json'] = self.json
+        if self.headers is not None:
+            d['headers'] = self.headers
+        return d
+
 
 class ResponseInfo(BaseModel):
     status_code: HTTPStatus
     data: Optional[dict]
+
+
+class MatchAgencyResponse(BaseModel):
+    status: MatchAgencyResponseStatus
+    matches: List[MatchAgencyInfo]

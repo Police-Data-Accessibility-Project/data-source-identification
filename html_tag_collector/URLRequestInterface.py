@@ -1,5 +1,4 @@
 import asyncio
-import subprocess
 from typing import Optional
 
 from aiohttp import ClientSession
@@ -7,15 +6,9 @@ from playwright.async_api import async_playwright
 
 from dataclasses import dataclass
 
-from requests import Response
 from tqdm.asyncio import tqdm
 
 MAX_CONCURRENCY = 5
-
-@dataclass
-class URLResponseInfoOld:
-    success: bool
-    response: Response or Exception
 
 @dataclass
 class URLResponseInfo:

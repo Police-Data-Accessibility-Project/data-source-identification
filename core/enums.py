@@ -48,3 +48,11 @@ class RecordType(Enum):
     COURT_CASES = "Court Cases"
     INCARCERATION_RECORDS = "Incarceration Records"
     OTHER = "Other"
+
+
+class SuggestionType(Enum):
+    AUTO_SUGGESTION = "Auto Suggestion"
+    MANUAL_SUGGESTION = "Manual Suggestion"
+    UNKNOWN = "Unknown"
+    NEW_AGENCY = "New Agency"
+    CONFIRMED = "Confirmed"

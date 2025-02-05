@@ -335,3 +335,13 @@ def test_add_task_tables_and_linking_logic(alembic_runner):
         table_name="url_metadata",
         columns_to_check=["notes"],
     )
+
+def test_add_url_agency_suggestions(alembic_runner):
+    table_creation_check(
+        alembic_runner,
+        tables=[
+            "url_agency_suggestions"
+        ],
+        start_revision="072b32a45b1c",
+        end_revision="19bf57df581a"
+    )

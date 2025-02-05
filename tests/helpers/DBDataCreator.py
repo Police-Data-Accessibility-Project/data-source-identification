@@ -1,5 +1,7 @@
 from typing import List, Optional
 
+from pydantic import BaseModel
+
 from collector_db.AsyncDatabaseClient import AsyncDatabaseClient
 from collector_db.DTOs.BatchInfo import BatchInfo
 from collector_db.DTOs.DuplicateInfo import DuplicateInsertInfo
@@ -15,6 +17,10 @@ from core.enums import BatchStatus
 from tests.helpers.simple_test_data_functions import generate_test_urls
 
 
+class BatchURLCreationInfo(BaseModel):
+    batch_id: int
+    url_ids: list[int]
+
 class DBDataCreator:
     """
     Assists in the creation of test data
@@ -23,10 +29,10 @@ class DBDataCreator:
         self.db_client = db_client
         self.adb_client: AsyncDatabaseClient = AsyncDatabaseClient()
 
-    def batch(self):
+    def batch(self, strategy: CollectorType = CollectorType.EXAMPLE) -> int:
         return self.db_client.insert_batch(
             BatchInfo(
-                strategy=CollectorType.EXAMPLE.value,
+                strategy=strategy.value,
                 status=BatchStatus.IN_PROCESS,
                 total_url_count=1,
                 parameters={"test_key": "test_value"},
@@ -39,6 +45,22 @@ class DBDataCreator:
         if url_ids is not None:
             await self.adb_client.link_urls_to_task(task_id=task_id, url_ids=url_ids)
         return task_id
+
+    async def batch_and_urls(
+            self,
+            strategy: CollectorType = CollectorType.EXAMPLE,
+            url_count: int = 1,
+            with_html_content: bool = False
+    ) -> BatchURLCreationInfo:
+        batch_id = self.batch(strategy=strategy)
+        iuis: InsertURLsInfo = self.urls(batch_id=batch_id, url_count=url_count)
+        url_ids = [iui.url_id for iui in iuis.url_mappings]
+        if with_html_content:
+            await self.html_data(url_ids)
+
+        return BatchURLCreationInfo(batch_id=batch_id, url_ids=url_ids)
+
+
 
     def urls(self, batch_id: int, url_count: int) -> InsertURLsInfo:
         raw_urls = generate_test_urls(url_count)
