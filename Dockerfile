@@ -25,6 +25,7 @@ COPY hugging_face/HuggingFaceInterface.py ./hugging_face/HuggingFaceInterface.py
 COPY source_collectors ./source_collectors
 COPY util ./util
 COPY alembic.ini ./alembic.ini
+COPY alembic ./alembic
 COPY apply_migrations.py ./apply_migrations.py
 COPY security_manager ./security_manager
 COPY execute.sh ./execute.sh
