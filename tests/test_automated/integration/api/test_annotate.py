@@ -78,9 +78,9 @@ async def run_annotation_test(
     assert results[0].value == expected_metadata_value
 
     # Submit this one in turn, and no subsequent annotation info should be returned
-    request_info_3 = ath.request_validator.post_relevance_annotation_and_get_next(
-        metadata_id=inner_info_2.metadata_id,
-        relevance_annotation_post_info=post_info
+    request_info_3 = submit_and_get_next_function(
+        inner_info_2.metadata_id,
+        post_info
     )
 
     assert request_info_3.next_annotation is None

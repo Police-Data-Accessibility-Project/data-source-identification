@@ -18,12 +18,14 @@ from collector_db.StatementComposer import StatementComposer
 from collector_db.enums import URLMetadataAttributeType, ValidationStatus, ValidationSource, TaskType
 from collector_db.helper_functions import get_postgres_connection_string
 from collector_db.models import URLMetadata, URL, URLErrorInfo, URLHTMLContent, Base, MetadataAnnotation, \
-    RootURL, Task, TaskError, LinkTaskURL
-from collector_manager.enums import URLStatus
+    RootURL, Task, TaskError, LinkTaskURL, URLAgencySuggestion, Batch
+from collector_manager.enums import URLStatus, CollectorType
 from core.DTOs.GetTasksResponse import GetTasksResponse, GetTasksResponseTaskInfo
 from core.DTOs.GetURLsResponseInfo import GetURLsResponseInfo, GetURLsResponseMetadataInfo, GetURLsResponseErrorInfo, \
     GetURLsResponseInnerInfo
 from core.DTOs.RelevanceAnnotationPostInfo import RelevanceAnnotationPostInfo
+from core.DTOs.URLAgencySuggestionInfo import URLAgencySuggestionInfo
+from core.DTOs.task_data_objects.AgencyIdentificationTDO import AgencyIdentificationTDO
 from core.enums import BatchStatus
 
 
@@ -566,3 +568,58 @@ class AsyncDatabaseClient:
         return GetTasksResponse(
             tasks=final_results
         )
+
+    @session_manager
+    async def has_urls_without_agency_suggestions(
+            self,
+            session: AsyncSession
+    ) -> bool:
+        statement = (
+            select(
+                URL.id
+            ))
+        statement = self.statement_composer.exclude_urls_with_agency_suggestions(statement)
+        raw_result = await session.execute(statement)
+        result = raw_result.all()
+        return len(result) != 0
+
+    @session_manager
+    async def get_urls_without_agency_suggestions(self, session: AsyncSession) -> list[AgencyIdentificationTDO]:
+        statement = (
+            select(
+                URL.id,
+                URL.collector_metadata,
+                Batch.strategy,
+            ).join(Batch)
+        )
+        statement = self.statement_composer.exclude_urls_with_agency_suggestions(statement)
+        statement = statement.limit(100)
+        raw_results = await session.execute(statement)
+        return [
+            AgencyIdentificationTDO(
+                url_id=raw_result[0],
+                collector_metadata=raw_result[1],
+                collector_type=CollectorType(raw_result[2])
+            )
+            for raw_result in raw_results
+        ]
+
+    @session_manager
+    async def add_agency_suggestions(
+            self,
+            session: AsyncSession,
+            suggestions: list[URLAgencySuggestionInfo]
+    ):
+        for suggestion in suggestions:
+            url_agency_suggestion = URLAgencySuggestion(
+                url_id=suggestion.url_id,
+                suggestion_type=suggestion.suggestion_type,
+                agency_id=suggestion.pdap_agency_id,
+                agency_name=suggestion.agency_name,
+                state=suggestion.state,
+                county=suggestion.county,
+                locality=suggestion.locality
+            )
+            session.add(url_agency_suggestion)
+
+        await session.commit()

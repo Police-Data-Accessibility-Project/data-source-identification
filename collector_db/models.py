@@ -24,7 +24,13 @@ class Batch(Base):
     id = Column(Integer, primary_key=True)
     strategy = Column(
         postgresql.ENUM(
-            'example', 'ckan', 'muckrock_county_search', 'auto_googler', 'muckrock_all_search', 'muckrock_simple_search', 'common_crawler',
+            'example',
+            'ckan',
+            'muckrock_county_search',
+            'auto_googler',
+            'muckrock_all_search',
+            'muckrock_simple_search',
+            'common_crawler',
             name='batch_strategy'),
         nullable=False)
     user_id = Column(Integer, nullable=False)
@@ -252,7 +258,11 @@ class Task(Base):
     id = Column(Integer, primary_key=True)
     task_type = Column(
         PGEnum(
-            'HTML', 'Relevancy', 'Record Type', name='task_type'
+            'HTML',
+            'Relevancy',
+            'Record Type',
+            'Agency Identification',
+            name='task_type'
         ), nullable=False)
     task_status = Column(batch_status_enum, nullable=False)
     updated_at = Column(TIMESTAMP, nullable=False, server_default=CURRENT_TIME_SERVER_DEFAULT)
@@ -303,7 +313,8 @@ class URLAgencySuggestion(Base):
     url_id = Column(Integer, ForeignKey('urls.id'), nullable=False)
     suggestion_type = Column(
         PGEnum(
-            'Suggestion',
+            'Auto Suggestion',
+            'Manual Suggestion'
             'Unknown',
             'New Agency',
             'Confirmed',
@@ -312,7 +323,7 @@ class URLAgencySuggestion(Base):
         nullable=False
     )
     agency_id = Column(Integer, nullable=True)
-    agency_name = Column(String, nullable=False)
+    agency_name = Column(String, nullable=True)
     state = Column(String, nullable=True)
     county = Column(String, nullable=True)
     locality = Column(String, nullable=True)

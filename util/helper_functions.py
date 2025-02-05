@@ -9,10 +9,10 @@ from pydantic import BaseModel
 def get_enum_values(enum: Type[Enum]):
     return [item.value for item in enum]
 
-def get_from_env(key: str):
+def get_from_env(key: str, allow_none: bool = False):
     load_dotenv()
     val = os.getenv(key)
-    if val is None:
+    if val is None and not allow_none:
         raise ValueError(f"Environment variable {key} is not set")
     return val
 

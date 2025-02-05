@@ -2,15 +2,16 @@ from http import HTTPStatus
 from typing import Optional
 
 import requests
+from aiohttp import ClientSession
 
 from pdap_api_client.DTOs import RequestType, Namespaces, RequestInfo, ResponseInfo
 
 API_URL = "https://data-sources-v2.pdap.dev/api"
 request_methods = {
-    RequestType.POST: requests.post,
-    RequestType.PUT: requests.put,
-    RequestType.GET: requests.get,
-    RequestType.DELETE: requests.delete,
+    RequestType.POST: ClientSession.post,
+    RequestType.PUT: ClientSession.put,
+    RequestType.GET: ClientSession.get,
+    RequestType.DELETE: ClientSession.delete,
 }
 
 
@@ -32,15 +33,42 @@ class AccessManager:
     """
     Manages login, api key, access and refresh tokens
     """
-    def __init__(self, email: str, password: str, api_key: Optional[str] = None):
-        self.access_token = None
-        self.refresh_token = None
+    def __init__(
+            self,
+            session: ClientSession,
+            email: str,
+            password: str,
+            api_key: Optional[str] = None,
+    ):
+        self.session = session
+        self._access_token = None
+        self._refresh_token = None
         self.api_key = api_key
+        self.email = email
+        self.password = password
         self.login(email=email, password=password)
+
+    @property
+    async def access_token(self):
+        if self._access_token is None:
+            await self.login(
+                email=self.email,
+                password=self.password
+            )
+        return self._access_token
+
+    @property
+    async def refresh_token(self):
+        if self._refresh_token is None:
+            await self.login(
+                email=self.email,
+                password=self.password
+            )
+        return self._refresh_token
 
     # TODO: Add means to refresh if token expired.
 
-    def load_api_key(self):
+    async def load_api_key(self):
         url = build_url(
             namespace=Namespaces.AUTH,
             subdomains=["api-key"]
@@ -48,41 +76,48 @@ class AccessManager:
         request_info = RequestInfo(
             type_ = RequestType.POST,
             url=url,
-            headers=self.jwt_header()
+            headers=await self.jwt_header()
         )
-        response_info = self.make_request(request_info)
+        response_info = await self.make_request(request_info)
         self.api_key = response_info.data["api_key"]
 
-    def refresh_access_token(self):
+    async def refresh_access_token(self):
         url = build_url(
             namespace=Namespaces.AUTH,
             subdomains=["refresh-session"],
         )
-        raise NotImplementedError("Waiting on https://github.com/Police-Data-Accessibility-Project/data-sources-app/issues/566")
+        refresh_token = await self.refresh_token
+        rqi = RequestInfo(
+            type_=RequestType.POST,
+            url=url,
+            json={"refresh_token": refresh_token},
+            headers=await self.jwt_header()
+        )
+        rsi = await self.make_request(rqi)
+        data = rsi.data
+        self._access_token = data['access_token']
+        self._refresh_token = data['refresh_token']
 
-    def make_request(self, ri: RequestInfo) -> ResponseInfo:
+    async def make_request(self, ri: RequestInfo) -> ResponseInfo:
         try:
-            response = request_methods[ri.type_](
-                ri.url,
-                json=ri.json,
-                headers=ri.headers,
-                params=ri.params,
-                timeout=ri.timeout
-            )
-            response.raise_for_status()
+            method = getattr(self.session, ri.type_.value.lower())
+            async with method(**ri.kwargs()) as response:
+                response.raise_for_status()
+                json = await response.json()
+                return ResponseInfo(
+                    status_code=HTTPStatus(response.status),
+                    data=json
+                )
         except requests.RequestException as e:
             # TODO: Precise string matching here is brittle. Consider changing later.
-            if e.response.json().message == "Token is expired. Please request a new token.":
-                self.refresh_access_token()
-                return self.make_request(ri)
+            if json.message == "Token is expired. Please request a new token.":
+                await self.refresh_access_token()
+                return await self.make_request(ri)
             else:
                 raise CustomHTTPException(f"Error making {ri.type_} request to {ri.url}: {e}")
-        return ResponseInfo(
-            status_code=HTTPStatus(response.status_code),
-            data=response.json()
-        )
 
-    def login(self, email: str, password: str):
+
+    async def login(self, email: str, password: str):
         url = build_url(
             namespace=Namespaces.AUTH,
             subdomains=["login"]
@@ -95,19 +130,20 @@ class AccessManager:
                 "password": password
             }
         )
-        response_info = self.make_request(request_info)
+        response_info = await self.make_request(request_info)
         data = response_info.data
-        self.access_token = data["access_token"]
-        self.refresh_token = data["refresh_token"]
+        self._access_token = data["access_token"]
+        self._refresh_token = data["refresh_token"]
 
 
-    def jwt_header(self) -> dict:
+    async def jwt_header(self) -> dict:
         """
         Retrieve JWT header
         Returns: Dictionary of Bearer Authorization with JWT key
         """
+        access_token = await self.access_token
         return {
-            "Authorization": f"Bearer {self.access_token}"
+            "Authorization": f"Bearer {access_token}"
         }
 
     def api_key_header(self):

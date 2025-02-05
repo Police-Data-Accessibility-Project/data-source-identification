@@ -25,13 +25,31 @@ suggestion_type_enum = PGEnum(
     'Confirmed', name='url_agency_suggestion_type'
 )
 
+old_task_options = (
+    'HTML',
+    'Relevancy',
+    'Record Type',
+)
+new_task_options = old_task_options + ('Agency Identification',)
+
+old_task_type_enum = PGEnum(
+    *old_task_options,
+    name='task_type_old'
+)
+
+new_task_type_enum = PGEnum(
+    *new_task_options,
+    name='task_type'
+)
+
 def upgrade() -> None:
+    op.execute("ALTER TYPE task_type ADD VALUE 'Agency Identification';")
     op.create_table('url_agency_suggestions',
         sa.Column('id', sa.Integer(), nullable=False),
         sa.Column('url_id', sa.Integer(), nullable=False),
         sa.Column('suggestion_type', suggestion_type_enum, nullable=False),
         sa.Column('agency_id', sa.Integer(), nullable=True),
-        sa.Column('agency_name', sa.String(), nullable=False),
+        sa.Column('agency_name', sa.String(), nullable=True),
         sa.Column('state', sa.String(), nullable=True),
         sa.Column('county', sa.String(), nullable=True),
         sa.Column('locality', sa.String(), nullable=True),
@@ -44,3 +62,8 @@ def upgrade() -> None:
 def downgrade() -> None:
     op.drop_table('url_agency_suggestions')
     suggestion_type_enum.drop(op.get_bind(), checkfirst=True)
+    old_task_type_enum.create(op.get_bind())
+    op.execute("DELETE FROM TASKS;")
+    op.execute("ALTER TABLE tasks ALTER COLUMN task_type TYPE task_type_old USING task_type::text::task_type_old;")
+    new_task_type_enum.drop(op.get_bind(), checkfirst=True)
+    op.execute("ALTER TYPE task_type_old RENAME TO task_type;")
