@@ -327,6 +327,7 @@ class URLAgencySuggestion(Base):
     state = Column(String, nullable=True)
     county = Column(String, nullable=True)
     locality = Column(String, nullable=True)
+    user_id = Column(Integer, nullable=True)
     updated_at = Column(TIMESTAMP, nullable=False, server_default=CURRENT_TIME_SERVER_DEFAULT)
 
     # Relationships

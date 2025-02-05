@@ -345,3 +345,17 @@ def test_add_url_agency_suggestions(alembic_runner):
         start_revision="072b32a45b1c",
         end_revision="19bf57df581a"
     )
+
+def test_add_user_url_agency_suggestions(alembic_runner):
+    def column_check() -> bool:
+        return columns_in_table(
+            alembic_runner,
+            table_name="url_agency_suggestions",
+            columns_to_check=["user_id"]
+        )
+
+    alembic_runner.upgrade("19bf57df581a")
+    assert not column_check()
+    alembic_runner.reflect()
+    alembic_runner.upgrade("8c44e02733ae")
+    assert column_check()

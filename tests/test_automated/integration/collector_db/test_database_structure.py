@@ -326,3 +326,17 @@ def test_root_url(db_data_creator: DBDataCreator):
     )
 
     table_tester.run_column_tests()
+
+@pytest.mark.asyncio
+async def test_url_agency_suggestions_trigger(db_data_creator: DBDataCreator):
+    # Check that if an entry is added to the user_url_agency_suggestions table,
+    # The trigger checks that the corresponding entry `url_agency_suggestions` has value 'Manual Suggestion'
+    # And raises an error if not
+    dbdc = db_data_creator
+    await dbdc.batch_and_urls(
+        with_html_content=True
+    )
+    # Insert
+
+
+    pytest.fail("Not implemented")
