@@ -73,3 +73,30 @@ async def annotate_url_for_record_type_and_get_next_url(
         metadata_type=URLMetadataAttributeType.RECORD_TYPE
     )
     return result
+
+async def get_next_url_for_agency_annotation(
+        access_info: AccessInfo = Depends(get_access_info),
+        async_core: AsyncCore = Depends(get_async_core),
+) -> GetNextURLForAnnotationResponse:
+    result = await async_core.get_next_url_for_annotation(
+        user_id=access_info.user_id,
+        metadata_type=URLMetadataAttributeType.AGENCY
+    )
+    return result
+
+async def annotate_url_for_agency_and_get_next_url(
+        agency_annotation_post_info: RecordTypeAnnotationPostInfo,
+        metadata_id: int = Path(description="The metadata id for the associated URL metadata"),
+        async_core: AsyncCore = Depends(get_async_core),
+        access_info: AccessInfo = Depends(get_access_info)
+) -> GetNextURLForAnnotationResponse:
+    """
+    Post URL annotation and get next URL to annotate
+    """
+    result = await async_core.submit_and_get_next_url_for_annotation(
+        user_id=access_info.user_id,
+        metadata_id=metadata_id,
+        annotation=agency_annotation_post_info.agency.value,
+        metadata_type=URLMetadataAttributeType.AGENCY
+    )
+    return result
