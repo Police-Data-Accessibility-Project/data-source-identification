@@ -17,7 +17,13 @@ branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
 
-suggestion_type_enum = PGEnum('Suggestion', 'Unknown', 'New Agency', 'Confirmed', name='url_agency_suggestion_type')
+suggestion_type_enum = PGEnum(
+    'Auto Suggestion',
+    'Manual Suggestion',
+    'Unknown',
+    'New Agency',
+    'Confirmed', name='url_agency_suggestion_type'
+)
 
 def upgrade() -> None:
     op.create_table('url_agency_suggestions',
