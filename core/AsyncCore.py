@@ -1,5 +1,8 @@
 import logging
 
+from aiohttp import ClientSession
+
+from agency_identifier.MuckrockAPIInterface import MuckrockAPIInterface
 from collector_db.AsyncDatabaseClient import AsyncDatabaseClient
 from collector_db.DTOs.TaskInfo import TaskInfo
 from collector_db.DTOs.URLAnnotationInfo import URLAnnotationInfo
@@ -8,6 +11,7 @@ from core.DTOs.GetNextURLForAnnotationResponse import GetNextURLForAnnotationRes
 from core.DTOs.GetTasksResponse import GetTasksResponse
 from core.DTOs.GetURLsResponseInfo import GetURLsResponseInfo
 from core.DTOs.AnnotationRequestInfo import AnnotationRequestInfo
+from core.classes.AgencyIdentificationTaskOperator import AgencyIdentificationTaskOperator
 from core.classes.URLHTMLTaskOperator import URLHTMLTaskOperator
 from core.classes.URLRecordTypeTaskOperator import URLRecordTypeTaskOperator
 from core.classes.URLRelevanceHuggingfaceTaskOperator import URLRelevanceHuggingfaceTaskOperator
@@ -17,6 +21,9 @@ from html_tag_collector.ResponseParser import HTMLResponseParser
 from html_tag_collector.URLRequestInterface import URLRequestInterface
 from hugging_face.HuggingFaceInterface import HuggingFaceInterface
 from llm_api_logic.OpenAIRecordClassifier import OpenAIRecordClassifier
+from pdap_api_client.AccessManager import AccessManager
+from pdap_api_client.PDAPClient import PDAPClient
+from util.helper_functions import get_from_env
 
 
 class AsyncCore:
@@ -26,7 +33,7 @@ class AsyncCore:
             adb_client: AsyncDatabaseClient,
             huggingface_interface: HuggingFaceInterface,
             url_request_interface: URLRequestInterface,
-            html_parser: HTMLResponseParser
+            html_parser: HTMLResponseParser,
     ):
         self.adb_client = adb_client
         self.huggingface_interface = huggingface_interface
@@ -60,10 +67,30 @@ class AsyncCore:
         )
         await operator.run_task()
 
+    async def run_agency_identification_task(self):
+        self.logger.info("Running Agency Identification Task")
+        async with ClientSession() as session:
+            pdap_client = PDAPClient(
+                access_manager=AccessManager(
+                    email=get_from_env("PDAP_EMAIL"),
+                    password=get_from_env("PDAP_PASSWORD"),
+                    api_key=get_from_env("PDAP_API_KEY"),
+                    session=session
+                ),
+            )
+            muckrock_api_interface = MuckrockAPIInterface(session=session)
+            operator = AgencyIdentificationTaskOperator(
+                adb_client=self.adb_client,
+                pdap_client=pdap_client,
+                muckrock_api_interface=muckrock_api_interface
+            )
+            await operator.run_task()
+
     async def run_tasks(self):
         await self.run_url_html_task()
         await self.run_url_relevance_huggingface_task()
         await self.run_url_record_type_task()
+        await self.run_agency_identification_task()
 
     async def convert_to_annotation_request_info(self, url_info: URLAnnotationInfo) -> AnnotationRequestInfo:
         response_html_info = convert_to_response_html_info(
