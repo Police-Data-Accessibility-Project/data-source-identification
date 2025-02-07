@@ -3,12 +3,14 @@ from collector_db.AsyncDatabaseClient import AsyncDatabaseClient
 from collector_db.DTOs.URLErrorInfos import URLErrorPydanticInfo
 from collector_db.enums import TaskType
 from collector_manager.enums import CollectorType
+from core.DTOs.URLAgencySuggestionInfo import URLAgencySuggestionInfo
 from core.DTOs.task_data_objects.AgencyIdentificationTDO import AgencyIdentificationTDO
 from core.classes.TaskOperatorBase import TaskOperatorBase
 from core.classes.subtasks.AutoGooglerAgencyIdentificationSubtask import AutoGooglerAgencyIdentificationSubtask
 from core.classes.subtasks.CKANAgencyIdentificationSubtask import CKANAgencyIdentificationSubtask
 from core.classes.subtasks.CommonCrawlerAgencyIdentificationSubtask import CommonCrawlerAgencyIdentificationSubtask
 from core.classes.subtasks.MuckrockAgencyIdentificationSubtask import MuckrockAgencyIdentificationSubtask
+from core.enums import SuggestionType
 from pdap_api_client.PDAPClient import PDAPClient
 
 
@@ -61,7 +63,7 @@ class AgencyIdentificationTaskOperator(TaskOperatorBase):
                 )
 
     @staticmethod
-    async def run_subtask(subtask, url_id, collector_metadata):
+    async def run_subtask(subtask, url_id, collector_metadata) -> list[URLAgencySuggestionInfo]:
         return await subtask.run(url_id=url_id, collector_metadata=collector_metadata)
 
     async def inner_task_logic(self):
@@ -86,7 +88,10 @@ class AgencyIdentificationTaskOperator(TaskOperatorBase):
                 )
                 error_infos.append(error_info)
 
-        await self.adb_client.add_agency_suggestions(all_agency_suggestions)
+        await self.adb_client.upsert_new_agencies(all_agency_suggestions)
+        confirmed_suggestions = [suggestion for suggestion in all_agency_suggestions if suggestion.suggestion_type == SuggestionType.CONFIRMED]
+        await self.adb_client.add_confirmed_agency_url_links(confirmed_suggestions)
+        await self.adb_client.add_agency_auto_suggestions(all_agency_suggestions)
         await self.adb_client.add_url_error_infos(error_infos)
 
 

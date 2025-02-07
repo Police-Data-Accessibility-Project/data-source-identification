@@ -359,3 +359,19 @@ def test_add_user_url_agency_suggestions(alembic_runner):
     alembic_runner.reflect()
     alembic_runner.upgrade("8c44e02733ae")
     assert column_check()
+
+def test_revise_agency_suggestions(alembic_runner):
+
+    tables_to_check = [
+        "user_url_agency_suggestions",
+        "automated_url_agency_suggestions",
+        "agencies",
+        "confirmed_url_agency"
+    ]
+
+    alembic_runner.upgrade("8c44e02733ae")
+    assert alembic_runner.table_exists("url_agency_suggestions")
+    assert not alembic_runner.tables_exist(tables_to_check)
+    alembic_runner.upgrade("d7eb670edaf0")
+    assert not alembic_runner.table_exists("url_agency_suggestions")
+    assert alembic_runner.tables_exist(tables_to_check)

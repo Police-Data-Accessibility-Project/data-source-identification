@@ -3,7 +3,7 @@ from typing import Optional
 
 from sqlalchemy import select, exists, func
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import selectinload, aliased
 
 from collector_db.ConfigManager import ConfigManager
 from collector_db.DTOs.MetadataAnnotationInfo import MetadataAnnotationInfo
@@ -18,7 +18,7 @@ from collector_db.StatementComposer import StatementComposer
 from collector_db.enums import URLMetadataAttributeType, ValidationStatus, ValidationSource, TaskType
 from collector_db.helper_functions import get_postgres_connection_string
 from collector_db.models import URLMetadata, URL, URLErrorInfo, URLHTMLContent, Base, MetadataAnnotation, \
-    RootURL, Task, TaskError, LinkTaskURL, URLAgencySuggestion, Batch
+    RootURL, Task, TaskError, LinkTaskURL, Batch, Agency, ConfirmedUrlAgency, AutomatedUrlAgencySuggestion
 from collector_manager.enums import URLStatus, CollectorType
 from core.DTOs.GetTasksResponse import GetTasksResponse, GetTasksResponseTaskInfo
 from core.DTOs.GetURLsResponseInfo import GetURLsResponseInfo, GetURLsResponseMetadataInfo, GetURLsResponseErrorInfo, \
@@ -26,7 +26,7 @@ from core.DTOs.GetURLsResponseInfo import GetURLsResponseInfo, GetURLsResponseMe
 from core.DTOs.RelevanceAnnotationPostInfo import RelevanceAnnotationPostInfo
 from core.DTOs.URLAgencySuggestionInfo import URLAgencySuggestionInfo
 from core.DTOs.task_data_objects.AgencyIdentificationTDO import AgencyIdentificationTDO
-from core.enums import BatchStatus
+from core.enums import BatchStatus, SuggestionType
 
 
 def add_standard_limit_and_offset(statement, page, limit=100):
@@ -585,12 +585,18 @@ class AsyncDatabaseClient:
 
     @session_manager
     async def get_urls_without_agency_suggestions(self, session: AsyncSession) -> list[AgencyIdentificationTDO]:
+        """
+        Retrieve URLs without confirmed or suggested agencies
+        Args:
+            session:
+
+        Returns:
+
+        """
+
         statement = (
-            select(
-                URL.id,
-                URL.collector_metadata,
-                Batch.strategy,
-            ).join(Batch)
+            select(URL.id, URL.collector_metadata, Batch.strategy)
+            .join(Batch)
         )
         statement = self.statement_composer.exclude_urls_with_agency_suggestions(statement)
         statement = statement.limit(100)
@@ -605,20 +611,47 @@ class AsyncDatabaseClient:
         ]
 
     @session_manager
-    async def add_agency_suggestions(
+    async def upsert_new_agencies(
+            self,
+            session: AsyncSession,
+            suggestions: list[URLAgencySuggestionInfo]
+    ):
+        """
+        Add or update agencies in the database
+        """
+        for suggestion in suggestions:
+            agency = Agency(
+                agency_id=suggestion.pdap_agency_id,
+                name=suggestion.agency_name,
+                state=suggestion.state,
+                county=suggestion.county,
+                locality=suggestion.locality
+            )
+            await session.merge(agency)
+
+    async def add_confirmed_agency_url_links(
             self,
             session: AsyncSession,
             suggestions: list[URLAgencySuggestionInfo]
     ):
         for suggestion in suggestions:
-            url_agency_suggestion = URLAgencySuggestion(
-                url_id=suggestion.url_id,
-                suggestion_type=suggestion.suggestion_type,
+            confirmed_agency_url_link = ConfirmedUrlAgency(
                 agency_id=suggestion.pdap_agency_id,
-                agency_name=suggestion.agency_name,
-                state=suggestion.state,
-                county=suggestion.county,
-                locality=suggestion.locality
+                url_id=suggestion.url_id
+            )
+            session.add(confirmed_agency_url_link)
+
+    @session_manager
+    async def add_agency_auto_suggestions(
+            self,
+            session: AsyncSession,
+            suggestions: list[URLAgencySuggestionInfo]
+    ):
+        for suggestion in suggestions:
+            url_agency_suggestion = AutomatedUrlAgencySuggestion(
+                url_id=suggestion.url_id,
+                agency_id=suggestion.pdap_agency_id,
+                is_unknown=suggestion.suggestion_type == SuggestionType.UNKNOWN
             )
             session.add(url_agency_suggestion)
 

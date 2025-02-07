@@ -14,15 +14,16 @@ import pytest
 import sqlalchemy as sa
 from sqlalchemy import create_engine
 from sqlalchemy.dialects import postgresql
-from sqlalchemy.exc import DataError
+from sqlalchemy.exc import DataError, DBAPIError
 
 from collector_db.DTOs.InsertURLsInfo import InsertURLsInfo
 from collector_db.enums import URLHTMLContentType
 from collector_db.helper_functions import get_postgres_connection_string
-from collector_db.models import Base
+from collector_db.models import Base, Agency
 from collector_manager.enums import CollectorType, URLStatus
-from core.enums import BatchStatus
-from tests.helpers.DBDataCreator import DBDataCreator
+from core.DTOs.URLAgencySuggestionInfo import URLAgencySuggestionInfo
+from core.enums import BatchStatus, SuggestionType
+from tests.helpers.DBDataCreator import DBDataCreator, BatchURLCreationInfo
 from util.helper_functions import get_enum_values
 
 SATypes: TypeAlias = sa.Integer or sa.String or postgresql.ENUM or sa.TIMESTAMP or sa.Text
@@ -333,10 +334,77 @@ async def test_url_agency_suggestions_trigger(db_data_creator: DBDataCreator):
     # The trigger checks that the corresponding entry `url_agency_suggestions` has value 'Manual Suggestion'
     # And raises an error if not
     dbdc = db_data_creator
-    await dbdc.batch_and_urls(
+    creation_info: BatchURLCreationInfo = await dbdc.batch_and_urls(
         with_html_content=True
     )
-    # Insert
+    # Insert agency suggestion
+    suggestion_info = URLAgencySuggestionInfo(
+        url_id=creation_info.url_ids[0],
+        suggestion_type=SuggestionType.MANUAL_SUGGESTION,
+        pdap_agency_id=1,
+        agency_name="Test Agency",
+        state="Test State",
+        county="Test County",
+        locality="Test Locality",
+        user_id=None
+    )
 
+    adb_client = dbdc.adb_client
 
-    pytest.fail("Not implemented")
+    # Without the User ID, should fail
+    with pytest.raises(DBAPIError):
+        await adb_client.add_agency_suggestions([suggestion_info])
+
+    # With the User ID, should succeed
+    suggestion_info.user_id = 1
+    await adb_client.add_agency_suggestions([suggestion_info])
+
+@pytest.mark.asyncio
+async def test_upset_new_agencies(db_data_creator: DBDataCreator):
+    """
+    Check that if the agency doesn't exist, it is added
+    But if the agency does exist, it is updated with new information
+    """
+
+    suggestions = []
+    for i in range(3):
+        suggestion = URLAgencySuggestionInfo(
+            url_id=1,
+            suggestion_type=SuggestionType.AUTO_SUGGESTION,
+            pdap_agency_id=i,
+            agency_name=f"Test Agency {i}",
+            state=f"Test State {i}",
+            county=f"Test County {i}",
+            locality=f"Test Locality {i}",
+            user_id=1
+        )
+        suggestions.append(suggestion)
+
+    adb_client = db_data_creator.adb_client
+    await adb_client.upsert_new_agencies(suggestions)
+
+    update_suggestion = URLAgencySuggestionInfo(
+        url_id=1,
+        suggestion_type=SuggestionType.AUTO_SUGGESTION,
+        pdap_agency_id=0,
+        agency_name="Updated Test Agency",
+        state="Updated Test State",
+        county="Updated Test County",
+        locality="Updated Test Locality",
+        user_id=1
+    )
+
+    await adb_client.upsert_new_agencies([update_suggestion])
+
+    rows = await adb_client.get_all(Agency)
+
+    assert len(rows) == 3
+
+    d = {}
+    for row in rows:
+        d[row.agency_id] = row.name
+
+    assert d[0] == "Updated Test Agency"
+    assert d[1] == "Test Agency 1"
+    assert d[2] == "Test Agency 2"
+

@@ -7,6 +7,8 @@ from collector_db.AsyncDatabaseClient import AsyncDatabaseClient
 from collector_db.DTOs.TaskInfo import TaskInfo
 from collector_db.DTOs.URLAnnotationInfo import URLAnnotationInfo
 from collector_db.enums import TaskType, URLMetadataAttributeType
+from core.DTOs.GetNextURLForAgencyAnnotationResponse import GetNextURLForAgencyAnnotationResponse, \
+    URLAgencyAnnotationPostInfo
 from core.DTOs.GetNextURLForAnnotationResponse import GetNextURLForAnnotationResponse
 from core.DTOs.GetTasksResponse import GetTasksResponse
 from core.DTOs.GetURLsResponseInfo import GetURLsResponseInfo
@@ -15,7 +17,7 @@ from core.classes.AgencyIdentificationTaskOperator import AgencyIdentificationTa
 from core.classes.URLHTMLTaskOperator import URLHTMLTaskOperator
 from core.classes.URLRecordTypeTaskOperator import URLRecordTypeTaskOperator
 from core.classes.URLRelevanceHuggingfaceTaskOperator import URLRelevanceHuggingfaceTaskOperator
-from core.enums import BatchStatus
+from core.enums import BatchStatus, SuggestionType
 from html_tag_collector.DataClassTags import convert_to_response_html_info
 from html_tag_collector.ResponseParser import HTMLResponseParser
 from html_tag_collector.URLRequestInterface import URLRequestInterface
@@ -157,3 +159,28 @@ class AsyncCore:
 
     async def get_tasks(self, page: int, task_type: TaskType, task_status: BatchStatus) -> GetTasksResponse:
         return await self.adb_client.get_tasks(page=page, task_type=task_type, task_status=task_status)
+
+    async def get_next_url_agency_for_annotation(
+            self,
+            user_id: int
+    ) -> GetNextURLForAgencyAnnotationResponse:
+        return await self.adb_client.get_next_url_agency_for_annotation(user_id=user_id)
+
+    async def submit_url_agency_annotation(
+            self,
+            user_id: int,
+            url_id: int,
+            agency_post_info: URLAgencyAnnotationPostInfo
+    ) -> GetNextURLForAgencyAnnotationResponse:
+        if agency_post_info.suggested_agency == "NEW":
+            suggestion_type = SuggestionType.NEW_AGENCY
+            agency_suggestion_id = None
+        else:
+            suggestion_type = SuggestionType.MANUAL_SUGGESTION
+            agency_suggestion_id = agency_post_info.suggested_agency
+        return await self.adb_client.submit_url_agency_annotation(
+            user_id=user_id,
+            url_id=url_id,
+            suggestion_type=suggestion_type,
+            agency_suggestion_id=agency_suggestion_id
+        )

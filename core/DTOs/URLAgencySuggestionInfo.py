@@ -13,3 +13,4 @@ class URLAgencySuggestionInfo(BaseModel):
     state: Optional[str] = None
     county: Optional[str] = None
     locality: Optional[str] = None
+    user_id: Optional[int] = None

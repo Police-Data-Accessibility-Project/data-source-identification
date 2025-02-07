@@ -1,8 +1,10 @@
 
 from sqlalchemy import Select, select, exists, Table, func, Subquery
+from sqlalchemy.orm import aliased
 
 from collector_db.enums import URLMetadataAttributeType, ValidationStatus
-from collector_db.models import URL, URLHTMLContent, URLMetadata, MetadataAnnotation, URLAgencySuggestion
+from collector_db.models import URL, URLHTMLContent, URLMetadata, MetadataAnnotation, AutomatedUrlAgencySuggestion, \
+    ConfirmedUrlAgency
 from collector_manager.enums import URLStatus
 
 
@@ -61,7 +63,13 @@ class StatementComposer:
     def exclude_urls_with_agency_suggestions(
             statement: Select
     ):
-        return (statement.where(~exists(
-                select(URLAgencySuggestion.id).
-                where(URLAgencySuggestion.url_id == URL.id)
-            )))
+        # Aliases for clarity
+        AutomatedSuggestion = aliased(AutomatedUrlAgencySuggestion)
+        ConfirmedAgency = aliased(ConfirmedUrlAgency)
+
+        statement = (statement
+            .where(~exists().where(AutomatedSuggestion.url_id == URL.id))  # Exclude if automated suggestions exist
+            .where(~exists().where(ConfirmedAgency.url_id == URL.id))
+        )  # Exclude if confirmed agencies exist
+
+        return statement
