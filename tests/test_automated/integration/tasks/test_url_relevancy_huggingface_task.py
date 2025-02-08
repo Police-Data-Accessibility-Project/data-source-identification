@@ -39,7 +39,7 @@ async def test_url_relevancy_huggingface_task(db_data_creator):
         adb_client=AsyncDatabaseClient(),
         huggingface_interface=mock_hf_interface
     )
-    await task_operator.run_task()
+    await task_operator.run_task(1)
 
     await assert_database_has_no_tasks(db_data_creator.adb_client)
 
@@ -49,7 +49,7 @@ async def test_url_relevancy_huggingface_task(db_data_creator):
     await db_data_creator.html_data(url_ids)
     await db_data_creator.metadata([url_ids[0]])
 
-    await task_operator.run_task()
+    await task_operator.run_task(1)
 
     results = await db_data_creator.adb_client.get_all(URLMetadata)
 

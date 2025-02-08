@@ -88,10 +88,12 @@ class AgencyIdentificationTaskOperator(TaskOperatorBase):
                 )
                 error_infos.append(error_info)
 
-        await self.adb_client.upsert_new_agencies(all_agency_suggestions)
+        non_unknown_agency_suggestions = [suggestion for suggestion in all_agency_suggestions if suggestion.suggestion_type != SuggestionType.UNKNOWN]
+        await self.adb_client.upsert_new_agencies(non_unknown_agency_suggestions)
         confirmed_suggestions = [suggestion for suggestion in all_agency_suggestions if suggestion.suggestion_type == SuggestionType.CONFIRMED]
         await self.adb_client.add_confirmed_agency_url_links(confirmed_suggestions)
-        await self.adb_client.add_agency_auto_suggestions(all_agency_suggestions)
+        non_confirmed_suggestions = [suggestion for suggestion in all_agency_suggestions if suggestion.suggestion_type != SuggestionType.CONFIRMED]
+        await self.adb_client.add_agency_auto_suggestions(non_confirmed_suggestions)
         await self.adb_client.add_url_error_infos(error_infos)
 
 

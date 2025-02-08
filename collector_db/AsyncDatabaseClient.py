@@ -629,6 +629,7 @@ class AsyncDatabaseClient:
             )
             await session.merge(agency)
 
+    @session_manager
     async def add_confirmed_agency_url_links(
             self,
             session: AsyncSession,

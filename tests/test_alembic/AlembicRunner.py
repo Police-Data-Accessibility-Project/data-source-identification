@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 from alembic import command
 from alembic.config import Config
-from sqlalchemy import Connection, Inspector, MetaData, inspect
+from sqlalchemy import Connection, Inspector, MetaData, inspect, text
 from sqlalchemy.orm import scoped_session
 
 
@@ -40,3 +40,10 @@ class AlembicRunner:
 
     def tables_exist(self, table_names: list[str]) -> bool:
         return all(table_name in self.inspector.get_table_names() for table_name in table_names)
+
+    def execute(self, sql: str):
+        result = self.connection.execute(text(sql))
+        if result.cursor is not None:
+            results = result.fetchall()
+            self.connection.commit()
+            return results

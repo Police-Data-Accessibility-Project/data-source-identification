@@ -72,7 +72,10 @@ class DBDataCreator:
                 )
             )
 
-        return self.db_client.insert_urls(url_infos=url_infos, batch_id=batch_id)
+        return self.db_client.insert_urls(
+            url_infos=url_infos,
+            batch_id=batch_id,
+        )
 
     def duplicate_urls(self, duplicate_batch_id: int, url_ids: list[int]):
         """

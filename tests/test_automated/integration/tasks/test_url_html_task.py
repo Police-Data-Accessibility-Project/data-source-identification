@@ -5,6 +5,7 @@ import pytest
 
 from collector_db.AsyncDatabaseClient import AsyncDatabaseClient
 from collector_db.enums import TaskType
+from core.DTOs.TaskOperatorRunInfo import TaskOperatorOutcome
 from core.classes.URLHTMLTaskOperator import URLHTMLTaskOperator
 from core.enums import BatchStatus
 from tests.helpers.DBDataCreator import DBDataCreator
@@ -65,20 +66,22 @@ async def test_url_html_task(db_data_creator: DBDataCreator):
         url_request_interface=url_request_interface,
         html_parser=html_parser
     )
-    await operator.run_task()
 
-    # Check that, because no URLs were created, the task did not run
-    await assert_database_has_no_tasks(db_data_creator.adb_client)
+    meets_prereqs = await operator.meets_task_prerequisites()
+    # Check that, because no URLs were created, the prereqs are not met
+    assert not meets_prereqs
 
     batch_id = db_data_creator.batch()
     url_mappings = db_data_creator.urls(batch_id=batch_id, url_count=3).url_mappings
     url_ids = [url_info.url_id for url_info in url_mappings]
 
-    await operator.run_task()
+    task_id = await db_data_creator.adb_client.initiate_task(task_type=TaskType.HTML)
+    run_info = await operator.run_task(task_id)
+    assert run_info.outcome == TaskOperatorOutcome.SUCCESS
+    assert run_info.linked_url_ids == url_ids
 
 
     # Check in database that
-    # - task is listed as complete
     # - task type is listed as 'HTML'
     # - task has 3 urls
     # - task has one errored url with error "ValueError"
@@ -87,18 +90,17 @@ async def test_url_html_task(db_data_creator: DBDataCreator):
     )
 
     assert task_info.error_info is None
-    assert task_info.task_status == BatchStatus.COMPLETE
     assert task_info.task_type == TaskType.HTML
 
-    assert len(task_info.urls) == 3
     assert len(task_info.url_errors) == 1
     assert task_info.url_errors[0].error == "test error"
 
     adb = db_data_creator.adb_client
     # Check that both success urls have two rows of HTML data
-    hci = await adb.get_html_content_info(url_id=task_info.urls[0].id)
+    await adb.link_urls_to_task(task_id=run_info.task_id, url_ids=run_info.linked_url_ids)
+    hci = await adb.get_html_content_info(url_id=url_ids[0])
     assert len(hci) == 2
-    hci = await adb.get_html_content_info(url_id=task_info.urls[1].id)
+    hci = await adb.get_html_content_info(url_id=url_ids[1])
     assert len(hci) == 2
 
     # Check that errored url has error info

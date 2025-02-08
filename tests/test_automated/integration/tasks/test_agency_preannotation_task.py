@@ -1,4 +1,5 @@
 import types
+from copy import deepcopy
 from typing import Optional
 from unittest.mock import MagicMock, AsyncMock, patch
 
@@ -8,6 +9,7 @@ from aiohttp import ClientSession
 from agency_identifier.MuckrockAPIInterface import MuckrockAPIInterface, AgencyLookupResponseType, AgencyLookupResponse
 from collector_db.models import ConfirmedUrlAgency, Agency, AutomatedUrlAgencySuggestion
 from collector_manager.enums import CollectorType
+from core.DTOs.TaskOperatorRunInfo import TaskOperatorOutcome
 from core.DTOs.URLAgencySuggestionInfo import URLAgencySuggestionInfo
 from core.classes.AgencyIdentificationTaskOperator import AgencyIdentificationTaskOperator
 from core.classes.subtasks.AutoGooglerAgencyIdentificationSubtask import AutoGooglerAgencyIdentificationSubtask
@@ -23,6 +25,7 @@ from tests.helpers.DBDataCreator import DBDataCreator, BatchURLCreationInfo
 
 sample_agency_suggestions = [
     URLAgencySuggestionInfo(
+        url_id=-1, # This will be overwritten
         suggestion_type=SuggestionType.UNKNOWN,
         pdap_agency_id=None,
         agency_name=None,
@@ -31,16 +34,18 @@ sample_agency_suggestions = [
         locality=None
     ),
     URLAgencySuggestionInfo(
+        url_id=-1, # This will be overwritten
         suggestion_type=SuggestionType.CONFIRMED,
-        pdap_agency_id=1,
+        pdap_agency_id=-1,
         agency_name="Test Agency",
         state="Test State",
         county="Test County",
         locality="Test Locality"
     ),
     URLAgencySuggestionInfo(
+        url_id=-1, # This will be overwritten
         suggestion_type=SuggestionType.AUTO_SUGGESTION,
-        pdap_agency_id=2,
+        pdap_agency_id=-1,
         agency_name="Test Agency 2",
         state="Test State 2",
         county="Test County 2",
@@ -55,9 +60,10 @@ async def test_agency_preannotation_task(db_data_creator: DBDataCreator):
             url_id: int,
             collector_metadata: Optional[dict]
     ):
-        val = url_id % 3
-        suggestion = sample_agency_suggestions[val]
+        # Deepcopy to prevent using the same instance in memory
+        suggestion = deepcopy(sample_agency_suggestions[url_id % 3])
         suggestion.url_id = url_id
+        suggestion.pdap_agency_id = (url_id % 3) if suggestion.suggestion_type != SuggestionType.UNKNOWN else None
         return [suggestion]
 
     async with ClientSession() as session:
@@ -83,9 +89,9 @@ async def test_agency_preannotation_task(db_data_creator: DBDataCreator):
                 muckrock_api_interface=muckrock_api_interface
             )
 
-            # Try to run initially and confirm it doesn't run
-            # due to not meeting prerequisites
-            await operator.run_task()
+            # Confirm does not yet meet prerequisites
+            assert not await operator.meets_task_prerequisites()
+
 
             d = {}
 
@@ -101,8 +107,12 @@ async def test_agency_preannotation_task(db_data_creator: DBDataCreator):
                 creation_info: BatchURLCreationInfo = await db_data_creator.batch_and_urls(strategy=strategy, url_count=1, with_html_content=True)
                 d[strategy] = creation_info.url_ids[0]
 
+
+            # Confirm meets prerequisites
+            assert await operator.meets_task_prerequisites()
             # Run task
-            await operator.run_task()
+            run_info = await operator.run_task(1)
+            assert run_info.outcome == TaskOperatorOutcome.SUCCESS, run_info.message
 
             # Confirm tasks are piped into the correct subtasks
                 # * common_crawler into common_crawler_subtask
@@ -136,10 +146,11 @@ async def test_agency_preannotation_task(db_data_creator: DBDataCreator):
                 url_id = d[collector_type]
                 assert d2[url_id] == subtask_class
 
-            # Run task again and confirm it doesn't call any additional subtasks
-            await operator.run_task()
 
-            assert mock.call_count == 6
+            # Confirm task again does not meet prerequisites
+            assert not await operator.meets_task_prerequisites()
+
+
 
 
     #  Check confirmed and auto suggestions

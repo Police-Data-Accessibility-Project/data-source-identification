@@ -53,13 +53,30 @@ def upgrade():
     op.create_table(
         "automated_url_agency_suggestions",
         sa.Column("id", sa.Integer(), primary_key=True, autoincrement=True),
-        sa.Column("agency_id", sa.Integer(), sa.ForeignKey("agencies.agency_id"), nullable=False),
+        sa.Column("agency_id", sa.Integer(), sa.ForeignKey("agencies.agency_id"), nullable=True),
         sa.Column("url_id", sa.Integer(), sa.ForeignKey("urls.id"), nullable=False),
         sa.Column("is_unknown", sa.Boolean(), nullable=True),
     )
     op.create_unique_constraint(
         "uq_automated_url_agency_suggestions", "automated_url_agency_suggestions", ["agency_id", "url_id"]
     )
+    op.execute("""
+    CREATE OR REPLACE FUNCTION enforce_no_agency_id_if_unknown()
+    RETURNS TRIGGER AS $$
+    BEGIN
+        IF NEW.is_unknown = TRUE AND NEW.agency_id IS NOT NULL THEN
+            RAISE EXCEPTION 'agency_id must be null when is_unknown is TRUE';
+        END IF;
+        RETURN NEW;
+    END;
+    $$ LANGUAGE plpgsql;
+    """)
+    op.execute("""
+    CREATE TRIGGER enforce_no_agency_id_if_unknown
+    BEFORE INSERT ON automated_url_agency_suggestions
+    FOR EACH ROW
+    EXECUTE FUNCTION enforce_no_agency_id_if_unknown();
+    """)
 
     # Create user_url_agency_suggestions table
     op.create_table(
@@ -104,4 +121,10 @@ def downgrade():
         sa.ForeignKeyConstraint(['url_id'], ['urls.id'], ),
         sa.PrimaryKeyConstraint('id')
     )
+    op.execute("""
+    DROP TRIGGER IF EXISTS enforce_no_agency_id_if_unknown ON automated_url_agency_suggestions;
+    """)
+    op.execute("""
+    DROP FUNCTION IF EXISTS enforce_no_agency_id_if_unknown; 
+    """)
 

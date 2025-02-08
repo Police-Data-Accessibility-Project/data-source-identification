@@ -344,7 +344,7 @@ class AutomatedUrlAgencySuggestion(Base):
     __tablename__ = "automated_url_agency_suggestions"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    agency_id = Column(Integer, ForeignKey("agencies.agency_id"), nullable=False)
+    agency_id = Column(Integer, ForeignKey("agencies.agency_id"), nullable=True)
     url_id = Column(Integer, ForeignKey("urls.id"), nullable=False)
     is_unknown = Column(Boolean, nullable=True)
 

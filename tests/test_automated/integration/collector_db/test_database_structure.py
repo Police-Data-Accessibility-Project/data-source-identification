@@ -328,36 +328,6 @@ def test_root_url(db_data_creator: DBDataCreator):
 
     table_tester.run_column_tests()
 
-@pytest.mark.asyncio
-async def test_url_agency_suggestions_trigger(db_data_creator: DBDataCreator):
-    # Check that if an entry is added to the user_url_agency_suggestions table,
-    # The trigger checks that the corresponding entry `url_agency_suggestions` has value 'Manual Suggestion'
-    # And raises an error if not
-    dbdc = db_data_creator
-    creation_info: BatchURLCreationInfo = await dbdc.batch_and_urls(
-        with_html_content=True
-    )
-    # Insert agency suggestion
-    suggestion_info = URLAgencySuggestionInfo(
-        url_id=creation_info.url_ids[0],
-        suggestion_type=SuggestionType.MANUAL_SUGGESTION,
-        pdap_agency_id=1,
-        agency_name="Test Agency",
-        state="Test State",
-        county="Test County",
-        locality="Test Locality",
-        user_id=None
-    )
-
-    adb_client = dbdc.adb_client
-
-    # Without the User ID, should fail
-    with pytest.raises(DBAPIError):
-        await adb_client.add_agency_suggestions([suggestion_info])
-
-    # With the User ID, should succeed
-    suggestion_info.user_id = 1
-    await adb_client.add_agency_suggestions([suggestion_info])
 
 @pytest.mark.asyncio
 async def test_upset_new_agencies(db_data_creator: DBDataCreator):
