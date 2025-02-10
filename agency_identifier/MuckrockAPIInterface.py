@@ -20,7 +20,7 @@ class AgencyLookupResponse(BaseModel):
 
 class MuckrockAPIInterface:
 
-    def __init__(self, session: ClientSession):
+    def __init__(self, session: Optional[ClientSession] = None):
         self.base_url = "https://www.muckrock.com/api_v1/"
         self.session = session
 

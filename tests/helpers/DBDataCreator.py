@@ -1,3 +1,4 @@
+from random import randint
 from typing import List, Optional
 
 from pydantic import BaseModel
@@ -13,7 +14,8 @@ from collector_db.DTOs.URLMetadataInfo import URLMetadataInfo
 from collector_db.DatabaseClient import DatabaseClient
 from collector_db.enums import URLMetadataAttributeType, ValidationStatus, ValidationSource, TaskType
 from collector_manager.enums import CollectorType
-from core.enums import BatchStatus
+from core.DTOs.URLAgencySuggestionInfo import URLAgencySuggestionInfo
+from core.enums import BatchStatus, SuggestionType
 from tests.helpers.simple_test_data_functions import generate_test_urls
 
 
@@ -60,6 +62,72 @@ class DBDataCreator:
 
         return BatchURLCreationInfo(batch_id=batch_id, url_ids=url_ids)
 
+    async def agency(self) -> int:
+        agency_id = randint(1, 99999999)
+        await self.adb_client.upsert_new_agencies(
+            suggestions=[
+                URLAgencySuggestionInfo(
+                    url_id=-1,
+                    suggestion_type=SuggestionType.UNKNOWN,
+                    pdap_agency_id=agency_id,
+                    agency_name=f"Test Agency {agency_id}",
+                    state=f"Test State {agency_id}",
+                    county=f"Test County {agency_id}",
+                    locality=f"Test Locality {agency_id}"
+                )
+            ]
+        )
+        return agency_id
+
+    async def auto_suggestions(
+            self,
+            url_ids: list[int],
+            num_suggestions: int,
+            suggestion_type: SuggestionType.AUTO_SUGGESTION or SuggestionType.UNKNOWN
+    ):
+        allowed_suggestion_types = [SuggestionType.AUTO_SUGGESTION, SuggestionType.UNKNOWN]
+        if suggestion_type not in allowed_suggestion_types:
+            raise ValueError(f"suggestion_type must be one of {allowed_suggestion_types}")
+        if suggestion_type == SuggestionType.UNKNOWN and num_suggestions > 1:
+            raise ValueError("num_suggestions must be 1 when suggestion_type is unknown")
+
+        for url_id in url_ids:
+            suggestions = []
+            for i in range(num_suggestions):
+                if suggestion_type == SuggestionType.UNKNOWN:
+                    agency_id = None
+                else:
+                    agency_id = await self.agency()
+                suggestion = URLAgencySuggestionInfo(
+                    url_id=url_id,
+                    suggestion_type=suggestion_type,
+                    pdap_agency_id=agency_id
+                )
+                suggestions.append(suggestion)
+
+            await self.adb_client.add_agency_auto_suggestions(
+                suggestions=suggestions
+            )
+
+    async def confirmed_suggestions(self, url_ids: list[int]):
+        for url_id in url_ids:
+            await self.adb_client.add_confirmed_agency_url_links(
+                suggestions=[
+                    URLAgencySuggestionInfo(
+                        url_id=url_id,
+                        suggestion_type=SuggestionType.CONFIRMED,
+                        pdap_agency_id=await self.agency()
+                    )
+                ]
+            )
+
+    async def manual_suggestion(self, user_id: int, url_id: int, is_new: bool = False):
+        await self.adb_client.add_agency_manual_suggestion(
+            agency_id=await self.agency(),
+            url_id=url_id,
+            user_id=user_id,
+            is_new=is_new
+        )
 
 
     def urls(self, batch_id: int, url_count: int) -> InsertURLsInfo:
