@@ -8,7 +8,7 @@ from collector_db.models import Task
 from core.AsyncCore import AsyncCore
 from core.DTOs.TaskOperatorRunInfo import TaskOperatorRunInfo, TaskOperatorOutcome
 from core.enums import BatchStatus
-from test.helpers.DBDataCreator import DBDataCreator
+from tests.helpers.DBDataCreator import DBDataCreator
 
 @pytest.mark.asyncio
 async def test_conclude_task_success(db_data_creator: DBDataCreator):
