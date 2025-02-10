@@ -44,6 +44,7 @@ class AsyncCore:
         self.url_request_interface = url_request_interface
         self.html_parser = html_parser
         self.logger = logging.getLogger(__name__)
+        self.logger.addHandler(logging.StreamHandler())
         self.logger.setLevel(logging.INFO)
 
     async def get_url_html_task_operator(self):
@@ -71,16 +72,14 @@ class AsyncCore:
         return operator
 
     async def get_agency_identification_task_operator(self):
-        session = ClientSession()
         pdap_client = PDAPClient(
             access_manager=AccessManager(
                 email=get_from_env("PDAP_EMAIL"),
                 password=get_from_env("PDAP_PASSWORD"),
                 api_key=get_from_env("PDAP_API_KEY"),
-                session=session
             ),
         )
-        muckrock_api_interface = MuckrockAPIInterface(session=session)
+        muckrock_api_interface = MuckrockAPIInterface()
         operator = AgencyIdentificationTaskOperator(
             adb_client=self.adb_client,
             pdap_client=pdap_client,
@@ -208,15 +207,16 @@ class AsyncCore:
             url_id: int,
             agency_post_info: URLAgencyAnnotationPostInfo
     ) -> GetNextURLForAgencyAnnotationResponse:
-        if agency_post_info.suggested_agency == "NEW":
-            suggestion_type = SuggestionType.NEW_AGENCY
+        if not agency_post_info.is_new and not agency_post_info.suggested_agency:
+            raise ValueError("suggested_agency must be provided if is_new is False")
+
+        if agency_post_info.is_new:
             agency_suggestion_id = None
         else:
-            suggestion_type = SuggestionType.MANUAL_SUGGESTION
             agency_suggestion_id = agency_post_info.suggested_agency
-        return await self.adb_client.submit_url_agency_annotation(
+        return await self.adb_client.add_agency_manual_suggestion(
             user_id=user_id,
             url_id=url_id,
-            suggestion_type=suggestion_type,
-            agency_suggestion_id=agency_suggestion_id
+            agency_id=agency_suggestion_id,
+            is_new=agency_post_info.is_new,
         )

@@ -77,7 +77,6 @@ def upgrade():
     FOR EACH ROW
     EXECUTE FUNCTION enforce_no_agency_id_if_unknown();
     """)
-
     # Create user_url_agency_suggestions table
     op.create_table(
         "user_url_agency_suggestions",
@@ -90,6 +89,26 @@ def upgrade():
     op.create_unique_constraint(
         "uq_user_url_agency_suggestions", "user_url_agency_suggestions", ["agency_id", "url_id", "user_id"]
     )
+    op.execute("""
+        CREATE OR REPLACE FUNCTION enforce_no_agency_id_if_new()
+        RETURNS TRIGGER AS $$
+        BEGIN
+            IF NEW.is_new = TRUE AND NEW.agency_id IS NOT NULL THEN
+                RAISE EXCEPTION 'agency_id must be null when is_new is TRUE';
+            END IF;
+            RETURN NEW;
+        END;
+        $$ LANGUAGE plpgsql;
+    """)
+    op.execute("""
+        CREATE TRIGGER enforce_no_agency_id_if_new
+        BEFORE INSERT ON user_url_agency_suggestions
+        FOR EACH ROW
+        EXECUTE FUNCTION enforce_no_agency_id_if_new();
+    """)
+
+
+
 
     op.drop_table('url_agency_suggestions')
     suggestion_type_enum.drop(op.get_bind(), checkfirst=True)
@@ -127,4 +146,6 @@ def downgrade():
     op.execute("""
     DROP FUNCTION IF EXISTS enforce_no_agency_id_if_unknown; 
     """)
+    op.execute("DROP TRIGGER enforce_no_agency_id_if_new ON user_url_agency_suggestions")
+    op.execute("DROP FUNCTION enforce_no_agency_id_if_new()")
 

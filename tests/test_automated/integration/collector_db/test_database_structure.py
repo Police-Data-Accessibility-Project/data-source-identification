@@ -330,7 +330,7 @@ def test_root_url(db_data_creator: DBDataCreator):
 
 
 @pytest.mark.asyncio
-async def test_upset_new_agencies(db_data_creator: DBDataCreator):
+async def test_upsert_new_agencies(db_data_creator: DBDataCreator):
     """
     Check that if the agency doesn't exist, it is added
     But if the agency does exist, it is updated with new information
@@ -377,4 +377,3 @@ async def test_upset_new_agencies(db_data_creator: DBDataCreator):
     assert d[0] == "Updated Test Agency"
     assert d[1] == "Test Agency 1"
     assert d[2] == "Test Agency 2"
-

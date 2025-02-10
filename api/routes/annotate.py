@@ -76,6 +76,7 @@ async def annotate_url_for_record_type_and_get_next_url(
     )
     return result
 
+@annotate_router.get("/agency")
 async def get_next_url_for_agency_annotation(
         access_info: AccessInfo = Depends(get_access_info),
         async_core: AsyncCore = Depends(get_async_core),
@@ -85,6 +86,7 @@ async def get_next_url_for_agency_annotation(
     )
     return result
 
+@annotate_router.post("/agency/{url_id}")
 async def annotate_url_for_agency_and_get_next_url(
         url_id: int,
         agency_annotation_post_info: URLAgencyAnnotationPostInfo,

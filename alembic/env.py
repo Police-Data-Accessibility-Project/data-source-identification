@@ -1,3 +1,4 @@
+from datetime import datetime
 from logging.config import fileConfig
 
 from alembic import context
@@ -59,6 +60,13 @@ def run_migrations_online() -> None:
     and associate a connection with the context.
 
     """
+
+    def process_revision_directives(context, revision, directives):
+        # 20210801211024 for a migration generated on Aug 1st, 2021 at 21:10:24
+        rev_id = datetime.now().strftime("%Y%m%d%H%M%S")
+        for directive in directives:
+            directive.rev_id = rev_id
+
     connectable = engine_from_config(
         config.get_section(config.config_ini_section, {}),
         prefix="sqlalchemy.",
@@ -67,7 +75,9 @@ def run_migrations_online() -> None:
 
     with connectable.connect() as connection:
         context.configure(
-            connection=connection, target_metadata=target_metadata
+            connection=connection,
+            target_metadata=target_metadata,
+            process_revision_directives=process_revision_directives
         )
 
         with context.begin_transaction():

@@ -12,6 +12,8 @@ from collector_manager.enums import CollectorType
 from core.DTOs.GetBatchLogsResponse import GetBatchLogsResponse
 from core.DTOs.GetBatchStatusResponse import GetBatchStatusResponse
 from core.DTOs.GetDuplicatesByBatchResponse import GetDuplicatesByBatchResponse
+from core.DTOs.GetNextURLForAgencyAnnotationResponse import GetNextURLForAgencyAnnotationResponse, \
+    URLAgencyAnnotationPostInfo
 from core.DTOs.GetNextURLForAnnotationResponse import GetNextURLForAnnotationResponse
 from core.DTOs.GetTasksResponse import GetTasksResponse
 from core.DTOs.GetURLsByBatchResponse import GetURLsByBatchResponse
@@ -209,6 +211,23 @@ class RequestValidator:
             json=relevance_annotation_post_info.model_dump(mode='json')
         )
         return GetNextURLForAnnotationResponse(**data)
+
+    async def get_next_agency_annotation(self) -> GetNextURLForAgencyAnnotationResponse:
+        data = self.get(
+            url=f"/annotate/agency"
+        )
+        return GetNextURLForAgencyAnnotationResponse(**data)
+
+    async def post_agency_annotation_and_get_next(
+            self,
+            url_id: int,
+            agency_annotation_post_info: URLAgencyAnnotationPostInfo
+    ) -> GetNextURLForAgencyAnnotationResponse:
+        data = self.post(
+            url=f"/annotate/agency/{url_id}",
+            json=agency_annotation_post_info.model_dump(mode='json')
+        )
+        return GetNextURLForAgencyAnnotationResponse(**data)
 
     def get_urls(self, page: int = 1, errors: bool = False) -> GetURLsResponseInfo:
         data = self.get(

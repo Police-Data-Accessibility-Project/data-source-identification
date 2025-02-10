@@ -20,6 +20,9 @@ class APITestHelper:
     mock_huggingface_interface: MagicMock
     mock_label_studio_interface: MagicMock
 
+    def adb_client(self):
+        return self.db_data_creator.adb_client
+
 MOCK_USER_ID = 1
 
 
