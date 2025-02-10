@@ -164,39 +164,38 @@ def test_convert_batch_strategy_status_to_enum(alembic_runner):
         "aborted"
     ]
     d = {}
-    with alembic_runner.session() as session:
-        for strategy, status in product(existing_strategy_strings, existing_status_strings):
-            # Execute inserts and store each ID
-            id_ = session.execute(text(
-                f"""
-                INSERT INTO BATCHES 
-                (strategy, user_id, status, total_url_count, original_url_count, duplicate_url_count) 
-                VALUES(
-                    '{strategy}',
-                    1,
-                    '{status}',
-                    0,
-                    0,
-                    0
-                )
-                RETURNING ID;
-                """
-            )).scalar()
-            d[id_] = [strategy, status]
-            session.commit()
+    for strategy, status in product(existing_strategy_strings, existing_status_strings):
+        # Execute inserts and store each ID
+        query = f"""
+            INSERT INTO BATCHES 
+            (strategy, user_id, status, total_url_count, original_url_count, duplicate_url_count) 
+            VALUES(
+                '{strategy}',
+                1,
+                '{status}',
+                0,
+                0,
+                0
+            )
+            RETURNING ID;
+            """
+
+        id_ = alembic_runner.execute(query)[0][0]
+        d[id_] = [strategy, status]
 
     alembic_runner.upgrade('db6d60feda7d')
-    with alembic_runner.session() as session:
-        # Assert all strategies and statuses remain the same
-        for id_ in d.keys():
-            strategy, status = d[id_]
-            result = session.execute(text(
-                f"""
-                SELECT strategy, status FROM BATCHES WHERE id = {id_};
-                """
-            )).fetchone()
-            assert result[0] == strategy
-            assert result [1] == status
+
+    # Assert all strategies and statuses remain the same
+    for id_ in d.keys():
+        strategy, status = d[id_]
+
+        result = alembic_runner.execute(
+            f"""
+            SELECT strategy, status FROM BATCHES WHERE id = {id_};
+            """
+        )[0]
+        assert result[0] == strategy
+        assert result [1] == status
 
 
 def test_convert_url_outcome_to_enum(alembic_runner):
@@ -209,50 +208,49 @@ def test_convert_url_outcome_to_enum(alembic_runner):
         'duplicate',
     ]
     d = {}
-    with alembic_runner.session() as session:
-        batch_id = session.execute(text(
-            """INSERT INTO BATCHES
-            (strategy, user_id, status, total_url_count, original_url_count, duplicate_url_count) 
-            VALUES(
-                    'ckan',
-                    1,
-                    'in-process',
-                    0,
-                    0,
-                    0
-                )
-                RETURNING ID;
-            """
-        )).scalar()
+    # with alembic_runner.session() as session:
+    batch_id = alembic_runner.execute(
+        """INSERT INTO BATCHES
+        (strategy, user_id, status, total_url_count, original_url_count, duplicate_url_count) 
+        VALUES(
+                'ckan',
+                1,
+                'in-process',
+                0,
+                0,
+                0
+            )
+            RETURNING ID;
+        """
+    )[0][0]
 
-        for outcome in existing_outcome_strings:
-            id_ = session.execute(text(
-                f"""
-                INSERT INTO URLS 
-                (batch_id, url, collector_metadata, outcome)
-                VALUES (
-                    '{batch_id}',
-                    'https://example.com/{outcome}',
-                    '{{}}',
-                    '{outcome}'
-                )
-                RETURNING ID;
-                """
-            )).scalar()
-            d[id_] = outcome
-            session.commit()
+
+    for outcome in existing_outcome_strings:
+        id_ = alembic_runner.execute(
+            f"""
+            INSERT INTO URLS 
+            (batch_id, url, collector_metadata, outcome)
+            VALUES (
+                '{batch_id}',
+                'https://example.com/{outcome}',
+                '{{}}',
+                '{outcome}'
+            )
+            RETURNING ID;
+            """
+        )[0][0]
+        d[id_] = outcome
 
     alembic_runner.upgrade('e27c5f8409a3')
 
-    with alembic_runner.session() as session:
-        for id_ in d.keys():
-            outcome = d[id_]
+    for id_ in d.keys():
+        outcome = d[id_]
 
-            result = session.execute(text(
-                f"""SELECT OUTCOME FROM URLS WHERE ID = {id_};"""
-            )).scalar()
+        result = alembic_runner.execute(
+            f"""SELECT OUTCOME FROM URLS WHERE ID = {id_};"""
+        )[0][0]
 
-            assert result == outcome
+        assert result == outcome
 
 def test_create_htmlcontent_and_rooturl_tables(alembic_runner):
     alembic_runner.upgrade('e27c5f8409a3')
@@ -345,3 +343,33 @@ def test_add_url_agency_suggestions(alembic_runner):
         start_revision="072b32a45b1c",
         end_revision="19bf57df581a"
     )
+
+def test_add_user_url_agency_suggestions(alembic_runner):
+    def column_check() -> bool:
+        return columns_in_table(
+            alembic_runner,
+            table_name="url_agency_suggestions",
+            columns_to_check=["user_id"]
+        )
+
+    alembic_runner.upgrade("19bf57df581a")
+    assert not column_check()
+    alembic_runner.reflect()
+    alembic_runner.upgrade("8c44e02733ae")
+    assert column_check()
+
+def test_revise_agency_suggestions(alembic_runner):
+
+    tables_to_check = [
+        "user_url_agency_suggestions",
+        "automated_url_agency_suggestions",
+        "agencies",
+        "confirmed_url_agency"
+    ]
+
+    alembic_runner.upgrade("8c44e02733ae")
+    assert alembic_runner.table_exists("url_agency_suggestions")
+    assert not alembic_runner.tables_exist(tables_to_check)
+    alembic_runner.upgrade("d7eb670edaf0")
+    assert not alembic_runner.table_exists("url_agency_suggestions")
+    assert alembic_runner.tables_exist(tables_to_check)

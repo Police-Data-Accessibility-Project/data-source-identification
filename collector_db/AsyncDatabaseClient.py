@@ -3,7 +3,7 @@ from typing import Optional
 
 from sqlalchemy import select, exists, func
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import selectinload, aliased
 
 from collector_db.ConfigManager import ConfigManager
 from collector_db.DTOs.MetadataAnnotationInfo import MetadataAnnotationInfo
@@ -18,15 +18,19 @@ from collector_db.StatementComposer import StatementComposer
 from collector_db.enums import URLMetadataAttributeType, ValidationStatus, ValidationSource, TaskType
 from collector_db.helper_functions import get_postgres_connection_string
 from collector_db.models import URLMetadata, URL, URLErrorInfo, URLHTMLContent, Base, MetadataAnnotation, \
-    RootURL, Task, TaskError, LinkTaskURL, URLAgencySuggestion, Batch
+    RootURL, Task, TaskError, LinkTaskURL, Batch, Agency, ConfirmedUrlAgency, AutomatedUrlAgencySuggestion, \
+    UserUrlAgencySuggestion
 from collector_manager.enums import URLStatus, CollectorType
+from core.DTOs.GetNextURLForAgencyAnnotationResponse import GetNextURLForAgencyAnnotationResponse, \
+    GetNextURLForAgencyAgencyInfo, GetNextURLForAgencyAnnotationInnerResponse, URLAgencyAnnotationPostInfo
 from core.DTOs.GetTasksResponse import GetTasksResponse, GetTasksResponseTaskInfo
 from core.DTOs.GetURLsResponseInfo import GetURLsResponseInfo, GetURLsResponseMetadataInfo, GetURLsResponseErrorInfo, \
     GetURLsResponseInnerInfo
 from core.DTOs.RelevanceAnnotationPostInfo import RelevanceAnnotationPostInfo
 from core.DTOs.URLAgencySuggestionInfo import URLAgencySuggestionInfo
 from core.DTOs.task_data_objects.AgencyIdentificationTDO import AgencyIdentificationTDO
-from core.enums import BatchStatus
+from core.enums import BatchStatus, SuggestionType
+from html_tag_collector.DataClassTags import convert_to_response_html_info
 
 
 def add_standard_limit_and_offset(statement, page, limit=100):
@@ -585,12 +589,18 @@ class AsyncDatabaseClient:
 
     @session_manager
     async def get_urls_without_agency_suggestions(self, session: AsyncSession) -> list[AgencyIdentificationTDO]:
+        """
+        Retrieve URLs without confirmed or suggested agencies
+        Args:
+            session:
+
+        Returns:
+
+        """
+
         statement = (
-            select(
-                URL.id,
-                URL.collector_metadata,
-                Batch.strategy,
-            ).join(Batch)
+            select(URL.id, URL.collector_metadata, Batch.strategy)
+            .join(Batch)
         )
         statement = self.statement_composer.exclude_urls_with_agency_suggestions(statement)
         statement = statement.limit(100)
@@ -605,21 +615,168 @@ class AsyncDatabaseClient:
         ]
 
     @session_manager
-    async def add_agency_suggestions(
+    async def get_next_url_agency_for_annotation(
+            self, session: AsyncSession, user_id: int
+    ) -> GetNextURLForAgencyAnnotationResponse:
+        """
+        Retrieve URL for annotation
+        The URL must
+            not be a confirmed URL
+            not have been annotated by this user
+            have extant autosuggestions
+        """
+        # Select statement
+        statement = (
+            select(URL.id, URL.url)
+            # Must not be a confirmed URL
+            .join(ConfirmedUrlAgency, isouter=True)
+            .where(
+                ~exists(
+                    select(ConfirmedUrlAgency).
+                    where(ConfirmedUrlAgency.url_id == URL.id).
+                    correlate(URL)
+                )
+            )
+            # Must not have been annotated by this user
+            .join(UserUrlAgencySuggestion, isouter=True)
+            .where(
+                ~exists(
+                    select(UserUrlAgencySuggestion).
+                    where(
+                        (UserUrlAgencySuggestion.user_id == user_id) &
+                        (UserUrlAgencySuggestion.url_id == URL.id)
+                    ).
+                    correlate(URL)
+                )
+            )
+            # Must have extant autosuggestions
+            .join(AutomatedUrlAgencySuggestion, isouter=True)
+            .where(
+                exists(
+                    select(AutomatedUrlAgencySuggestion).
+                    where(AutomatedUrlAgencySuggestion.url_id == URL.id).
+                    correlate(URL)
+                )
+            )
+        ).limit(1)
+        raw_result = await session.execute(statement)
+        results = raw_result.all()
+        if len(results) == 0:
+            return GetNextURLForAgencyAnnotationResponse(
+                next_annotation=None
+            )
+
+        result = results[0]
+        url_id = result[0]
+        url = result[1]
+        # Get relevant autosuggestions and agency info, if an associated agency exists
+        statement = (
+            select(
+                AutomatedUrlAgencySuggestion.agency_id,
+                AutomatedUrlAgencySuggestion.is_unknown,
+                Agency.name,
+                Agency.state,
+                Agency.county,
+                Agency.locality
+            )
+            .join(Agency, isouter=True)
+            .where(AutomatedUrlAgencySuggestion.url_id == url_id)
+        )
+        raw_autosuggestions = await session.execute(statement)
+        autosuggestions = raw_autosuggestions.all()
+        agency_suggestions = []
+        for autosuggestion in autosuggestions:
+            agency_id = autosuggestion[0]
+            is_unknown = autosuggestion[1]
+            name = autosuggestion[2]
+            state = autosuggestion[3]
+            county = autosuggestion[4]
+            locality = autosuggestion[5]
+            agency_suggestions.append(GetNextURLForAgencyAgencyInfo(
+                suggestion_type=SuggestionType.AUTO_SUGGESTION if not is_unknown else SuggestionType.UNKNOWN,
+                pdap_agency_id=agency_id,
+                agency_name=name,
+                state=state,
+                county=county,
+                locality=locality
+            ))
+
+        # Get HTML content info
+        html_content_infos = await self.get_html_content_info(url_id)
+        response_html_info = convert_to_response_html_info(html_content_infos)
+
+        return GetNextURLForAgencyAnnotationResponse(
+            next_annotation=GetNextURLForAgencyAnnotationInnerResponse(
+                url_id=url_id,
+                url=url,
+                html_info=response_html_info,
+                agency_suggestions=agency_suggestions
+            )
+        )
+
+    @session_manager
+    async def upsert_new_agencies(
+            self,
+            session: AsyncSession,
+            suggestions: list[URLAgencySuggestionInfo]
+    ):
+        """
+        Add or update agencies in the database
+        """
+        for suggestion in suggestions:
+            agency = Agency(
+                agency_id=suggestion.pdap_agency_id,
+                name=suggestion.agency_name,
+                state=suggestion.state,
+                county=suggestion.county,
+                locality=suggestion.locality
+            )
+            await session.merge(agency)
+
+    @session_manager
+    async def add_confirmed_agency_url_links(
             self,
             session: AsyncSession,
             suggestions: list[URLAgencySuggestionInfo]
     ):
         for suggestion in suggestions:
-            url_agency_suggestion = URLAgencySuggestion(
-                url_id=suggestion.url_id,
-                suggestion_type=suggestion.suggestion_type,
+            confirmed_agency_url_link = ConfirmedUrlAgency(
                 agency_id=suggestion.pdap_agency_id,
-                agency_name=suggestion.agency_name,
-                state=suggestion.state,
-                county=suggestion.county,
-                locality=suggestion.locality
+                url_id=suggestion.url_id
+            )
+            session.add(confirmed_agency_url_link)
+
+    @session_manager
+    async def add_agency_auto_suggestions(
+            self,
+            session: AsyncSession,
+            suggestions: list[URLAgencySuggestionInfo]
+    ):
+        for suggestion in suggestions:
+            url_agency_suggestion = AutomatedUrlAgencySuggestion(
+                url_id=suggestion.url_id,
+                agency_id=suggestion.pdap_agency_id,
+                is_unknown=suggestion.suggestion_type == SuggestionType.UNKNOWN
             )
             session.add(url_agency_suggestion)
 
         await session.commit()
+
+    @session_manager
+    async def add_agency_manual_suggestion(
+            self,
+            session: AsyncSession,
+            agency_id: Optional[int],
+            url_id: int,
+            user_id: int,
+            is_new: bool
+    ):
+        if is_new and agency_id is not None:
+            raise ValueError("agency_id must be None when is_new is True")
+        url_agency_suggestion = UserUrlAgencySuggestion(
+            url_id=url_id,
+            agency_id=agency_id,
+            user_id=user_id,
+            is_new=is_new
+        )
+        session.add(url_agency_suggestion)

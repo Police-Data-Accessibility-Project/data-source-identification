@@ -1,4 +1,5 @@
 import types
+from copy import deepcopy
 from typing import Optional
 from unittest.mock import MagicMock, AsyncMock, patch
 
@@ -6,7 +7,9 @@ import pytest
 from aiohttp import ClientSession
 
 from agency_identifier.MuckrockAPIInterface import MuckrockAPIInterface, AgencyLookupResponseType, AgencyLookupResponse
+from collector_db.models import ConfirmedUrlAgency, Agency, AutomatedUrlAgencySuggestion
 from collector_manager.enums import CollectorType
+from core.DTOs.TaskOperatorRunInfo import TaskOperatorOutcome
 from core.DTOs.URLAgencySuggestionInfo import URLAgencySuggestionInfo
 from core.classes.AgencyIdentificationTaskOperator import AgencyIdentificationTaskOperator
 from core.classes.subtasks.AutoGooglerAgencyIdentificationSubtask import AutoGooglerAgencyIdentificationSubtask
@@ -14,12 +17,41 @@ from core.classes.subtasks.CKANAgencyIdentificationSubtask import CKANAgencyIden
 from core.classes.subtasks.CommonCrawlerAgencyIdentificationSubtask import CommonCrawlerAgencyIdentificationSubtask
 from core.classes.subtasks.MuckrockAgencyIdentificationSubtask import MuckrockAgencyIdentificationSubtask
 from core.enums import SuggestionType
-from helpers.DBDataCreator import DBDataCreator, BatchURLCreationInfo
 from pdap_api_client.AccessManager import AccessManager
 from pdap_api_client.DTOs import MatchAgencyResponse, MatchAgencyInfo
 from pdap_api_client.PDAPClient import PDAPClient
 from pdap_api_client.enums import MatchAgencyResponseStatus
+from tests.helpers.DBDataCreator import DBDataCreator, BatchURLCreationInfo
 
+sample_agency_suggestions = [
+    URLAgencySuggestionInfo(
+        url_id=-1, # This will be overwritten
+        suggestion_type=SuggestionType.UNKNOWN,
+        pdap_agency_id=None,
+        agency_name=None,
+        state=None,
+        county=None,
+        locality=None
+    ),
+    URLAgencySuggestionInfo(
+        url_id=-1, # This will be overwritten
+        suggestion_type=SuggestionType.CONFIRMED,
+        pdap_agency_id=-1,
+        agency_name="Test Agency",
+        state="Test State",
+        county="Test County",
+        locality="Test Locality"
+    ),
+    URLAgencySuggestionInfo(
+        url_id=-1, # This will be overwritten
+        suggestion_type=SuggestionType.AUTO_SUGGESTION,
+        pdap_agency_id=-1,
+        agency_name="Test Agency 2",
+        state="Test State 2",
+        county="Test County 2",
+        locality="Test Locality 2"
+    )
+]
 
 @pytest.mark.asyncio
 async def test_agency_preannotation_task(db_data_creator: DBDataCreator):
@@ -28,17 +60,11 @@ async def test_agency_preannotation_task(db_data_creator: DBDataCreator):
             url_id: int,
             collector_metadata: Optional[dict]
     ):
-        return [
-            URLAgencySuggestionInfo(
-                url_id=url_id,
-                suggestion_type=SuggestionType.UNKNOWN,
-                pdap_agency_id=None,
-                agency_name=None,
-                state=None,
-                county=None,
-                locality=None
-            )
-        ]
+        # Deepcopy to prevent using the same instance in memory
+        suggestion = deepcopy(sample_agency_suggestions[url_id % 3])
+        suggestion.url_id = url_id
+        suggestion.pdap_agency_id = (url_id % 3) if suggestion.suggestion_type != SuggestionType.UNKNOWN else None
+        return [suggestion]
 
     async with ClientSession() as session:
         mock = MagicMock()
@@ -63,9 +89,9 @@ async def test_agency_preannotation_task(db_data_creator: DBDataCreator):
                 muckrock_api_interface=muckrock_api_interface
             )
 
-            # Try to run initially and confirm it doesn't run
-            # due to not meeting prerequisites
-            await operator.run_task()
+            # Confirm does not yet meet prerequisites
+            assert not await operator.meets_task_prerequisites()
+
 
             d = {}
 
@@ -81,8 +107,12 @@ async def test_agency_preannotation_task(db_data_creator: DBDataCreator):
                 creation_info: BatchURLCreationInfo = await db_data_creator.batch_and_urls(strategy=strategy, url_count=1, with_html_content=True)
                 d[strategy] = creation_info.url_ids[0]
 
+
+            # Confirm meets prerequisites
+            assert await operator.meets_task_prerequisites()
             # Run task
-            await operator.run_task()
+            run_info = await operator.run_task(1)
+            assert run_info.outcome == TaskOperatorOutcome.SUCCESS, run_info.message
 
             # Confirm tasks are piped into the correct subtasks
                 # * common_crawler into common_crawler_subtask
@@ -116,10 +146,29 @@ async def test_agency_preannotation_task(db_data_creator: DBDataCreator):
                 url_id = d[collector_type]
                 assert d2[url_id] == subtask_class
 
-            # Run task again and confirm it doesn't call any additional subtasks
-            await operator.run_task()
 
-            assert mock.call_count == 6
+            # Confirm task again does not meet prerequisites
+            assert not await operator.meets_task_prerequisites()
+
+
+
+
+    #  Check confirmed and auto suggestions
+    adb_client = db_data_creator.adb_client
+    confirmed_suggestions = await adb_client.get_all(ConfirmedUrlAgency)
+    assert len(confirmed_suggestions) == 2
+
+    agencies = await adb_client.get_all(Agency)
+    assert len(agencies) == 2
+
+    auto_suggestions = await adb_client.get_all(AutomatedUrlAgencySuggestion)
+    assert len(auto_suggestions) == 4
+
+    # Of the auto suggestions, 2 should be unknown
+    assert len([s for s in auto_suggestions if s.is_unknown]) == 2
+
+    # Of the auto suggestions, 2 should not be unknown
+    assert len([s for s in auto_suggestions if not s.is_unknown]) == 2
 
 @pytest.mark.asyncio
 async def test_common_crawler_subtask(db_data_creator: DBDataCreator):

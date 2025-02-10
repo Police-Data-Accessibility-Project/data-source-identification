@@ -125,6 +125,7 @@ class DatabaseClient:
             total_count=len(url_infos),
             original_count=len(url_mappings),
             duplicate_count=len(duplicates),
+            url_ids=[url_mapping.url_id for url_mapping in url_mappings]
         )
 
     @session_manager

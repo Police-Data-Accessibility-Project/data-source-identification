@@ -1,7 +1,8 @@
 """
 SQLAlchemy ORM models
 """
-from sqlalchemy import func, Column, Integer, String, TIMESTAMP, Float, JSON, ForeignKey, Text, UniqueConstraint
+from sqlalchemy import func, Column, Integer, String, TIMESTAMP, Float, JSON, ForeignKey, Text, UniqueConstraint, \
+    Boolean, DateTime
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.orm import declarative_base, relationship
 
@@ -96,7 +97,9 @@ class URL(Base):
         secondary="link_task_urls",
         back_populates="urls",
     )
-    agency_suggestions = relationship("URLAgencySuggestion", back_populates="url", cascade="all, delete-orphan")
+    automated_agency_suggestions = relationship("AutomatedUrlAgencySuggestion", back_populates="url")
+    user_agency_suggestions = relationship("UserUrlAgencySuggestion", back_populates="url")
+    confirmed_agencies = relationship("ConfirmedUrlAgency", back_populates="url")
 
 
 # URL Metadata table definition
@@ -306,28 +309,65 @@ class TaskError(Base):
         name="uq_task_id_error"),
     )
 
-class URLAgencySuggestion(Base):
-    __tablename__ = 'url_agency_suggestions'
+class Agency(Base):
+    __tablename__ = "agencies"
 
-    id = Column(Integer, primary_key=True)
-    url_id = Column(Integer, ForeignKey('urls.id'), nullable=False)
-    suggestion_type = Column(
-        PGEnum(
-            'Auto Suggestion',
-            'Manual Suggestion'
-            'Unknown',
-            'New Agency',
-            'Confirmed',
-            name='url_agency_suggestion_type'
-        ),
-        nullable=False
-    )
-    agency_id = Column(Integer, nullable=True)
-    agency_name = Column(String, nullable=True)
+    agency_id = Column(Integer, primary_key=True)
+    name = Column(String, nullable=False)
     state = Column(String, nullable=True)
     county = Column(String, nullable=True)
     locality = Column(String, nullable=True)
-    updated_at = Column(TIMESTAMP, nullable=False, server_default=CURRENT_TIME_SERVER_DEFAULT)
+    updated_at = Column(DateTime, nullable=False, default=func.now())
 
     # Relationships
-    url = relationship("URL", back_populates="agency_suggestions")
+    confirmed_urls = relationship("ConfirmedUrlAgency", back_populates="agency")
+    automated_suggestions = relationship("AutomatedUrlAgencySuggestion", back_populates="agency")
+    user_suggestions = relationship("UserUrlAgencySuggestion", back_populates="agency")
+
+
+class ConfirmedUrlAgency(Base):
+    __tablename__ = "confirmed_url_agency"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    agency_id = Column(Integer, ForeignKey("agencies.agency_id"), nullable=False)
+    url_id = Column(Integer, ForeignKey("urls.id"), nullable=False)
+
+    agency = relationship("Agency", back_populates="confirmed_urls")
+    url = relationship("URL", back_populates="confirmed_agencies")
+
+    __table_args__ = (
+        UniqueConstraint("agency_id", "url_id", name="uq_confirmed_url_agency"),
+    )
+
+
+class AutomatedUrlAgencySuggestion(Base):
+    __tablename__ = "automated_url_agency_suggestions"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    agency_id = Column(Integer, ForeignKey("agencies.agency_id"), nullable=True)
+    url_id = Column(Integer, ForeignKey("urls.id"), nullable=False)
+    is_unknown = Column(Boolean, nullable=True)
+
+    agency = relationship("Agency", back_populates="automated_suggestions")
+    url = relationship("URL", back_populates="automated_agency_suggestions")
+
+    __table_args__ = (
+        UniqueConstraint("agency_id", "url_id", name="uq_automated_url_agency_suggestions"),
+    )
+
+
+class UserUrlAgencySuggestion(Base):
+    __tablename__ = "user_url_agency_suggestions"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    agency_id = Column(Integer, ForeignKey("agencies.agency_id"), nullable=True)
+    url_id = Column(Integer, ForeignKey("urls.id"), nullable=False)
+    user_id = Column(Integer, nullable=False)
+    is_new = Column(Boolean, nullable=True)
+
+    agency = relationship("Agency", back_populates="user_suggestions")
+    url = relationship("URL", back_populates="user_agency_suggestions")
+
+    __table_args__ = (
+        UniqueConstraint("agency_id", "url_id", "user_id", name="uq_user_url_agency_suggestions"),
+    )

@@ -35,9 +35,9 @@ class AccessManager:
     """
     def __init__(
             self,
-            session: ClientSession,
             email: str,
             password: str,
+            session: Optional[ClientSession] = None,
             api_key: Optional[str] = None,
     ):
         self.session = session
@@ -46,7 +46,6 @@ class AccessManager:
         self.api_key = api_key
         self.email = email
         self.password = password
-        self.login(email=email, password=password)
 
     @property
     async def access_token(self):

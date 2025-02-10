@@ -28,6 +28,7 @@ COPY alembic.ini ./alembic.ini
 COPY alembic ./alembic
 COPY apply_migrations.py ./apply_migrations.py
 COPY security_manager ./security_manager
+COPY pdap_api_client ./pdap_api_client
 COPY execute.sh ./execute.sh
 COPY .project-root ./.project-root
 
@@ -45,4 +46,4 @@ EXPOSE 80
 RUN chmod +x execute.sh
 # Use the below for ease of local development, but remove when pushing to GitHub
 # Because there is no .env file in the repository (for security reasons)
-#COPY .env ./.env
+COPY .env ./.env
