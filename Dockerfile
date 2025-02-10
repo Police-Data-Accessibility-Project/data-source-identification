@@ -46,4 +46,4 @@ EXPOSE 80
 RUN chmod +x execute.sh
 # Use the below for ease of local development, but remove when pushing to GitHub
 # Because there is no .env file in the repository (for security reasons)
-COPY .env ./.env
+#COPY .env ./.env
