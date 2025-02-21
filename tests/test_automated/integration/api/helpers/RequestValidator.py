@@ -15,6 +15,7 @@ from core.DTOs.GetDuplicatesByBatchResponse import GetDuplicatesByBatchResponse
 from core.DTOs.GetNextURLForAgencyAnnotationResponse import GetNextURLForAgencyAnnotationResponse, \
     URLAgencyAnnotationPostInfo
 from core.DTOs.GetNextURLForAnnotationResponse import GetNextURLForAnnotationResponse
+from core.DTOs.GetNextURLForFinalReviewResponse import GetNextURLForFinalReviewResponse
 from core.DTOs.GetTasksResponse import GetTasksResponse
 from core.DTOs.GetURLsByBatchResponse import GetURLsByBatchResponse
 from core.DTOs.GetURLsResponseInfo import GetURLsResponseInfo
@@ -261,3 +262,10 @@ class RequestValidator:
             params=params
         )
         return GetTasksResponse(**data)
+
+    async def review_next_source(self) -> GetNextURLForFinalReviewResponse:
+        data = self.get(
+            url=f"/review/next-source"
+        )
+        return GetNextURLForFinalReviewResponse(**data)
+

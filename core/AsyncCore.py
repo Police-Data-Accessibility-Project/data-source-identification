@@ -180,7 +180,7 @@ class AsyncCore:
             annotation: str,
             metadata_type: URLMetadataAttributeType
     ) -> GetNextURLForAnnotationResponse:
-        await self.adb_client.add_relevance_annotation(
+        await self.adb_client.add_metadata_annotation(
             user_id=user_id,
             metadata_id=metadata_id,
             annotation=annotation)
@@ -220,3 +220,6 @@ class AsyncCore:
             agency_id=agency_suggestion_id,
             is_new=agency_post_info.is_new,
         )
+
+    async def get_next_source_for_review(self):
+        return await self.adb_client.get_next_url_for_final_review()

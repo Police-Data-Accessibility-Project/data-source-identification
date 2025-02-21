@@ -1,11 +1,12 @@
 from functools import wraps
 from typing import Optional
 
-from sqlalchemy import select, exists, func
+from sqlalchemy import select, exists, func, distinct, case, desc, asc
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
-from sqlalchemy.orm import selectinload, aliased
+from sqlalchemy.orm import selectinload, aliased, joinedload
 
 from collector_db.ConfigManager import ConfigManager
+from collector_db.DTOConverter import DTOConverter
 from collector_db.DTOs.MetadataAnnotationInfo import MetadataAnnotationInfo
 from collector_db.DTOs.TaskInfo import TaskInfo
 from collector_db.DTOs.URLAnnotationInfo import URLAnnotationInfo
@@ -23,6 +24,8 @@ from collector_db.models import URLMetadata, URL, URLErrorInfo, URLHTMLContent, 
 from collector_manager.enums import URLStatus, CollectorType
 from core.DTOs.GetNextURLForAgencyAnnotationResponse import GetNextURLForAgencyAnnotationResponse, \
     GetNextURLForAgencyAgencyInfo, GetNextURLForAgencyAnnotationInnerResponse, URLAgencyAnnotationPostInfo
+from core.DTOs.GetNextURLForFinalReviewResponse import GetNextURLForFinalReviewResponse, FinalReviewAnnotationInfo, \
+    FinalReviewAnnotationRelevantInfo, FinalReviewAnnotationRecordTypeInfo, FinalReviewAnnotationAgencyInfo
 from core.DTOs.GetTasksResponse import GetTasksResponse, GetTasksResponseTaskInfo
 from core.DTOs.GetURLsResponseInfo import GetURLsResponseInfo, GetURLsResponseMetadataInfo, GetURLsResponseErrorInfo, \
     GetURLsResponseInnerInfo
@@ -47,10 +50,12 @@ class AsyncDatabaseClient:
         self.statement_composer = StatementComposer()
 
     @staticmethod
-    def _add_models(session: AsyncSession, model_class, models):
-        for model in models:
-            instance = model_class(**model.model_dump())
-            session.add(instance)
+    async def _add_models(session: AsyncSession, model_class, models) -> list[int]:
+        instances = [model_class(**model.model_dump()) for model in models]
+        session.add_all(instances)
+        await session.flush()
+        return [instance.id for instance in instances]
+
 
 
     @staticmethod
@@ -86,12 +91,13 @@ class AsyncDatabaseClient:
         return [URLMetadataInfo(**url_metadata.__dict__) for url_metadata in model_result]
 
     @session_manager
-    async def add_url_metadata(self, session: AsyncSession, url_metadata_info: URLMetadataInfo):
-        self._add_models(session, URLMetadata, [url_metadata_info])
+    async def add_url_metadata(self, session: AsyncSession, url_metadata_info: URLMetadataInfo) -> int:
+        result = await self._add_models(session, URLMetadata, [url_metadata_info])
+        return result[0]
 
     @session_manager
-    async def add_url_metadatas(self, session: AsyncSession, url_metadata_infos: list[URLMetadataInfo]):
-        self._add_models(session, URLMetadata, url_metadata_infos)
+    async def add_url_metadatas(self, session: AsyncSession, url_metadata_infos: list[URLMetadataInfo]) -> list[int]:
+        return await self._add_models(session, URLMetadata, url_metadata_infos)
 
     @session_manager
     async def add_url_error_infos(self, session: AsyncSession, url_error_infos: list[URLErrorPydanticInfo]):
@@ -125,7 +131,7 @@ class AsyncDatabaseClient:
 
     @session_manager
     async def add_html_content_infos(self, session: AsyncSession, html_content_infos: list[URLHTMLContentInfo]):
-        self._add_models(session, URLHTMLContent, html_content_infos)
+        await self._add_models(session, URLHTMLContent, html_content_infos)
 
     @session_manager
     async def has_pending_urls_without_html_data(self, session: AsyncSession) -> bool:
@@ -312,7 +318,7 @@ class AsyncDatabaseClient:
         return annotation_info
 
     @session_manager
-    async def add_relevance_annotation(
+    async def add_metadata_annotation(
             self,
             session: AsyncSession,
             user_id: int,
@@ -780,3 +786,180 @@ class AsyncDatabaseClient:
             is_new=is_new
         )
         session.add(url_agency_suggestion)
+
+    @session_manager
+    async def get_next_url_for_final_review(
+            self,
+            session: AsyncSession
+    ) -> Optional[GetNextURLForFinalReviewResponse]:
+
+        # Subqueries for ORDER clause
+
+        # Subqueries for Counting distinct annotations
+        # Count distinct auto annotations for metadata
+        distinct_auto_metadata_subquery = (
+            select(
+                URLMetadata.url_id,
+                func.count(distinct(URLMetadata.attribute)).label("auto_count")
+            ).
+            group_by(URLMetadata.url_id).subquery()
+        )
+        # Count distinct user annotations for metadata
+        distinct_user_metadata_subquery = (
+            select(
+                URLMetadata.url_id,
+                func.count(distinct(URLMetadata.attribute)).label("user_count")
+            ).join(MetadataAnnotation).
+            where(MetadataAnnotation.user_id != None).
+            group_by(URLMetadata.url_id).subquery()
+        )
+
+
+        # Count whether agency auto annotations exist
+        # (Note: Can be either confirmed or auto suggestion)
+        agency_annotations_exist_subquery = (
+            select(
+                URL.id,
+                case(
+                    (
+                        exists().where(URL.id == ConfirmedUrlAgency.url_id), 1
+                    ),
+                    (
+                        exists().where(URL.id == AutomatedUrlAgencySuggestion.url_id), 1
+                    ),
+                    else_=0
+                ).label("agency_annotations_exist")
+            ).subquery()
+        )
+
+        # Count whether agency user annotations exist
+        agency_user_annotations_exist_subquery = (
+            select(
+                URL.id,
+                case(
+                    (
+                        exists().where(URL.id == UserUrlAgencySuggestion.url_id), 1
+                    ),
+                    else_=0
+                ).label("agency_user_annotations_exist")
+            ).subquery()
+        )
+
+        # Subqueries for counting *all* annotations
+
+        # Count all auto annotations for metadata
+        all_auto_metadata_subquery = (
+            select(
+                URLMetadata.url_id,
+                func.count(URLMetadata.attribute).label("auto_count")
+            ).group_by(URLMetadata.url_id).subquery()
+        )
+        # Count all user annotations for metadata
+        all_user_metadata_subquery = (
+            select(
+                URLMetadata.url_id,
+                func.count(URLMetadata.attribute).label("user_count")
+            ).join(MetadataAnnotation).
+            where(MetadataAnnotation.user_id != None).
+            group_by(URLMetadata.url_id).subquery()
+        )
+
+        # Count all user agency annotations
+        all_user_agency_annotations_subquery = (
+            select(
+                UserUrlAgencySuggestion.url_id,
+                func.count(UserUrlAgencySuggestion.agency_id).label("user_count")
+            ).group_by(UserUrlAgencySuggestion.url_id).subquery()
+        )
+
+
+
+        # Basic URL query
+        url_query = (
+            select(
+                URL,
+                (
+                    func.coalesce(distinct_auto_metadata_subquery.c.auto_count, 0) +
+                    func.coalesce(distinct_user_metadata_subquery.c.user_count, 0) +
+                    func.coalesce(agency_annotations_exist_subquery.c.agency_annotations_exist, 0) +
+                    func.coalesce(agency_user_annotations_exist_subquery.c.agency_user_annotations_exist, 0)
+                ).label("total_distinct_annotation_count"),
+                (
+                    func.coalesce(all_auto_metadata_subquery.c.auto_count, 0) +
+                    func.coalesce(all_user_metadata_subquery.c.user_count, 0) +
+                    func.coalesce(all_user_agency_annotations_subquery.c.user_count, 0) +
+                    func.coalesce(agency_annotations_exist_subquery.c.agency_annotations_exist, 0)
+                ).label("total_overall_annotation_count")
+            ).outerjoin(
+                distinct_auto_metadata_subquery, URL.id == distinct_auto_metadata_subquery.c.url_id
+            ).outerjoin(
+                distinct_user_metadata_subquery, URL.id == distinct_user_metadata_subquery.c.url_id
+            ).outerjoin(
+                agency_annotations_exist_subquery, URL.id == agency_annotations_exist_subquery.c.id
+            ).outerjoin(
+                agency_user_annotations_exist_subquery, URL.id == agency_user_annotations_exist_subquery.c.id
+            ).outerjoin(
+                all_auto_metadata_subquery, URL.id == all_auto_metadata_subquery.c.url_id
+            ).outerjoin(
+                all_user_metadata_subquery, URL.id == all_user_metadata_subquery.c.url_id
+            ).outerjoin(
+                all_user_agency_annotations_subquery, URL.id == all_user_agency_annotations_subquery.c.url_id
+            ).where(
+                URL.outcome == URLStatus.PENDING.value
+            )
+        )
+        options = [
+            joinedload(URL.html_content),
+            joinedload(URL.url_metadata).joinedload(URLMetadata.annotations),
+            joinedload(URL.automated_agency_suggestions).joinedload(AutomatedUrlAgencySuggestion.agency),
+            joinedload(URL.user_agency_suggestions).joinedload(UserUrlAgencySuggestion.agency),
+            joinedload(URL.confirmed_agencies).joinedload(ConfirmedUrlAgency.agency),
+        ]
+
+        # Apply options
+        url_query = url_query.options(*options)
+
+        # Apply order clause
+        url_query = url_query.order_by(
+            desc("total_distinct_annotation_count"),
+            desc("total_overall_annotation_count"),
+        )
+
+
+        # Apply limit
+        url_query = url_query.limit(1)
+
+        # Execute query
+        raw_result = await session.execute(url_query)
+
+        full_result = raw_result.unique().all()
+
+        if len(full_result) == 0:
+            return None
+        result: URL = full_result[0][0]
+
+        # Convert html content to response format
+        html_content = result.html_content
+        html_content_infos = [URLHTMLContentInfo(**html_info.__dict__) for html_info in html_content]
+
+        automated_agency_suggestions = result.automated_agency_suggestions
+        user_agency_suggestions = result.user_agency_suggestions
+        confirmed_agencies = result.confirmed_agencies
+        url_metadatas = result.url_metadata
+
+        # Return
+        return GetNextURLForFinalReviewResponse(
+            id=result.id,
+            url=result.url,
+            html_info=convert_to_response_html_info(html_content_infos),
+            annotations=FinalReviewAnnotationInfo(
+                relevant=DTOConverter.final_review_annotation_relevant_info(url_metadatas),
+                record_type=DTOConverter.final_review_annotation_record_type_info(url_metadatas),
+                agency=DTOConverter.final_review_annotation_agency_info(
+                    automated_agency_suggestions=automated_agency_suggestions,
+                    confirmed_agencies=confirmed_agencies,
+                    user_agency_suggestions=user_agency_suggestions
+                )
+            )
+        )
+
