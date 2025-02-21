@@ -186,9 +186,10 @@ class DBDataCreator:
             value: str = "False",
             validation_status: ValidationStatus = ValidationStatus.PENDING_VALIDATION,
             validation_source: ValidationSource = ValidationSource.MACHINE_LEARNING
-    ):
+    ) -> list[int]:
+        metadata_ids = []
         for url_id in url_ids:
-            await self.adb_client.add_url_metadata(
+            metadata_id = await self.adb_client.add_url_metadata(
                 URLMetadataInfo(
                     url_id=url_id,
                     attribute=attribute,
@@ -197,6 +198,8 @@ class DBDataCreator:
                     validation_source=validation_source,
                 )
             )
+            metadata_ids.append(metadata_id)
+        return metadata_ids
 
     async def error_info(
             self,
@@ -215,3 +218,71 @@ class DBDataCreator:
             error_infos.append(url_error_info)
         await self.adb_client.add_url_error_infos(error_infos)
 
+    async def user_annotation(
+            self,
+            metadata_id: int,
+            user_id: Optional[int] = None,
+            annotation: str = "test annotation"
+    ):
+        if user_id is None:
+            user_id = randint(1, 99999999)
+        await self.adb_client.add_metadata_annotation(
+            user_id=user_id,
+            metadata_id=metadata_id,
+            annotation=annotation
+        )
+
+    async def agency_auto_suggestions(
+            self,
+            url_id: int,
+            count: int,
+            suggestion_type: SuggestionType = SuggestionType.AUTO_SUGGESTION
+    ):
+        if suggestion_type == SuggestionType.UNKNOWN:
+            count = 1  # Can only be one auto suggestion if unknown
+
+        await self.adb_client.add_agency_auto_suggestions(
+            suggestions=[
+                URLAgencySuggestionInfo(
+                    url_id=url_id,
+                    suggestion_type=suggestion_type,
+                    pdap_agency_id=None if suggestion_type == SuggestionType.UNKNOWN else await self.agency(),
+                    state="Test State",
+                    county="Test County",
+                    locality="Test Locality"
+                ) for _ in range(count)
+            ]
+        )
+
+    async def agency_confirmed_suggestion(
+            self,
+            url_id: int
+    ):
+
+        await self.adb_client.add_confirmed_agency_url_links(
+            suggestions=[
+                URLAgencySuggestionInfo(
+                    url_id=url_id,
+                    suggestion_type=SuggestionType.CONFIRMED,
+                    pdap_agency_id=await self.agency()
+                )
+            ]
+        )
+
+    async def agency_user_suggestions(
+            self,
+            url_id: int,
+            user_id: Optional[int] = None,
+            agency_id: Optional[int] = None
+    ):
+        if user_id is None:
+            user_id = randint(1, 99999999)
+
+        if agency_id is None:
+            agency_id = await self.agency()
+        await self.adb_client.add_agency_manual_suggestion(
+            agency_id=agency_id,
+            url_id=url_id,
+            user_id=user_id,
+            is_new=False
+        )

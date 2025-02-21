@@ -111,7 +111,7 @@ class URLMetadata(Base):
         name="uq_url_id_attribute"),
     )
 
-    id = Column(Integer, primary_key=True)
+    id = Column(Integer, primary_key=True, autoincrement=True)
     url_id = Column(Integer, ForeignKey('urls.id', name='url_metadata_url_id_fkey'), nullable=False)
     attribute = Column(
         PGEnum('Record Type', 'Agency', 'Relevant', name='url_attribute'),
@@ -143,7 +143,7 @@ class MetadataAnnotation(Base):
         name="metadata_annotations_uq_user_id_metadata_id"),
     )
 
-    id = Column(Integer, primary_key=True)
+    id = Column(Integer, primary_key=True, autoincrement=True)
     user_id = Column(Integer, nullable=False)
     metadata_id = Column(Integer, ForeignKey('url_metadata.id'), nullable=False)
     value = Column(Text, nullable=False)
@@ -193,7 +193,7 @@ class URLHTMLContent(Base):
         name="uq_url_id_content_type"),
     )
 
-    id = Column(Integer, primary_key=True)
+    id = Column(Integer, primary_key=True, autoincrement=True)
     url_id = Column(Integer, ForeignKey('urls.id'), nullable=False)
     content_type = Column(
         PGEnum('Title', 'Description', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'Div', name='url_html_content_type'),
