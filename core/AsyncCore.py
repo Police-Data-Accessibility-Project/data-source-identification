@@ -223,3 +223,6 @@ class AsyncCore:
 
     async def get_next_source_for_review(self):
         return await self.adb_client.get_next_url_for_final_review()
+
+    async def approve_and_get_next_source_for_review(
+            self, url_id: int):

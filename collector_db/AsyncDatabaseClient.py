@@ -1,7 +1,8 @@
 from functools import wraps
-from typing import Optional
+from typing import Optional, List
 
-from sqlalchemy import select, exists, func, distinct, case, desc, asc
+from fastapi import HTTPException
+from sqlalchemy import select, exists, func, distinct, case, desc, asc, Select
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.orm import selectinload, aliased, joinedload
 
@@ -20,7 +21,7 @@ from collector_db.enums import URLMetadataAttributeType, ValidationStatus, Valid
 from collector_db.helper_functions import get_postgres_connection_string
 from collector_db.models import URLMetadata, URL, URLErrorInfo, URLHTMLContent, Base, MetadataAnnotation, \
     RootURL, Task, TaskError, LinkTaskURL, Batch, Agency, ConfirmedUrlAgency, AutomatedUrlAgencySuggestion, \
-    UserUrlAgencySuggestion
+    UserUrlAgencySuggestion, status
 from collector_manager.enums import URLStatus, CollectorType
 from core.DTOs.GetNextURLForAgencyAnnotationResponse import GetNextURLForAgencyAnnotationResponse, \
     GetNextURLForAgencyAgencyInfo, GetNextURLForAgencyAnnotationInnerResponse, URLAgencyAnnotationPostInfo
@@ -32,7 +33,7 @@ from core.DTOs.GetURLsResponseInfo import GetURLsResponseInfo, GetURLsResponseMe
 from core.DTOs.RelevanceAnnotationPostInfo import RelevanceAnnotationPostInfo
 from core.DTOs.URLAgencySuggestionInfo import URLAgencySuggestionInfo
 from core.DTOs.task_data_objects.AgencyIdentificationTDO import AgencyIdentificationTDO
-from core.enums import BatchStatus, SuggestionType
+from core.enums import BatchStatus, SuggestionType, RecordType
 from html_tag_collector.DataClassTags import convert_to_response_html_info
 
 
@@ -962,4 +963,107 @@ class AsyncDatabaseClient:
                 )
             )
         )
+
+    @session_manager
+    async def approve_url(
+            self,
+            session: AsyncSession,
+            url_id: int,
+            record_type: Optional[RecordType],
+            relevant: Optional[bool],
+            agency_id: Optional[int]
+    ) -> None:
+
+        async def set_approved_metadata(
+                attribute: URLMetadataAttributeType,
+                value: Optional[str]
+        ):
+            selected_metadata = None
+            for metadata in metadatas:
+                if metadata.attribute == attribute.value:
+                    selected_metadata = metadata
+                    break
+
+            # If metadata doesn't exist, create it
+            if selected_metadata is None:
+                # If a value was not provided for this metadata, raise an error.
+                if value is None:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail=f"Must specify {attribute.value} value if URL does not already have a {attribute.value} metadata entry"
+                    )
+
+                metadata_obj = URLMetadata(
+                    attribute=attribute.value,
+                    value=value,
+                    validation_status=ValidationStatus.VALIDATED.value,
+                    validation_source=ValidationSource.MANUAL.value,
+                    url_id=url_id
+                )
+                url.url_metadata.append(metadata_obj)
+
+            else:
+
+                # If value was provided, overwrite existing value. Otherwise, ignore
+                if value is not None:
+                    selected_metadata.value = value
+
+                # Mark metadata as validated
+                selected_metadata.validation_status = ValidationStatus.VALIDATED.value
+                selected_metadata.validation_source = ValidationSource.MANUAL.value
+
+
+
+        # Get URL
+
+        query = (
+            Select(URL)
+            .where(URL.id == url_id)
+            .options(
+                selectinload(URL.url_metadata),
+                selectinload(URL.confirmed_agencies)
+            )
+        )
+
+        url = await session.execute(query)
+        url = url.scalars().first()
+
+        metadatas = url.url_metadata
+
+        await set_approved_metadata(
+            attribute=URLMetadataAttributeType.RECORD_TYPE,
+            value=record_type
+        )
+
+        await set_approved_metadata(
+            attribute=URLMetadataAttributeType.RELEVANT,
+            value=relevant
+        )
+
+        # Check if agency_id exists as confirmed agency
+        confirmed_agency = url.confirmed_agencies
+        # If it doesn't, create it
+        if confirmed_agency is None:
+            confirmed_agency = ConfirmedUrlAgency(
+                agency_id=agency_id,
+                url_id=url_id
+            )
+            url.confirmed_agencies.append(confirmed_agency)
+
+        # If a different agency exists as confirmed, overwrite it
+        elif confirmed_agency.agency_id != agency_id:
+            confirmed_agency.agency_id = agency_id
+
+        # If it does, do nothing
+
+        url.outcome = URLStatus.APPROVED
+
+
+
+
+        # Confirm that URL has
+        # - a confirmed agency
+        # - a validated record_type
+        # - a validated relevant
+
 

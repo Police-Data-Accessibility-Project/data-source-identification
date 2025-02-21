@@ -16,3 +16,4 @@ class URLStatus(Enum):
     REJECTED = "rejected"
     DUPLICATE = "duplicate"
     ERROR = "error"
+    APPROVED = "approved"
