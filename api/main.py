@@ -6,6 +6,7 @@ from fastapi import FastAPI
 from api.routes.annotate import annotate_router
 from api.routes.batch import batch_router
 from api.routes.collector import collector_router
+from api.routes.review import review_router
 from api.routes.root import root_router
 from api.routes.task import task_router
 from api.routes.url import url_router
@@ -79,8 +80,10 @@ routers = [
     batch_router,
     annotate_router,
     url_router,
-    task_router
+    task_router,
+    review_router
 ]
+
 for router in routers:
     app.include_router(router)
 

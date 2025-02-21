@@ -12,6 +12,7 @@ from collector_db.enums import URLMetadataAttributeType, ValidationStatus, Valid
 from collector_manager.enums import URLStatus
 from core.enums import BatchStatus, RecordType, SuggestionType
 from tests.helpers.DBDataCreator import DBDataCreator
+from tests.helpers.complex_test_data_functions import setup_for_get_next_url_for_final_review
 
 
 def test_insert_urls(db_client_test):
@@ -194,62 +195,6 @@ async def test_get_urls_with_metadata(db_data_creator: DBDataCreator):
     )
     assert len(results) == 1
 
-async def setup_for_get_next_url_for_final_review(
-        db_data_creator: DBDataCreator,
-        annotation_count: int,
-        include_user_annotations: bool = True
-):
-    batch_id = db_data_creator.batch()
-    url_mapping = db_data_creator.urls(batch_id=batch_id, url_count=1).url_mappings[0]
-    await db_data_creator.html_data([url_mapping.url_id])
-
-    async def add_metadata_annotation(count: int, value: str, metadata_id: int):
-        for i in range(count):
-            await db_data_creator.user_annotation(
-                metadata_id=metadata_id,
-                annotation=value
-        )
-
-    async def add_user_suggestion(count: int):
-        agency_id = await db_data_creator.agency()
-        for i in range(count):
-            await db_data_creator.agency_user_suggestions(
-                url_id=url_mapping.url_id,
-                agency_id=agency_id
-        )
-
-    relevant_metadata_ids = await db_data_creator.metadata(
-        url_ids=[url_mapping.url_id],
-        attribute=URLMetadataAttributeType.RELEVANT,
-        value="True",
-        validation_source=ValidationSource.MACHINE_LEARNING,
-        validation_status=ValidationStatus.PENDING_VALIDATION
-    )
-    relevant_metadata_id = relevant_metadata_ids[0]
-    record_type_metadata_ids = await db_data_creator.metadata(
-        url_ids=[url_mapping.url_id],
-        attribute=URLMetadataAttributeType.RECORD_TYPE,
-        value=RecordType.ARREST_RECORDS.value,
-        validation_source=ValidationSource.MACHINE_LEARNING,
-        validation_status=ValidationStatus.PENDING_VALIDATION
-    )
-    record_type_metadata_id = record_type_metadata_ids[0]
-
-    if include_user_annotations:
-        await add_metadata_annotation(annotation_count, "True", relevant_metadata_id)
-        await add_metadata_annotation(1, "False", relevant_metadata_id)
-        await add_metadata_annotation(3, RecordType.ARREST_RECORDS.value, record_type_metadata_id)
-        await add_metadata_annotation(2, RecordType.DISPATCH_RECORDINGS.value, record_type_metadata_id)
-        await add_metadata_annotation(1, RecordType.ACCIDENT_REPORTS.value, record_type_metadata_id)
-
-    if include_user_annotations:
-        # Add user suggestions for agencies, one suggested by 3 users, another by 2, another by 1
-        for i in range(annotation_count):
-            await add_user_suggestion(i + 1)
-
-
-    return url_mapping
-
 
 @pytest.mark.asyncio
 async def test_get_next_url_for_final_review_basic(db_data_creator: DBDataCreator):
@@ -367,7 +312,6 @@ async def test_get_next_url_for_final_review_favor_more_annotations(db_data_crea
 
     assert result.annotations.agency.confirmed is not None
 
-    # TODO: Check that the the confirmed agency is shown for the result
 
 
 
@@ -400,10 +344,20 @@ async def test_get_next_url_for_final_review_no_annotations(db_data_creator: DBD
     assert relevant.users.relevant == 0
     assert relevant.users.not_relevant == 0
 
-
+@pytest.mark.asyncio
 async def test_get_next_url_for_final_review_only_confirmed_urls(db_data_creator: DBDataCreator):
     """
-    Test in the case of one URL that is confirmed
+    Test in the case of one URL that is submitted
     Should not be returned.
     """
     batch_id = db_data_creator.batch()
+    url_mapping = db_data_creator.urls(
+        batch_id=batch_id,
+        url_count=1,
+        outcome=URLStatus.SUBMITTED
+    ).url_mappings[0]
+
+    result = await db_data_creator.adb_client.get_next_url_for_final_review()
+
+    assert result is None
+

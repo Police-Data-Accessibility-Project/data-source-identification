@@ -13,7 +13,7 @@ from collector_db.DTOs.URLInfo import URLInfo
 from collector_db.DTOs.URLMetadataInfo import URLMetadataInfo
 from collector_db.DatabaseClient import DatabaseClient
 from collector_db.enums import URLMetadataAttributeType, ValidationStatus, ValidationSource, TaskType
-from collector_manager.enums import CollectorType
+from collector_manager.enums import CollectorType, URLStatus
 from core.DTOs.URLAgencySuggestionInfo import URLAgencySuggestionInfo
 from core.enums import BatchStatus, SuggestionType
 from tests.helpers.simple_test_data_functions import generate_test_urls
@@ -130,13 +130,19 @@ class DBDataCreator:
         )
 
 
-    def urls(self, batch_id: int, url_count: int) -> InsertURLsInfo:
+    def urls(
+            self,
+            batch_id: int,
+            url_count: int,
+            outcome: URLStatus = URLStatus.PENDING
+    ) -> InsertURLsInfo:
         raw_urls = generate_test_urls(url_count)
         url_infos: List[URLInfo] = []
         for url in raw_urls:
             url_infos.append(
                 URLInfo(
                     url=url,
+                    outcome=outcome
                 )
             )
 

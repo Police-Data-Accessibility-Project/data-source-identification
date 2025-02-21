@@ -788,7 +788,10 @@ class AsyncDatabaseClient:
         session.add(url_agency_suggestion)
 
     @session_manager
-    async def get_next_url_for_final_review(self, session: AsyncSession) -> GetNextURLForFinalReviewResponse:
+    async def get_next_url_for_final_review(
+            self,
+            session: AsyncSession
+    ) -> Optional[GetNextURLForFinalReviewResponse]:
 
         # Subqueries for ORDER clause
 
@@ -901,6 +904,8 @@ class AsyncDatabaseClient:
                 all_user_metadata_subquery, URL.id == all_user_metadata_subquery.c.url_id
             ).outerjoin(
                 all_user_agency_annotations_subquery, URL.id == all_user_agency_annotations_subquery.c.url_id
+            ).where(
+                URL.outcome == URLStatus.PENDING.value
             )
         )
         options = [
@@ -926,8 +931,12 @@ class AsyncDatabaseClient:
 
         # Execute query
         raw_result = await session.execute(url_query)
-        full_result = raw_result.unique().all()[0]
-        result: URL = full_result[0]
+
+        full_result = raw_result.unique().all()
+
+        if len(full_result) == 0:
+            return None
+        result: URL = full_result[0][0]
 
         # Convert html content to response format
         html_content = result.html_content
