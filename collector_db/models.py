@@ -80,7 +80,15 @@ class URL(Base):
     collector_metadata = Column(JSON)
     # The outcome of the URL: submitted, human_labeling, rejected, duplicate, etc.
     outcome = Column(
-        postgresql.ENUM('pending', 'submitted', 'human_labeling', 'rejected', 'duplicate', 'error', name='url_status'),
+        postgresql.ENUM(
+            'pending',
+            'submitted',
+            'human_labeling',
+            'rejected',
+            'duplicate',
+            'error',
+            name='url_status'
+        ),
         nullable=False
     )
     created_at = Column(TIMESTAMP, nullable=False, server_default=CURRENT_TIME_SERVER_DEFAULT)

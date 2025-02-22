@@ -7,6 +7,7 @@ from collector_db.AsyncDatabaseClient import AsyncDatabaseClient
 from collector_db.DTOs.TaskInfo import TaskInfo
 from collector_db.DTOs.URLAnnotationInfo import URLAnnotationInfo
 from collector_db.enums import TaskType, URLMetadataAttributeType
+from core.DTOs.FinalReviewApprovalInfo import FinalReviewApprovalInfo
 from core.DTOs.GetNextURLForAgencyAnnotationResponse import GetNextURLForAgencyAnnotationResponse, \
     URLAgencyAnnotationPostInfo
 from core.DTOs.GetNextURLForAnnotationResponse import GetNextURLForAnnotationResponse
@@ -225,4 +226,13 @@ class AsyncCore:
         return await self.adb_client.get_next_url_for_final_review()
 
     async def approve_and_get_next_source_for_review(
-            self, url_id: int):
+            self,
+            approval_info: FinalReviewApprovalInfo
+    ):
+        await self.adb_client.approve_url(
+            url_id=approval_info.url_id,
+            is_approved=approval_info.is_approved,
+            record_type=approval_info.record_type,
+            relevant=approval_info.relevant
+        )
+        return await self.get_next_source_for_review()

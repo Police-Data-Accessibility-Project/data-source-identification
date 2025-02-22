@@ -361,3 +361,21 @@ async def test_get_next_url_for_final_review_only_confirmed_urls(db_data_creator
 
     assert result is None
 
+@pytest.mark.asyncio
+async def test_approve_url_basic(db_data_creator: DBDataCreator):
+    url_mapping = await setup_for_get_next_url_for_final_review(
+        db_data_creator=db_data_creator,
+        annotation_count=3,
+        include_user_annotations=True
+    )
+
+    # Add confirmed agency
+    await db_data_creator.agency_confirmed_suggestion(
+        url_id=url_mapping.url_id
+    )
+
+    # Approve URL. Only URL should be affected. No other properties should be changed.
+    await db_data_creator.adb_client.approve_url(url_mapping.url_id)
+
+
+

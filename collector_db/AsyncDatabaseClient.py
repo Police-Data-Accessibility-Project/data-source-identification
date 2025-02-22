@@ -5,6 +5,7 @@ from fastapi import HTTPException
 from sqlalchemy import select, exists, func, distinct, case, desc, asc, Select
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.orm import selectinload, aliased, joinedload
+from starlette import status
 
 from collector_db.ConfigManager import ConfigManager
 from collector_db.DTOConverter import DTOConverter
@@ -21,7 +22,7 @@ from collector_db.enums import URLMetadataAttributeType, ValidationStatus, Valid
 from collector_db.helper_functions import get_postgres_connection_string
 from collector_db.models import URLMetadata, URL, URLErrorInfo, URLHTMLContent, Base, MetadataAnnotation, \
     RootURL, Task, TaskError, LinkTaskURL, Batch, Agency, ConfirmedUrlAgency, AutomatedUrlAgencySuggestion, \
-    UserUrlAgencySuggestion, status
+    UserUrlAgencySuggestion
 from collector_manager.enums import URLStatus, CollectorType
 from core.DTOs.GetNextURLForAgencyAnnotationResponse import GetNextURLForAgencyAnnotationResponse, \
     GetNextURLForAgencyAgencyInfo, GetNextURLForAgencyAnnotationInnerResponse, URLAgencyAnnotationPostInfo
@@ -1012,8 +1013,6 @@ class AsyncDatabaseClient:
                 selected_metadata.validation_status = ValidationStatus.VALIDATED.value
                 selected_metadata.validation_source = ValidationSource.MANUAL.value
 
-
-
         # Get URL
 
         query = (
@@ -1057,13 +1056,4 @@ class AsyncDatabaseClient:
         # If it does, do nothing
 
         url.outcome = URLStatus.APPROVED
-
-
-
-
-        # Confirm that URL has
-        # - a confirmed agency
-        # - a validated record_type
-        # - a validated relevant
-
 

@@ -21,7 +21,9 @@ old_enum_values = ('pending', 'submitted', 'human_labeling', 'rejected', 'duplic
 new_enum_values = old_enum_values + ('approved',)
 
 old_outcome_enum = postgresql.ENUM(
-    *old_enum_values, name='url_status')
+    *old_enum_values,
+    name='url_status'
+)
 
 tmp_new_outcome_enum = postgresql.ENUM(
     *new_enum_values,
@@ -38,33 +40,41 @@ common_args = {
 }
 
 def upgrade() -> None:
+    tmp_new_outcome_enum.create(op.get_bind(), checkfirst=True)
     op.alter_column(
         **common_args,
         existing_type=old_outcome_enum,
-        type_=tmp_new_outcome_enum
+        type_=tmp_new_outcome_enum,
+        postgresql_using='outcome::text::tmp_url_status'
     )
     old_outcome_enum.drop(op.get_bind(), checkfirst=True)
-    new_outcome_enum.create(op.get_bind())
+    new_outcome_enum.create(op.get_bind(), checkfirst=True)
 
     op.alter_column(
         **common_args,
         existing_type=tmp_new_outcome_enum,
-        type_=new_outcome_enum
+        type_=new_outcome_enum,
+        postgresql_using='outcome::text::url_status'
     )
     tmp_new_outcome_enum.drop(op.get_bind(), checkfirst=True)
 
 def downgrade() -> None:
+    tmp_new_outcome_enum.create(op.get_bind())
     op.alter_column(
         **common_args,
         existing_type=new_outcome_enum,
-        type_=old_outcome_enum
+        type_=tmp_new_outcome_enum,
+        postgresql_using='outcome::text::tmp_url_status'
     )
 
     new_outcome_enum.drop(op.get_bind(), checkfirst=True)
-    old_outcome_enum.create(op.get_bind())
+    old_outcome_enum.create(op.get_bind(), checkfirst=True)
 
     op.alter_column(
         **common_args,
-        existing_type=old_outcome_enum,
-        type_=new_outcome_enum
+        existing_type=tmp_new_outcome_enum,
+        type_=old_outcome_enum,
+        postgresql_using='outcome::text::url_status'
     )
+
+    tmp_new_outcome_enum.drop(op.get_bind(), checkfirst=True)
