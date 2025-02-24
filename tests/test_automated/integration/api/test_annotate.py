@@ -90,6 +90,42 @@ async def run_annotation_test(
 
 @pytest.mark.asyncio
 async def test_annotate_relevancy(api_test_helper):
+    ath = api_test_helper
+
+    batch_id = ath.db_data_creator.batch()
+
+    # Create 2 URLs with outcome `pending`
+    iui: InsertURLsInfo = ath.db_data_creator.urls(batch_id=batch_id, url_count=2)
+
+    url_1 = iui.url_mappings[0]
+    url_2 = iui.url_mappings[1]
+
+    # Add `Relevancy` attribute with value `True` to 1st URL
+    await ath.db_data_creator.auto_relevant_suggestions(
+        url_id=url_1.url_id,
+        relevant=True
+    )
+
+    # Add 'Relevancy' attribute with value `False` to 2nd URL
+    await ath.db_data_creator.auto_relevant_suggestions(
+        url_id=url_2.url_id,
+        relevant=False
+    )
+
+    # Add HTML data to both
+    await ath.db_data_creator.html_data([url_1.url_id, url_2.url_id])
+    # Call `GET` `/annotate/url` and receive next URL
+    request_info_1: GetNextURLForAnnotationResponse = api_test_helper.request_validator.get_next_relevance_annotation()
+    inner_info_1 = request_info_1.next_annotation
+
+    # Validate presence of HTML data in `html` field
+    assert inner_info_1.html_info.description != ""
+    assert inner_info_1.html_info.title != ""
+    assert inner_info_1.suggested_value == "True"
+
+
+
+
     await run_annotation_test(
         api_test_helper=api_test_helper,
         submit_and_get_next_function=api_test_helper.request_validator.post_relevance_annotation_and_get_next,

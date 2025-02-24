@@ -8,6 +8,12 @@ async def setup_for_get_next_url_for_final_review(
         annotation_count: int,
         include_user_annotations: bool = True
 ):
+    """
+    Sets up the database to test the final_review functions
+    Auto-labels the URL with 'relevant=True' and 'record_type=ARREST_RECORDS'
+    And applies auto-generated user annotations
+    """
+
     batch_id = db_data_creator.batch()
     url_mapping = db_data_creator.urls(batch_id=batch_id, url_count=1).url_mappings[0]
     await db_data_creator.html_data([url_mapping.url_id])

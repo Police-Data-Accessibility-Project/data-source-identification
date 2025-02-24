@@ -9,6 +9,7 @@ from collector_db.DTOs.URLErrorInfos import URLErrorPydanticInfo
 from collector_db.DTOs.URLInfo import URLInfo
 from collector_db.DTOs.URLMetadataInfo import URLMetadataInfo
 from collector_db.enums import URLMetadataAttributeType, ValidationStatus, ValidationSource
+from collector_db.models import ConfirmedUrlAgency, MetadataAnnotation, URL
 from collector_manager.enums import URLStatus
 from core.enums import BatchStatus, RecordType, SuggestionType
 from tests.helpers.DBDataCreator import DBDataCreator
@@ -370,12 +371,51 @@ async def test_approve_url_basic(db_data_creator: DBDataCreator):
     )
 
     # Add confirmed agency
-    await db_data_creator.agency_confirmed_suggestion(
+    agency_id = await db_data_creator.agency_confirmed_suggestion(
         url_id=url_mapping.url_id
     )
 
+    adb_client = db_data_creator.adb_client
     # Approve URL. Only URL should be affected. No other properties should be changed.
-    await db_data_creator.adb_client.approve_url(url_mapping.url_id)
+    await adb_client.approve_url(url_mapping.url_id)
 
+    # Confirm same agency id is listed as confirmed
+    confirmed_agencies = await adb_client.get_all(
+        ConfirmedUrlAgency
+    )
+    assert len(confirmed_agencies) == 1
+    confirmed_agency = confirmed_agencies[0]
+    assert confirmed_agency.url_id == url_mapping.url_id
+    assert confirmed_agency.agency_id == agency_id
 
+    # Confirm two metadata entries
+    metadatas = await adb_client.get_all(
+        MetadataAnnotation
+    )
+    assert len(metadatas) == 2
+    record_type_metadata = None
+    relevant_metadata = None
+    for metadata in metadatas:
+        if metadata.attribute == URLMetadataAttributeType.RECORD_TYPE.value:
+            record_type_metadata = metadata
+        elif metadata.attribute == URLMetadataAttributeType.RELEVANT.value:
+            relevant_metadata = metadata
+
+    # - One is Record Type, with record type as ARREST_RECORDS and set as approved
+
+    assert record_type_metadata.value == RecordType.ARREST_RECORDS.value
+    assert record_type_metadata.validation_status == ValidationStatus.VALIDATED.value
+
+    # - One is Relevant, and is set as TRUE and approved
+
+    assert relevant_metadata.value == "True"
+    assert relevant_metadata.validation_status == ValidationStatus.VALIDATED.value
+
+    # Confirm URL
+    urls = await adb_client.get_all(
+        URL
+    )
+    assert len(urls) == 1
+    url = urls[0]
+    assert url.status == URLStatus.APPROVED
 

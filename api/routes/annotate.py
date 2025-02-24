@@ -29,23 +29,24 @@ async def get_next_url_for_relevance_annotation(
     return result
 
 
-@annotate_router.post("/relevance/{metadata_id}")
+@annotate_router.post("/relevance/{url_id}")
 async def annotate_url_for_relevance_and_get_next_url(
         relevance_annotation_post_info: RelevanceAnnotationPostInfo,
-        metadata_id: int = Path(description="The metadata id for the associated URL metadata"),
+        url_id: int = Path(description="The URL id to annotate"),
         async_core: AsyncCore = Depends(get_async_core),
         access_info: AccessInfo = Depends(get_access_info)
 ) -> GetNextURLForAnnotationResponse:
     """
     Post URL annotation and get next URL to annotate
     """
-    result = await async_core.submit_and_get_next_url_for_annotation(
+    await async_core.submit_url_relevance_annotation(
         user_id=access_info.user_id,
-        metadata_id=metadata_id,
-        annotation=str(relevance_annotation_post_info.is_relevant),
-        metadata_type = URLMetadataAttributeType.RELEVANT
+        url_id=url_id,
+        relevant=relevance_annotation_post_info.is_relevant
     )
-    return result
+    return await async_core.get_next_url_for_relevance_annotation(
+        user_id=access_info.user_id,
+    )
 
 @annotate_router.get("/record-type")
 async def get_next_url_for_record_type_annotation(
@@ -58,10 +59,10 @@ async def get_next_url_for_record_type_annotation(
     )
     return result
 
-@annotate_router.post("/record-type/{metadata_id}")
+@annotate_router.post("/record-type/{url_id}")
 async def annotate_url_for_record_type_and_get_next_url(
         record_type_annotation_post_info: RecordTypeAnnotationPostInfo,
-        metadata_id: int = Path(description="The metadata id for the associated URL metadata"),
+        url_id: int = Path(description="The URL id to annotate"),
         async_core: AsyncCore = Depends(get_async_core),
         access_info: AccessInfo = Depends(get_access_info)
 ) -> GetNextURLForAnnotationResponse:

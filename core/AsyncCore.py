@@ -174,6 +174,21 @@ class AsyncCore:
         )
         return result
 
+    async def submit_url_relevance_annotation(
+            self,
+            user_id: int,
+            url_id: int,
+            relevant: bool
+    ):
+        return await self.adb_client.add_user_relevant_suggestion(
+            user_id=user_id,
+            url_id=url_id,
+            relevant=relevant
+        )
+
+    async def get_next_url_for_relevance_annotation(self, user_id: int) -> GetNextURLForAnnotationResponse:
+        return await self.adb_client.get_next_url_for_relevance_annotation(user_id=user_id)
+
     async def submit_url_annotation(
             self,
             user_id: int,
@@ -231,8 +246,8 @@ class AsyncCore:
     ):
         await self.adb_client.approve_url(
             url_id=approval_info.url_id,
-            is_approved=approval_info.is_approved,
             record_type=approval_info.record_type,
-            relevant=approval_info.relevant
+            relevant=approval_info.relevant,
+            agency_id=approval_info.agency_id
         )
         return await self.get_next_source_for_review()

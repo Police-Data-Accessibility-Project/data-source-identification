@@ -3,8 +3,7 @@ from sqlalchemy import Select, select, exists, Table, func, Subquery
 from sqlalchemy.orm import aliased
 
 from collector_db.enums import URLMetadataAttributeType, ValidationStatus
-from collector_db.models import URL, URLHTMLContent, URLMetadata, MetadataAnnotation, AutomatedUrlAgencySuggestion, \
-    ConfirmedUrlAgency
+from collector_db.models import URL, URLHTMLContent, AutomatedUrlAgencySuggestion
 from collector_manager.enums import URLStatus
 
 
@@ -73,3 +72,20 @@ class StatementComposer:
         )  # Exclude if confirmed agencies exist
 
         return statement
+
+    @staticmethod
+    def get_all_html_content_for_url(subquery) -> Select:
+        statement = (
+            select(
+                subquery.c.url,
+                subquery.c.metadata_id,
+                subquery.c.value,
+                URLHTMLContent.content_type,
+                URLHTMLContent.content,
+            )
+            .join(URLHTMLContent)
+            .where(subquery.c.url_id == URLHTMLContent.url_id)
+        )
+
+        raw_result = await session.execute(statement)
+        result = raw_result.all()

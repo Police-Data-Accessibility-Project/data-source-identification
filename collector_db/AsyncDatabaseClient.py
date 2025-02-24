@@ -2,7 +2,7 @@ from functools import wraps
 from typing import Optional, List
 
 from fastapi import HTTPException
-from sqlalchemy import select, exists, func, distinct, case, desc, asc, Select
+from sqlalchemy import select, exists, func, distinct, case, desc, asc, Select, not_
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.orm import selectinload, aliased, joinedload
 from starlette import status
@@ -20,9 +20,10 @@ from collector_db.DTOs.URLWithHTML import URLWithHTML
 from collector_db.StatementComposer import StatementComposer
 from collector_db.enums import URLMetadataAttributeType, ValidationStatus, ValidationSource, TaskType
 from collector_db.helper_functions import get_postgres_connection_string
-from collector_db.models import URLMetadata, URL, URLErrorInfo, URLHTMLContent, Base, MetadataAnnotation, \
-    RootURL, Task, TaskError, LinkTaskURL, Batch, Agency, ConfirmedUrlAgency, AutomatedUrlAgencySuggestion, \
-    UserUrlAgencySuggestion
+from collector_db.models import URL, URLErrorInfo, URLHTMLContent, Base, \
+    RootURL, Task, TaskError, LinkTaskURL, Batch, Agency, AutomatedUrlAgencySuggestion, \
+    UserUrlAgencySuggestion, AutoRelevantSuggestion, AutoRecordTypeSuggestion, UserRelevantSuggestion, \
+    UserRecordTypeSuggestion
 from collector_manager.enums import URLStatus, CollectorType
 from core.DTOs.GetNextURLForAgencyAnnotationResponse import GetNextURLForAgencyAnnotationResponse, \
     GetNextURLForAgencyAgencyInfo, GetNextURLForAgencyAnnotationInnerResponse, URLAgencyAnnotationPostInfo
@@ -91,6 +92,124 @@ class AsyncDatabaseClient:
         scalar_result = await session.scalars(statement)
         model_result = scalar_result.all()
         return [URLMetadataInfo(**url_metadata.__dict__) for url_metadata in model_result]
+
+    # region relevant
+    @session_manager
+    async def add_auto_relevant_suggestion(
+            self,
+            session: AsyncSession,
+            url_id: int,
+            relevant: bool
+    ):
+        suggestion = AutoRelevantSuggestion(
+            url_id=url_id,
+            relevant=relevant
+        )
+        session.add(suggestion)
+
+    @session_manager
+    async def add_user_relevant_suggestion(
+            self,
+            session: AsyncSession,
+            url_id: int,
+            user_id: int,
+            relevant: bool
+    ):
+        suggestion = UserRelevantSuggestion(
+            url_id=url_id,
+            user_id=user_id,
+            relevant=relevant
+        )
+        session.add(suggestion)
+
+    @session_manager
+    async def get_next_url_for_relevance_annotation(
+            self,
+            session: AsyncSession,
+            user_id: int
+    ):
+        url_query = (
+            select(
+                URL,
+            )
+            # TODO: Generalize this whole section
+            .where(exists(select(URLHTMLContent).where(URLHTMLContent.url_id == URL.id)))
+            # URL must not have metadata annotation by this user
+            # TODO: Have this as a parameter for the user model
+            .where(
+                not_(
+                    exists(
+                        select(UserRelevantSuggestion)
+                        .where(
+                            UserRelevantSuggestion.url_id == URL.id,
+                            UserRelevantSuggestion.user_id == user_id
+                        )
+                    )
+                )
+            # TODO: Parameterize relationship attribute to joinedload
+            ).options(
+                joinedload(URL.auto_relevant_suggestions),
+                joinedload(URL.html_content)
+            ).
+            limit(1)
+        )
+
+        raw_result = await session.execute(url_query)
+
+        url: URL = raw_result.scalars().one_or_none()
+        if url is None:
+            return None
+
+        # Next, get all HTML content for the URL
+        html_response_info = DTOConverter.html_content_list_to_html_response_info(
+            url.html_content
+        )
+
+        # Get auto-suggestion if exists
+        if len(url.auto_relevant_suggestions) > 0:
+            auto_suggestion = url.auto_relevant_suggestions[0].relevant
+        else:
+            auto_suggestion = None
+
+        return RelevanceAnnotationResponseInfo(
+            url_id=url.id,
+            suggested_relevant=auto_suggestion,
+            html_response_info=html_response_info
+        )
+
+
+
+    #endregion relevant
+
+    @session_manager
+    async def add_auto_record_type_suggestion(
+            self,
+            session: AsyncSession,
+            url_id: int,
+            record_type: RecordType
+    ):
+        suggestion = AutoRecordTypeSuggestion(
+            url_id=url_id,
+            record_type=record_type.value
+        )
+        session.add(suggestion)
+
+
+    @session_manager
+    async def add_user_record_type_suggestion(
+            self,
+            session: AsyncSession,
+            url_id: int,
+            user_id: int,
+            record_type: RecordType
+    ):
+        suggestion = UserRecordTypeSuggestion(
+            url_id=url_id,
+            user_id=user_id,
+            record_type=record_type.value
+        )
+        session.add(suggestion)
+
 
     @session_manager
     async def add_url_metadata(self, session: AsyncSession, url_metadata_info: URLMetadataInfo) -> int:
@@ -281,9 +400,6 @@ class AsyncDatabaseClient:
             .limit(1)
         )
 
-        raw_result = await session.execute(subquery)
-        result = raw_result.all()
-
         # Next, get all HTML content for the URL
 
         statement = (
@@ -334,17 +450,17 @@ class AsyncDatabaseClient:
         )
         session.add(annotation)
 
-    @session_manager
-    async def get_annotations_for_metadata_id(
-            self,
-            session: AsyncSession,
-            metadata_id: int
-    ) -> list[MetadataAnnotation]:
-        statement = (select(MetadataAnnotation).
-                     where(MetadataAnnotation.metadata_id == metadata_id))
-        scalar_result = await session.scalars(statement)
-        all_results = scalar_result.all()
-        return [MetadataAnnotationInfo(**result.__dict__) for result in all_results]
+    # @session_manager
+    # async def get_annotations_for_metadata_id(
+    #         self,
+    #         session: AsyncSession,
+    #         metadata_id: int
+    # ) -> list[MetadataAnnotation]:
+    #     statement = (select(MetadataAnnotation).
+    #                  where(MetadataAnnotation.metadata_id == metadata_id))
+    #     scalar_result = await session.scalars(statement)
+    #     all_results = scalar_result.all()
+    #     return [MetadataAnnotationInfo(**result.__dict__) for result in all_results]
 
     @session_manager
     async def get_all(self, session, model: Base):
@@ -970,9 +1086,9 @@ class AsyncDatabaseClient:
             self,
             session: AsyncSession,
             url_id: int,
-            record_type: Optional[RecordType],
-            relevant: Optional[bool],
-            agency_id: Optional[int]
+            record_type: Optional[RecordType] = None,
+            relevant: Optional[bool] = None,
+            agency_id: Optional[int] = None
     ) -> None:
 
         async def set_approved_metadata(
@@ -1040,9 +1156,16 @@ class AsyncDatabaseClient:
         )
 
         # Check if agency_id exists as confirmed agency
-        confirmed_agency = url.confirmed_agencies
+        confirmed_agency = url.confirmed_agencies[0] if len(url.confirmed_agencies) > 0 else None
+
         # If it doesn't, create it
         if confirmed_agency is None:
+            if agency_id is None:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Must specify agency_id if URL does not already have a confirmed agency"
+                )
+
             confirmed_agency = ConfirmedUrlAgency(
                 agency_id=agency_id,
                 url_id=url_id
@@ -1050,10 +1173,10 @@ class AsyncDatabaseClient:
             url.confirmed_agencies.append(confirmed_agency)
 
         # If a different agency exists as confirmed, overwrite it
-        elif confirmed_agency.agency_id != agency_id:
+        elif confirmed_agency.agency_id != agency_id and agency_id is not None:
             confirmed_agency.agency_id = agency_id
 
         # If it does, do nothing
 
-        url.outcome = URLStatus.APPROVED
+        url.outcome = URLStatus.APPROVED.value
 

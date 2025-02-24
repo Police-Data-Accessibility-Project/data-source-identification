@@ -79,6 +79,13 @@ class DBDataCreator:
         )
         return agency_id
 
+    async def auto_relevant_suggestions(self, url_id: int, relevant: bool = True):
+        await self.adb_client.add_auto_relevant_suggestion(
+            url_id=url_id,
+            relevant=relevant
+        )
+
+
     async def auto_suggestions(
             self,
             url_ids: list[int],
@@ -264,16 +271,21 @@ class DBDataCreator:
             self,
             url_id: int
     ):
-
+        """
+        Creates a confirmed agency suggestion
+        and returns the auto-generated pdap_agency_id
+        """
+        agency_id = await self.agency()
         await self.adb_client.add_confirmed_agency_url_links(
             suggestions=[
                 URLAgencySuggestionInfo(
                     url_id=url_id,
                     suggestion_type=SuggestionType.CONFIRMED,
-                    pdap_agency_id=await self.agency()
+                    pdap_agency_id=agency_id
                 )
             ]
         )
+        return agency_id
 
     async def agency_user_suggestions(
             self,
