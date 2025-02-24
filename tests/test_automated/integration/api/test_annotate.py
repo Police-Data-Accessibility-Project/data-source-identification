@@ -3,15 +3,31 @@ from typing import Any
 import pytest
 
 from collector_db.DTOs.InsertURLsInfo import InsertURLsInfo
+from collector_db.DTOs.URLMapping import URLMapping
 from collector_db.enums import URLMetadataAttributeType, ValidationStatus, ValidationSource
-from collector_db.models import UserUrlAgencySuggestion
+from collector_db.models import UserUrlAgencySuggestion, UserRelevantSuggestion
+from core.DTOs.GetNextRelevanceAnnotationResponseInfo import GetNextRelevanceAnnotationResponseOuterInfo
 from core.DTOs.GetNextURLForAgencyAnnotationResponse import URLAgencyAnnotationPostInfo
 from core.DTOs.GetNextURLForAnnotationResponse import GetNextURLForAnnotationResponse
 from core.DTOs.RecordTypeAnnotationPostInfo import RecordTypeAnnotationPostInfo
 from core.DTOs.RelevanceAnnotationPostInfo import RelevanceAnnotationPostInfo
 from core.enums import RecordType, SuggestionType
+from html_tag_collector.DataClassTags import ResponseHTMLInfo
 from tests.helpers.DBDataCreator import BatchURLCreationInfo
 from tests.test_automated.integration.api.conftest import MOCK_USER_ID
+
+def check_url_mappings_match(
+    map_1: URLMapping,
+    map_2: URLMapping
+):
+    assert map_1.url_id == map_2.url_id
+    assert map_2.url == map_2.url
+
+def check_html_info_not_empty(
+    html_info: ResponseHTMLInfo
+):
+    assert html_info.description != ""
+    assert html_info.title != ""
 
 async def run_annotation_test(
     api_test_helper,
@@ -57,6 +73,8 @@ async def run_annotation_test(
     # Validate presence of HTML data in `html` field
     assert inner_info_1.html_info.description != ""
     assert inner_info_1.html_info.title != ""
+
+    # Validate that the correct metadata value is returned
     assert inner_info_1.suggested_value == "False"
 
     # Call `POST` `/annotate/url` with finished annotation, and receive next URL
@@ -115,27 +133,71 @@ async def test_annotate_relevancy(api_test_helper):
     # Add HTML data to both
     await ath.db_data_creator.html_data([url_1.url_id, url_2.url_id])
     # Call `GET` `/annotate/url` and receive next URL
-    request_info_1: GetNextURLForAnnotationResponse = api_test_helper.request_validator.get_next_relevance_annotation()
+    request_info_1: GetNextRelevanceAnnotationResponseOuterInfo = api_test_helper.request_validator.get_next_relevance_annotation()
     inner_info_1 = request_info_1.next_annotation
 
-    # Validate presence of HTML data in `html` field
-    assert inner_info_1.html_info.description != ""
-    assert inner_info_1.html_info.title != ""
-    assert inner_info_1.suggested_value == "True"
+    check_url_mappings_match(inner_info_1.url_info, url_1)
+    check_html_info_not_empty(inner_info_1.html_info)
 
+    # Validate that the correct relevant value is returned
+    assert inner_info_1.suggested_relevant is True
 
-
-
-    await run_annotation_test(
-        api_test_helper=api_test_helper,
-        submit_and_get_next_function=api_test_helper.request_validator.post_relevance_annotation_and_get_next,
-        get_next_function=api_test_helper.request_validator.get_next_relevance_annotation,
-        post_info=RelevanceAnnotationPostInfo(
-            is_relevant=True
-        ),
-        metadata_attribute=URLMetadataAttributeType.RELEVANT,
-        expected_metadata_value="True"
+    #  Annotate with value 'False' and get next URL
+    request_info_2: GetNextRelevanceAnnotationResponseOuterInfo = api_test_helper.request_validator.post_relevance_annotation_and_get_next(
+        url_id=inner_info_1.url_info.url_id,
+        relevance_annotation_post_info=RelevanceAnnotationPostInfo(
+            is_relevant=False
+        )
     )
+
+    inner_info_2 = request_info_2.next_annotation
+
+    check_url_mappings_match(
+        inner_info_2.url_info,
+        url_2
+    )
+    check_html_info_not_empty(inner_info_2.html_info)
+
+    request_info_3: GetNextRelevanceAnnotationResponseOuterInfo = api_test_helper.request_validator.post_relevance_annotation_and_get_next(
+        url_id=inner_info_2.url_info.url_id,
+        relevance_annotation_post_info=RelevanceAnnotationPostInfo(
+            is_relevant=True
+        )
+    )
+
+    assert request_info_3.next_annotation is None
+
+    # Get all URL annotations. Confirm they exist for user
+    adb_client = ath.adb_client()
+    results: list[UserRelevantSuggestion] = await adb_client.get_all(UserRelevantSuggestion)
+    result_1 = results[0]
+    result_2 = results[1]
+
+    assert result_1.url_id == inner_info_1.url_info.url_id
+    assert result_1.relevant is False
+
+    assert result_2.url_id == inner_info_2.url_info.url_id
+    assert result_2.relevant is True
+
+    # If user submits annotation for same URL, the URL should be overwritten
+
+    request_info_4: GetNextRelevanceAnnotationResponseOuterInfo = api_test_helper.request_validator.post_relevance_annotation_and_get_next(
+        url_id=inner_info_1.url_info.url_id,
+        relevance_annotation_post_info=RelevanceAnnotationPostInfo(
+            is_relevant=True
+        )
+    )
+
+    assert request_info_4.next_annotation is None
+
+    results: list[UserRelevantSuggestion] = await adb_client.get_all(UserRelevantSuggestion)
+    assert len(results) == 2
+
+    for result in results:
+        if result.url_id == inner_info_1.url_info.url_id:
+            assert results[0].relevant is True
+
+
 
 @pytest.mark.asyncio
 async def test_annotate_record_type(api_test_helper):

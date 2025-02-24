@@ -8,6 +8,7 @@ from collector_db.DTOs.TaskInfo import TaskInfo
 from collector_db.DTOs.URLAnnotationInfo import URLAnnotationInfo
 from collector_db.enums import TaskType, URLMetadataAttributeType
 from core.DTOs.FinalReviewApprovalInfo import FinalReviewApprovalInfo
+from core.DTOs.GetNextRelevanceAnnotationResponseInfo import GetNextRelevanceAnnotationResponseOuterInfo
 from core.DTOs.GetNextURLForAgencyAnnotationResponse import GetNextURLForAgencyAnnotationResponse, \
     URLAgencyAnnotationPostInfo
 from core.DTOs.GetNextURLForAnnotationResponse import GetNextURLForAnnotationResponse
@@ -20,7 +21,7 @@ from core.classes.TaskOperatorBase import TaskOperatorBase
 from core.classes.URLHTMLTaskOperator import URLHTMLTaskOperator
 from core.classes.URLRecordTypeTaskOperator import URLRecordTypeTaskOperator
 from core.classes.URLRelevanceHuggingfaceTaskOperator import URLRelevanceHuggingfaceTaskOperator
-from core.enums import BatchStatus, SuggestionType
+from core.enums import BatchStatus, SuggestionType, RecordType
 from html_tag_collector.DataClassTags import convert_to_response_html_info
 from html_tag_collector.ResponseParser import HTMLResponseParser
 from html_tag_collector.URLRequestInterface import URLRequestInterface
@@ -186,8 +187,29 @@ class AsyncCore:
             relevant=relevant
         )
 
-    async def get_next_url_for_relevance_annotation(self, user_id: int) -> GetNextURLForAnnotationResponse:
-        return await self.adb_client.get_next_url_for_relevance_annotation(user_id=user_id)
+    async def get_next_url_for_relevance_annotation(self, user_id: int) -> GetNextRelevanceAnnotationResponseOuterInfo:
+        next_annotation = await self.adb_client.get_next_url_for_relevance_annotation(user_id=user_id)
+        return GetNextRelevanceAnnotationResponseOuterInfo(
+            next_annotation=next_annotation
+        )
+
+    async def get_next_url_for_record_type_annotation(self, user_id: int) -> GetNextRecordTypeAnnotationResponseOuterInfo:
+        next_annotation = await self.adb_client.get_next_url_for_record_type_annotation(user_id=user_id)
+        return GetNextRecordTypeAnnotationResponseOuterInfo(
+            next_annotation=next_annotation
+        )
+
+    async def submit_url_record_type_annotation(
+            self,
+            user_id: int,
+            url_id: int,
+            record_type: RecordType
+    ):
+        return await self.adb_client.add_user_record_type_suggestion(
+            user_id=user_id,
+            url_id=url_id,
+            record_type=record_type
+        )
 
     async def submit_url_annotation(
             self,

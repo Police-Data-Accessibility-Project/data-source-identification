@@ -74,7 +74,7 @@ class StatementComposer:
         return statement
 
     @staticmethod
-    def get_all_html_content_for_url(subquery) -> Select:
+    async def get_all_html_content_for_url(subquery) -> Select:
         statement = (
             select(
                 subquery.c.url,

@@ -12,6 +12,8 @@ from collector_manager.enums import CollectorType
 from core.DTOs.GetBatchLogsResponse import GetBatchLogsResponse
 from core.DTOs.GetBatchStatusResponse import GetBatchStatusResponse
 from core.DTOs.GetDuplicatesByBatchResponse import GetDuplicatesByBatchResponse
+from core.DTOs.GetNextRelevanceAnnotationResponseInfo import GetNextRelevanceAnnotationResponseInfo, \
+    GetNextRelevanceAnnotationResponseOuterInfo
 from core.DTOs.GetNextURLForAgencyAnnotationResponse import GetNextURLForAgencyAnnotationResponse, \
     URLAgencyAnnotationPostInfo
 from core.DTOs.GetNextURLForAnnotationResponse import GetNextURLForAnnotationResponse
@@ -172,18 +174,11 @@ class RequestValidator:
         )
         return MessageResponse(**data)
 
-    def process_relevancy(self) -> MessageCountResponse:
-        # TODO: Delete
-        data = self.post(
-            url=f"process/relevancy"
-        )
-        return MessageCountResponse(**data)
-
-    def get_next_relevance_annotation(self) -> GetNextURLForAnnotationResponse:
+    def get_next_relevance_annotation(self) -> GetNextRelevanceAnnotationResponseOuterInfo:
         data = self.get(
             url=f"/annotate/relevance"
         )
-        return GetNextURLForAnnotationResponse(**data)
+        return GetNextRelevanceAnnotationResponseOuterInfo(**data)
 
     def get_next_record_type_annotation(self) -> GetNextURLForAnnotationResponse:
         data = self.get(
@@ -204,14 +199,14 @@ class RequestValidator:
 
     def post_relevance_annotation_and_get_next(
             self,
-            metadata_id: int,
+            url_id: int,
             relevance_annotation_post_info: RelevanceAnnotationPostInfo
-    ) -> GetNextURLForAnnotationResponse:
+    ) -> GetNextRelevanceAnnotationResponseOuterInfo:
         data = self.post(
-            url=f"/annotate/relevance/{metadata_id}",
+            url=f"/annotate/relevance/{url_id}",
             json=relevance_annotation_post_info.model_dump(mode='json')
         )
-        return GetNextURLForAnnotationResponse(**data)
+        return GetNextRelevanceAnnotationResponseOuterInfo(**data)
 
     async def get_next_agency_annotation(self) -> GetNextURLForAgencyAnnotationResponse:
         data = self.get(
