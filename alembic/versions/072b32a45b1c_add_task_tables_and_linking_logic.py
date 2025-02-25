@@ -72,7 +72,6 @@ def downgrade() -> None:
     op.drop_constraint("url_error_info_task_id_fkey", 'url_error_info', type_='foreignkey')
     op.drop_constraint('uq_url_id_error', 'url_error_info', type_='unique')
     op.drop_column('url_error_info', 'task_id')
-    op.drop_column('url_metadata', 'notes')
     op.drop_table('link_task_urls')
     op.drop_table('task_errors')
     op.drop_table('tasks')

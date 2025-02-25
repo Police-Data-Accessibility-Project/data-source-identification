@@ -43,13 +43,13 @@ def upgrade() -> None:
 
 def downgrade() -> None:
     validation_status.create(op.get_bind())
-
-    op.alter_column(
-        table_name="url_metadata",
-        column_name="validation_status",
-        existing_type=metadata_validation_status,
-        type_=validation_status,
-        postgresql_using="validation_status::text::validation_status"
-    )
+    #
+    # op.alter_column(
+    #     table_name="url_metadata",
+    #     column_name="validation_status",
+    #     existing_type=metadata_validation_status,
+    #     type_=validation_status,
+    #     postgresql_using="validation_status::text::validation_status"
+    # )
 
     metadata_validation_status.drop(op.get_bind(), checkfirst=True)

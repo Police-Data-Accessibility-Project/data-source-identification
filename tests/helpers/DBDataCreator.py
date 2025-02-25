@@ -15,7 +15,7 @@ from collector_db.DatabaseClient import DatabaseClient
 from collector_db.enums import URLMetadataAttributeType, ValidationStatus, ValidationSource, TaskType
 from collector_manager.enums import CollectorType, URLStatus
 from core.DTOs.URLAgencySuggestionInfo import URLAgencySuggestionInfo
-from core.enums import BatchStatus, SuggestionType
+from core.enums import BatchStatus, SuggestionType, RecordType
 from tests.helpers.simple_test_data_functions import generate_test_urls
 
 
@@ -83,6 +83,40 @@ class DBDataCreator:
         await self.adb_client.add_auto_relevant_suggestion(
             url_id=url_id,
             relevant=relevant
+        )
+
+    async def user_relevant_suggestion(
+            self,
+            url_id: int,
+            user_id: Optional[int] = None,
+            relevant: bool = True
+    ):
+        if user_id is None:
+            user_id = randint(1, 99999999)
+        await self.adb_client.add_user_relevant_suggestion(
+            url_id=url_id,
+            user_id=user_id,
+            relevant=relevant
+        )
+
+    async def user_record_type_suggestion(
+            self,
+            url_id: int,
+            record_type: RecordType,
+            user_id: Optional[int] = None,
+    ):
+        if user_id is None:
+            user_id = randint(1, 99999999)
+        await self.adb_client.add_user_record_type_suggestion(
+            url_id=url_id,
+            user_id=user_id,
+            record_type=record_type
+        )
+
+    async def auto_record_type_suggestions(self, url_id: int, record_type: RecordType):
+        await self.adb_client.add_auto_record_type_suggestion(
+            url_id=url_id,
+            record_type=record_type
         )
 
 
@@ -192,28 +226,6 @@ class DBDataCreator:
             )
         await self.adb_client.add_html_content_infos(html_content_infos)
 
-    async def metadata(
-            self,
-            url_ids: list[int],
-            attribute: URLMetadataAttributeType = URLMetadataAttributeType.RELEVANT,
-            value: str = "False",
-            validation_status: ValidationStatus = ValidationStatus.PENDING_VALIDATION,
-            validation_source: ValidationSource = ValidationSource.MACHINE_LEARNING
-    ) -> list[int]:
-        metadata_ids = []
-        for url_id in url_ids:
-            metadata_id = await self.adb_client.add_url_metadata(
-                URLMetadataInfo(
-                    url_id=url_id,
-                    attribute=attribute,
-                    value=value,
-                    validation_status=validation_status,
-                    validation_source=validation_source,
-                )
-            )
-            metadata_ids.append(metadata_id)
-        return metadata_ids
-
     async def error_info(
             self,
             url_ids: list[int],
@@ -231,19 +243,6 @@ class DBDataCreator:
             error_infos.append(url_error_info)
         await self.adb_client.add_url_error_infos(error_infos)
 
-    async def user_annotation(
-            self,
-            metadata_id: int,
-            user_id: Optional[int] = None,
-            annotation: str = "test annotation"
-    ):
-        if user_id is None:
-            user_id = randint(1, 99999999)
-        await self.adb_client.add_metadata_annotation(
-            user_id=user_id,
-            metadata_id=metadata_id,
-            annotation=annotation
-        )
 
     async def agency_auto_suggestions(
             self,

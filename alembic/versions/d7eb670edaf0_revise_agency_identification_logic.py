@@ -146,6 +146,5 @@ def downgrade():
     op.execute("""
     DROP FUNCTION IF EXISTS enforce_no_agency_id_if_unknown; 
     """)
-    op.execute("DROP TRIGGER enforce_no_agency_id_if_new ON user_url_agency_suggestions")
     op.execute("DROP FUNCTION enforce_no_agency_id_if_new()")
 

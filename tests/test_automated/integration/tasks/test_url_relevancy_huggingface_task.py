@@ -5,7 +5,8 @@ import pytest
 from collector_db.AsyncDatabaseClient import AsyncDatabaseClient
 from collector_db.DTOs.URLWithHTML import URLWithHTML
 from collector_db.enums import ValidationStatus, ValidationSource
-from collector_db.models import URLMetadata, Task
+from collector_db.models import AutoRelevantSuggestion
+from core.DTOs.TaskOperatorRunInfo import TaskOperatorRunInfo, TaskOperatorOutcome
 from core.classes.URLRelevanceHuggingfaceTaskOperator import URLRelevanceHuggingfaceTaskOperator
 from tests.helpers.assert_functions import assert_database_has_no_tasks
 from hugging_face.HuggingFaceInterface import HuggingFaceInterface
@@ -39,7 +40,8 @@ async def test_url_relevancy_huggingface_task(db_data_creator):
         adb_client=AsyncDatabaseClient(),
         huggingface_interface=mock_hf_interface
     )
-    await task_operator.run_task(1)
+    meets_task_prerequisites = await task_operator.meets_task_prerequisites()
+    assert not meets_task_prerequisites
 
     await assert_database_has_no_tasks(db_data_creator.adb_client)
 
@@ -47,15 +49,14 @@ async def test_url_relevancy_huggingface_task(db_data_creator):
     url_mappings = db_data_creator.urls(batch_id=batch_id, url_count=3).url_mappings
     url_ids = [url_info.url_id for url_info in url_mappings]
     await db_data_creator.html_data(url_ids)
-    await db_data_creator.metadata([url_ids[0]])
 
-    await task_operator.run_task(1)
+    run_info: TaskOperatorRunInfo = await task_operator.run_task(1)
+    assert run_info.outcome == TaskOperatorOutcome.SUCCESS
 
-    results = await db_data_creator.adb_client.get_all(URLMetadata)
+
+    results = await db_data_creator.adb_client.get_all(AutoRelevantSuggestion)
 
     assert len(results) == 3
     for result in results:
         assert result.url_id in url_ids
-        assert result.value in ['True', 'False']
-        assert result.validation_status == ValidationStatus.PENDING_VALIDATION.value
-        assert result.validation_source == ValidationSource.MACHINE_LEARNING.value
+        assert result.relevant == num_to_bool(result.url_id % 2)

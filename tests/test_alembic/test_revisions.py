@@ -373,3 +373,8 @@ def test_revise_agency_suggestions(alembic_runner):
     alembic_runner.upgrade("d7eb670edaf0")
     assert not alembic_runner.table_exists("url_agency_suggestions")
     assert alembic_runner.tables_exist(tables_to_check)
+
+def test_full_upgrade_downgrade(alembic_runner):
+    # Both should run without error
+    alembic_runner.upgrade("head")
+    alembic_runner.downgrade("base")

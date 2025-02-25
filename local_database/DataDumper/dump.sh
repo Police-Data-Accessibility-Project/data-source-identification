@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e
+#set -e
 # Variables (customize these or pass them as environment variables)
 DB_HOST=${DUMP_HOST:-"postgres_container"}
 DB_USER=${DUMP_USER:-"your_user"}

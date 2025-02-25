@@ -7,7 +7,7 @@ import pytest
 from aiohttp import ClientSession
 
 from agency_identifier.MuckrockAPIInterface import MuckrockAPIInterface, AgencyLookupResponseType, AgencyLookupResponse
-from collector_db.models import ConfirmedUrlAgency, Agency, AutomatedUrlAgencySuggestion
+from collector_db.models import Agency, AutomatedUrlAgencySuggestion
 from collector_manager.enums import CollectorType
 from core.DTOs.TaskOperatorRunInfo import TaskOperatorOutcome
 from core.DTOs.URLAgencySuggestionInfo import URLAgencySuggestionInfo
@@ -155,7 +155,7 @@ async def test_agency_preannotation_task(db_data_creator: DBDataCreator):
 
     #  Check confirmed and auto suggestions
     adb_client = db_data_creator.adb_client
-    confirmed_suggestions = await adb_client.get_all(ConfirmedUrlAgency)
+    confirmed_suggestions = await adb_client.get_urls_with_confirmed_agencies()
     assert len(confirmed_suggestions) == 2
 
     agencies = await adb_client.get_all(Agency)

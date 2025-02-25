@@ -9,7 +9,7 @@ from collector_db.DTOs.URLErrorInfos import URLErrorPydanticInfo
 from collector_db.DTOs.URLInfo import URLInfo
 from collector_db.DTOs.URLMetadataInfo import URLMetadataInfo
 from collector_db.enums import URLMetadataAttributeType, ValidationStatus, ValidationSource
-from collector_db.models import ConfirmedUrlAgency, MetadataAnnotation, URL
+from collector_db.models import URL
 from collector_manager.enums import URLStatus
 from core.enums import BatchStatus, RecordType, SuggestionType
 from tests.helpers.DBDataCreator import DBDataCreator
@@ -111,25 +111,7 @@ def test_delete_url_updated_at(db_data_creator: DBDataCreator):
     url = db_client.get_urls_by_batch(batch_id=batch_id, page=1)[0]
     assert url.updated_at > old_updated_at
 
-@pytest.mark.asyncio
-async def test_get_url_metadata(db_data_creator: DBDataCreator):
-    batch_id = db_data_creator.batch()
-    url_id = db_data_creator.urls(batch_id=batch_id, url_count=1).url_mappings[0].url_id
 
-    adb_client = AsyncDatabaseClient()
-
-    await adb_client.add_url_metadata(
-        url_metadata_info=URLMetadataInfo(
-            url_id=url_id,
-            attribute=URLMetadataAttributeType.RELEVANT,
-            value="False",
-            validation_status=ValidationStatus.PENDING_VALIDATION,
-            validation_source=ValidationSource.MACHINE_LEARNING,
-        )
-    )
-
-    metadata = await adb_client.get_url_metadata_by_status(url_status=URLStatus.PENDING)
-    print(metadata)
 
 @pytest.mark.asyncio
 async def test_add_url_error_info(db_data_creator: DBDataCreator):
@@ -161,40 +143,6 @@ async def test_add_url_error_info(db_data_creator: DBDataCreator):
     for result in results:
         assert result.url_id in url_ids
         assert result.error == "test error"
-
-@pytest.mark.asyncio
-async def test_get_urls_with_html_data_and_no_relevancy_metadata(
-    db_data_creator: DBDataCreator,
-):
-    batch_id = db_data_creator.batch()
-    url_mappings = db_data_creator.urls(batch_id=batch_id, url_count=3).url_mappings
-    url_ids = [url_info.url_id for url_info in url_mappings]
-    await db_data_creator.html_data(url_ids)
-    await db_data_creator.metadata([url_ids[0]])
-    results = await db_data_creator.adb_client.get_urls_with_html_data_and_without_metadata_type(
-        without_metadata_type=URLMetadataAttributeType.RELEVANT
-    )
-
-    permitted_url_ids = [url_id for url_id in url_ids if url_id != url_ids[0]]
-    assert len(results) == 2
-    for result in results:
-        assert result.url_id in permitted_url_ids
-        assert len(result.html_infos) == 2
-
-@pytest.mark.asyncio
-async def test_get_urls_with_metadata(db_data_creator: DBDataCreator):
-    batch_id = db_data_creator.batch()
-    url_mappings = db_data_creator.urls(batch_id=batch_id, url_count=3).url_mappings
-    url_ids = [url_info.url_id for url_info in url_mappings]
-    await db_data_creator.metadata([url_ids[0]])
-    # Neither of these two URLs should be picked up
-    await db_data_creator.metadata([url_ids[1]], attribute=URLMetadataAttributeType.RECORD_TYPE)
-    await db_data_creator.metadata([url_ids[2]], validation_status=ValidationStatus.VALIDATED)
-    results = await db_data_creator.adb_client.get_urls_with_metadata(
-        attribute=URLMetadataAttributeType.RELEVANT,
-        validation_status=ValidationStatus.PENDING_VALIDATION
-    )
-    assert len(results) == 1
 
 
 @pytest.mark.asyncio
@@ -377,45 +325,19 @@ async def test_approve_url_basic(db_data_creator: DBDataCreator):
 
     adb_client = db_data_creator.adb_client
     # Approve URL. Only URL should be affected. No other properties should be changed.
-    await adb_client.approve_url(url_mapping.url_id)
+    await adb_client.approve_url(
+        url_mapping.url_id,
+        record_type=RecordType.ARREST_RECORDS,
+        relevant=True
+    )
 
     # Confirm same agency id is listed as confirmed
-    confirmed_agencies = await adb_client.get_all(
-        ConfirmedUrlAgency
-    )
-    assert len(confirmed_agencies) == 1
-    confirmed_agency = confirmed_agencies[0]
-    assert confirmed_agency.url_id == url_mapping.url_id
-    assert confirmed_agency.agency_id == agency_id
-
-    # Confirm two metadata entries
-    metadatas = await adb_client.get_all(
-        MetadataAnnotation
-    )
-    assert len(metadatas) == 2
-    record_type_metadata = None
-    relevant_metadata = None
-    for metadata in metadatas:
-        if metadata.attribute == URLMetadataAttributeType.RECORD_TYPE.value:
-            record_type_metadata = metadata
-        elif metadata.attribute == URLMetadataAttributeType.RELEVANT.value:
-            relevant_metadata = metadata
-
-    # - One is Record Type, with record type as ARREST_RECORDS and set as approved
-
-    assert record_type_metadata.value == RecordType.ARREST_RECORDS.value
-    assert record_type_metadata.validation_status == ValidationStatus.VALIDATED.value
-
-    # - One is Relevant, and is set as TRUE and approved
-
-    assert relevant_metadata.value == "True"
-    assert relevant_metadata.validation_status == ValidationStatus.VALIDATED.value
-
-    # Confirm URL
-    urls = await adb_client.get_all(
-        URL
-    )
+    urls = await adb_client.get_all(URL)
     assert len(urls) == 1
     url = urls[0]
-    assert url.status == URLStatus.APPROVED
+    assert url.id == url_mapping.url_id
+    assert url.agency_id == agency_id
+    assert url.record_type == RecordType.ARREST_RECORDS.value
+    assert url.relevant == True
+    assert url.outcome == URLStatus.VALIDATED.value
 

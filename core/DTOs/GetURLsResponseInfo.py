@@ -29,7 +29,6 @@ class GetURLsResponseInnerInfo(BaseModel):
     updated_at: datetime.datetime
     created_at: datetime.datetime
     errors: list[GetURLsResponseErrorInfo]
-    metadata: list[GetURLsResponseMetadataInfo]
 
 class GetURLsResponseInfo(BaseModel):
     urls: list[GetURLsResponseInnerInfo]

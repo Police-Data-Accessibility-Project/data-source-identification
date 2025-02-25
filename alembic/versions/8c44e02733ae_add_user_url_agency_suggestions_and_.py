@@ -51,13 +51,9 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    op.drop_column(
-        table_name='url_agency_suggestions',
-        column_name="user_id"
-    )
+    op.execute("DROP TRIGGER IF EXISTS enforce_url_agency_suggestions_manual_suggestion_user_id ON url_agency_suggestions;")
     op.execute(
         """
-        DROP TRIGGER IF EXISTS enforce_url_agency_suggestions_manual_suggestion_user_id;
         DROP FUNCTION IF EXISTS user_url_agency_suggestions_value();
         """
     )

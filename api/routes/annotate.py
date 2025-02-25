@@ -3,6 +3,7 @@ from fastapi import APIRouter, Depends, Path
 from api.dependencies import get_async_core
 from collector_db.enums import URLMetadataAttributeType
 from core.AsyncCore import AsyncCore
+from core.DTOs.GetNextRecordTypeAnnotationResponseInfo import GetNextRecordTypeAnnotationResponseOuterInfo
 from core.DTOs.GetNextRelevanceAnnotationResponseInfo import GetNextRelevanceAnnotationResponseInfo, \
     GetNextRelevanceAnnotationResponseOuterInfo
 from core.DTOs.GetNextURLForAgencyAnnotationResponse import GetNextURLForAgencyAnnotationResponse, \
@@ -53,10 +54,9 @@ async def annotate_url_for_relevance_and_get_next_url(
 async def get_next_url_for_record_type_annotation(
         access_info: AccessInfo = Depends(get_access_info),
         async_core: AsyncCore = Depends(get_async_core),
-) -> GetNextURLForAnnotationResponse:
-    result = await async_core.get_next_url_for_annotation(
+) -> GetNextRecordTypeAnnotationResponseOuterInfo:
+    result = await async_core.get_next_url_for_record_type_annotation(
         user_id=access_info.user_id,
-        metadata_type=URLMetadataAttributeType.RECORD_TYPE
     )
     return result
 
@@ -66,15 +66,14 @@ async def annotate_url_for_record_type_and_get_next_url(
         url_id: int = Path(description="The URL id to annotate"),
         async_core: AsyncCore = Depends(get_async_core),
         access_info: AccessInfo = Depends(get_access_info)
-) -> GetNextURLForAnnotationResponse:
+) -> GetNextRecordTypeAnnotationResponseOuterInfo:
     """
     Post URL annotation and get next URL to annotate
     """
-    result = await async_core.submit_and_get_next_url_for_annotation(
+    result = await async_core.submit_url_record_type_annotation(
         user_id=access_info.user_id,
-        metadata_id=metadata_id,
-        annotation=record_type_annotation_post_info.record_type.value,
-        metadata_type=URLMetadataAttributeType.RECORD_TYPE
+        url_id=url_id,
+        record_type=record_type_annotation_post_info.record_type,
     )
     return result
 

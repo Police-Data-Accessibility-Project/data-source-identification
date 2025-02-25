@@ -1,7 +1,6 @@
 from collector_db.AsyncDatabaseClient import AsyncDatabaseClient
 from collector_db.DTOs.URLErrorInfos import URLErrorPydanticInfo
-from collector_db.DTOs.URLMetadataInfo import URLMetadataInfo
-from collector_db.enums import URLMetadataAttributeType, TaskType, ValidationStatus, ValidationSource
+from collector_db.enums import TaskType
 from core.DTOs.task_data_objects.URLRecordTypeTDO import URLRecordTypeTDO
 from core.classes.TaskOperatorBase import TaskOperatorBase
 from core.enums import RecordType
@@ -23,14 +22,10 @@ class URLRecordTypeTaskOperator(TaskOperatorBase):
         return TaskType.RECORD_TYPE
 
     async def meets_task_prerequisites(self):
-        return await self.adb_client.has_pending_urls_with_html_data_and_without_metadata_type(
-            without_metadata_type=URLMetadataAttributeType.RECORD_TYPE
-        )
+        return await self.adb_client.has_urls_with_html_data_and_without_auto_record_type_suggestion()
 
     async def get_tdos(self) -> list[URLRecordTypeTDO]:
-        urls_with_html = await self.adb_client.get_urls_with_html_data_and_without_metadata_type(
-            without_metadata_type=URLMetadataAttributeType.RECORD_TYPE
-        )
+        urls_with_html = await self.adb_client.get_urls_with_html_data_and_without_auto_record_type_suggestion()
         tdos = [URLRecordTypeTDO(url_with_html=url_with_html) for url_with_html in urls_with_html]
         return tdos
 
@@ -58,18 +53,12 @@ class URLRecordTypeTaskOperator(TaskOperatorBase):
         await self.adb_client.add_url_error_infos(error_infos)
 
     async def put_results_into_database(self, tdos: list[URLRecordTypeTDO]):
-        url_metadatas = []
+        suggestions = []
         for tdo in tdos:
-            url_metadata = URLMetadataInfo(
-                url_id=tdo.url_with_html.url_id,
-                attribute=URLMetadataAttributeType.RECORD_TYPE,
-                value=str(tdo.record_type.value),
-                validation_status=ValidationStatus.PENDING_VALIDATION,
-                validation_source=ValidationSource.MACHINE_LEARNING,
-                notes=self.classifier.model_name
-            )
-            url_metadatas.append(url_metadata)
-        await self.adb_client.add_url_metadatas(url_metadatas)
+            url_id = tdo.url_with_html.url_id
+            record_type = tdo.record_type
+            suggestions.append((url_id, record_type))
+        await self.adb_client.add_auto_record_type_suggestions(suggestions)
 
     async def separate_success_and_error_subsets(self, tdos: list[URLRecordTypeTDO]):
         success_subset = [tdo for tdo in tdos if not tdo.is_errored()]

@@ -92,8 +92,7 @@ class URL(Base):
         postgresql.ENUM(
             'pending',
             'submitted',
-            'human_labeling',
-            'rejected',
+            'validated',
             'duplicate',
             'error',
             name='url_status'
@@ -116,63 +115,19 @@ class URL(Base):
         secondary="link_task_urls",
         back_populates="urls",
     )
-    agency = relationship("Agency", back_populates="urls")
-    automated_agency_suggestions = relationship("AutomatedUrlAgencySuggestion", back_populates="url")
-    user_agency_suggestions = relationship("UserUrlAgencySuggestion", back_populates="url")
-    auto_record_type_suggestions = relationship("AutoRecordTypeSuggestion", back_populates="url")
-    user_record_type_suggestions = relationship("UserRecordTypeSuggestion", back_populates="url")
-    auto_relevant_suggestions = relationship("AutoRelevantSuggestion", back_populates="url")
-    user_relevant_suggestions = relationship("UserRelevantSuggestion", back_populates="url")
-
-# # URL Metadata table definition
-# class URLMetadata(Base):
-#     __tablename__ = 'url_metadata'
-#     __table_args__ = (UniqueConstraint(
-#         "url_id",
-#         "attribute",
-#         name="uq_url_id_attribute"),
-#     )
-#
-#     id = Column(Integer, primary_key=True, autoincrement=True)
-#     url_id = Column(Integer, ForeignKey('urls.id', name='url_metadata_url_id_fkey'), nullable=False)
-#     attribute = Column(
-#         PGEnum('Record Type', 'Agency', 'Relevant', name='url_attribute'),
-#         nullable=False)
-#     value = Column(Text, nullable=False)
-#     validation_status = Column(
-#         PGEnum('Pending Validation', 'Validated', name='metadata_validation_status'),
-#         nullable=False)
-#     validation_source = Column(
-#         PGEnum('Machine Learning', 'Label Studio', 'Manual', name='validation_source'),
-#         nullable=False
-#     )
-#     notes = Column(Text, nullable=True)
-#
-#
-#     # Timestamps
-#     created_at = Column(TIMESTAMP, nullable=False, server_default=func.now())
-#     updated_at = Column(TIMESTAMP, nullable=False, server_default=func.now(), onupdate=func.now())
-#
-#     # Relationships
-#     url = relationship("URL", back_populates="url_metadata")
-#     annotations = relationship("MetadataAnnotation", back_populates="url_metadata")
-
-# class MetadataAnnotation(Base):
-#     __tablename__ = 'metadata_annotations'
-#     __table_args__ = (UniqueConstraint(
-#         "user_id",
-#         "metadata_id",
-#         name="metadata_annotations_uq_user_id_metadata_id"),
-#     )
-#
-#     id = Column(Integer, primary_key=True, autoincrement=True)
-#     user_id = Column(Integer, nullable=False)
-#     metadata_id = Column(Integer, ForeignKey('url_metadata.id'), nullable=False)
-#     value = Column(Text, nullable=False)
-#     created_at = Column(TIMESTAMP, nullable=False, server_default=func.now())
-#
-#     # Relationships
-#     url_metadata = relationship("URLMetadata", back_populates="annotations")
+    agency = relationship("Agency", uselist=False, back_populates="urls")
+    automated_agency_suggestions = relationship(
+        "AutomatedUrlAgencySuggestion", back_populates="url")
+    user_agency_suggestions = relationship(
+        "UserUrlAgencySuggestion", back_populates="url")
+    auto_record_type_suggestion = relationship(
+        "AutoRecordTypeSuggestion", uselist=False, back_populates="url")
+    user_record_type_suggestions = relationship(
+        "UserRecordTypeSuggestion", back_populates="url")
+    auto_relevant_suggestion = relationship(
+        "AutoRelevantSuggestion", uselist=False, back_populates="url")
+    user_relevant_suggestions = relationship(
+        "UserRelevantSuggestion", back_populates="url")
 
 class RootURL(Base):
     __tablename__ = 'root_url_cache'
@@ -409,7 +364,7 @@ class AutoRelevantSuggestion(Base):
 
     # Relationships
 
-    url = relationship("URL", back_populates="auto_relevant_suggestions")
+    url = relationship("URL", back_populates="auto_relevant_suggestion")
 
 
 class AutoRecordTypeSuggestion(Base):
@@ -427,7 +382,7 @@ class AutoRecordTypeSuggestion(Base):
 
     # Relationships
 
-    url = relationship("URL", back_populates="auto_record_type_suggestions")
+    url = relationship("URL", back_populates="auto_record_type_suggestion")
 
 class UserRelevantSuggestion(Base):
     __tablename__ = "user_relevant_suggestions"

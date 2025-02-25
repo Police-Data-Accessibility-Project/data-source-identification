@@ -16,6 +16,11 @@ Removed Tables
 - `ConfirmedURLAgency`
 - `MetadataAnnotation`
 
+Update URL Status to just three enum value:
+- VALIDATED
+- SUBMITTED
+- PENDING
+
 Revision ID: 33421c0590bb
 Revises: 0c6dc00806ce
 Create Date: 2025-02-23 10:23:19.696248
@@ -27,7 +32,7 @@ from alembic import op
 import sqlalchemy as sa
 from sqlalchemy import UniqueConstraint
 
-from core.enums import RecordType
+from util.alembic_helpers import switch_enum_type
 
 # revision identifiers, used by Alembic.
 revision: str = '33421c0590bb'
@@ -77,11 +82,50 @@ record_type_values = [
 
 record_type_enum = sa.Enum(*record_type_values, name='record_type')
 
+def run_data_migrations():
+
+    op.execute(
+        """
+        INSERT INTO AUTO_RELEVANT_SUGGESTIONS (url_id, relevant) 
+            SELECT url_id, LOWER(value)::boolean
+            FROM public.url_metadata
+            WHERE validation_source = 'Machine Learning'
+            and attribute = 'Relevant'
+	    """
+    )
+
+    op.execute(
+        """
+        INSERT INTO AUTO_RECORD_TYPE_SUGGESTIONS(url_id, record_type)
+        SELECT url_id, value::record_type
+        FROM public.url_metadata
+        WHERE validation_source = 'Machine Learning'
+        and attribute = 'Record Type'
+        """
+    )
+
+    op.execute(
+        """
+        INSERT INTO USER_RELEVANT_SUGGESTIONS(url_id, relevant, user_id)
+        SELECT um.url_id, LOWER(um.value)::boolean, ma.user_id
+        FROM public.url_metadata um
+        INNER join metadata_annotations ma on um.id = ma.metadata_id
+        where um.attribute = 'Relevant'
+        """
+    )
+
+    op.execute(
+        """
+        INSERT INTO USER_RECORD_TYPE_SUGGESTIONS(url_id, record_type, user_id)
+        SELECT um.url_id, um.value::record_type, ma.user_id
+        FROM public.url_metadata um
+        INNER join metadata_annotations ma on um.id = ma.metadata_id
+        where um.attribute = 'Record Type'
+
+        """
+    )
+
 def upgrade() -> None:
-    # Delete the old tables
-    op.drop_table('metadata_annotations')
-    op.drop_table('url_metadata')
-    op.drop_table('confirmed_url_agency')
 
     # Create the new tables
     op.create_table(
@@ -168,6 +212,21 @@ def upgrade() -> None:
         )
     )
 
+    run_data_migrations()
+
+    # Delete the old tables
+    op.drop_table('metadata_annotations')
+    op.drop_table('url_metadata')
+    op.drop_table('confirmed_url_agency')
+
+    switch_enum_type(
+        table_name='urls',
+        column_name='outcome',
+        enum_name='url_status',
+        new_enum_values=['pending', 'submitted', 'validated', 'error', 'duplicate']
+    )
+
+
 
 
 
@@ -214,7 +273,7 @@ def downgrade() -> None:
     op.create_table(
         'metadata_annotations',
         sa.Column('id', sa.Integer(), primary_key=True),
-        sa.Column('url_id', sa.Integer(), sa.ForeignKey('urls.id', ondelete='CASCADE'), nullable=False),
+        sa.Column('metadata_id', sa.Integer(), sa.ForeignKey('url_metadata.id', ondelete='CASCADE'), nullable=False),
         sa.Column('user_id', sa.Integer(), nullable=False),
         sa.Column('created_at', sa.TIMESTAMP(), nullable=False, server_default=sa.text('now()')),
         sa.Column('updated_at', sa.TIMESTAMP(), nullable=False, server_default=sa.text('now()'), onupdate=sa.text('now()')),
@@ -223,3 +282,13 @@ def downgrade() -> None:
             "metadata_id",
             name="metadata_annotations_uq_user_id_metadata_id"),
     )
+
+    switch_enum_type(
+        table_name='urls',
+        column_name='outcome',
+        enum_name='url_status',
+        new_enum_values=['pending', 'submitted', 'human_labeling', 'rejected', 'duplicate', 'error']
+    )
+
+    # Drop enum
+    record_type_enum.drop(op.get_bind())
