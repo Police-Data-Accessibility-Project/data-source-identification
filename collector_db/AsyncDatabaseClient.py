@@ -5,6 +5,7 @@ from fastapi import HTTPException
 from sqlalchemy import select, exists, func, case, desc, Select, not_, and_
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.orm import selectinload, joinedload, QueryableAttribute
+from sqlalchemy.sql.functions import coalesce
 from starlette import status
 
 from collector_db.ConfigManager import ConfigManager
@@ -1004,7 +1005,7 @@ class AsyncDatabaseClient:
         sum_of_count_subqueries = (
             sum(
                 [
-                    subquery.c.count
+                    coalesce(subquery.c.count, 0)
                     for subquery in count_subqueries
                 ]
             )
