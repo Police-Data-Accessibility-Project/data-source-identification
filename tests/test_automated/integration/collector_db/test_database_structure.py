@@ -235,45 +235,6 @@ def test_url(db_data_creator: DBDataCreator):
 
     table_tester.run_column_tests()
 
-def test_url_metadata(db_data_creator: DBDataCreator):
-    batch_id = db_data_creator.batch()
-    iui: InsertURLsInfo = db_data_creator.urls(batch_id=batch_id, url_count=1)
-
-
-    table_tester = TableTester(
-        table_name="url_metadata",
-        columns=[
-            ColumnTester(
-                column_name="url_id",
-                type_=sa.Integer,
-                allowed_values=[iui.url_mappings[0].url_id]
-            ),
-            ColumnTester(
-                column_name="attribute",
-                type_=postgresql.ENUM,
-                allowed_values=["Record Type", "Agency", "Relevant"]
-            ),
-            ColumnTester(
-                column_name="value",
-                type_=sa.Text,
-                allowed_values=["Text"]
-            ),
-            ColumnTester(
-                column_name="validation_status",
-                type_=postgresql.ENUM,
-                allowed_values=["Pending Validation", "Validated"]
-            ),
-            ColumnTester(
-                column_name="validation_source",
-                type_=postgresql.ENUM,
-                allowed_values=["Machine Learning", "Label Studio", "Manual"]
-            )
-        ],
-        engine=db_data_creator.db_client.engine
-    )
-
-    table_tester.run_column_tests()
-
 def test_html_content(db_data_creator: DBDataCreator):
     batch_id = db_data_creator.batch()
     iui: InsertURLsInfo = db_data_creator.urls(batch_id=batch_id, url_count=1)

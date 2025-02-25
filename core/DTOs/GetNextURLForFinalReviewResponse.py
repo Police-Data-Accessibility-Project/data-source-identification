@@ -2,7 +2,6 @@ from typing import Optional
 
 from pydantic import BaseModel, Field
 
-from collector_db.DTOs.URLHTMLContentInfo import URLHTMLContentInfo
 from core.DTOs.GetNextURLForAgencyAnnotationResponse import GetNextURLForAgencyAgencyInfo
 from core.enums import RecordType
 from html_tag_collector.DataClassTags import ResponseHTMLInfo

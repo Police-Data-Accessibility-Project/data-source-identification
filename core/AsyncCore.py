@@ -7,6 +7,9 @@ from collector_db.AsyncDatabaseClient import AsyncDatabaseClient
 from collector_db.DTOs.TaskInfo import TaskInfo
 from collector_db.DTOs.URLAnnotationInfo import URLAnnotationInfo
 from collector_db.enums import TaskType, URLMetadataAttributeType
+from core.DTOs.FinalReviewApprovalInfo import FinalReviewApprovalInfo
+from core.DTOs.GetNextRecordTypeAnnotationResponseInfo import GetNextRecordTypeAnnotationResponseOuterInfo
+from core.DTOs.GetNextRelevanceAnnotationResponseInfo import GetNextRelevanceAnnotationResponseOuterInfo
 from core.DTOs.GetNextURLForAgencyAnnotationResponse import GetNextURLForAgencyAnnotationResponse, \
     URLAgencyAnnotationPostInfo
 from core.DTOs.GetNextURLForAnnotationResponse import GetNextURLForAnnotationResponse
@@ -19,7 +22,7 @@ from core.classes.TaskOperatorBase import TaskOperatorBase
 from core.classes.URLHTMLTaskOperator import URLHTMLTaskOperator
 from core.classes.URLRecordTypeTaskOperator import URLRecordTypeTaskOperator
 from core.classes.URLRelevanceHuggingfaceTaskOperator import URLRelevanceHuggingfaceTaskOperator
-from core.enums import BatchStatus, SuggestionType
+from core.enums import BatchStatus, SuggestionType, RecordType
 from html_tag_collector.DataClassTags import convert_to_response_html_info
 from html_tag_collector.ResponseParser import HTMLResponseParser
 from html_tag_collector.URLRequestInterface import URLRequestInterface
@@ -129,62 +132,46 @@ class AsyncCore:
         await self.adb_client.update_task_status(task_id=run_info.task_id, status=BatchStatus.ERROR)
         await self.adb_client.add_task_error(task_id=run_info.task_id, error=run_info.message)
 
-    async def convert_to_annotation_request_info(self, url_info: URLAnnotationInfo) -> AnnotationRequestInfo:
-        response_html_info = convert_to_response_html_info(
-            html_content_infos=url_info.html_infos
-        )
-
-        return AnnotationRequestInfo(
-            url=url_info.url,
-            metadata_id=url_info.metadata_id,
-            html_info=response_html_info,
-            suggested_value=url_info.suggested_value
-        )
-
-    async def get_next_url_for_annotation(self, user_id: int, metadata_type: URLMetadataAttributeType) -> GetNextURLForAnnotationResponse:
-        response = GetNextURLForAnnotationResponse()
-        ua_info: URLAnnotationInfo = await self.adb_client.get_next_url_for_annotation(
-            user_id=user_id,
-            metadata_type=metadata_type
-        )
-        if ua_info is None:
-            return response
-        # Format result
-        result = await self.convert_to_annotation_request_info(url_info=ua_info)
-        response.next_annotation = result
-        return response
-
-    async def submit_and_get_next_url_for_annotation(
+    async def submit_url_relevance_annotation(
             self,
             user_id: int,
-            metadata_id: int,
-            annotation: str,
-            metadata_type: URLMetadataAttributeType
-    ) -> GetNextURLForAnnotationResponse:
-        await self.submit_url_annotation(
+            url_id: int,
+            relevant: bool
+    ):
+        return await self.adb_client.add_user_relevant_suggestion(
             user_id=user_id,
-            metadata_id=metadata_id,
-            annotation=annotation,
-            metadata_type=metadata_type
+            url_id=url_id,
+            relevant=relevant
         )
-        result = await self.get_next_url_for_annotation(
-            user_id=user_id,
-            metadata_type=metadata_type
-        )
-        return result
 
-    async def submit_url_annotation(
+    async def get_next_url_for_relevance_annotation(self, user_id: int) -> GetNextRelevanceAnnotationResponseOuterInfo:
+        next_annotation = await self.adb_client.get_next_url_for_relevance_annotation(user_id=user_id)
+        return GetNextRelevanceAnnotationResponseOuterInfo(
+            next_annotation=next_annotation
+        )
+
+    async def get_next_url_for_record_type_annotation(self, user_id: int) -> GetNextRecordTypeAnnotationResponseOuterInfo:
+        next_annotation = await self.adb_client.get_next_url_for_record_type_annotation(user_id=user_id)
+        return GetNextRecordTypeAnnotationResponseOuterInfo(
+            next_annotation=next_annotation
+        )
+
+    async def submit_url_record_type_annotation(
             self,
             user_id: int,
-            metadata_id: int,
-            annotation: str,
-            metadata_type: URLMetadataAttributeType
-    ) -> GetNextURLForAnnotationResponse:
-        await self.adb_client.add_metadata_annotation(
+            url_id: int,
+            record_type: RecordType
+    ):
+        await self.adb_client.add_user_record_type_suggestion(
             user_id=user_id,
-            metadata_id=metadata_id,
-            annotation=annotation)
-        return await self.get_next_url_for_annotation(user_id=user_id, metadata_type=metadata_type)
+            url_id=url_id,
+            record_type=record_type
+        )
+        next_annotation = await self.adb_client.get_next_url_for_record_type_annotation(user_id=user_id)
+        return GetNextRecordTypeAnnotationResponseOuterInfo(
+            next_annotation=next_annotation
+        )
+
 
     async def get_urls(self, page: int, errors: bool) -> GetURLsResponseInfo:
         return await self.adb_client.get_urls(page=page, errors=errors)
@@ -223,3 +210,15 @@ class AsyncCore:
 
     async def get_next_source_for_review(self):
         return await self.adb_client.get_next_url_for_final_review()
+
+    async def approve_and_get_next_source_for_review(
+            self,
+            approval_info: FinalReviewApprovalInfo
+    ):
+        await self.adb_client.approve_url(
+            url_id=approval_info.url_id,
+            record_type=approval_info.record_type,
+            relevant=approval_info.relevant,
+            agency_id=approval_info.agency_id
+        )
+        return await self.get_next_source_for_review()

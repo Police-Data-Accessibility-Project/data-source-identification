@@ -3,12 +3,11 @@ from unittest.mock import MagicMock
 import pytest
 
 from collector_db.enums import TaskType
-from collector_db.models import URLMetadata
+from collector_db.models import AutoRecordTypeSuggestion
 from core.DTOs.TaskOperatorRunInfo import TaskOperatorOutcome
 from core.classes.URLRecordTypeTaskOperator import URLRecordTypeTaskOperator
 from core.enums import RecordType, BatchStatus
 from tests.helpers.DBDataCreator import DBDataCreator
-from tests.helpers.assert_functions import assert_database_has_no_tasks
 from llm_api_logic.DeepSeekRecordClassifier import DeepSeekRecordClassifier
 
 @pytest.mark.asyncio
@@ -51,8 +50,7 @@ async def test_url_record_type_task(db_data_creator: DBDataCreator):
     assert task.url_error_count == 1
 
     # Get metadata
-    metadata_results = await db_data_creator.adb_client.get_all(URLMetadata)
-    for metadata_row in metadata_results:
-        assert metadata_row.notes == "test_notes"
-        assert metadata_row.value == RecordType.ACCIDENT_REPORTS.value
+    suggestions = await db_data_creator.adb_client.get_all(AutoRecordTypeSuggestion)
+    for suggestion in suggestions:
+        assert suggestion.record_type == RecordType.ACCIDENT_REPORTS.value
 

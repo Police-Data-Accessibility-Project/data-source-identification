@@ -12,7 +12,6 @@ class CollectorType(Enum):
 class URLStatus(Enum):
     PENDING = "pending"
     SUBMITTED = "submitted"
-    HUMAN_LABELING = "human_labeling"
-    REJECTED = "rejected"
-    DUPLICATE = "duplicate"
+    VALIDATED = "validated"
     ERROR = "error"
+    DUPLICATE = "duplicate"

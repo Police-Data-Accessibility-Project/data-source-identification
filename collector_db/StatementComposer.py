@@ -1,10 +1,10 @@
+from typing import Any
 
 from sqlalchemy import Select, select, exists, Table, func, Subquery
 from sqlalchemy.orm import aliased
 
 from collector_db.enums import URLMetadataAttributeType, ValidationStatus
-from collector_db.models import URL, URLHTMLContent, URLMetadata, MetadataAnnotation, AutomatedUrlAgencySuggestion, \
-    ConfirmedUrlAgency
+from collector_db.models import URL, URLHTMLContent, AutomatedUrlAgencySuggestion
 from collector_manager.enums import URLStatus
 
 
@@ -19,6 +19,22 @@ class StatementComposer:
                      outerjoin(URLHTMLContent).
                      where(URLHTMLContent.id == None).
                      where(URL.outcome == URLStatus.PENDING.value))
+
+
+
+    @staticmethod
+    def exclude_urls_with_extant_model(
+            statement: Select,
+            model: Any
+    ):
+        return (statement.where(
+                        ~exists(
+                            select(model.id).
+                            where(
+                                model.url_id == URL.id
+                            )
+                        )
+                    ))
 
     @staticmethod
     def exclude_urls_with_select_metadata(
@@ -65,11 +81,26 @@ class StatementComposer:
     ):
         # Aliases for clarity
         AutomatedSuggestion = aliased(AutomatedUrlAgencySuggestion)
-        ConfirmedAgency = aliased(ConfirmedUrlAgency)
 
         statement = (statement
             .where(~exists().where(AutomatedSuggestion.url_id == URL.id))  # Exclude if automated suggestions exist
-            .where(~exists().where(ConfirmedAgency.url_id == URL.id))
         )  # Exclude if confirmed agencies exist
 
         return statement
+
+    @staticmethod
+    async def get_all_html_content_for_url(subquery) -> Select:
+        statement = (
+            select(
+                subquery.c.url,
+                subquery.c.metadata_id,
+                subquery.c.value,
+                URLHTMLContent.content_type,
+                URLHTMLContent.content,
+            )
+            .join(URLHTMLContent)
+            .where(subquery.c.url_id == URLHTMLContent.url_id)
+        )
+
+        raw_result = await session.execute(statement)
+        result = raw_result.all()

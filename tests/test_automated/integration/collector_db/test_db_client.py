@@ -9,6 +9,7 @@ from collector_db.DTOs.URLErrorInfos import URLErrorPydanticInfo
 from collector_db.DTOs.URLInfo import URLInfo
 from collector_db.DTOs.URLMetadataInfo import URLMetadataInfo
 from collector_db.enums import URLMetadataAttributeType, ValidationStatus, ValidationSource
+from collector_db.models import URL
 from collector_manager.enums import URLStatus
 from core.enums import BatchStatus, RecordType, SuggestionType
 from tests.helpers.DBDataCreator import DBDataCreator
@@ -110,25 +111,7 @@ def test_delete_url_updated_at(db_data_creator: DBDataCreator):
     url = db_client.get_urls_by_batch(batch_id=batch_id, page=1)[0]
     assert url.updated_at > old_updated_at
 
-@pytest.mark.asyncio
-async def test_get_url_metadata(db_data_creator: DBDataCreator):
-    batch_id = db_data_creator.batch()
-    url_id = db_data_creator.urls(batch_id=batch_id, url_count=1).url_mappings[0].url_id
 
-    adb_client = AsyncDatabaseClient()
-
-    await adb_client.add_url_metadata(
-        url_metadata_info=URLMetadataInfo(
-            url_id=url_id,
-            attribute=URLMetadataAttributeType.RELEVANT,
-            value="False",
-            validation_status=ValidationStatus.PENDING_VALIDATION,
-            validation_source=ValidationSource.MACHINE_LEARNING,
-        )
-    )
-
-    metadata = await adb_client.get_url_metadata_by_status(url_status=URLStatus.PENDING)
-    print(metadata)
 
 @pytest.mark.asyncio
 async def test_add_url_error_info(db_data_creator: DBDataCreator):
@@ -160,40 +143,6 @@ async def test_add_url_error_info(db_data_creator: DBDataCreator):
     for result in results:
         assert result.url_id in url_ids
         assert result.error == "test error"
-
-@pytest.mark.asyncio
-async def test_get_urls_with_html_data_and_no_relevancy_metadata(
-    db_data_creator: DBDataCreator,
-):
-    batch_id = db_data_creator.batch()
-    url_mappings = db_data_creator.urls(batch_id=batch_id, url_count=3).url_mappings
-    url_ids = [url_info.url_id for url_info in url_mappings]
-    await db_data_creator.html_data(url_ids)
-    await db_data_creator.metadata([url_ids[0]])
-    results = await db_data_creator.adb_client.get_urls_with_html_data_and_without_metadata_type(
-        without_metadata_type=URLMetadataAttributeType.RELEVANT
-    )
-
-    permitted_url_ids = [url_id for url_id in url_ids if url_id != url_ids[0]]
-    assert len(results) == 2
-    for result in results:
-        assert result.url_id in permitted_url_ids
-        assert len(result.html_infos) == 2
-
-@pytest.mark.asyncio
-async def test_get_urls_with_metadata(db_data_creator: DBDataCreator):
-    batch_id = db_data_creator.batch()
-    url_mappings = db_data_creator.urls(batch_id=batch_id, url_count=3).url_mappings
-    url_ids = [url_info.url_id for url_info in url_mappings]
-    await db_data_creator.metadata([url_ids[0]])
-    # Neither of these two URLs should be picked up
-    await db_data_creator.metadata([url_ids[1]], attribute=URLMetadataAttributeType.RECORD_TYPE)
-    await db_data_creator.metadata([url_ids[2]], validation_status=ValidationStatus.VALIDATED)
-    results = await db_data_creator.adb_client.get_urls_with_metadata(
-        attribute=URLMetadataAttributeType.RELEVANT,
-        validation_status=ValidationStatus.PENDING_VALIDATION
-    )
-    assert len(results) == 1
 
 
 @pytest.mark.asyncio
@@ -285,7 +234,10 @@ async def test_get_next_url_for_final_review_favor_more_components(db_data_creat
 
 
 @pytest.mark.asyncio
-async def test_get_next_url_for_final_review_favor_more_annotations(db_data_creator: DBDataCreator):
+async def test_get_next_url_for_final_review_favor_more_annotations(
+        db_data_creator: DBDataCreator,
+        wipe_database
+):
     """
     Test in the case of two URLs with the same number of components annotated, favoring the one with more total annotations
     """
@@ -360,4 +312,35 @@ async def test_get_next_url_for_final_review_only_confirmed_urls(db_data_creator
     result = await db_data_creator.adb_client.get_next_url_for_final_review()
 
     assert result is None
+
+@pytest.mark.asyncio
+async def test_approve_url_basic(db_data_creator: DBDataCreator):
+    url_mapping = await setup_for_get_next_url_for_final_review(
+        db_data_creator=db_data_creator,
+        annotation_count=3,
+        include_user_annotations=True
+    )
+
+    # Add confirmed agency
+    agency_id = await db_data_creator.agency_confirmed_suggestion(
+        url_id=url_mapping.url_id
+    )
+
+    adb_client = db_data_creator.adb_client
+    # Approve URL. Only URL should be affected. No other properties should be changed.
+    await adb_client.approve_url(
+        url_mapping.url_id,
+        record_type=RecordType.ARREST_RECORDS,
+        relevant=True
+    )
+
+    # Confirm same agency id is listed as confirmed
+    urls = await adb_client.get_all(URL)
+    assert len(urls) == 1
+    url = urls[0]
+    assert url.id == url_mapping.url_id
+    assert url.agency_id == agency_id
+    assert url.record_type == RecordType.ARREST_RECORDS.value
+    assert url.relevant == True
+    assert url.outcome == URLStatus.VALIDATED.value
 

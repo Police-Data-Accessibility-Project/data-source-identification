@@ -7,7 +7,7 @@ from sqlalchemy.dialects import postgresql
 from sqlalchemy.orm import declarative_base, relationship
 
 from collector_db.enums import PGEnum
-from core.enums import BatchStatus
+from core.enums import BatchStatus, RecordType
 from util.helper_functions import get_enum_values
 
 # Base class for SQLAlchemy ORM models
@@ -18,6 +18,15 @@ status_check_string = ", ".join([f"'{status}'" for status in get_enum_values(Bat
 CURRENT_TIME_SERVER_DEFAULT = func.now()
 
 batch_status_enum = PGEnum('complete', 'error', 'in-process', 'aborted', name='batch_status')
+
+record_type_values = get_enum_values(RecordType)
+
+def get_created_at_column():
+    return Column(TIMESTAMP, nullable=False, server_default=CURRENT_TIME_SERVER_DEFAULT)
+
+def get_updated_at_column():
+    return Column(TIMESTAMP, nullable=False, server_default=CURRENT_TIME_SERVER_DEFAULT, onupdate=CURRENT_TIME_SERVER_DEFAULT)
+
 
 class Batch(Base):
     __tablename__ = 'batches'
@@ -80,16 +89,25 @@ class URL(Base):
     collector_metadata = Column(JSON)
     # The outcome of the URL: submitted, human_labeling, rejected, duplicate, etc.
     outcome = Column(
-        postgresql.ENUM('pending', 'submitted', 'human_labeling', 'rejected', 'duplicate', 'error', name='url_status'),
+        postgresql.ENUM(
+            'pending',
+            'submitted',
+            'validated',
+            'duplicate',
+            'error',
+            name='url_status'
+        ),
         nullable=False
     )
-    created_at = Column(TIMESTAMP, nullable=False, server_default=CURRENT_TIME_SERVER_DEFAULT)
-    updated_at = Column(TIMESTAMP, nullable=False, server_default=CURRENT_TIME_SERVER_DEFAULT)
+    agency_id = Column(Integer, ForeignKey('agencies.agency_id', name='fk_url_agency_id'))
+    record_type = Column(postgresql.ENUM(*record_type_values, name='record_type'), nullable=True)
+    relevant = Column(Boolean, nullable=True)
+    created_at = get_created_at_column()
+    updated_at = get_updated_at_column()
 
     # Relationships
     batch = relationship("Batch", back_populates="urls")
     duplicates = relationship("Duplicate", back_populates="original_url")
-    url_metadata = relationship("URLMetadata", back_populates="url", cascade="all, delete-orphan")
     html_content = relationship("URLHTMLContent", back_populates="url", cascade="all, delete-orphan")
     error_info = relationship("URLErrorInfo", back_populates="url", cascade="all, delete-orphan")
     tasks = relationship(
@@ -97,60 +115,19 @@ class URL(Base):
         secondary="link_task_urls",
         back_populates="urls",
     )
-    automated_agency_suggestions = relationship("AutomatedUrlAgencySuggestion", back_populates="url")
-    user_agency_suggestions = relationship("UserUrlAgencySuggestion", back_populates="url")
-    confirmed_agencies = relationship("ConfirmedUrlAgency", back_populates="url")
-
-
-# URL Metadata table definition
-class URLMetadata(Base):
-    __tablename__ = 'url_metadata'
-    __table_args__ = (UniqueConstraint(
-        "url_id",
-        "attribute",
-        name="uq_url_id_attribute"),
-    )
-
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    url_id = Column(Integer, ForeignKey('urls.id', name='url_metadata_url_id_fkey'), nullable=False)
-    attribute = Column(
-        PGEnum('Record Type', 'Agency', 'Relevant', name='url_attribute'),
-        nullable=False)
-    value = Column(Text, nullable=False)
-    validation_status = Column(
-        PGEnum('Pending Validation', 'Validated', name='metadata_validation_status'),
-        nullable=False)
-    validation_source = Column(
-        PGEnum('Machine Learning', 'Label Studio', 'Manual', name='validation_source'),
-        nullable=False
-    )
-    notes = Column(Text, nullable=True)
-
-
-    # Timestamps
-    created_at = Column(TIMESTAMP, nullable=False, server_default=func.now())
-    updated_at = Column(TIMESTAMP, nullable=False, server_default=func.now(), onupdate=func.now())
-
-    # Relationships
-    url = relationship("URL", back_populates="url_metadata")
-    annotations = relationship("MetadataAnnotation", back_populates="url_metadata")
-
-class MetadataAnnotation(Base):
-    __tablename__ = 'metadata_annotations'
-    __table_args__ = (UniqueConstraint(
-        "user_id",
-        "metadata_id",
-        name="metadata_annotations_uq_user_id_metadata_id"),
-    )
-
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    user_id = Column(Integer, nullable=False)
-    metadata_id = Column(Integer, ForeignKey('url_metadata.id'), nullable=False)
-    value = Column(Text, nullable=False)
-    created_at = Column(TIMESTAMP, nullable=False, server_default=func.now())
-
-    # Relationships
-    url_metadata = relationship("URLMetadata", back_populates="annotations")
+    agency = relationship("Agency", uselist=False, back_populates="urls")
+    automated_agency_suggestions = relationship(
+        "AutomatedUrlAgencySuggestion", back_populates="url")
+    user_agency_suggestions = relationship(
+        "UserUrlAgencySuggestion", back_populates="url")
+    auto_record_type_suggestion = relationship(
+        "AutoRecordTypeSuggestion", uselist=False, back_populates="url")
+    user_record_type_suggestions = relationship(
+        "UserRecordTypeSuggestion", back_populates="url")
+    auto_relevant_suggestion = relationship(
+        "AutoRelevantSuggestion", uselist=False, back_populates="url")
+    user_relevant_suggestions = relationship(
+        "UserRelevantSuggestion", back_populates="url")
 
 class RootURL(Base):
     __tablename__ = 'root_url_cache'
@@ -164,7 +141,7 @@ class RootURL(Base):
     url = Column(String, nullable=False)
     page_title = Column(String, nullable=False)
     page_description = Column(String, nullable=True)
-    updated_at = Column(TIMESTAMP, nullable=False, server_default=func.now(), onupdate=func.now())
+    updated_at = get_updated_at_column()
 
 
 class URLErrorInfo(Base):
@@ -178,7 +155,7 @@ class URLErrorInfo(Base):
     id = Column(Integer, primary_key=True)
     url_id = Column(Integer, ForeignKey('urls.id'), nullable=False)
     error = Column(Text, nullable=False)
-    updated_at = Column(TIMESTAMP, nullable=False, server_default=CURRENT_TIME_SERVER_DEFAULT)
+    updated_at = get_updated_at_column()
     task_id = Column(Integer, ForeignKey('tasks.id'), nullable=False)
 
     # Relationships
@@ -200,7 +177,7 @@ class URLHTMLContent(Base):
         nullable=False)
     content = Column(Text, nullable=False)
 
-    updated_at = Column(TIMESTAMP, nullable=False, server_default=func.now(), onupdate=func.now())
+    updated_at = get_updated_at_column()
 
     # Relationships
     url = relationship("URL", back_populates="html_content")
@@ -237,7 +214,7 @@ class Log(Base):
     id = Column(Integer, primary_key=True)
     batch_id = Column(Integer, ForeignKey('batches.id'), nullable=False)
     log = Column(Text, nullable=False)
-    created_at = Column(TIMESTAMP, nullable=False, server_default=CURRENT_TIME_SERVER_DEFAULT)
+    created_at = get_created_at_column()
 
     # Relationships
     batch = relationship("Batch", back_populates="logs")
@@ -250,7 +227,7 @@ class Missing(Base):
     record_type = Column(String, nullable=False)
     batch_id = Column(Integer, ForeignKey('batches.id'))
     strategy_used = Column(Text, nullable=False)
-    date_searched = Column(TIMESTAMP, nullable=False, server_default=CURRENT_TIME_SERVER_DEFAULT)
+    date_searched = get_created_at_column()
 
     # Relationships
     batch = relationship("Batch", back_populates="missings")
@@ -268,7 +245,7 @@ class Task(Base):
             name='task_type'
         ), nullable=False)
     task_status = Column(batch_status_enum, nullable=False)
-    updated_at = Column(TIMESTAMP, nullable=False, server_default=CURRENT_TIME_SERVER_DEFAULT)
+    updated_at = get_updated_at_column()
 
     # Relationships
     urls = relationship(
@@ -298,7 +275,7 @@ class TaskError(Base):
     id = Column(Integer, primary_key=True)
     task_id = Column(Integer, ForeignKey('tasks.id', ondelete="CASCADE"), nullable=False)
     error = Column(Text, nullable=False)
-    updated_at = Column(TIMESTAMP, nullable=False, server_default=CURRENT_TIME_SERVER_DEFAULT)
+    updated_at = get_updated_at_column()
 
     # Relationships
     task = relationship("Task", back_populates="error")
@@ -317,27 +294,27 @@ class Agency(Base):
     state = Column(String, nullable=True)
     county = Column(String, nullable=True)
     locality = Column(String, nullable=True)
-    updated_at = Column(DateTime, nullable=False, default=func.now())
+    updated_at = get_updated_at_column()
 
     # Relationships
-    confirmed_urls = relationship("ConfirmedUrlAgency", back_populates="agency")
+    urls = relationship("URL", back_populates="agency")
     automated_suggestions = relationship("AutomatedUrlAgencySuggestion", back_populates="agency")
     user_suggestions = relationship("UserUrlAgencySuggestion", back_populates="agency")
 
 
-class ConfirmedUrlAgency(Base):
-    __tablename__ = "confirmed_url_agency"
-
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    agency_id = Column(Integer, ForeignKey("agencies.agency_id"), nullable=False)
-    url_id = Column(Integer, ForeignKey("urls.id"), nullable=False)
-
-    agency = relationship("Agency", back_populates="confirmed_urls")
-    url = relationship("URL", back_populates="confirmed_agencies")
-
-    __table_args__ = (
-        UniqueConstraint("agency_id", "url_id", name="uq_confirmed_url_agency"),
-    )
+# class ConfirmedUrlAgency(Base):
+#     __tablename__ = "confirmed_url_agency"
+#
+#     id = Column(Integer, primary_key=True, autoincrement=True)
+#     agency_id = Column(Integer, ForeignKey("agencies.agency_id"), nullable=False)
+#     url_id = Column(Integer, ForeignKey("urls.id"), nullable=False)
+#
+#     agency = relationship("Agency", back_populates="confirmed_urls")
+#     url = relationship("URL", back_populates="confirmed_agencies")
+#
+#     __table_args__ = (
+#         UniqueConstraint("url_id", name="uq_confirmed_url_agency"),
+#     )
 
 
 class AutomatedUrlAgencySuggestion(Base):
@@ -371,3 +348,75 @@ class UserUrlAgencySuggestion(Base):
     __table_args__ = (
         UniqueConstraint("agency_id", "url_id", "user_id", name="uq_user_url_agency_suggestions"),
     )
+
+class AutoRelevantSuggestion(Base):
+    __tablename__ = "auto_relevant_suggestions"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    url_id = Column(Integer, ForeignKey("urls.id"), nullable=False)
+    relevant = Column(Boolean, nullable=True)
+    created_at = get_created_at_column()
+    updated_at = get_updated_at_column()
+
+    __table_args__ = (
+        UniqueConstraint("url_id", name="auto_relevant_suggestions_uq_url_id"),
+    )
+
+    # Relationships
+
+    url = relationship("URL", back_populates="auto_relevant_suggestion")
+
+
+class AutoRecordTypeSuggestion(Base):
+    __tablename__ = "auto_record_type_suggestions"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    url_id = Column(Integer, ForeignKey("urls.id"), nullable=False)
+    record_type = Column(postgresql.ENUM(*record_type_values, name='record_type'), nullable=False)
+    created_at = get_created_at_column()
+    updated_at = get_updated_at_column()
+
+    __table_args__ = (
+        UniqueConstraint("url_id", name="auto_record_type_suggestions_uq_url_id"),
+    )
+
+    # Relationships
+
+    url = relationship("URL", back_populates="auto_record_type_suggestion")
+
+class UserRelevantSuggestion(Base):
+    __tablename__ = "user_relevant_suggestions"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    url_id = Column(Integer, ForeignKey("urls.id"), nullable=False)
+    user_id = Column(Integer, nullable=False)
+    relevant = Column(Boolean, nullable=False)
+    created_at = get_created_at_column()
+    updated_at = get_updated_at_column()
+
+    __table_args__ = (
+        UniqueConstraint("url_id", "user_id", name="uq_user_relevant_suggestions"),
+    )
+
+    # Relationships
+
+    url = relationship("URL", back_populates="user_relevant_suggestions")
+
+
+class UserRecordTypeSuggestion(Base):
+    __tablename__ = "user_record_type_suggestions"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    url_id = Column(Integer, ForeignKey("urls.id"), nullable=False)
+    user_id = Column(Integer, nullable=False)
+    record_type = Column(postgresql.ENUM(*record_type_values, name='record_type'), nullable=False)
+    created_at = get_created_at_column()
+    updated_at = get_updated_at_column()
+
+    __table_args__ = (
+        UniqueConstraint("url_id", "user_id", name="uq_user_record_type_suggestions"),
+    )
+
+    # Relationships
+
+    url = relationship("URL", back_populates="user_record_type_suggestions")
