@@ -234,7 +234,10 @@ async def test_get_next_url_for_final_review_favor_more_components(db_data_creat
 
 
 @pytest.mark.asyncio
-async def test_get_next_url_for_final_review_favor_more_annotations(db_data_creator: DBDataCreator):
+async def test_get_next_url_for_final_review_favor_more_annotations(
+        db_data_creator: DBDataCreator,
+        wipe_database
+):
     """
     Test in the case of two URLs with the same number of components annotated, favoring the one with more total annotations
     """
