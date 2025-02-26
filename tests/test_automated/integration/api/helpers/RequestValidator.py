@@ -9,6 +9,7 @@ from collector_db.DTOs.TaskInfo import TaskInfo
 from collector_db.enums import TaskType
 from collector_manager.DTOs.ExampleInputDTO import ExampleInputDTO
 from collector_manager.enums import CollectorType
+from core.DTOs.FinalReviewApprovalInfo import FinalReviewApprovalInfo
 from core.DTOs.GetBatchLogsResponse import GetBatchLogsResponse
 from core.DTOs.GetBatchStatusResponse import GetBatchStatusResponse
 from core.DTOs.GetDuplicatesByBatchResponse import GetDuplicatesByBatchResponse
@@ -18,7 +19,8 @@ from core.DTOs.GetNextRelevanceAnnotationResponseInfo import GetNextRelevanceAnn
 from core.DTOs.GetNextURLForAgencyAnnotationResponse import GetNextURLForAgencyAnnotationResponse, \
     URLAgencyAnnotationPostInfo
 from core.DTOs.GetNextURLForAnnotationResponse import GetNextURLForAnnotationResponse
-from core.DTOs.GetNextURLForFinalReviewResponse import GetNextURLForFinalReviewResponse
+from core.DTOs.GetNextURLForFinalReviewResponse import GetNextURLForFinalReviewResponse, \
+    GetNextURLForFinalReviewOuterResponse
 from core.DTOs.GetTasksResponse import GetTasksResponse
 from core.DTOs.GetURLsByBatchResponse import GetURLsByBatchResponse
 from core.DTOs.GetURLsResponseInfo import GetURLsResponseInfo
@@ -259,9 +261,18 @@ class RequestValidator:
         )
         return GetTasksResponse(**data)
 
-    async def review_next_source(self) -> GetNextURLForFinalReviewResponse:
+    async def review_next_source(self) -> GetNextURLForFinalReviewOuterResponse:
         data = self.get(
             url=f"/review/next-source"
         )
-        return GetNextURLForFinalReviewResponse(**data)
+        return GetNextURLForFinalReviewOuterResponse(**data)
 
+    async def approve_and_get_next_source_for_review(
+            self,
+            approval_info: FinalReviewApprovalInfo
+    ) -> GetNextURLForFinalReviewOuterResponse:
+        data = self.post(
+            url=f"/review/approve-source",
+            json=approval_info.model_dump(mode='json')
+        )
+        return GetNextURLForFinalReviewOuterResponse(**data)

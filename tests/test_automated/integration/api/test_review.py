@@ -1,5 +1,9 @@
 import pytest
 
+from collector_db.models import URL
+from collector_manager.enums import URLStatus
+from core.DTOs.FinalReviewApprovalInfo import FinalReviewApprovalInfo
+from core.DTOs.GetNextURLForFinalReviewResponse import GetNextURLForFinalReviewOuterResponse
 from core.enums import RecordType
 from tests.helpers.complex_test_data_functions import setup_for_get_next_url_for_final_review
 
@@ -19,7 +23,9 @@ async def test_review_next_source(api_test_helper):
         count=3
     )
 
-    result = await ath.request_validator.review_next_source()
+    outer_result = await ath.request_validator.review_next_source()
+
+    result = outer_result.next_source
 
     assert result.url == url_mapping.url
     html_info = result.html_info
@@ -52,4 +58,43 @@ async def test_review_next_source(api_test_helper):
     assert len(user_agency_suggestions_as_list) == 3
     for i in range(3):
         assert user_agency_suggestions_as_list[i].count == 3 - i
+
+@pytest.mark.asyncio
+async def test_approve_and_get_next_source_for_review(api_test_helper):
+    ath = api_test_helper
+    db_data_creator = ath.db_data_creator
+
+    url_mapping = await setup_for_get_next_url_for_final_review(
+        db_data_creator=db_data_creator,
+        annotation_count=3,
+        include_user_annotations=True
+    )
+
+    # Add confirmed agency
+    agency_id = await db_data_creator.agency_confirmed_suggestion(
+        url_id=url_mapping.url_id
+    )
+
+    result: GetNextURLForFinalReviewOuterResponse = await ath.request_validator.approve_and_get_next_source_for_review(
+        approval_info=FinalReviewApprovalInfo(
+            url_id=url_mapping.url_id,
+            record_type=RecordType.ARREST_RECORDS,
+            relevant=True,
+            agency_id=agency_id
+        )
+    )
+
+    assert result.next_source is None
+
+    adb_client = db_data_creator.adb_client
+    # Confirm same agency id is listed as confirmed
+    urls = await adb_client.get_all(URL)
+    assert len(urls) == 1
+    url = urls[0]
+    assert url.id == url_mapping.url_id
+    assert url.agency_id == agency_id
+    assert url.record_type == RecordType.ARREST_RECORDS.value
+    assert url.relevant == True
+    assert url.outcome == URLStatus.VALIDATED.value
+
 

@@ -61,3 +61,8 @@ class GetNextURLForFinalReviewResponse(BaseModel):
     annotations: FinalReviewAnnotationInfo = Field(
         title="The annotations for the URL, from both users and the auto-labeler",
     )
+
+class GetNextURLForFinalReviewOuterResponse(BaseModel):
+    next_source: Optional[GetNextURLForFinalReviewResponse] = Field(
+        title="The next source to be reviewed",
+    )
