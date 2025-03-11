@@ -128,6 +128,24 @@ class URL(Base):
         "AutoRelevantSuggestion", uselist=False, back_populates="url")
     user_relevant_suggestions = relationship(
         "UserRelevantSuggestion", back_populates="url")
+    approving_users = relationship(
+        "ApprovingUserURL", back_populates="url")
+
+class ApprovingUserURL(Base):
+    __tablename__ = 'approving_user_url'
+    __table_args__ = (
+        UniqueConstraint(
+        "url_id",
+        name="approving_user_url_uq_user_id_url_id"),
+    )
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, nullable=False)
+    url_id = Column(Integer, ForeignKey('urls.id'), nullable=False)
+    created_at = get_created_at_column()
+
+    # Relationships
+    url = relationship("URL", back_populates="approving_users")
 
 class RootURL(Base):
     __tablename__ = 'root_url_cache'

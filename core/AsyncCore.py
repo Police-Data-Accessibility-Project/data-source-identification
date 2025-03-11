@@ -30,6 +30,7 @@ from hugging_face.HuggingFaceInterface import HuggingFaceInterface
 from llm_api_logic.OpenAIRecordClassifier import OpenAIRecordClassifier
 from pdap_api_client.AccessManager import AccessManager
 from pdap_api_client.PDAPClient import PDAPClient
+from security_manager.SecurityManager import AccessInfo
 from util.helper_functions import get_from_env
 
 
@@ -213,12 +214,14 @@ class AsyncCore:
 
     async def approve_and_get_next_source_for_review(
             self,
-            approval_info: FinalReviewApprovalInfo
+            approval_info: FinalReviewApprovalInfo,
+            access_info: AccessInfo
     ):
         await self.adb_client.approve_url(
             url_id=approval_info.url_id,
             record_type=approval_info.record_type,
             relevant=approval_info.relevant,
-            agency_id=approval_info.agency_id
+            agency_id=approval_info.agency_id,
+            user_id=access_info.user_id
         )
         return await self.get_next_source_for_review()

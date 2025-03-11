@@ -9,7 +9,7 @@ from collector_db.DTOs.URLErrorInfos import URLErrorPydanticInfo
 from collector_db.DTOs.URLInfo import URLInfo
 from collector_db.DTOs.URLMetadataInfo import URLMetadataInfo
 from collector_db.enums import URLMetadataAttributeType, ValidationStatus, ValidationSource
-from collector_db.models import URL
+from collector_db.models import URL, ApprovingUserURL
 from collector_manager.enums import URLStatus
 from core.enums import BatchStatus, RecordType, SuggestionType
 from tests.helpers.DBDataCreator import DBDataCreator
@@ -331,7 +331,8 @@ async def test_approve_url_basic(db_data_creator: DBDataCreator):
     await adb_client.approve_url(
         url_mapping.url_id,
         record_type=RecordType.ARREST_RECORDS,
-        relevant=True
+        relevant=True,
+        user_id=1
     )
 
     # Confirm same agency id is listed as confirmed
@@ -343,4 +344,9 @@ async def test_approve_url_basic(db_data_creator: DBDataCreator):
     assert url.record_type == RecordType.ARREST_RECORDS.value
     assert url.relevant == True
     assert url.outcome == URLStatus.VALIDATED.value
+
+    approving_user_urls = await adb_client.get_all(ApprovingUserURL)
+    assert len(approving_user_urls) == 1
+    assert approving_user_urls[0].user_id == 1
+    assert approving_user_urls[0].url_id == url_mapping.url_id
 

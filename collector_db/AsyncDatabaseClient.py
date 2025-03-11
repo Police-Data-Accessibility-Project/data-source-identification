@@ -22,7 +22,7 @@ from collector_db.helper_functions import get_postgres_connection_string
 from collector_db.models import URL, URLErrorInfo, URLHTMLContent, Base, \
     RootURL, Task, TaskError, LinkTaskURL, Batch, Agency, AutomatedUrlAgencySuggestion, \
     UserUrlAgencySuggestion, AutoRelevantSuggestion, AutoRecordTypeSuggestion, UserRelevantSuggestion, \
-    UserRecordTypeSuggestion
+    UserRecordTypeSuggestion, ApprovingUserURL
 from collector_manager.enums import URLStatus, CollectorType
 from core.DTOs.GetNextRecordTypeAnnotationResponseInfo import GetNextRecordTypeAnnotationResponseInfo
 from core.DTOs.GetNextRelevanceAnnotationResponseInfo import GetNextRelevanceAnnotationResponseInfo
@@ -1107,7 +1107,8 @@ class AsyncDatabaseClient:
             url_id: int,
             record_type: RecordType,
             relevant: bool,
-            agency_id: Optional[int] = None
+            user_id: int,
+            agency_id: Optional[int] = None,
     ) -> None:
 
         # Get URL
@@ -1135,3 +1136,10 @@ class AsyncDatabaseClient:
         # If it does, do nothing
 
         url.outcome = URLStatus.VALIDATED.value
+
+        approving_user_url = ApprovingUserURL(
+            user_id=user_id,
+            url_id=url_id
+        )
+
+        session.add(approving_user_url)
