@@ -27,5 +27,8 @@ async def approve_source(
     access_info: AccessInfo = Depends(get_access_info),
     approval_info: FinalReviewApprovalInfo = FinalReviewApprovalInfo
 ) -> GetNextURLForFinalReviewOuterResponse:
-    next_source = await core.approve_and_get_next_source_for_review(approval_info)
+    next_source = await core.approve_and_get_next_source_for_review(
+        approval_info,
+        access_info=access_info
+    )
     return GetNextURLForFinalReviewOuterResponse(next_source=next_source)
