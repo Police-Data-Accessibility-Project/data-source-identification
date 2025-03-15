@@ -5,8 +5,8 @@ import requests
 from aiohttp import ClientSession
 
 from pdap_api_client.DTOs import RequestType, Namespaces, RequestInfo, ResponseInfo
+from util.helper_functions import get_from_env
 
-API_URL = "https://data-sources-v2.pdap.dev/api"
 request_methods = {
     RequestType.POST: ClientSession.post,
     RequestType.PUT: ClientSession.put,
@@ -23,7 +23,8 @@ def build_url(
     namespace: Namespaces,
     subdomains: Optional[list[str]] = None
 ):
-    url = f"{API_URL}/{namespace.value}"
+    api_url = get_from_env('PDAP_API_URL')
+    url = f"{api_url}/{namespace.value}"
     if subdomains is not None:
         url = f"{url}/{'/'.join(subdomains)}"
     return url

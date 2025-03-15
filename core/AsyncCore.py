@@ -18,6 +18,7 @@ from core.DTOs.GetURLsResponseInfo import GetURLsResponseInfo
 from core.DTOs.AnnotationRequestInfo import AnnotationRequestInfo
 from core.DTOs.TaskOperatorRunInfo import TaskOperatorRunInfo, TaskOperatorOutcome
 from core.classes.AgencyIdentificationTaskOperator import AgencyIdentificationTaskOperator
+from core.classes.SubmitApprovedURLTaskOperator import SubmitApprovedURLTaskOperator
 from core.classes.TaskOperatorBase import TaskOperatorBase
 from core.classes.URLHTMLTaskOperator import URLHTMLTaskOperator
 from core.classes.URLRecordTypeTaskOperator import URLRecordTypeTaskOperator
@@ -51,6 +52,15 @@ class AsyncCore:
         self.logger.addHandler(logging.StreamHandler())
         self.logger.setLevel(logging.INFO)
 
+    async def get_pdap_client(self):
+        return PDAPClient(
+            access_manager=AccessManager(
+                email=get_from_env("PDAP_EMAIL"),
+                password=get_from_env("PDAP_PASSWORD"),
+                api_key=get_from_env("PDAP_API_KEY"),
+            ),
+        )
+
     async def get_url_html_task_operator(self):
         self.logger.info("Running URL HTML Task")
         operator = URLHTMLTaskOperator(
@@ -76,13 +86,7 @@ class AsyncCore:
         return operator
 
     async def get_agency_identification_task_operator(self):
-        pdap_client = PDAPClient(
-            access_manager=AccessManager(
-                email=get_from_env("PDAP_EMAIL"),
-                password=get_from_env("PDAP_PASSWORD"),
-                api_key=get_from_env("PDAP_API_KEY"),
-            ),
-        )
+        pdap_client = await self.get_pdap_client()
         muckrock_api_interface = MuckrockAPIInterface()
         operator = AgencyIdentificationTaskOperator(
             adb_client=self.adb_client,
@@ -91,12 +95,22 @@ class AsyncCore:
         )
         return operator
 
+    async def get_submit_approved_url_task_operator(self):
+        pdap_client = await self.get_pdap_client()
+        operator = SubmitApprovedURLTaskOperator(
+            adb_client=self.adb_client,
+            pdap_client=pdap_client
+        )
+        return operator
+
+
     async def get_task_operators(self) -> list[TaskOperatorBase]:
         return [
             await self.get_url_html_task_operator(),
             await self.get_url_relevance_huggingface_task_operator(),
             await self.get_url_record_type_task_operator(),
-            await self.get_agency_identification_task_operator()
+            await self.get_agency_identification_task_operator(),
+            await self.get_submit_approved_url_task_operator(),
         ]
 
     async def run_tasks(self):
