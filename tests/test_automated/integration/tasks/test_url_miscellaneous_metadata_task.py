@@ -6,7 +6,7 @@ from collector_db.models import URL, URLOptionalDataSourceMetadata
 from collector_manager.enums import CollectorType
 from core.DTOs.TaskOperatorRunInfo import TaskOperatorOutcome
 from core.classes.URLMiscellaneousMetadataTaskOperator import URLMiscellaneousMetadataTaskOperator
-from helpers.DBDataCreator import DBDataCreator
+from tests.helpers.DBDataCreator import DBDataCreator
 
 
 def batch_and_url(
