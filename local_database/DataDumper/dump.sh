@@ -6,7 +6,7 @@ DB_USER=${DUMP_USER:-"your_user"}
 DB_PORT=${DUMP_PORT:-"5432"}  # Default to 5432 if not provided
 DB_PASSWORD=${DUMP_PASSWORD:-"your_password"}
 DB_NAME=${DUMP_NAME:-"your_database"}
-DUMP_FILE=${DUMP_FILE:-"/dump/db_dump.sql"}
+DUMP_FILE="/dump/db_dump.sql"
 # Export password for pg_dump
 export PGPASSWORD=$DB_PASSWORD
 # Dump the database

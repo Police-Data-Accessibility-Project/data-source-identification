@@ -79,10 +79,8 @@ class URLRequestInterface:
             self,
             urls: list[str],
     ) -> list[URLResponseInfo]:
-        try:
-            ensure_browsers_installed()
-            return await self.fetch_urls(urls)
-        except Exception as e:
-            return []
+        ensure_browsers_installed()
+        return await self.fetch_urls(urls)
+
 
 

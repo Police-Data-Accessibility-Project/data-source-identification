@@ -1,4 +1,4 @@
-
+import traceback
 from abc import ABC, abstractmethod
 from collector_db.AsyncDatabaseClient import AsyncDatabaseClient
 from collector_db.enums import TaskType
@@ -50,9 +50,10 @@ class TaskOperatorBase(ABC):
             await self.inner_task_logic()
             return await self.conclude_task()
         except Exception as e:
+            stack_trace = traceback.format_exc()
             return await self.run_info(
                 outcome=TaskOperatorOutcome.ERROR,
-                message=str(e)
+                message=str(e) + "\n" + stack_trace
             )
 
     async def run_info(self, outcome: TaskOperatorOutcome, message: str):

@@ -2,11 +2,11 @@
 SQLAlchemy ORM models
 """
 from sqlalchemy import func, Column, Integer, String, TIMESTAMP, Float, JSON, ForeignKey, Text, UniqueConstraint, \
-    Boolean, DateTime
+    Boolean, DateTime, ARRAY
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.orm import declarative_base, relationship
 
-from collector_db.enums import PGEnum
+from collector_db.enums import PGEnum, TaskType
 from core.enums import BatchStatus, RecordType
 from util.helper_functions import get_enum_values
 
@@ -85,6 +85,8 @@ class URL(Base):
     # The batch this URL is associated with
     batch_id = Column(Integer, ForeignKey('batches.id', name='fk_url_batch_id'), nullable=False)
     url = Column(Text, unique=True)
+    name = Column(String)
+    description = Column(Text)
     # The metadata from the collector
     collector_metadata = Column(JSON)
     # The outcome of the URL: submitted, human_labeling, rejected, duplicate, etc.
@@ -130,6 +132,20 @@ class URL(Base):
         "UserRelevantSuggestion", back_populates="url")
     approving_users = relationship(
         "ApprovingUserURL", back_populates="url")
+    optional_data_source_metadata = relationship(
+        "URLOptionalDataSourceMetadata", uselist=False, back_populates="url")
+
+class URLOptionalDataSourceMetadata(Base):
+    __tablename__ = 'url_optional_data_source_metadata'
+
+    id = Column(Integer, primary_key=True)
+    url_id = Column(Integer, ForeignKey('urls.id'), nullable=False)
+    record_formats = Column(ARRAY(String), nullable=True)
+    data_portal_type = Column(String, nullable=True)
+    supplying_entity = Column(String, nullable=True)
+
+    # Relationships
+    url = relationship("URL", uselist=False, back_populates="optional_data_source_metadata")
 
 class ApprovingUserURL(Base):
     __tablename__ = 'approving_user_url'
@@ -256,10 +272,7 @@ class Task(Base):
     id = Column(Integer, primary_key=True)
     task_type = Column(
         PGEnum(
-            'HTML',
-            'Relevancy',
-            'Record Type',
-            'Agency Identification',
+            *[task_type.value for task_type in TaskType],
             name='task_type'
         ), nullable=False)
     task_status = Column(batch_status_enum, nullable=False)
@@ -318,22 +331,6 @@ class Agency(Base):
     urls = relationship("URL", back_populates="agency")
     automated_suggestions = relationship("AutomatedUrlAgencySuggestion", back_populates="agency")
     user_suggestions = relationship("UserUrlAgencySuggestion", back_populates="agency")
-
-
-# class ConfirmedUrlAgency(Base):
-#     __tablename__ = "confirmed_url_agency"
-#
-#     id = Column(Integer, primary_key=True, autoincrement=True)
-#     agency_id = Column(Integer, ForeignKey("agencies.agency_id"), nullable=False)
-#     url_id = Column(Integer, ForeignKey("urls.id"), nullable=False)
-#
-#     agency = relationship("Agency", back_populates="confirmed_urls")
-#     url = relationship("URL", back_populates="confirmed_agencies")
-#
-#     __table_args__ = (
-#         UniqueConstraint("url_id", name="uq_confirmed_url_agency"),
-#     )
-
 
 class AutomatedUrlAgencySuggestion(Base):
     __tablename__ = "automated_url_agency_suggestions"
