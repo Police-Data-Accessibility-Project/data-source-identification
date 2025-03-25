@@ -20,6 +20,7 @@ from core.DTOs.TaskOperatorRunInfo import TaskOperatorRunInfo, TaskOperatorOutco
 from core.classes.AgencyIdentificationTaskOperator import AgencyIdentificationTaskOperator
 from core.classes.TaskOperatorBase import TaskOperatorBase
 from core.classes.URLHTMLTaskOperator import URLHTMLTaskOperator
+from core.classes.URLMiscellaneousMetadataTaskOperator import URLMiscellaneousMetadataTaskOperator
 from core.classes.URLRecordTypeTaskOperator import URLRecordTypeTaskOperator
 from core.classes.URLRelevanceHuggingfaceTaskOperator import URLRelevanceHuggingfaceTaskOperator
 from core.enums import BatchStatus, SuggestionType, RecordType
@@ -91,12 +92,19 @@ class AsyncCore:
         )
         return operator
 
+    async def get_url_miscellaneous_metadata_task_operator(self):
+        operator = URLMiscellaneousMetadataTaskOperator(
+            adb_client=self.adb_client
+        )
+        return operator
+
     async def get_task_operators(self) -> list[TaskOperatorBase]:
         return [
             await self.get_url_html_task_operator(),
             await self.get_url_relevance_huggingface_task_operator(),
             await self.get_url_record_type_task_operator(),
-            await self.get_agency_identification_task_operator()
+            await self.get_agency_identification_task_operator(),
+            await self.get_url_miscellaneous_metadata_task_operator()
         ]
 
     async def run_tasks(self):
@@ -225,3 +233,4 @@ class AsyncCore:
             user_id=access_info.user_id
         )
         return await self.get_next_source_for_review()
+

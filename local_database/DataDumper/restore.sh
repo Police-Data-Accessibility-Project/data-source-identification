@@ -15,10 +15,14 @@ MAINT_CONNECTION_STRING="postgresql://$DB_USER:$DB_PASSWORD@$DB_HOST:$DB_PORT/$M
 echo "Checking if database $NEW_DB_NAME exists on $DB_HOST:$DB_PORT..."
 psql -d $MAINT_CONNECTION_STRING -tc "SELECT 1 FROM pg_database WHERE datname = '$NEW_DB_NAME';" | grep -q 1 && {
     echo "Database $NEW_DB_NAME exists. Dropping it..."
-    # Terminate all connections to the database
-    psql -d $MAINT_CONNECTION_STRING -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = '$NEW_DB_NAME';"
+    psql -d $MAINT_CONNECTION_STRING -tAc "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = 'your_database_name' AND pid <> pg_backend_pid();"
     # Drop the database
     psql -d $MAINT_CONNECTION_STRING -c "DROP DATABASE $NEW_DB_NAME;"
+    echo "Waiting for connections to terminate..."
+    while psql -d $MAINT_CONNECTION_STRING -tAc "SELECT 1 FROM pg_stat_activity WHERE datname = '$NEW_DB_NAME';" | grep -q 1; do
+        sleep 1
+        echo "Still waiting..."
+    done
 }
 # Create the new database
 echo "Creating new database $NEW_DB_NAME on $DB_HOST:$DB_PORT..."

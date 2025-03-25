@@ -7,9 +7,7 @@ from collector_db.AsyncDatabaseClient import AsyncDatabaseClient
 from collector_db.enums import TaskType
 from core.DTOs.TaskOperatorRunInfo import TaskOperatorOutcome
 from core.classes.URLHTMLTaskOperator import URLHTMLTaskOperator
-from core.enums import BatchStatus
 from tests.helpers.DBDataCreator import DBDataCreator
-from tests.helpers.assert_functions import assert_database_has_no_tasks
 from html_tag_collector.DataClassTags import ResponseHTMLInfo
 from html_tag_collector.ResponseParser import HTMLResponseParser
 from html_tag_collector.RootURLCache import RootURLCache

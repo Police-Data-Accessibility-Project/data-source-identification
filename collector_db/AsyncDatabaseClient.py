@@ -2,7 +2,7 @@ from functools import wraps
 from typing import Optional, Type
 
 from fastapi import HTTPException
-from sqlalchemy import select, exists, func, case, desc, Select, not_, and_
+from sqlalchemy import select, exists, func, case, desc, Select, not_, and_, or_, update
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.orm import selectinload, joinedload, QueryableAttribute
 from sqlalchemy.sql.functions import coalesce
@@ -22,7 +22,7 @@ from collector_db.helper_functions import get_postgres_connection_string
 from collector_db.models import URL, URLErrorInfo, URLHTMLContent, Base, \
     RootURL, Task, TaskError, LinkTaskURL, Batch, Agency, AutomatedUrlAgencySuggestion, \
     UserUrlAgencySuggestion, AutoRelevantSuggestion, AutoRecordTypeSuggestion, UserRelevantSuggestion, \
-    UserRecordTypeSuggestion, ApprovingUserURL
+    UserRecordTypeSuggestion, ApprovingUserURL, URLOptionalDataSourceMetadata
 from collector_manager.enums import URLStatus, CollectorType
 from core.DTOs.GetNextRecordTypeAnnotationResponseInfo import GetNextRecordTypeAnnotationResponseInfo
 from core.DTOs.GetNextRelevanceAnnotationResponseInfo import GetNextRelevanceAnnotationResponseInfo
@@ -34,6 +34,7 @@ from core.DTOs.GetURLsResponseInfo import GetURLsResponseInfo, GetURLsResponseEr
     GetURLsResponseInnerInfo
 from core.DTOs.URLAgencySuggestionInfo import URLAgencySuggestionInfo
 from core.DTOs.task_data_objects.AgencyIdentificationTDO import AgencyIdentificationTDO
+from core.DTOs.task_data_objects.URLMiscellaneousMetadataTDO import URLMiscellaneousMetadataTDO
 from core.enums import BatchStatus, SuggestionType, RecordType
 from html_tag_collector.DataClassTags import convert_to_response_html_info
 
@@ -354,6 +355,68 @@ class AsyncDatabaseClient:
         return bool(scalar_result.first())
 
     @session_manager
+    async def has_pending_urls_missing_miscellaneous_metadata(self, session: AsyncSession) -> bool:
+        query = StatementComposer.pending_urls_missing_miscellaneous_metadata_query()
+        query = query.limit(1)
+
+        scalar_result = await session.scalars(query)
+        return bool(scalar_result.first())
+
+    @session_manager
+    async def get_pending_urls_missing_miscellaneous_metadata(
+            self,
+            session: AsyncSession
+    ) -> list[URLMiscellaneousMetadataTDO]:
+        query = StatementComposer.pending_urls_missing_miscellaneous_metadata_query()
+        query = (
+            query.options(
+                selectinload(URL.batch),
+            ).limit(100).order_by(URL.id)
+        )
+
+        scalar_result = await session.scalars(query)
+        all_results = scalar_result.all()
+        final_results = []
+        for result in all_results:
+            tdo = URLMiscellaneousMetadataTDO(
+                url_id=result.id,
+                collector_metadata=result.collector_metadata,
+                collector_type=CollectorType(result.batch.strategy),
+            )
+            final_results.append(tdo)
+        return final_results
+
+    @session_manager
+    async def add_miscellaneous_metadata(self, session: AsyncSession, tdos: list[URLMiscellaneousMetadataTDO]):
+        updates = []
+
+        for tdo in tdos:
+            update_query = update(
+                URL
+            ).where(
+                URL.id == tdo.url_id
+            ).values(
+                name=tdo.name,
+                description=tdo.description,
+            )
+
+            updates.append(update_query)
+
+        for stmt in updates:
+            await session.execute(stmt)
+
+        for tdo in tdos:
+            metadata_object = URLOptionalDataSourceMetadata(
+                url_id=tdo.url_id,
+                record_formats=tdo.record_formats,
+                data_portal_type=tdo.data_portal_type,
+                supplying_entity=tdo.supplying_entity
+            )
+            session.add(metadata_object)
+
+
+
+    @session_manager
     async def get_pending_urls_without_html_data(self, session: AsyncSession):
         # TODO: Add test that includes some urls WITH html data. Check they're not returned
         statement = self.statement_composer.pending_urls_without_html_data()
@@ -433,97 +496,15 @@ class AsyncDatabaseClient:
         )
 
 
-    #TODO: Slated for deletion
     @session_manager
-    async def get_urls_with_html_data_and_without_metadata_type(
-            self,
-            session: AsyncSession,
-            without_metadata_type: URLMetadataAttributeType = URLMetadataAttributeType.RELEVANT
-    ) -> list[URLWithHTML]:
-
-        # Get URLs with no relevancy metadata
-        statement = (select(URL)
-                     .options(selectinload(URL.html_content))
-                     .where(URL.outcome == URLStatus.PENDING.value))
-        # Exclude URLs with auto suggested record types
-        statement = self.statement_composer.exclude_urls_with_extant_model(
-            statement=statement,
-            model=AutoRecordTypeSuggestion
-        )
-        statement = statement.limit(100).order_by(URL.id)
-
-
-        # TODO: The below can probably be generalized
-
-
-        statement = self.statement_composer.exclude_urls_with_select_metadata(
-            statement=statement,
-            attribute=without_metadata_type
-        )
-        # TODO: Generalize
-        statement = statement.limit(100).order_by(URL.id)
-        raw_result = await session.execute(statement)
-        result = raw_result.all()
-        url_ids_to_urls = {url_id: url for url_id, url, _ in result}
-        url_ids_to_html_info = {url_id: [] for url_id, _, _ in result}
-
-        for url_id, _, html_info in result:
-            url_ids_to_html_info[url_id].append(
-                URLHTMLContentInfo(**html_info.__dict__)
-            )
-
-        final_results = []
-        for url_id, url in url_ids_to_urls.items():
-            url_with_html = URLWithHTML(
-                url_id=url_id,
-                url=url,
-                html_infos=url_ids_to_html_info[url_id]
-            )
-            final_results.append(url_with_html)
-
-        return final_results
-
-    @session_manager
-    async def has_pending_urls_with_html_data_and_without_metadata_type(
-            self,
-            session: AsyncSession,
-            without_metadata_type: URLMetadataAttributeType = URLMetadataAttributeType.RELEVANT
-    ) -> bool:
-        # TODO: Generalize this so that it can exclude based on other attributes
-        # Get URLs with no relevancy metadata
-        statement = (select(URL.id, URL.url, URLHTMLContent).
-                     join(URLHTMLContent).
-                     where(URL.outcome == URLStatus.PENDING.value))
-        statement = self.statement_composer.exclude_urls_with_select_metadata(
-            statement=statement,
-            attribute=without_metadata_type
-        )
-        statement = statement.limit(1)
-        raw_result = await session.execute(statement)
-        result = raw_result.all()
-        return len(result) > 0
-
-
-
-    # @session_manager
-    # async def get_annotations_for_metadata_id(
-    #         self,
-    #         session: AsyncSession,
-    #         metadata_id: int
-    # ) -> list[MetadataAnnotation]:
-    #     statement = (select(MetadataAnnotation).
-    #                  where(MetadataAnnotation.metadata_id == metadata_id))
-    #     scalar_result = await session.scalars(statement)
-    #     all_results = scalar_result.all()
-    #     return [MetadataAnnotationInfo(**result.__dict__) for result in all_results]
-
-    @session_manager
-    async def get_all(self, session, model: Base):
+    async def get_all(self, session, model: Base, order_by_attribute: Optional[str] = None) -> list[Base]:
         """
         Get all records of a model
         Used primarily in testing
         """
         statement = select(model)
+        if order_by_attribute:
+            statement = statement.order_by(getattr(model, order_by_attribute))
         result = await session.execute(statement)
         return result.scalars().all()
 

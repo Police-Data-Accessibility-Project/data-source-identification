@@ -175,6 +175,7 @@ class DBDataCreator:
             self,
             batch_id: int,
             url_count: int,
+            collector_metadata: Optional[dict] = None,
             outcome: URLStatus = URLStatus.PENDING
     ) -> InsertURLsInfo:
         raw_urls = generate_test_urls(url_count)
@@ -183,7 +184,8 @@ class DBDataCreator:
             url_infos.append(
                 URLInfo(
                     url=url,
-                    outcome=outcome
+                    outcome=outcome,
+                    collector_metadata=collector_metadata
                 )
             )
 
