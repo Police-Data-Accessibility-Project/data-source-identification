@@ -15,6 +15,7 @@ from collector_db.DatabaseClient import DatabaseClient
 from collector_db.enums import URLMetadataAttributeType, ValidationStatus, ValidationSource, TaskType
 from collector_manager.enums import CollectorType, URLStatus
 from core.DTOs.URLAgencySuggestionInfo import URLAgencySuggestionInfo
+from core.DTOs.task_data_objects.URLMiscellaneousMetadataTDO import URLMiscellaneousMetadataTDO
 from core.enums import BatchStatus, SuggestionType, RecordType
 from tests.helpers.simple_test_data_functions import generate_test_urls
 
@@ -193,6 +194,32 @@ class DBDataCreator:
             url_infos=url_infos,
             batch_id=batch_id,
         )
+
+    async def url_miscellaneous_metadata(
+            self,
+            url_id: int,
+            name: str = "Test Name",
+            description: str = "Test Description",
+            record_formats: Optional[list[str]] = None,
+            data_portal_type: Optional[str] = "Test Data Portal Type",
+            supplying_entity: Optional[str] = "Test Supplying Entity"
+    ):
+        if record_formats is None:
+            record_formats = ["Test Record Format", "Test Record Format 2"]
+
+        tdo = URLMiscellaneousMetadataTDO(
+            url_id=url_id,
+            collector_metadata={},
+            collector_type=CollectorType.EXAMPLE,
+            record_formats=record_formats,
+            name=name,
+            description=description,
+            data_portal_type=data_portal_type,
+            supplying_entity=supplying_entity
+        )
+
+        await self.adb_client.add_miscellaneous_metadata([tdo])
+
 
     def duplicate_urls(self, duplicate_batch_id: int, url_ids: list[int]):
         """

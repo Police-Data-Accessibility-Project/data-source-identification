@@ -1,6 +1,6 @@
 import pytest
 
-from collector_db.models import URL
+from collector_db.models import URL, URLOptionalDataSourceMetadata
 from collector_manager.enums import URLStatus
 from core.DTOs.FinalReviewApprovalInfo import FinalReviewApprovalInfo
 from core.DTOs.GetNextURLForFinalReviewResponse import GetNextURLForFinalReviewOuterResponse
@@ -26,6 +26,15 @@ async def test_review_next_source(api_test_helper):
     outer_result = await ath.request_validator.review_next_source()
 
     result = outer_result.next_source
+
+    assert result.name == "Test Name"
+    assert result.description == "Test Description"
+
+    optional_metadata = result.optional_metadata
+
+    assert optional_metadata.data_portal_type == "Test Data Portal Type"
+    assert optional_metadata.supplying_entity == "Test Supplying Entity"
+    assert optional_metadata.record_formats == ["Test Record Format", "Test Record Format 2"]
 
     assert result.url == url_mapping.url
     html_info = result.html_info
@@ -80,7 +89,12 @@ async def test_approve_and_get_next_source_for_review(api_test_helper):
             url_id=url_mapping.url_id,
             record_type=RecordType.ARREST_RECORDS,
             relevant=True,
-            agency_id=agency_id
+            agency_id=agency_id,
+            name="New Test Name",
+            description="New Test Description",
+            record_formats=["New Test Record Format", "New Test Record Format 2"],
+            data_portal_type="New Test Data Portal Type",
+            supplying_entity="New Test Supplying Entity"
         )
     )
 
@@ -96,5 +110,13 @@ async def test_approve_and_get_next_source_for_review(api_test_helper):
     assert url.record_type == RecordType.ARREST_RECORDS.value
     assert url.relevant == True
     assert url.outcome == URLStatus.VALIDATED.value
+    assert url.name == "New Test Name"
+    assert url.description == "New Test Description"
+
+    optional_metadata = await adb_client.get_all(URLOptionalDataSourceMetadata)
+    assert len(optional_metadata) == 1
+    assert optional_metadata[0].data_portal_type == "New Test Data Portal Type"
+    assert optional_metadata[0].supplying_entity == "New Test Supplying Entity"
+    assert optional_metadata[0].record_formats == ["New Test Record Format", "New Test Record Format 2"]
 
 

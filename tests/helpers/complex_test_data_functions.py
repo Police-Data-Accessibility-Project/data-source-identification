@@ -6,7 +6,8 @@ from tests.helpers.DBDataCreator import DBDataCreator
 async def setup_for_get_next_url_for_final_review(
         db_data_creator: DBDataCreator,
         annotation_count: int,
-        include_user_annotations: bool = True
+        include_user_annotations: bool = True,
+        include_miscellaneous_metadata: bool = True
 ):
     """
     Sets up the database to test the final_review functions
@@ -15,7 +16,12 @@ async def setup_for_get_next_url_for_final_review(
     """
 
     batch_id = db_data_creator.batch()
-    url_mapping = db_data_creator.urls(batch_id=batch_id, url_count=1).url_mappings[0]
+    url_mapping = db_data_creator.urls(
+        batch_id=batch_id,
+        url_count=1
+    ).url_mappings[0]
+    if include_miscellaneous_metadata:
+        await db_data_creator.url_miscellaneous_metadata(url_id=url_mapping.url_id)
     await db_data_creator.html_data([url_mapping.url_id])
 
     async def add_agency_suggestion(count: int):

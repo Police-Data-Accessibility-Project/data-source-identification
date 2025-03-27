@@ -1,5 +1,5 @@
 from functools import wraps
-from typing import Optional, Type
+from typing import Optional, Type, Any
 
 from fastapi import HTTPException
 from sqlalchemy import select, exists, func, case, desc, Select, not_, and_, or_, update
@@ -24,11 +24,13 @@ from collector_db.models import URL, URLErrorInfo, URLHTMLContent, Base, \
     UserUrlAgencySuggestion, AutoRelevantSuggestion, AutoRecordTypeSuggestion, UserRelevantSuggestion, \
     UserRecordTypeSuggestion, ApprovingUserURL, URLOptionalDataSourceMetadata
 from collector_manager.enums import URLStatus, CollectorType
+from core.DTOs.FinalReviewApprovalInfo import FinalReviewApprovalInfo
 from core.DTOs.GetNextRecordTypeAnnotationResponseInfo import GetNextRecordTypeAnnotationResponseInfo
 from core.DTOs.GetNextRelevanceAnnotationResponseInfo import GetNextRelevanceAnnotationResponseInfo
 from core.DTOs.GetNextURLForAgencyAnnotationResponse import GetNextURLForAgencyAnnotationResponse, \
     GetNextURLForAgencyAgencyInfo, GetNextURLForAgencyAnnotationInnerResponse
-from core.DTOs.GetNextURLForFinalReviewResponse import GetNextURLForFinalReviewResponse, FinalReviewAnnotationInfo
+from core.DTOs.GetNextURLForFinalReviewResponse import GetNextURLForFinalReviewResponse, FinalReviewAnnotationInfo, \
+    FinalReviewOptionalMetadata
 from core.DTOs.GetTasksResponse import GetTasksResponse, GetTasksResponseTaskInfo
 from core.DTOs.GetURLsResponseInfo import GetURLsResponseInfo, GetURLsResponseErrorInfo, \
     GetURLsResponseInnerInfo
@@ -1014,6 +1016,7 @@ class AsyncDatabaseClient:
                 URL.outcome == URLStatus.PENDING.value
             )
 
+        # The below relationships are joined directly to the URL
         single_join_relationships = [
             URL.agency,
             URL.html_content,
@@ -1021,12 +1024,14 @@ class AsyncDatabaseClient:
             URL.auto_relevant_suggestion,
             URL.user_relevant_suggestions,
             URL.user_record_type_suggestions,
+            URL.optional_data_source_metadata
         ]
 
         options = [
             joinedload(relationship) for relationship in single_join_relationships
         ]
 
+        # The below relationships are joined to entities that are joined to the URL
         double_join_relationships = [
             (URL.automated_agency_suggestions, AutomatedUrlAgencySuggestion.agency),
             (URL.user_agency_suggestions, UserUrlAgencySuggestion.agency)
@@ -1059,11 +1064,23 @@ class AsyncDatabaseClient:
         html_content = result.html_content
         html_content_infos = [URLHTMLContentInfo(**html_info.__dict__) for html_info in html_content]
 
+        if result.optional_data_source_metadata is None:
+            optional_metadata = FinalReviewOptionalMetadata()
+        else:
+            optional_metadata = FinalReviewOptionalMetadata(
+                record_formats=result.optional_data_source_metadata.record_formats,
+                data_portal_type=result.optional_data_source_metadata.data_portal_type,
+                supplying_entity=result.optional_data_source_metadata.supplying_entity
+            )
+
+
         # Return
         return GetNextURLForFinalReviewResponse(
             id=result.id,
             url=result.url,
             html_info=convert_to_response_html_info(html_content_infos),
+            name=result.name,
+            description=result.description,
             annotations=FinalReviewAnnotationInfo(
                 relevant=DTOConverter.final_review_annotation_relevant_info(
                     user_suggestions=result.user_relevant_suggestions,
@@ -1078,33 +1095,63 @@ class AsyncDatabaseClient:
                     user_agency_suggestions=result.user_agency_suggestions,
                     confirmed_agency=result.agency
                 )
-            )
+            ),
+            optional_metadata=optional_metadata
         )
 
     @session_manager
     async def approve_url(
             self,
             session: AsyncSession,
-            url_id: int,
-            record_type: RecordType,
-            relevant: bool,
+            approval_info: FinalReviewApprovalInfo,
             user_id: int,
-            agency_id: Optional[int] = None,
     ) -> None:
 
         # Get URL
+        def update_if_not_none(
+                model,
+                field,
+                value: Optional[Any],
+                required: bool=False
+        ):
+            if value is not None:
+                setattr(model, field, value)
+                return
+            if not required:
+                return
+            model_value = getattr(model, field, None)
+            if model_value is None:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Must specify {field} if it does not already exist"
+                )
+
 
         query = (
             Select(URL)
-            .where(URL.id == url_id)
+            .where(URL.id == approval_info.url_id)
+            .options(
+                joinedload(URL.optional_data_source_metadata),
+            )
         )
 
         url = await session.execute(query)
         url = url.scalars().first()
 
-        url.record_type = record_type.value
-        url.relevant = relevant
+        update_if_not_none(
+            url,
+            "record_type",
+            approval_info.record_type.value if approval_info.record_type is not None else None,
+            required=True
+        )
+        update_if_not_none(
+            url,
+            "relevant",
+            approval_info.relevant,
+            required=True
+        )
 
+        agency_id = approval_info.agency_id
         if url.agency_id is None and agency_id is None:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -1114,13 +1161,44 @@ class AsyncDatabaseClient:
         if url.agency_id != agency_id and agency_id is not None:
             url.agency_id = agency_id
 
+
+
         # If it does, do nothing
 
         url.outcome = URLStatus.VALIDATED.value
 
+        update_if_not_none(url, "name", approval_info.name, required=True)
+        update_if_not_none(url, "description", approval_info.description, required=True)
+
+        optional_metadata = url.optional_data_source_metadata
+        if optional_metadata is None:
+            url.optional_data_source_metadata = URLOptionalDataSourceMetadata(
+                record_formats=approval_info.record_formats,
+                data_portal_type=approval_info.data_portal_type,
+                supplying_entity=approval_info.supplying_entity
+            )
+        else:
+            update_if_not_none(
+                optional_metadata,
+                "record_formats",
+                approval_info.record_formats
+            )
+            update_if_not_none(
+                optional_metadata,
+                "data_portal_type",
+                approval_info.data_portal_type
+            )
+            update_if_not_none(
+                optional_metadata,
+                "supplying_entity",
+                approval_info.supplying_entity
+            )
+
+        # Add approving user
+
         approving_user_url = ApprovingUserURL(
             user_id=user_id,
-            url_id=url_id
+            url_id=approval_info.url_id
         )
 
         session.add(approving_user_url)
