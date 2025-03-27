@@ -226,10 +226,7 @@ class AsyncCore:
             access_info: AccessInfo
     ):
         await self.adb_client.approve_url(
-            url_id=approval_info.url_id,
-            record_type=approval_info.record_type,
-            relevant=approval_info.relevant,
-            agency_id=approval_info.agency_id,
+            approval_info=approval_info,
             user_id=access_info.user_id
         )
         return await self.get_next_source_for_review()

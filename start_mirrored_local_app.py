@@ -226,51 +226,6 @@ class DockerManager:
         )
         return container
 
-    def run_dockerfile(self, command: str):
-        dockerfile_path = os.path.dirname(os.path.abspath(__file__))
-        tag = "court_scraper"
-        self.client.images.build(
-            path=dockerfile_path,
-            tag=tag
-        )
-
-        # Create data directory if doesn't exist
-        data_directory = dockerfile_path + "/data"
-        if not os.path.exists(data_directory):
-            os.makedirs(data_directory)
-
-        volumes = {
-            data_directory: {
-                "bind": "/app/data",
-                "mode": "rw"
-            }
-        }
-        # Stop if
-        self.stop_dockerfile()
-
-        container = self.run_container(
-            tag=tag,
-            command=command,
-            volumes=volumes,
-            name="court_scraper",
-            ports={"5000/tcp": 5000},
-            environment={
-                "MONGO_URI": "mongodb://mongo:27017/"
-            }
-        )
-
-        for log in container.logs(stream=True, follow=True):  # 'follow=True' ensures logs stop when the container stops
-            print(log.decode().strip())
-
-        return container
-
-    def stop_dockerfile(self):
-        try:
-            self.client.containers.get("court_scraper")
-        except NotFound:
-            return
-        self.client.containers.get("court_scraper").stop()
-        self.client.containers.get("court_scraper").remove()
 
 class TimestampChecker:
     def __init__(self):
