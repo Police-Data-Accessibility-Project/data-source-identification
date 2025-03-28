@@ -101,7 +101,6 @@ class URL(Base):
         ),
         nullable=False
     )
-    agency_id = Column(Integer, ForeignKey('agencies.agency_id', name='fk_url_agency_id'))
     record_type = Column(postgresql.ENUM(*record_type_values, name='record_type'), nullable=True)
     relevant = Column(Boolean, nullable=True)
     created_at = get_created_at_column()
@@ -117,7 +116,6 @@ class URL(Base):
         secondary="link_task_urls",
         back_populates="urls",
     )
-    agency = relationship("Agency", uselist=False, back_populates="urls")
     automated_agency_suggestions = relationship(
         "AutomatedUrlAgencySuggestion", back_populates="url")
     user_agency_suggestions = relationship(
@@ -134,6 +132,10 @@ class URL(Base):
         "ApprovingUserURL", back_populates="url")
     optional_data_source_metadata = relationship(
         "URLOptionalDataSourceMetadata", uselist=False, back_populates="url")
+    confirmed_agencies = relationship(
+        "ConfirmedURLAgency",
+    )
+
 
 class URLOptionalDataSourceMetadata(Base):
     __tablename__ = 'url_optional_data_source_metadata'
@@ -328,9 +330,23 @@ class Agency(Base):
     updated_at = get_updated_at_column()
 
     # Relationships
-    urls = relationship("URL", back_populates="agency")
     automated_suggestions = relationship("AutomatedUrlAgencySuggestion", back_populates="agency")
     user_suggestions = relationship("UserUrlAgencySuggestion", back_populates="agency")
+    confirmed_urls = relationship("ConfirmedURLAgency", back_populates="agency")
+
+class ConfirmedURLAgency(Base):
+    __tablename__ = "confirmed_url_agency"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    url_id = Column(Integer, ForeignKey("urls.id"), nullable=False)
+    agency_id = Column(Integer, ForeignKey("agencies.agency_id"), nullable=False)
+
+    url = relationship("URL", back_populates="confirmed_agencies")
+    agency = relationship("Agency", back_populates="confirmed_urls")
+
+    __table_args__ = (
+        UniqueConstraint("url_id", "agency_id", name="uq_confirmed_url_agency"),
+    )
 
 class AutomatedUrlAgencySuggestion(Base):
     __tablename__ = "automated_url_agency_suggestions"

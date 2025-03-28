@@ -2,7 +2,7 @@ from functools import wraps
 from typing import Optional, Type, Any
 
 from fastapi import HTTPException
-from sqlalchemy import select, exists, func, case, desc, Select, not_, and_, or_, update
+from sqlalchemy import select, exists, func, case, desc, Select, not_, and_, or_, update, Delete, Insert
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.orm import selectinload, joinedload, QueryableAttribute
 from sqlalchemy.sql.functions import coalesce
@@ -22,7 +22,7 @@ from collector_db.helper_functions import get_postgres_connection_string
 from collector_db.models import URL, URLErrorInfo, URLHTMLContent, Base, \
     RootURL, Task, TaskError, LinkTaskURL, Batch, Agency, AutomatedUrlAgencySuggestion, \
     UserUrlAgencySuggestion, AutoRelevantSuggestion, AutoRecordTypeSuggestion, UserRelevantSuggestion, \
-    UserRecordTypeSuggestion, ApprovingUserURL, URLOptionalDataSourceMetadata
+    UserRecordTypeSuggestion, ApprovingUserURL, URLOptionalDataSourceMetadata, ConfirmedURLAgency
 from collector_manager.enums import URLStatus, CollectorType
 from core.DTOs.FinalReviewApprovalInfo import FinalReviewApprovalInfo
 from core.DTOs.GetNextRecordTypeAnnotationResponseInfo import GetNextRecordTypeAnnotationResponseInfo
@@ -775,10 +775,9 @@ class AsyncDatabaseClient:
         # Select statement
         statement = (
             select(URL.id, URL.url)
-            # Must not have a confirmed agency identifier.
+            # Must not have confirmed agencies
             .where(
                 and_(
-                    URL.agency_id.is_(None),
                     URL.outcome == URLStatus.PENDING.value
                 )
             )
@@ -800,6 +799,15 @@ class AsyncDatabaseClient:
                 exists(
                     select(AutomatedUrlAgencySuggestion).
                     where(AutomatedUrlAgencySuggestion.url_id == URL.id).
+                    correlate(URL)
+                )
+            )
+            # Must not have confirmed agencies
+            .join(ConfirmedURLAgency, isouter=True)
+            .where(
+                ~exists(
+                    select(ConfirmedURLAgency).
+                    where(ConfirmedURLAgency.url_id == URL.id).
                     correlate(URL)
                 )
             )
@@ -885,9 +893,11 @@ class AsyncDatabaseClient:
             suggestions: list[URLAgencySuggestionInfo]
     ):
         for suggestion in suggestions:
-            url = await session.execute(select(URL).where(URL.id == suggestion.url_id))
-            url = url.scalar_one()
-            url.agency_id = suggestion.pdap_agency_id
+            confirmed_agency = ConfirmedURLAgency(
+                url_id=suggestion.url_id,
+                agency_id=suggestion.pdap_agency_id
+            )
+            session.add(confirmed_agency)
 
     @session_manager
     async def add_agency_auto_suggestions(
@@ -1018,13 +1028,12 @@ class AsyncDatabaseClient:
 
         # The below relationships are joined directly to the URL
         single_join_relationships = [
-            URL.agency,
             URL.html_content,
             URL.auto_record_type_suggestion,
             URL.auto_relevant_suggestion,
             URL.user_relevant_suggestions,
             URL.user_record_type_suggestions,
-            URL.optional_data_source_metadata
+            URL.optional_data_source_metadata,
         ]
 
         options = [
@@ -1034,7 +1043,8 @@ class AsyncDatabaseClient:
         # The below relationships are joined to entities that are joined to the URL
         double_join_relationships = [
             (URL.automated_agency_suggestions, AutomatedUrlAgencySuggestion.agency),
-            (URL.user_agency_suggestions, UserUrlAgencySuggestion.agency)
+            (URL.user_agency_suggestions, UserUrlAgencySuggestion.agency),
+            (URL.confirmed_agencies, ConfirmedURLAgency.agency)
         ]
         for primary, secondary in double_join_relationships:
             options.append(joinedload(primary).joinedload(secondary))
@@ -1093,7 +1103,7 @@ class AsyncDatabaseClient:
                 agency=DTOConverter.final_review_annotation_agency_info(
                     automated_agency_suggestions=result.automated_agency_suggestions,
                     user_agency_suggestions=result.user_agency_suggestions,
-                    confirmed_agency=result.agency
+                    confirmed_agencies=result.confirmed_agencies
                 )
             ),
             optional_metadata=optional_metadata
@@ -1132,6 +1142,7 @@ class AsyncDatabaseClient:
             .where(URL.id == approval_info.url_id)
             .options(
                 joinedload(URL.optional_data_source_metadata),
+                joinedload(URL.confirmed_agencies),
             )
         )
 
@@ -1151,17 +1162,29 @@ class AsyncDatabaseClient:
             required=True
         )
 
-        agency_id = approval_info.agency_id
-        if url.agency_id is None and agency_id is None:
+        # Get existing agency ids
+        existing_agency_ids = [agency.agency_id for agency in url.confirmed_agencies]
+        new_agency_ids = approval_info.agency_ids
+        if len(existing_agency_ids) == 0 and len(new_agency_ids) == 0:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Must specify agency_id if URL does not already have a confirmed agency"
             )
-        # If a different agency exists as confirmed, overwrite it
-        if url.agency_id != agency_id and agency_id is not None:
-            url.agency_id = agency_id
 
-
+        # Get any existing agency ids that are not in the new agency ids
+        for existing_agency in url.confirmed_agencies:
+            if existing_agency.id not in new_agency_ids:
+                # If the existing agency id is not in the new agency ids, delete it
+                await session.delete(existing_agency)
+        # Add any new agency ids that are not in the existing agency ids
+        for new_agency_id in new_agency_ids:
+            if new_agency_id not in existing_agency_ids:
+                # If the new agency id is not in the existing agency ids, add it
+                confirmed_url_agency = ConfirmedURLAgency(
+                    url_id=approval_info.url_id,
+                    agency_id=new_agency_id
+                )
+                session.add(confirmed_url_agency)
 
         # If it does, do nothing
 

@@ -33,7 +33,7 @@ class FinalReviewAnnotationAgencyAutoInfo(BaseModel):
     )
 
 class FinalReviewAnnotationAgencyInfo(BaseModel):
-    confirmed: Optional[GetNextURLForAgencyAgencyInfo] = Field(
+    confirmed: Optional[list[GetNextURLForAgencyAgencyInfo]] = Field(
         title="The confirmed agency for the URL",
     )
     auto: Optional[FinalReviewAnnotationAgencyAutoInfo] = Field(

@@ -286,7 +286,7 @@ async def test_get_next_url_for_final_review_no_annotations(db_data_creator: DBD
     annotations = result.annotations
 
     agency = annotations.agency
-    assert agency.confirmed is None
+    assert agency.confirmed == []
     assert agency.auto.unknown is True
     assert agency.auto.suggestions == []
 

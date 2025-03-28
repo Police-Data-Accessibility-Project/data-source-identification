@@ -19,8 +19,8 @@ class FinalReviewApprovalInfo(BaseModel):
               "If none, defers to the existing value from the auto-labeler only if it exists.",
         default=None
     )
-    agency_id: Optional[int] = Field(
-        title="The final confirmed agency for the URL. "
+    agency_ids: Optional[list[int]] = Field(
+        title="The final confirmed agencies for the URL. "
               "If none, defers to an existing confirmed agency only if that exists.",
         default=None
     )

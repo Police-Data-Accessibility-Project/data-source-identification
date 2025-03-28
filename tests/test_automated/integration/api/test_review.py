@@ -1,6 +1,6 @@
 import pytest
 
-from collector_db.models import URL, URLOptionalDataSourceMetadata
+from collector_db.models import URL, URLOptionalDataSourceMetadata, ConfirmedURLAgency
 from collector_manager.enums import URLStatus
 from core.DTOs.FinalReviewApprovalInfo import FinalReviewApprovalInfo
 from core.DTOs.GetNextURLForFinalReviewResponse import GetNextURLForFinalReviewOuterResponse
@@ -22,6 +22,7 @@ async def test_review_next_source(api_test_helper):
         url_id=url_mapping.url_id,
         count=3
     )
+    confirmed_agency_id = await ath.db_data_creator.agency_confirmed_suggestion(url_id=url_mapping.url_id)
 
     outer_result = await ath.request_validator.review_next_source()
 
@@ -68,6 +69,12 @@ async def test_review_next_source(api_test_helper):
     for i in range(3):
         assert user_agency_suggestions_as_list[i].count == 3 - i
 
+    # Check confirmed agencies exist
+    confirmed_agencies = agency_info.confirmed
+    assert len(confirmed_agencies) == 1
+    confirmed_agency = confirmed_agencies[0]
+    assert confirmed_agency.pdap_agency_id == confirmed_agency_id
+
 @pytest.mark.asyncio
 async def test_approve_and_get_next_source_for_review(api_test_helper):
     ath = api_test_helper
@@ -80,16 +87,16 @@ async def test_approve_and_get_next_source_for_review(api_test_helper):
     )
 
     # Add confirmed agency
-    agency_id = await db_data_creator.agency_confirmed_suggestion(
-        url_id=url_mapping.url_id
-    )
+    confirmed_agency = await db_data_creator.confirmed_suggestions([url_mapping.url_id])
+
+    agency_ids = [await db_data_creator.agency() for _ in range(3)]
 
     result: GetNextURLForFinalReviewOuterResponse = await ath.request_validator.approve_and_get_next_source_for_review(
         approval_info=FinalReviewApprovalInfo(
             url_id=url_mapping.url_id,
             record_type=RecordType.ARREST_RECORDS,
             relevant=True,
-            agency_id=agency_id,
+            agency_ids=agency_ids,
             name="New Test Name",
             description="New Test Description",
             record_formats=["New Test Record Format", "New Test Record Format 2"],
@@ -106,7 +113,6 @@ async def test_approve_and_get_next_source_for_review(api_test_helper):
     assert len(urls) == 1
     url = urls[0]
     assert url.id == url_mapping.url_id
-    assert url.agency_id == agency_id
     assert url.record_type == RecordType.ARREST_RECORDS.value
     assert url.relevant == True
     assert url.outcome == URLStatus.VALIDATED.value
@@ -118,5 +124,11 @@ async def test_approve_and_get_next_source_for_review(api_test_helper):
     assert optional_metadata[0].data_portal_type == "New Test Data Portal Type"
     assert optional_metadata[0].supplying_entity == "New Test Supplying Entity"
     assert optional_metadata[0].record_formats == ["New Test Record Format", "New Test Record Format 2"]
+
+    # Get agencies
+    agencies = await adb_client.get_all(ConfirmedURLAgency)
+    assert len(agencies) == 3
+    for agency in agencies:
+        assert agency.agency_id in agency_ids
 
 
