@@ -298,7 +298,7 @@ class DBDataCreator:
     async def agency_confirmed_suggestion(
             self,
             url_id: int
-    ):
+    ) -> int:
         """
         Creates a confirmed agency suggestion
         and returns the auto-generated pdap_agency_id

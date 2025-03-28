@@ -4,7 +4,8 @@ from collector_db.DTOs.URLHTMLContentInfo import HTMLContentType, URLHTMLContent
 from collector_db.DTOs.URLWithHTML import URLWithHTML
 from collector_db.enums import ValidationStatus, ValidationSource, URLMetadataAttributeType
 from collector_db.models import AutomatedUrlAgencySuggestion, UserUrlAgencySuggestion, URLHTMLContent, URL, Agency, \
-    AutoRecordTypeSuggestion, UserRecordTypeSuggestion, UserRelevantSuggestion, AutoRelevantSuggestion
+    AutoRecordTypeSuggestion, UserRecordTypeSuggestion, UserRelevantSuggestion, AutoRelevantSuggestion, \
+    ConfirmedURLAgency
 from core.DTOs.GetNextURLForAgencyAnnotationResponse import GetNextURLForAgencyAgencyInfo
 from core.DTOs.GetNextURLForFinalReviewResponse import FinalReviewAnnotationRelevantInfo, \
     FinalReviewAnnotationRelevantUsersInfo, FinalReviewAnnotationRecordTypeInfo, FinalReviewAnnotationAgencyAutoInfo, \
@@ -130,27 +131,35 @@ class DTOConverter:
         # Return sorted
         return dict(sorted(d.items(), key=lambda x: x[1].count, reverse=True))
 
+    @staticmethod
+    def confirmed_agencies_to_final_review_annotation_agency_info(
+        confirmed_agencies: list[ConfirmedURLAgency]
+    ) -> list[GetNextURLForAgencyAgencyInfo]:
+        results = []
+        for confirmed_agency in confirmed_agencies:
+            agency = confirmed_agency.agency
+            agency_info = GetNextURLForAgencyAgencyInfo(
+                suggestion_type=SuggestionType.CONFIRMED,
+                pdap_agency_id=agency.agency_id,
+                agency_name=agency.name,
+                state=agency.state,
+                county=agency.county,
+                locality=agency.locality
+            )
+            results.append(agency_info)
+        return results
+
 
     @staticmethod
     def final_review_annotation_agency_info(
         automated_agency_suggestions: list[AutomatedUrlAgencySuggestion],
-        confirmed_agency: Optional[Agency],
+        confirmed_agencies: list[ConfirmedURLAgency],
         user_agency_suggestions: list[UserUrlAgencySuggestion]
     ):
-        if confirmed_agency is not None:
-            confirmed_agency_info = GetNextURLForAgencyAgencyInfo(
-                suggestion_type=SuggestionType.CONFIRMED,
-                pdap_agency_id=confirmed_agency.agency_id,
-                agency_name=confirmed_agency.name,
-                state=confirmed_agency.state,
-                county=confirmed_agency.county,
-                locality=confirmed_agency.locality
-            )
-            return FinalReviewAnnotationAgencyInfo(
-                confirmed=confirmed_agency_info,
-                users=None,
-                auto=None
-            )
+
+        confirmed_agency_info = DTOConverter.confirmed_agencies_to_final_review_annotation_agency_info(
+            confirmed_agencies
+        )
 
         agency_auto_info = DTOConverter.final_review_annotation_agency_auto_info(
             automated_agency_suggestions
@@ -161,7 +170,7 @@ class DTOConverter:
         )
 
         return FinalReviewAnnotationAgencyInfo(
-            confirmed=None,
+            confirmed=confirmed_agency_info,
             users=agency_user_info,
             auto=agency_auto_info
         )
