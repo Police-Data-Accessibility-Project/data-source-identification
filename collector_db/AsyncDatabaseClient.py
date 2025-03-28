@@ -728,7 +728,9 @@ class AsyncDatabaseClient:
         statement = (
             select(
                 URL.id
-            ).where(URL.agency_id == None))
+            )
+        )
+
         statement = self.statement_composer.exclude_urls_with_agency_suggestions(statement)
         raw_result = await session.execute(statement)
         result = raw_result.all()
@@ -936,7 +938,7 @@ class AsyncDatabaseClient:
 
     @session_manager
     async def get_urls_with_confirmed_agencies(self, session: AsyncSession) -> list[URL]:
-        statement = select(URL).where(URL.agency_id != None)
+        statement = select(URL).where(exists().where(ConfirmedURLAgency.url_id == URL.id))
         results = await session.execute(statement)
         return list(results.scalars().all())
 
@@ -1163,8 +1165,9 @@ class AsyncDatabaseClient:
         )
 
         # Get existing agency ids
-        existing_agency_ids = [agency.agency_id for agency in url.confirmed_agencies]
-        new_agency_ids = approval_info.agency_ids
+        existing_agencies = url.confirmed_agencies or []
+        existing_agency_ids = [agency.agency_id for agency in existing_agencies]
+        new_agency_ids = approval_info.agency_ids or []
         if len(existing_agency_ids) == 0 and len(new_agency_ids) == 0:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -1172,10 +1175,12 @@ class AsyncDatabaseClient:
             )
 
         # Get any existing agency ids that are not in the new agency ids
-        for existing_agency in url.confirmed_agencies:
-            if existing_agency.id not in new_agency_ids:
-                # If the existing agency id is not in the new agency ids, delete it
-                await session.delete(existing_agency)
+        # If new agency ids are specified, overwrite existing
+        if len(new_agency_ids) != 0:
+            for existing_agency in existing_agencies:
+                if existing_agency.id not in new_agency_ids:
+                    # If the existing agency id is not in the new agency ids, delete it
+                    await session.delete(existing_agency)
         # Add any new agency ids that are not in the existing agency ids
         for new_agency_id in new_agency_ids:
             if new_agency_id not in existing_agency_ids:

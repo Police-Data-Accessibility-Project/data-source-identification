@@ -4,7 +4,8 @@ from sqlalchemy import Select, select, exists, Table, func, Subquery, and_
 from sqlalchemy.orm import aliased
 
 from collector_db.enums import URLMetadataAttributeType, ValidationStatus
-from collector_db.models import URL, URLHTMLContent, AutomatedUrlAgencySuggestion, URLOptionalDataSourceMetadata, Batch
+from collector_db.models import URL, URLHTMLContent, AutomatedUrlAgencySuggestion, URLOptionalDataSourceMetadata, Batch, \
+    ConfirmedURLAgency
 from collector_manager.enums import URLStatus, CollectorType
 
 
@@ -54,10 +55,12 @@ class StatementComposer:
         # Aliases for clarity
         AutomatedSuggestion = aliased(AutomatedUrlAgencySuggestion)
 
-        statement = (statement
-            .where(~exists().where(AutomatedSuggestion.url_id == URL.id))  # Exclude if automated suggestions exist
-        )  # Exclude if confirmed agencies exist
-
+        statement = statement.where(
+            ~exists().where(AutomatedSuggestion.url_id == URL.id)
+        )  # Exclude if automated suggestions exist
+        statement = statement.where(
+            ~exists().where(ConfirmedURLAgency.url_id == URL.id)
+        )
         return statement
 
 

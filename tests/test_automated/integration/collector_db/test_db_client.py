@@ -11,7 +11,7 @@ from collector_db.DTOs.URLErrorInfos import URLErrorPydanticInfo
 from collector_db.DTOs.URLInfo import URLInfo
 from collector_db.DTOs.URLMetadataInfo import URLMetadataInfo
 from collector_db.enums import URLMetadataAttributeType, ValidationStatus, ValidationSource
-from collector_db.models import URL, ApprovingUserURL, URLOptionalDataSourceMetadata
+from collector_db.models import URL, ApprovingUserURL, URLOptionalDataSourceMetadata, ConfirmedURLAgency
 from collector_manager.enums import URLStatus
 from core.DTOs.FinalReviewApprovalInfo import FinalReviewApprovalInfo
 from core.enums import BatchStatus, RecordType, SuggestionType
@@ -345,12 +345,16 @@ async def test_approve_url_basic(db_data_creator: DBDataCreator):
     assert len(urls) == 1
     url = urls[0]
     assert url.id == url_mapping.url_id
-    assert url.agency_id == agency_id
     assert url.record_type == RecordType.ARREST_RECORDS.value
     assert url.relevant == True
     assert url.outcome == URLStatus.VALIDATED.value
     assert url.name == "Test Name"
     assert url.description == "Test Description"
+
+    confirmed_agency = await adb_client.get_all(ConfirmedURLAgency)
+    assert len(confirmed_agency) == 1
+    assert confirmed_agency[0].url_id == url_mapping.url_id
+    assert confirmed_agency[0].agency_id == agency_id
 
     approving_user_urls = await adb_client.get_all(ApprovingUserURL)
     assert len(approving_user_urls) == 1
@@ -387,7 +391,7 @@ async def test_approval_url_error(db_data_creator: DBDataCreator):
     # Create kwarg dictionary with all required approval info fields
     kwarg_dict = {
         "record_type": RecordType.ARREST_RECORDS,
-        "agency_id": await db_data_creator.agency(),
+        "agency_ids": [await db_data_creator.agency()],
         "name": "Test Name",
         "description": "Test Description",
     }
