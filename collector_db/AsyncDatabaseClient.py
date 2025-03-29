@@ -17,6 +17,7 @@ from collector_db.DTOs.URLInfo import URLInfo
 from collector_db.DTOs.URLMapping import URLMapping
 from collector_db.DTOs.URLWithHTML import URLWithHTML
 from collector_db.StatementComposer import StatementComposer
+from collector_db.constants import PLACEHOLDER_AGENCY_NAME
 from collector_db.enums import URLMetadataAttributeType, TaskType
 from collector_db.helper_functions import get_postgres_connection_string
 from collector_db.models import URL, URLErrorInfo, URLHTMLContent, Base, \
@@ -1184,6 +1185,21 @@ class AsyncDatabaseClient:
         # Add any new agency ids that are not in the existing agency ids
         for new_agency_id in new_agency_ids:
             if new_agency_id not in existing_agency_ids:
+                # Check if the new agency exists in the database
+                query = (
+                    select(Agency)
+                    .where(Agency.agency_id == new_agency_id)
+                )
+                existing_agency = await session.execute(query)
+                existing_agency = existing_agency.scalars().first()
+                if existing_agency is None:
+                # If not, create it
+                    agency = Agency(
+                        agency_id=new_agency_id,
+                        name=PLACEHOLDER_AGENCY_NAME,
+                    )
+                    session.add(agency)
+
                 # If the new agency id is not in the existing agency ids, add it
                 confirmed_url_agency = ConfirmedURLAgency(
                     url_id=approval_info.url_id,
