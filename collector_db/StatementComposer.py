@@ -55,9 +55,11 @@ class StatementComposer:
         # Aliases for clarity
         AutomatedSuggestion = aliased(AutomatedUrlAgencySuggestion)
 
+        # Exclude if automated suggestions exist
         statement = statement.where(
             ~exists().where(AutomatedSuggestion.url_id == URL.id)
-        )  # Exclude if automated suggestions exist
+        )
+        # Exclude if confirmed agencies exist
         statement = statement.where(
             ~exists().where(ConfirmedURLAgency.url_id == URL.id)
         )
