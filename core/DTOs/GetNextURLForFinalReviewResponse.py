@@ -6,7 +6,6 @@ from core.DTOs.GetNextURLForAgencyAnnotationResponse import GetNextURLForAgencyA
 from core.enums import RecordType
 from html_tag_collector.DataClassTags import ResponseHTMLInfo
 
-# Todo: Add descriptions
 
 class FinalReviewAnnotationRelevantUsersInfo(BaseModel):
     relevant: int = Field(title="Number of users who marked the URL as relevant")
@@ -34,7 +33,7 @@ class FinalReviewAnnotationAgencyAutoInfo(BaseModel):
     )
 
 class FinalReviewAnnotationAgencyInfo(BaseModel):
-    confirmed: Optional[GetNextURLForAgencyAgencyInfo] = Field(
+    confirmed: Optional[list[GetNextURLForAgencyAgencyInfo]] = Field(
         title="The confirmed agency for the URL",
     )
     auto: Optional[FinalReviewAnnotationAgencyAutoInfo] = Field(
@@ -54,12 +53,31 @@ class FinalReviewAnnotationInfo(BaseModel):
         title="User and auto annotations for agency",
     )
 
+class FinalReviewOptionalMetadata(BaseModel):
+    record_formats: Optional[list[str]] = Field(
+        title="The record formats of the source",
+        default=None
+    )
+    data_portal_type: Optional[str] = Field(
+        title="The data portal type of the source",
+        default=None
+    )
+    supplying_entity: Optional[str] = Field(
+        title="The supplying entity of the source",
+        default=None
+    )
+
 class GetNextURLForFinalReviewResponse(BaseModel):
     id: int = Field(title="The id of the URL")
     url: str = Field(title="The URL")
+    name: Optional[str] = Field(title="The name of the source")
+    description: Optional[str] = Field(title="The description of the source")
     html_info: ResponseHTMLInfo = Field(title="The HTML content of the URL")
     annotations: FinalReviewAnnotationInfo = Field(
         title="The annotations for the URL, from both users and the auto-labeler",
+    )
+    optional_metadata: FinalReviewOptionalMetadata = Field(
+        title="Optional metadata for the source",
     )
 
 class GetNextURLForFinalReviewOuterResponse(BaseModel):

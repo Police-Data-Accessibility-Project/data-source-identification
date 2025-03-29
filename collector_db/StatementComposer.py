@@ -1,11 +1,12 @@
 from typing import Any
 
-from sqlalchemy import Select, select, exists, Table, func, Subquery
+from sqlalchemy import Select, select, exists, Table, func, Subquery, and_
 from sqlalchemy.orm import aliased
 
 from collector_db.enums import URLMetadataAttributeType, ValidationStatus
-from collector_db.models import URL, URLHTMLContent, AutomatedUrlAgencySuggestion
-from collector_manager.enums import URLStatus
+from collector_db.models import URL, URLHTMLContent, AutomatedUrlAgencySuggestion, URLOptionalDataSourceMetadata, Batch, \
+    ConfirmedURLAgency
+from collector_manager.enums import URLStatus, CollectorType
 
 
 class StatementComposer:
@@ -36,35 +37,7 @@ class StatementComposer:
                         )
                     ))
 
-    @staticmethod
-    def exclude_urls_with_select_metadata(
-            statement: Select,
-            attribute: URLMetadataAttributeType
-    ) -> Select:
-        return (statement.where(
-                        ~exists(
-                            select(URLMetadata.id).
-                            where(
-                                URLMetadata.url_id == URL.id,
-                                URLMetadata.attribute == attribute.value
-                            )
-                        )
-                    ))
 
-    @staticmethod
-    def exclude_url_annotated_by_user(
-            statement: Select,
-            user_id: int
-    ) -> Select:
-        return (statement.where(
-                        ~exists(
-                            select(MetadataAnnotation.id).
-                            where(
-                                MetadataAnnotation.metadata_id == URLMetadata.id,
-                                MetadataAnnotation.user_id == user_id
-                            )
-                        )
-                    ))
 
 
     @staticmethod
@@ -82,25 +55,39 @@ class StatementComposer:
         # Aliases for clarity
         AutomatedSuggestion = aliased(AutomatedUrlAgencySuggestion)
 
-        statement = (statement
-            .where(~exists().where(AutomatedSuggestion.url_id == URL.id))  # Exclude if automated suggestions exist
-        )  # Exclude if confirmed agencies exist
-
+        # Exclude if automated suggestions exist
+        statement = statement.where(
+            ~exists().where(AutomatedSuggestion.url_id == URL.id)
+        )
+        # Exclude if confirmed agencies exist
+        statement = statement.where(
+            ~exists().where(ConfirmedURLAgency.url_id == URL.id)
+        )
         return statement
 
-    @staticmethod
-    async def get_all_html_content_for_url(subquery) -> Select:
-        statement = (
-            select(
-                subquery.c.url,
-                subquery.c.metadata_id,
-                subquery.c.value,
-                URLHTMLContent.content_type,
-                URLHTMLContent.content,
-            )
-            .join(URLHTMLContent)
-            .where(subquery.c.url_id == URLHTMLContent.url_id)
-        )
 
-        raw_result = await session.execute(statement)
-        result = raw_result.all()
+    @staticmethod
+    def pending_urls_missing_miscellaneous_metadata_query() -> Select:
+        query = select(URL).where(
+            and_(
+                    URL.outcome == URLStatus.PENDING.value,
+                    URL.name == None,
+                    URL.description == None,
+                    URLOptionalDataSourceMetadata.url_id == None,
+                    Batch.strategy.in_(
+                        [
+                            CollectorType.AUTO_GOOGLER.value,
+                            CollectorType.CKAN.value,
+                            CollectorType.MUCKROCK_ALL_SEARCH.value,
+                            CollectorType.MUCKROCK_COUNTY_SEARCH.value,
+                            CollectorType.MUCKROCK_SIMPLE_SEARCH.value
+                        ]
+                    )
+                )
+            ).outerjoin(
+                URLOptionalDataSourceMetadata
+            ).join(
+                Batch
+            )
+
+        return query

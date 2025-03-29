@@ -1,8 +1,8 @@
 from functools import wraps
-from typing import Optional, Type
+from typing import Optional, Type, Any
 
 from fastapi import HTTPException
-from sqlalchemy import select, exists, func, case, desc, Select, not_, and_
+from sqlalchemy import select, exists, func, case, desc, Select, not_, and_, or_, update, Delete, Insert
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.orm import selectinload, joinedload, QueryableAttribute
 from sqlalchemy.sql.functions import coalesce
@@ -17,23 +17,27 @@ from collector_db.DTOs.URLInfo import URLInfo
 from collector_db.DTOs.URLMapping import URLMapping
 from collector_db.DTOs.URLWithHTML import URLWithHTML
 from collector_db.StatementComposer import StatementComposer
+from collector_db.constants import PLACEHOLDER_AGENCY_NAME
 from collector_db.enums import URLMetadataAttributeType, TaskType
 from collector_db.helper_functions import get_postgres_connection_string
 from collector_db.models import URL, URLErrorInfo, URLHTMLContent, Base, \
     RootURL, Task, TaskError, LinkTaskURL, Batch, Agency, AutomatedUrlAgencySuggestion, \
     UserUrlAgencySuggestion, AutoRelevantSuggestion, AutoRecordTypeSuggestion, UserRelevantSuggestion, \
-    UserRecordTypeSuggestion, ApprovingUserURL
+    UserRecordTypeSuggestion, ApprovingUserURL, URLOptionalDataSourceMetadata, ConfirmedURLAgency
 from collector_manager.enums import URLStatus, CollectorType
+from core.DTOs.FinalReviewApprovalInfo import FinalReviewApprovalInfo
 from core.DTOs.GetNextRecordTypeAnnotationResponseInfo import GetNextRecordTypeAnnotationResponseInfo
 from core.DTOs.GetNextRelevanceAnnotationResponseInfo import GetNextRelevanceAnnotationResponseInfo
 from core.DTOs.GetNextURLForAgencyAnnotationResponse import GetNextURLForAgencyAnnotationResponse, \
     GetNextURLForAgencyAgencyInfo, GetNextURLForAgencyAnnotationInnerResponse
-from core.DTOs.GetNextURLForFinalReviewResponse import GetNextURLForFinalReviewResponse, FinalReviewAnnotationInfo
+from core.DTOs.GetNextURLForFinalReviewResponse import GetNextURLForFinalReviewResponse, FinalReviewAnnotationInfo, \
+    FinalReviewOptionalMetadata
 from core.DTOs.GetTasksResponse import GetTasksResponse, GetTasksResponseTaskInfo
 from core.DTOs.GetURLsResponseInfo import GetURLsResponseInfo, GetURLsResponseErrorInfo, \
     GetURLsResponseInnerInfo
 from core.DTOs.URLAgencySuggestionInfo import URLAgencySuggestionInfo
 from core.DTOs.task_data_objects.AgencyIdentificationTDO import AgencyIdentificationTDO
+from core.DTOs.task_data_objects.URLMiscellaneousMetadataTDO import URLMiscellaneousMetadataTDO
 from core.enums import BatchStatus, SuggestionType, RecordType
 from html_tag_collector.DataClassTags import convert_to_response_html_info
 
@@ -122,6 +126,7 @@ class AsyncDatabaseClient:
             select(
                 URL,
             )
+            .where(URL.outcome == URLStatus.PENDING.value)
             .where(exists(select(URLHTMLContent).where(URLHTMLContent.url_id == URL.id)))
             # URL must not have metadata annotation by this user
             .where(
@@ -354,6 +359,68 @@ class AsyncDatabaseClient:
         return bool(scalar_result.first())
 
     @session_manager
+    async def has_pending_urls_missing_miscellaneous_metadata(self, session: AsyncSession) -> bool:
+        query = StatementComposer.pending_urls_missing_miscellaneous_metadata_query()
+        query = query.limit(1)
+
+        scalar_result = await session.scalars(query)
+        return bool(scalar_result.first())
+
+    @session_manager
+    async def get_pending_urls_missing_miscellaneous_metadata(
+            self,
+            session: AsyncSession
+    ) -> list[URLMiscellaneousMetadataTDO]:
+        query = StatementComposer.pending_urls_missing_miscellaneous_metadata_query()
+        query = (
+            query.options(
+                selectinload(URL.batch),
+            ).limit(100).order_by(URL.id)
+        )
+
+        scalar_result = await session.scalars(query)
+        all_results = scalar_result.all()
+        final_results = []
+        for result in all_results:
+            tdo = URLMiscellaneousMetadataTDO(
+                url_id=result.id,
+                collector_metadata=result.collector_metadata,
+                collector_type=CollectorType(result.batch.strategy),
+            )
+            final_results.append(tdo)
+        return final_results
+
+    @session_manager
+    async def add_miscellaneous_metadata(self, session: AsyncSession, tdos: list[URLMiscellaneousMetadataTDO]):
+        updates = []
+
+        for tdo in tdos:
+            update_query = update(
+                URL
+            ).where(
+                URL.id == tdo.url_id
+            ).values(
+                name=tdo.name,
+                description=tdo.description,
+            )
+
+            updates.append(update_query)
+
+        for stmt in updates:
+            await session.execute(stmt)
+
+        for tdo in tdos:
+            metadata_object = URLOptionalDataSourceMetadata(
+                url_id=tdo.url_id,
+                record_formats=tdo.record_formats,
+                data_portal_type=tdo.data_portal_type,
+                supplying_entity=tdo.supplying_entity
+            )
+            session.add(metadata_object)
+
+
+
+    @session_manager
     async def get_pending_urls_without_html_data(self, session: AsyncSession):
         # TODO: Add test that includes some urls WITH html data. Check they're not returned
         statement = self.statement_composer.pending_urls_without_html_data()
@@ -433,97 +500,15 @@ class AsyncDatabaseClient:
         )
 
 
-    #TODO: Slated for deletion
     @session_manager
-    async def get_urls_with_html_data_and_without_metadata_type(
-            self,
-            session: AsyncSession,
-            without_metadata_type: URLMetadataAttributeType = URLMetadataAttributeType.RELEVANT
-    ) -> list[URLWithHTML]:
-
-        # Get URLs with no relevancy metadata
-        statement = (select(URL)
-                     .options(selectinload(URL.html_content))
-                     .where(URL.outcome == URLStatus.PENDING.value))
-        # Exclude URLs with auto suggested record types
-        statement = self.statement_composer.exclude_urls_with_extant_model(
-            statement=statement,
-            model=AutoRecordTypeSuggestion
-        )
-        statement = statement.limit(100).order_by(URL.id)
-
-
-        # TODO: The below can probably be generalized
-
-
-        statement = self.statement_composer.exclude_urls_with_select_metadata(
-            statement=statement,
-            attribute=without_metadata_type
-        )
-        # TODO: Generalize
-        statement = statement.limit(100).order_by(URL.id)
-        raw_result = await session.execute(statement)
-        result = raw_result.all()
-        url_ids_to_urls = {url_id: url for url_id, url, _ in result}
-        url_ids_to_html_info = {url_id: [] for url_id, _, _ in result}
-
-        for url_id, _, html_info in result:
-            url_ids_to_html_info[url_id].append(
-                URLHTMLContentInfo(**html_info.__dict__)
-            )
-
-        final_results = []
-        for url_id, url in url_ids_to_urls.items():
-            url_with_html = URLWithHTML(
-                url_id=url_id,
-                url=url,
-                html_infos=url_ids_to_html_info[url_id]
-            )
-            final_results.append(url_with_html)
-
-        return final_results
-
-    @session_manager
-    async def has_pending_urls_with_html_data_and_without_metadata_type(
-            self,
-            session: AsyncSession,
-            without_metadata_type: URLMetadataAttributeType = URLMetadataAttributeType.RELEVANT
-    ) -> bool:
-        # TODO: Generalize this so that it can exclude based on other attributes
-        # Get URLs with no relevancy metadata
-        statement = (select(URL.id, URL.url, URLHTMLContent).
-                     join(URLHTMLContent).
-                     where(URL.outcome == URLStatus.PENDING.value))
-        statement = self.statement_composer.exclude_urls_with_select_metadata(
-            statement=statement,
-            attribute=without_metadata_type
-        )
-        statement = statement.limit(1)
-        raw_result = await session.execute(statement)
-        result = raw_result.all()
-        return len(result) > 0
-
-
-
-    # @session_manager
-    # async def get_annotations_for_metadata_id(
-    #         self,
-    #         session: AsyncSession,
-    #         metadata_id: int
-    # ) -> list[MetadataAnnotation]:
-    #     statement = (select(MetadataAnnotation).
-    #                  where(MetadataAnnotation.metadata_id == metadata_id))
-    #     scalar_result = await session.scalars(statement)
-    #     all_results = scalar_result.all()
-    #     return [MetadataAnnotationInfo(**result.__dict__) for result in all_results]
-
-    @session_manager
-    async def get_all(self, session, model: Base):
+    async def get_all(self, session, model: Base, order_by_attribute: Optional[str] = None) -> list[Base]:
         """
         Get all records of a model
         Used primarily in testing
         """
         statement = select(model)
+        if order_by_attribute:
+            statement = statement.order_by(getattr(model, order_by_attribute))
         result = await session.execute(statement)
         return result.scalars().all()
 
@@ -745,7 +730,9 @@ class AsyncDatabaseClient:
         statement = (
             select(
                 URL.id
-            ).where(URL.agency_id == None))
+            )
+        )
+
         statement = self.statement_composer.exclude_urls_with_agency_suggestions(statement)
         raw_result = await session.execute(statement)
         result = raw_result.all()
@@ -792,10 +779,9 @@ class AsyncDatabaseClient:
         # Select statement
         statement = (
             select(URL.id, URL.url)
-            # Must not have a confirmed agency identifier.
+            # Must not have confirmed agencies
             .where(
                 and_(
-                    URL.agency_id.is_(None),
                     URL.outcome == URLStatus.PENDING.value
                 )
             )
@@ -817,6 +803,15 @@ class AsyncDatabaseClient:
                 exists(
                     select(AutomatedUrlAgencySuggestion).
                     where(AutomatedUrlAgencySuggestion.url_id == URL.id).
+                    correlate(URL)
+                )
+            )
+            # Must not have confirmed agencies
+            .join(ConfirmedURLAgency, isouter=True)
+            .where(
+                ~exists(
+                    select(ConfirmedURLAgency).
+                    where(ConfirmedURLAgency.url_id == URL.id).
                     correlate(URL)
                 )
             )
@@ -902,9 +897,11 @@ class AsyncDatabaseClient:
             suggestions: list[URLAgencySuggestionInfo]
     ):
         for suggestion in suggestions:
-            url = await session.execute(select(URL).where(URL.id == suggestion.url_id))
-            url = url.scalar_one()
-            url.agency_id = suggestion.pdap_agency_id
+            confirmed_agency = ConfirmedURLAgency(
+                url_id=suggestion.url_id,
+                agency_id=suggestion.pdap_agency_id
+            )
+            session.add(confirmed_agency)
 
     @session_manager
     async def add_agency_auto_suggestions(
@@ -943,7 +940,7 @@ class AsyncDatabaseClient:
 
     @session_manager
     async def get_urls_with_confirmed_agencies(self, session: AsyncSession) -> list[URL]:
-        statement = select(URL).where(URL.agency_id != None)
+        statement = select(URL).where(exists().where(ConfirmedURLAgency.url_id == URL.id))
         results = await session.execute(statement)
         return list(results.scalars().all())
 
@@ -1033,22 +1030,25 @@ class AsyncDatabaseClient:
                 URL.outcome == URLStatus.PENDING.value
             )
 
+        # The below relationships are joined directly to the URL
         single_join_relationships = [
-            URL.agency,
             URL.html_content,
             URL.auto_record_type_suggestion,
             URL.auto_relevant_suggestion,
             URL.user_relevant_suggestions,
             URL.user_record_type_suggestions,
+            URL.optional_data_source_metadata,
         ]
 
         options = [
             joinedload(relationship) for relationship in single_join_relationships
         ]
 
+        # The below relationships are joined to entities that are joined to the URL
         double_join_relationships = [
             (URL.automated_agency_suggestions, AutomatedUrlAgencySuggestion.agency),
-            (URL.user_agency_suggestions, UserUrlAgencySuggestion.agency)
+            (URL.user_agency_suggestions, UserUrlAgencySuggestion.agency),
+            (URL.confirmed_agencies, ConfirmedURLAgency.agency)
         ]
         for primary, secondary in double_join_relationships:
             options.append(joinedload(primary).joinedload(secondary))
@@ -1078,11 +1078,23 @@ class AsyncDatabaseClient:
         html_content = result.html_content
         html_content_infos = [URLHTMLContentInfo(**html_info.__dict__) for html_info in html_content]
 
+        if result.optional_data_source_metadata is None:
+            optional_metadata = FinalReviewOptionalMetadata()
+        else:
+            optional_metadata = FinalReviewOptionalMetadata(
+                record_formats=result.optional_data_source_metadata.record_formats,
+                data_portal_type=result.optional_data_source_metadata.data_portal_type,
+                supplying_entity=result.optional_data_source_metadata.supplying_entity
+            )
+
+
         # Return
         return GetNextURLForFinalReviewResponse(
             id=result.id,
             url=result.url,
             html_info=convert_to_response_html_info(html_content_infos),
+            name=result.name,
+            description=result.description,
             annotations=FinalReviewAnnotationInfo(
                 relevant=DTOConverter.final_review_annotation_relevant_info(
                     user_suggestions=result.user_relevant_suggestions,
@@ -1095,51 +1107,143 @@ class AsyncDatabaseClient:
                 agency=DTOConverter.final_review_annotation_agency_info(
                     automated_agency_suggestions=result.automated_agency_suggestions,
                     user_agency_suggestions=result.user_agency_suggestions,
-                    confirmed_agency=result.agency
+                    confirmed_agencies=result.confirmed_agencies
                 )
-            )
+            ),
+            optional_metadata=optional_metadata
         )
 
     @session_manager
     async def approve_url(
             self,
             session: AsyncSession,
-            url_id: int,
-            record_type: RecordType,
-            relevant: bool,
+            approval_info: FinalReviewApprovalInfo,
             user_id: int,
-            agency_id: Optional[int] = None,
     ) -> None:
 
         # Get URL
+        def update_if_not_none(
+                model,
+                field,
+                value: Optional[Any],
+                required: bool=False
+        ):
+            if value is not None:
+                setattr(model, field, value)
+                return
+            if not required:
+                return
+            model_value = getattr(model, field, None)
+            if model_value is None:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Must specify {field} if it does not already exist"
+                )
+
 
         query = (
             Select(URL)
-            .where(URL.id == url_id)
+            .where(URL.id == approval_info.url_id)
+            .options(
+                joinedload(URL.optional_data_source_metadata),
+                joinedload(URL.confirmed_agencies),
+            )
         )
 
         url = await session.execute(query)
         url = url.scalars().first()
 
-        url.record_type = record_type.value
-        url.relevant = relevant
+        update_if_not_none(
+            url,
+            "record_type",
+            approval_info.record_type.value if approval_info.record_type is not None else None,
+            required=True
+        )
+        update_if_not_none(
+            url,
+            "relevant",
+            approval_info.relevant,
+            required=True
+        )
 
-        if url.agency_id is None and agency_id is None:
+        # Get existing agency ids
+        existing_agencies = url.confirmed_agencies or []
+        existing_agency_ids = [agency.agency_id for agency in existing_agencies]
+        new_agency_ids = approval_info.agency_ids or []
+        if len(existing_agency_ids) == 0 and len(new_agency_ids) == 0:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Must specify agency_id if URL does not already have a confirmed agency"
             )
-        # If a different agency exists as confirmed, overwrite it
-        if url.agency_id != agency_id and agency_id is not None:
-            url.agency_id = agency_id
+
+        # Get any existing agency ids that are not in the new agency ids
+        # If new agency ids are specified, overwrite existing
+        if len(new_agency_ids) != 0:
+            for existing_agency in existing_agencies:
+                if existing_agency.id not in new_agency_ids:
+                    # If the existing agency id is not in the new agency ids, delete it
+                    await session.delete(existing_agency)
+        # Add any new agency ids that are not in the existing agency ids
+        for new_agency_id in new_agency_ids:
+            if new_agency_id not in existing_agency_ids:
+                # Check if the new agency exists in the database
+                query = (
+                    select(Agency)
+                    .where(Agency.agency_id == new_agency_id)
+                )
+                existing_agency = await session.execute(query)
+                existing_agency = existing_agency.scalars().first()
+                if existing_agency is None:
+                # If not, create it
+                    agency = Agency(
+                        agency_id=new_agency_id,
+                        name=PLACEHOLDER_AGENCY_NAME,
+                    )
+                    session.add(agency)
+
+                # If the new agency id is not in the existing agency ids, add it
+                confirmed_url_agency = ConfirmedURLAgency(
+                    url_id=approval_info.url_id,
+                    agency_id=new_agency_id
+                )
+                session.add(confirmed_url_agency)
 
         # If it does, do nothing
 
         url.outcome = URLStatus.VALIDATED.value
 
+        update_if_not_none(url, "name", approval_info.name, required=True)
+        update_if_not_none(url, "description", approval_info.description, required=True)
+
+        optional_metadata = url.optional_data_source_metadata
+        if optional_metadata is None:
+            url.optional_data_source_metadata = URLOptionalDataSourceMetadata(
+                record_formats=approval_info.record_formats,
+                data_portal_type=approval_info.data_portal_type,
+                supplying_entity=approval_info.supplying_entity
+            )
+        else:
+            update_if_not_none(
+                optional_metadata,
+                "record_formats",
+                approval_info.record_formats
+            )
+            update_if_not_none(
+                optional_metadata,
+                "data_portal_type",
+                approval_info.data_portal_type
+            )
+            update_if_not_none(
+                optional_metadata,
+                "supplying_entity",
+                approval_info.supplying_entity
+            )
+
+        # Add approving user
+
         approving_user_url = ApprovingUserURL(
             user_id=user_id,
-            url_id=url_id
+            url_id=approval_info.url_id
         )
 
         session.add(approving_user_url)

@@ -1,16 +1,21 @@
 from datetime import datetime, timedelta
 
 import pytest
+from _pytest.outcomes import fail
+from fastapi import HTTPException
 
 from collector_db.AsyncDatabaseClient import AsyncDatabaseClient
 from collector_db.DTOs.BatchInfo import BatchInfo
+from collector_db.DTOs.InsertURLsInfo import InsertURLsInfo
 from collector_db.DTOs.LogInfo import LogInfo
 from collector_db.DTOs.URLErrorInfos import URLErrorPydanticInfo
 from collector_db.DTOs.URLInfo import URLInfo
 from collector_db.DTOs.URLMetadataInfo import URLMetadataInfo
 from collector_db.enums import URLMetadataAttributeType, ValidationStatus, ValidationSource
-from collector_db.models import URL, ApprovingUserURL
+from collector_db.models import URL, ApprovingUserURL, URLOptionalDataSourceMetadata, ConfirmedURLAgency, \
+    UserRelevantSuggestion
 from collector_manager.enums import URLStatus
+from core.DTOs.FinalReviewApprovalInfo import FinalReviewApprovalInfo
 from core.enums import BatchStatus, RecordType, SuggestionType
 from tests.helpers.DBDataCreator import DBDataCreator
 from tests.helpers.complex_test_data_functions import setup_for_get_next_url_for_final_review
@@ -283,7 +288,7 @@ async def test_get_next_url_for_final_review_no_annotations(db_data_creator: DBD
     annotations = result.annotations
 
     agency = annotations.agency
-    assert agency.confirmed is None
+    assert agency.confirmed == []
     assert agency.auto.unknown is True
     assert agency.auto.suggestions == []
 
@@ -329,9 +334,11 @@ async def test_approve_url_basic(db_data_creator: DBDataCreator):
     adb_client = db_data_creator.adb_client
     # Approve URL. Only URL should be affected. No other properties should be changed.
     await adb_client.approve_url(
-        url_mapping.url_id,
-        record_type=RecordType.ARREST_RECORDS,
-        relevant=True,
+        approval_info=FinalReviewApprovalInfo(
+            url_id=url_mapping.url_id,
+            record_type=RecordType.ARREST_RECORDS,
+            relevant=True,
+        ),
         user_id=1
     )
 
@@ -340,13 +347,143 @@ async def test_approve_url_basic(db_data_creator: DBDataCreator):
     assert len(urls) == 1
     url = urls[0]
     assert url.id == url_mapping.url_id
-    assert url.agency_id == agency_id
     assert url.record_type == RecordType.ARREST_RECORDS.value
     assert url.relevant == True
     assert url.outcome == URLStatus.VALIDATED.value
+    assert url.name == "Test Name"
+    assert url.description == "Test Description"
+
+    confirmed_agency = await adb_client.get_all(ConfirmedURLAgency)
+    assert len(confirmed_agency) == 1
+    assert confirmed_agency[0].url_id == url_mapping.url_id
+    assert confirmed_agency[0].agency_id == agency_id
 
     approving_user_urls = await adb_client.get_all(ApprovingUserURL)
     assert len(approving_user_urls) == 1
     assert approving_user_urls[0].user_id == 1
     assert approving_user_urls[0].url_id == url_mapping.url_id
 
+    optional_metadata = await adb_client.get_all(URLOptionalDataSourceMetadata)
+    assert len(optional_metadata) == 1
+    assert optional_metadata[0].url_id == url_mapping.url_id
+    assert optional_metadata[0].record_formats == ["Test Record Format", "Test Record Format 2"]
+    assert optional_metadata[0].data_portal_type == "Test Data Portal Type"
+    assert optional_metadata[0].supplying_entity == "Test Supplying Entity"
+
+@pytest.mark.asyncio
+async def test_approval_url_error(db_data_creator: DBDataCreator):
+    url_mapping = await setup_for_get_next_url_for_final_review(
+        db_data_creator=db_data_creator,
+        annotation_count=3,
+        include_user_annotations=True,
+        include_miscellaneous_metadata=False
+    )
+
+    # Set all required descriptors to none and receive an error
+    adb_client = db_data_creator.adb_client
+    with pytest.raises(HTTPException) as e:
+        await adb_client.approve_url(
+            approval_info=FinalReviewApprovalInfo(
+                url_id=url_mapping.url_id,
+            ),
+            user_id=1
+        )
+        assert e.value.status_code == 422
+
+    # Create kwarg dictionary with all required approval info fields
+    kwarg_dict = {
+        "record_type": RecordType.ARREST_RECORDS,
+        "agency_ids": [await db_data_creator.agency()],
+        "name": "Test Name",
+        "description": "Test Description",
+    }
+    # For each keyword, create a copy of the kwargs and set that one to none
+    # Confirm it produces the correct error
+    for kwarg in kwarg_dict:
+        kwarg_copy = kwarg_dict.copy()
+        kwarg_copy[kwarg] = None
+        with pytest.raises(HTTPException) as e:
+            await adb_client.approve_url(
+                approval_info=FinalReviewApprovalInfo(
+                    url_id=url_mapping.url_id,
+                    relevant=True,
+                    **kwarg_copy
+                ),
+                user_id=1
+            )
+            pytest.fail(f"Expected error for kwarg {kwarg}")
+
+    # Test that if all kwargs are set, no error is raised
+    await adb_client.approve_url(
+        approval_info=FinalReviewApprovalInfo(
+            url_id=url_mapping.url_id,
+            relevant=True,
+            **kwarg_dict
+        ),
+        user_id=1
+    )
+
+@pytest.mark.asyncio
+async def test_get_next_url_for_user_relevance_annotation_pending(
+        db_data_creator: DBDataCreator
+):
+
+    batch_id = db_data_creator.batch()
+
+    # Create 2 URLs with outcome `pending`
+    iui: InsertURLsInfo = db_data_creator.urls(
+        batch_id=batch_id,
+        url_count=1,
+        outcome=URLStatus.PENDING
+    )
+
+    url_1 = iui.url_mappings[0]
+
+    # Add `Relevancy` attribute with value `True`
+    await db_data_creator.auto_relevant_suggestions(
+        url_id=url_1.url_id,
+        relevant=True
+    )
+
+    # Add HTML data
+    await db_data_creator.html_data([url_1.url_id])
+
+    adb_client = db_data_creator.adb_client
+    url = await adb_client.get_next_url_for_relevance_annotation(
+        user_id=1
+    )
+    assert url is not None
+
+@pytest.mark.asyncio
+async def test_get_next_url_for_user_relevance_annotation_validated(
+        db_data_creator: DBDataCreator
+):
+    """
+    A validated URL should not turn up in get_next_url_for_user_annotation
+    """
+
+    batch_id = db_data_creator.batch()
+
+    # Create 2 URLs with outcome `pending`
+    iui: InsertURLsInfo = db_data_creator.urls(
+        batch_id=batch_id,
+        url_count=1,
+        outcome=URLStatus.VALIDATED
+    )
+
+    url_1 = iui.url_mappings[0]
+
+    # Add `Relevancy` attribute with value `True`
+    await db_data_creator.auto_relevant_suggestions(
+        url_id=url_1.url_id,
+        relevant=True
+    )
+
+    # Add HTML data
+    await db_data_creator.html_data([url_1.url_id])
+
+    adb_client = db_data_creator.adb_client
+    url = await adb_client.get_next_url_for_relevance_annotation(
+        user_id=1
+    )
+    assert url is None

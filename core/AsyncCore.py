@@ -21,6 +21,7 @@ from core.classes.AgencyIdentificationTaskOperator import AgencyIdentificationTa
 from core.classes.SubmitApprovedURLTaskOperator import SubmitApprovedURLTaskOperator
 from core.classes.TaskOperatorBase import TaskOperatorBase
 from core.classes.URLHTMLTaskOperator import URLHTMLTaskOperator
+from core.classes.URLMiscellaneousMetadataTaskOperator import URLMiscellaneousMetadataTaskOperator
 from core.classes.URLRecordTypeTaskOperator import URLRecordTypeTaskOperator
 from core.classes.URLRelevanceHuggingfaceTaskOperator import URLRelevanceHuggingfaceTaskOperator
 from core.enums import BatchStatus, SuggestionType, RecordType
@@ -104,12 +105,19 @@ class AsyncCore:
         return operator
 
 
+    async def get_url_miscellaneous_metadata_task_operator(self):
+        operator = URLMiscellaneousMetadataTaskOperator(
+            adb_client=self.adb_client
+        )
+        return operator
+
     async def get_task_operators(self) -> list[TaskOperatorBase]:
         return [
             await self.get_url_html_task_operator(),
             await self.get_url_relevance_huggingface_task_operator(),
             await self.get_url_record_type_task_operator(),
             await self.get_agency_identification_task_operator(),
+            await self.get_url_miscellaneous_metadata_task_operator(),
             await self.get_submit_approved_url_task_operator(),
         ]
 
@@ -232,10 +240,8 @@ class AsyncCore:
             access_info: AccessInfo
     ):
         await self.adb_client.approve_url(
-            url_id=approval_info.url_id,
-            record_type=approval_info.record_type,
-            relevant=approval_info.relevant,
-            agency_id=approval_info.agency_id,
+            approval_info=approval_info,
             user_id=access_info.user_id
         )
         return await self.get_next_source_for_review()
+
