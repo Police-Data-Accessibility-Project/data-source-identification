@@ -6,12 +6,14 @@ from fastapi import HTTPException
 
 from collector_db.AsyncDatabaseClient import AsyncDatabaseClient
 from collector_db.DTOs.BatchInfo import BatchInfo
+from collector_db.DTOs.InsertURLsInfo import InsertURLsInfo
 from collector_db.DTOs.LogInfo import LogInfo
 from collector_db.DTOs.URLErrorInfos import URLErrorPydanticInfo
 from collector_db.DTOs.URLInfo import URLInfo
 from collector_db.DTOs.URLMetadataInfo import URLMetadataInfo
 from collector_db.enums import URLMetadataAttributeType, ValidationStatus, ValidationSource
-from collector_db.models import URL, ApprovingUserURL, URLOptionalDataSourceMetadata, ConfirmedURLAgency
+from collector_db.models import URL, ApprovingUserURL, URLOptionalDataSourceMetadata, ConfirmedURLAgency, \
+    UserRelevantSuggestion
 from collector_manager.enums import URLStatus
 from core.DTOs.FinalReviewApprovalInfo import FinalReviewApprovalInfo
 from core.enums import BatchStatus, RecordType, SuggestionType
@@ -421,3 +423,67 @@ async def test_approval_url_error(db_data_creator: DBDataCreator):
         user_id=1
     )
 
+@pytest.mark.asyncio
+async def test_get_next_url_for_user_relevance_annotation_pending(
+        db_data_creator: DBDataCreator
+):
+
+    batch_id = db_data_creator.batch()
+
+    # Create 2 URLs with outcome `pending`
+    iui: InsertURLsInfo = db_data_creator.urls(
+        batch_id=batch_id,
+        url_count=1,
+        outcome=URLStatus.PENDING
+    )
+
+    url_1 = iui.url_mappings[0]
+
+    # Add `Relevancy` attribute with value `True`
+    await db_data_creator.auto_relevant_suggestions(
+        url_id=url_1.url_id,
+        relevant=True
+    )
+
+    # Add HTML data
+    await db_data_creator.html_data([url_1.url_id])
+
+    adb_client = db_data_creator.adb_client
+    url = await adb_client.get_next_url_for_relevance_annotation(
+        user_id=1
+    )
+    assert url is not None
+
+@pytest.mark.asyncio
+async def test_get_next_url_for_user_relevance_annotation_validated(
+        db_data_creator: DBDataCreator
+):
+    """
+    A validated URL should not turn up in get_next_url_for_user_annotation
+    """
+
+    batch_id = db_data_creator.batch()
+
+    # Create 2 URLs with outcome `pending`
+    iui: InsertURLsInfo = db_data_creator.urls(
+        batch_id=batch_id,
+        url_count=1,
+        outcome=URLStatus.VALIDATED
+    )
+
+    url_1 = iui.url_mappings[0]
+
+    # Add `Relevancy` attribute with value `True`
+    await db_data_creator.auto_relevant_suggestions(
+        url_id=url_1.url_id,
+        relevant=True
+    )
+
+    # Add HTML data
+    await db_data_creator.html_data([url_1.url_id])
+
+    adb_client = db_data_creator.adb_client
+    url = await adb_client.get_next_url_for_relevance_annotation(
+        user_id=1
+    )
+    assert url is None
