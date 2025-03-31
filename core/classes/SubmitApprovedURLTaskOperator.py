@@ -1,5 +1,6 @@
 from collector_db.AsyncDatabaseClient import AsyncDatabaseClient
 from collector_db.enums import TaskType
+from core.DTOs.task_data_objects.UrlHtmlTDO import UrlHtmlTDO
 from core.classes.TaskOperatorBase import TaskOperatorBase
 from pdap_api_client.PDAPClient import PDAPClient
 

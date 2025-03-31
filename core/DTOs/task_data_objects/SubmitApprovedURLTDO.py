@@ -9,3 +9,9 @@ class SubmitApprovedURLTDO(BaseModel):
     url: str
     record_type: RecordType
     agency_id: Optional[int]
+    name: str
+    description: str
+    record_formats: Optional[list[str]] = None
+    data_portal_type: Optional[str] = None
+    supplying_entity: Optional[str] = None
+    data_source_id: Optional[int] = None

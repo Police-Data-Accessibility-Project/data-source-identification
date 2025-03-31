@@ -105,6 +105,7 @@ class URL(Base):
     relevant = Column(Boolean, nullable=True)
     created_at = get_created_at_column()
     updated_at = get_updated_at_column()
+    data_source_id = Column(Integer, nullable=True)
 
     # Relationships
     batch = relationship("Batch", back_populates="urls")
