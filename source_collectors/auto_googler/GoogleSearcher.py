@@ -73,7 +73,7 @@ class GoogleSearcher:
             inner_dto = GoogleSearchQueryResultsInnerDTO(
                 url=item["link"],
                 title=item["title"],
-                snippet=item["snippet"]
+                snippet=item.get("snippet", ""),
             )
             items.append(inner_dto)
 
