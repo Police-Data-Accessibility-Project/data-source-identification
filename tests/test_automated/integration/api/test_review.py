@@ -13,11 +13,12 @@ from tests.helpers.complex_test_data_functions import setup_for_get_next_url_for
 async def test_review_next_source(api_test_helper):
     ath = api_test_helper
 
-    url_mapping = await setup_for_get_next_url_for_final_review(
+    setup_info = await setup_for_get_next_url_for_final_review(
         db_data_creator=ath.db_data_creator,
         annotation_count=3,
         include_user_annotations=True
     )
+    url_mapping = setup_info.url_mapping
 
     await ath.db_data_creator.agency_auto_suggestions(
         url_id=url_mapping.url_id,
@@ -81,11 +82,12 @@ async def test_approve_and_get_next_source_for_review(api_test_helper):
     ath = api_test_helper
     db_data_creator = ath.db_data_creator
 
-    url_mapping = await setup_for_get_next_url_for_final_review(
+    setup_info = await setup_for_get_next_url_for_final_review(
         db_data_creator=db_data_creator,
         annotation_count=3,
         include_user_annotations=True
     )
+    url_mapping = setup_info.url_mapping
 
     # Add confirmed agency
     confirmed_agency = await db_data_creator.confirmed_suggestions([url_mapping.url_id])

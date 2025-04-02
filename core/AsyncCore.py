@@ -1,4 +1,5 @@
 import logging
+from typing import Optional
 
 from aiohttp import ClientSession
 
@@ -52,6 +53,12 @@ class AsyncCore:
         self.logger.addHandler(logging.StreamHandler())
         self.logger.setLevel(logging.INFO)
 
+
+    async def get_urls(self, page: int, errors: bool) -> GetURLsResponseInfo:
+        return await self.adb_client.get_urls(page=page, errors=errors)
+
+
+    #region Task Operators
     async def get_url_html_task_operator(self):
         self.logger.info("Running URL HTML Task")
         operator = URLHTMLTaskOperator(
@@ -107,6 +114,9 @@ class AsyncCore:
             await self.get_url_miscellaneous_metadata_task_operator()
         ]
 
+    #endregion
+
+    #region Tasks
     async def run_tasks(self):
         operators = await self.get_task_operators()
         for operator in operators:
@@ -141,6 +151,17 @@ class AsyncCore:
         await self.adb_client.update_task_status(task_id=run_info.task_id, status=BatchStatus.ERROR)
         await self.adb_client.add_task_error(task_id=run_info.task_id, error=run_info.message)
 
+    async def get_task_info(self, task_id: int) -> TaskInfo:
+        return await self.adb_client.get_task_info(task_id=task_id)
+
+    async def get_tasks(self, page: int, task_type: TaskType, task_status: BatchStatus) -> GetTasksResponse:
+        return await self.adb_client.get_tasks(page=page, task_type=task_type, task_status=task_status)
+
+
+    #endregion
+
+    #region Annotations and Review
+
     async def submit_url_relevance_annotation(
             self,
             user_id: int,
@@ -153,14 +174,28 @@ class AsyncCore:
             relevant=relevant
         )
 
-    async def get_next_url_for_relevance_annotation(self, user_id: int) -> GetNextRelevanceAnnotationResponseOuterInfo:
-        next_annotation = await self.adb_client.get_next_url_for_relevance_annotation(user_id=user_id)
+    async def get_next_url_for_relevance_annotation(
+            self,
+            user_id: int,
+            batch_id: Optional[int]
+    ) -> GetNextRelevanceAnnotationResponseOuterInfo:
+        next_annotation = await self.adb_client.get_next_url_for_relevance_annotation(
+            user_id=user_id,
+            batch_id=batch_id
+        )
         return GetNextRelevanceAnnotationResponseOuterInfo(
             next_annotation=next_annotation
         )
 
-    async def get_next_url_for_record_type_annotation(self, user_id: int) -> GetNextRecordTypeAnnotationResponseOuterInfo:
-        next_annotation = await self.adb_client.get_next_url_for_record_type_annotation(user_id=user_id)
+    async def get_next_url_for_record_type_annotation(
+            self,
+            user_id: int,
+            batch_id: Optional[int]
+    ) -> GetNextRecordTypeAnnotationResponseOuterInfo:
+        next_annotation = await self.adb_client.get_next_url_for_record_type_annotation(
+            user_id=user_id,
+            batch_id=batch_id
+        )
         return GetNextRecordTypeAnnotationResponseOuterInfo(
             next_annotation=next_annotation
         )
@@ -169,33 +204,24 @@ class AsyncCore:
             self,
             user_id: int,
             url_id: int,
-            record_type: RecordType
+            record_type: RecordType,
     ):
         await self.adb_client.add_user_record_type_suggestion(
             user_id=user_id,
             url_id=url_id,
             record_type=record_type
         )
-        next_annotation = await self.adb_client.get_next_url_for_record_type_annotation(user_id=user_id)
-        return GetNextRecordTypeAnnotationResponseOuterInfo(
-            next_annotation=next_annotation
-        )
 
-
-    async def get_urls(self, page: int, errors: bool) -> GetURLsResponseInfo:
-        return await self.adb_client.get_urls(page=page, errors=errors)
-
-    async def get_task_info(self, task_id: int) -> TaskInfo:
-        return await self.adb_client.get_task_info(task_id=task_id)
-
-    async def get_tasks(self, page: int, task_type: TaskType, task_status: BatchStatus) -> GetTasksResponse:
-        return await self.adb_client.get_tasks(page=page, task_type=task_type, task_status=task_status)
 
     async def get_next_url_agency_for_annotation(
             self,
-            user_id: int
+            user_id: int,
+            batch_id: Optional[int]
     ) -> GetNextURLForAgencyAnnotationResponse:
-        return await self.adb_client.get_next_url_agency_for_annotation(user_id=user_id)
+        return await self.adb_client.get_next_url_agency_for_annotation(
+            user_id=user_id,
+            batch_id=batch_id
+        )
 
     async def submit_url_agency_annotation(
             self,
@@ -217,17 +243,25 @@ class AsyncCore:
             is_new=agency_post_info.is_new,
         )
 
-    async def get_next_source_for_review(self):
-        return await self.adb_client.get_next_url_for_final_review()
+    async def get_next_source_for_review(
+            self,
+            batch_id: Optional[int]
+    ):
+        return await self.adb_client.get_next_url_for_final_review(
+            batch_id=batch_id
+        )
 
     async def approve_and_get_next_source_for_review(
             self,
             approval_info: FinalReviewApprovalInfo,
-            access_info: AccessInfo
+            access_info: AccessInfo,
+            batch_id: Optional[int]
     ):
         await self.adb_client.approve_url(
             approval_info=approval_info,
             user_id=access_info.user_id
         )
-        return await self.get_next_source_for_review()
+        return await self.get_next_source_for_review(
+            batch_id=batch_id
+        )
 

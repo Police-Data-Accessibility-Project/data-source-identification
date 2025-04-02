@@ -2,7 +2,7 @@ from functools import wraps
 from typing import Optional, Type, Any
 
 from fastapi import HTTPException
-from sqlalchemy import select, exists, func, case, desc, Select, not_, and_, or_, update, Delete, Insert
+from sqlalchemy import select, exists, func, case, desc, Select, not_, and_, or_, update, Delete, Insert, asc
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.orm import selectinload, joinedload, QueryableAttribute
 from sqlalchemy.sql.functions import coalesce
@@ -120,7 +120,8 @@ class AsyncDatabaseClient:
             session: AsyncSession,
             user_suggestion_model_to_exclude: UserSuggestionModel,
             auto_suggestion_relationship: QueryableAttribute,
-            user_id: int
+            user_id: int,
+            batch_id: Optional[int]
     ) -> URL:
         url_query = (
             select(
@@ -139,12 +140,15 @@ class AsyncDatabaseClient:
                         )
                     )
                 )
-            ).options(
+            )
+        )
+        if batch_id is not None:
+            url_query = url_query.where(URL.batch_id == batch_id)
+
+        url_query = url_query.options(
                 joinedload(auto_suggestion_relationship),
                 joinedload(URL.html_content)
-            ).
-            limit(1)
-        )
+            ).limit(1)
 
         raw_result = await session.execute(url_query)
 
@@ -179,14 +183,16 @@ class AsyncDatabaseClient:
     async def get_next_url_for_relevance_annotation(
             self,
             session: AsyncSession,
-            user_id: int
+            user_id: int,
+            batch_id: Optional[int]
     ) -> Optional[GetNextRelevanceAnnotationResponseInfo]:
 
         url = await self.get_next_url_for_user_annotation(
             session,
             user_suggestion_model_to_exclude=UserRelevantSuggestion,
             auto_suggestion_relationship=URL.auto_relevant_suggestion,
-            user_id=user_id
+            user_id=user_id,
+            batch_id=batch_id
         )
         if url is None:
             return None
@@ -218,14 +224,16 @@ class AsyncDatabaseClient:
     async def get_next_url_for_record_type_annotation(
             self,
             session: AsyncSession,
-            user_id: int
+            user_id: int,
+            batch_id: Optional[int]
     ) -> Optional[GetNextRecordTypeAnnotationResponseInfo]:
 
         url = await self.get_next_url_for_user_annotation(
             session,
             user_suggestion_model_to_exclude=UserRecordTypeSuggestion,
             auto_suggestion_relationship=URL.auto_record_type_suggestion,
-            user_id=user_id
+            user_id=user_id,
+            batch_id=batch_id
         )
         if url is None:
             return None
@@ -767,7 +775,10 @@ class AsyncDatabaseClient:
 
     @session_manager
     async def get_next_url_agency_for_annotation(
-            self, session: AsyncSession, user_id: int
+            self,
+            session: AsyncSession,
+            user_id: int,
+            batch_id: Optional[int]
     ) -> GetNextURLForAgencyAnnotationResponse:
         """
         Retrieve URL for annotation
@@ -785,8 +796,14 @@ class AsyncDatabaseClient:
                     URL.outcome == URLStatus.PENDING.value
                 )
             )
-            # Must not have been annotated by this user
-            .join(UserUrlAgencySuggestion, isouter=True)
+        )
+
+        if batch_id is not None:
+            statement = statement.where(URL.batch_id == batch_id)
+
+        # Must not have been annotated by this user
+        statement = (
+            statement.join(UserUrlAgencySuggestion, isouter=True)
             .where(
                 ~exists(
                     select(UserUrlAgencySuggestion).
@@ -947,7 +964,8 @@ class AsyncDatabaseClient:
     @session_manager
     async def get_next_url_for_final_review(
             self,
-            session: AsyncSession
+            session: AsyncSession,
+            batch_id: Optional[int]
     ) -> Optional[GetNextURLForFinalReviewResponse]:
 
 
@@ -1029,6 +1047,10 @@ class AsyncDatabaseClient:
         url_query = url_query.where(
                 URL.outcome == URLStatus.PENDING.value
             )
+        if batch_id is not None:
+            url_query = url_query.where(
+                URL.batch_id == batch_id
+            )
 
         # The below relationships are joined directly to the URL
         single_join_relationships = [
@@ -1060,6 +1082,7 @@ class AsyncDatabaseClient:
         url_query = url_query.order_by(
             desc("total_distinct_annotation_count"),
             desc("total_overall_annotation_count"),
+            asc(URL.id)
         )
 
         # Apply limit

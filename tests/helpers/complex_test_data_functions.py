@@ -1,14 +1,44 @@
-from collector_db.enums import URLMetadataAttributeType, ValidationSource, ValidationStatus
+from pydantic import BaseModel
+
+from collector_db.DTOs.InsertURLsInfo import InsertURLsInfo
+from collector_db.DTOs.URLMapping import URLMapping
+from collector_manager.enums import URLStatus
 from core.enums import RecordType
 from tests.helpers.DBDataCreator import DBDataCreator
 
+class AnnotationSetupInfo(BaseModel):
+    batch_id: int
+    insert_urls_info: InsertURLsInfo
+
+async def setup_for_get_next_url_for_annotation(
+        db_data_creator: DBDataCreator,
+        url_count: int,
+        outcome: URLStatus = URLStatus.PENDING
+) -> AnnotationSetupInfo:
+    batch_id = db_data_creator.batch()
+    insert_urls_info = db_data_creator.urls(
+        batch_id=batch_id,
+        url_count=url_count,
+        outcome=outcome
+    )
+    await db_data_creator.html_data(
+        [
+            url.url_id for url in insert_urls_info.url_mappings
+        ]
+    )
+    return AnnotationSetupInfo(batch_id=batch_id, insert_urls_info=insert_urls_info)
+
+
+class FinalReviewSetupInfo(BaseModel):
+    batch_id: int
+    url_mapping: URLMapping
 
 async def setup_for_get_next_url_for_final_review(
         db_data_creator: DBDataCreator,
         annotation_count: int,
         include_user_annotations: bool = True,
         include_miscellaneous_metadata: bool = True
-):
+) -> FinalReviewSetupInfo:
     """
     Sets up the database to test the final_review functions
     Auto-labels the URL with 'relevant=True' and 'record_type=ARREST_RECORDS'
@@ -30,7 +60,7 @@ async def setup_for_get_next_url_for_final_review(
             await db_data_creator.agency_user_suggestions(
                 url_id=url_mapping.url_id,
                 agency_id=agency_id
-        )
+            )
 
     async def add_record_type_suggestion(count: int, record_type: RecordType):
         for i in range(count):
@@ -68,5 +98,7 @@ async def setup_for_get_next_url_for_final_review(
         for i in range(annotation_count):
             await add_agency_suggestion(i + 1)
 
-
-    return url_mapping
+    return FinalReviewSetupInfo(
+        batch_id=batch_id,
+        url_mapping=url_mapping
+    )
