@@ -41,6 +41,12 @@ class URLMiscellaneousMetadataTaskOperator(TaskOperatorBase):
             case _:
                 raise Exception(f"Unknown collector type: {collector_type}")
 
+    async def html_default_logic(self, tdo: URLMiscellaneousMetadataTDO):
+        if tdo.name is None:
+            tdo.name = tdo.html_metadata_info.title
+        if tdo.description is None:
+            tdo.description = tdo.html_metadata_info.description
+
     async def inner_task_logic(self):
         tdos: list[URLMiscellaneousMetadataTDO] = await self.adb_client.get_pending_urls_missing_miscellaneous_metadata()
         await self.link_urls_to_task(url_ids=[tdo.url_id for tdo in tdos])
@@ -50,6 +56,7 @@ class URLMiscellaneousMetadataTaskOperator(TaskOperatorBase):
             subtask = await self.get_subtask(tdo.collector_type)
             try:
                 subtask.process(tdo)
+                await self.html_default_logic(tdo)
             except Exception as e:
                 error_info = URLErrorPydanticInfo(
                     task_id=self.task_id,

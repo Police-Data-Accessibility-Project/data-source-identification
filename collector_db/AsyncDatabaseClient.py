@@ -12,7 +12,7 @@ from collector_db.ConfigManager import ConfigManager
 from collector_db.DTOConverter import DTOConverter
 from collector_db.DTOs.TaskInfo import TaskInfo
 from collector_db.DTOs.URLErrorInfos import URLErrorPydanticInfo
-from collector_db.DTOs.URLHTMLContentInfo import URLHTMLContentInfo
+from collector_db.DTOs.URLHTMLContentInfo import URLHTMLContentInfo, HTMLContentType
 from collector_db.DTOs.URLInfo import URLInfo
 from collector_db.DTOs.URLMapping import URLMapping
 from collector_db.DTOs.URLWithHTML import URLWithHTML
@@ -37,7 +37,7 @@ from core.DTOs.GetURLsResponseInfo import GetURLsResponseInfo, GetURLsResponseEr
     GetURLsResponseInnerInfo
 from core.DTOs.URLAgencySuggestionInfo import URLAgencySuggestionInfo
 from core.DTOs.task_data_objects.AgencyIdentificationTDO import AgencyIdentificationTDO
-from core.DTOs.task_data_objects.URLMiscellaneousMetadataTDO import URLMiscellaneousMetadataTDO
+from core.DTOs.task_data_objects.URLMiscellaneousMetadataTDO import URLMiscellaneousMetadataTDO, URLHTMLMetadataInfo
 from core.enums import BatchStatus, SuggestionType, RecordType
 from html_tag_collector.DataClassTags import convert_to_response_html_info
 
@@ -375,6 +375,7 @@ class AsyncDatabaseClient:
         query = (
             query.options(
                 selectinload(URL.batch),
+                selectinload(URL.html_content)
             ).limit(100).order_by(URL.id)
         )
 
@@ -387,6 +388,13 @@ class AsyncDatabaseClient:
                 collector_metadata=result.collector_metadata,
                 collector_type=CollectorType(result.batch.strategy),
             )
+            html_info = URLHTMLMetadataInfo()
+            for html_content in result.html_content:
+                if html_content.content_type == HTMLContentType.TITLE.value:
+                    html_info.title = html_content.content
+                elif html_content.content_type == HTMLContentType.DESCRIPTION.value:
+                    html_info.description = html_content.content
+            tdo.html_metadata_info = html_info
             final_results.append(tdo)
         return final_results
 

@@ -4,6 +4,9 @@ from pydantic import BaseModel
 
 from collector_manager.enums import CollectorType
 
+class URLHTMLMetadataInfo(BaseModel):
+    title: Optional[str] = None
+    description: Optional[str] = None
 
 class URLMiscellaneousMetadataTDO(BaseModel):
     url_id: int
@@ -14,3 +17,4 @@ class URLMiscellaneousMetadataTDO(BaseModel):
     record_formats: Optional[list[str]] = None
     data_portal_type: Optional[str] = None
     supplying_entity: Optional[str] = None
+    html_metadata_info: Optional[URLHTMLMetadataInfo] = None
