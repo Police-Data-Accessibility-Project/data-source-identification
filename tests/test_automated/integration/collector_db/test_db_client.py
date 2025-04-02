@@ -1,22 +1,18 @@
 from datetime import datetime, timedelta
 
 import pytest
-from _pytest.outcomes import fail
 from fastapi import HTTPException
 
 from collector_db.AsyncDatabaseClient import AsyncDatabaseClient
 from collector_db.DTOs.BatchInfo import BatchInfo
-from collector_db.DTOs.InsertURLsInfo import InsertURLsInfo
 from collector_db.DTOs.LogInfo import LogInfo
 from collector_db.DTOs.URLErrorInfos import URLErrorPydanticInfo
 from collector_db.DTOs.URLInfo import URLInfo
-from collector_db.DTOs.URLMetadataInfo import URLMetadataInfo
-from collector_db.enums import URLMetadataAttributeType, ValidationStatus, ValidationSource
-from collector_db.models import URL, ApprovingUserURL, URLOptionalDataSourceMetadata, ConfirmedURLAgency, \
-    UserRelevantSuggestion
+from collector_db.models import URL, ApprovingUserURL, URLOptionalDataSourceMetadata, ConfirmedURLAgency
 from collector_manager.enums import URLStatus
 from core.DTOs.FinalReviewApprovalInfo import FinalReviewApprovalInfo
 from core.enums import BatchStatus, RecordType, SuggestionType
+from tests.helpers.complex_test_data_functions import setup_for_get_next_url_for_annotation
 from tests.helpers.DBDataCreator import DBDataCreator
 from tests.helpers.complex_test_data_functions import setup_for_get_next_url_for_final_review
 
@@ -156,11 +152,13 @@ async def test_get_next_url_for_final_review_basic(db_data_creator: DBDataCreato
     Test that an annotated URL is returned
     """
 
-    url_mapping = await setup_for_get_next_url_for_final_review(
+    setup_info = await setup_for_get_next_url_for_final_review(
         db_data_creator=db_data_creator,
         annotation_count=3,
         include_user_annotations=True
     )
+
+    url_mapping = setup_info.url_mapping
 
     await db_data_creator.agency_auto_suggestions(
         url_id=url_mapping.url_id,
@@ -168,7 +166,9 @@ async def test_get_next_url_for_final_review_basic(db_data_creator: DBDataCreato
     )
 
 
-    result = await db_data_creator.adb_client.get_next_url_for_final_review()
+    result = await db_data_creator.adb_client.get_next_url_for_final_review(
+        batch_id=None
+    )
 
     assert result.url == url_mapping.url
     html_info = result.html_info
@@ -202,6 +202,36 @@ async def test_get_next_url_for_final_review_basic(db_data_creator: DBDataCreato
     for i in range(3):
         assert user_agency_suggestions_as_list[i].count == 3 - i
 
+@pytest.mark.asyncio
+async def test_get_next_url_for_final_review_batch_id_filtering(db_data_creator: DBDataCreator):
+    setup_info_1 = await setup_for_get_next_url_for_final_review(
+        db_data_creator=db_data_creator,
+        annotation_count=3,
+        include_user_annotations=True
+    )
+
+    setup_info_2 = await setup_for_get_next_url_for_final_review(
+        db_data_creator=db_data_creator,
+        annotation_count=3,
+        include_user_annotations=True
+    )
+
+    url_mapping_1 = setup_info_1.url_mapping
+    url_mapping_2 = setup_info_2.url_mapping
+
+    # If a batch id is provided, return first valid URL with that batch id
+    result_with_batch_id =await db_data_creator.adb_client.get_next_url_for_final_review(
+        batch_id=setup_info_2.batch_id
+    )
+
+    assert result_with_batch_id.url == url_mapping_2.url
+
+    # If no batch id is provided, return first valid URL
+    result_no_batch_id =await db_data_creator.adb_client.get_next_url_for_final_review(
+        batch_id=None
+    )
+
+    assert result_no_batch_id.url == url_mapping_1.url
 
 
 @pytest.mark.asyncio
@@ -211,17 +241,19 @@ async def test_get_next_url_for_final_review_favor_more_components(db_data_creat
     i.e., if one has annotations for record type and agency id, that should be favored over one with just record type
     """
 
-    url_mapping_without_user_anno = await setup_for_get_next_url_for_final_review(
+    setup_info_without_user_anno = await setup_for_get_next_url_for_final_review(
         db_data_creator=db_data_creator,
         annotation_count=3,
         include_user_annotations=False
     )
+    url_mapping_without_user_anno = setup_info_without_user_anno.url_mapping
 
-    url_mapping_with_user_anno = await setup_for_get_next_url_for_final_review(
+    setup_info_with_user_anno = await setup_for_get_next_url_for_final_review(
         db_data_creator=db_data_creator,
         annotation_count=3,
         include_user_annotations=True
     )
+    url_mapping_with_user_anno = setup_info_with_user_anno.url_mapping
 
     # Have both be listed as unknown
 
@@ -232,7 +264,9 @@ async def test_get_next_url_for_final_review_favor_more_components(db_data_creat
             suggestion_type=SuggestionType.UNKNOWN
         )
 
-    result = await db_data_creator.adb_client.get_next_url_for_final_review()
+    result = await db_data_creator.adb_client.get_next_url_for_final_review(
+        batch_id=None
+    )
 
     assert result.id == url_mapping_with_user_anno.url_id
 
@@ -246,24 +280,28 @@ async def test_get_next_url_for_final_review_favor_more_annotations(
     """
     Test in the case of two URLs with the same number of components annotated, favoring the one with more total annotations
     """
-    url_mapping_lower_count = await setup_for_get_next_url_for_final_review(
+    setup_info_lower_count = await setup_for_get_next_url_for_final_review(
         db_data_creator=db_data_creator,
         annotation_count=1,
         include_user_annotations=True
     )
+    url_mapping_lower_count = setup_info_lower_count.url_mapping
 
-    url_mapping_higher_count = await setup_for_get_next_url_for_final_review(
+    setup_info_higher_count = await setup_for_get_next_url_for_final_review(
         db_data_creator=db_data_creator,
         annotation_count=3,
         include_user_annotations=True
     )
+    url_mapping_higher_count = setup_info_higher_count.url_mapping
 
     for url_mapping in [url_mapping_lower_count, url_mapping_higher_count]:
         await db_data_creator.agency_confirmed_suggestion(
             url_id=url_mapping.url_id
         )
 
-    result = await db_data_creator.adb_client.get_next_url_for_final_review()
+    result = await db_data_creator.adb_client.get_next_url_for_final_review(
+        batch_id=None
+    )
 
     assert result.id == url_mapping_higher_count.url_id
 
@@ -281,7 +319,9 @@ async def test_get_next_url_for_final_review_no_annotations(db_data_creator: DBD
     batch_id = db_data_creator.batch()
     url_mapping = db_data_creator.urls(batch_id=batch_id, url_count=1).url_mappings[0]
 
-    result = await db_data_creator.adb_client.get_next_url_for_final_review()
+    result = await db_data_creator.adb_client.get_next_url_for_final_review(
+        batch_id=None
+    )
 
     assert result.id == url_mapping.url_id
 
@@ -314,17 +354,20 @@ async def test_get_next_url_for_final_review_only_confirmed_urls(db_data_creator
         outcome=URLStatus.SUBMITTED
     ).url_mappings[0]
 
-    result = await db_data_creator.adb_client.get_next_url_for_final_review()
+    result = await db_data_creator.adb_client.get_next_url_for_final_review(
+        batch_id=None
+    )
 
     assert result is None
 
 @pytest.mark.asyncio
 async def test_approve_url_basic(db_data_creator: DBDataCreator):
-    url_mapping = await setup_for_get_next_url_for_final_review(
+    setup_info = await setup_for_get_next_url_for_final_review(
         db_data_creator=db_data_creator,
         annotation_count=3,
         include_user_annotations=True
     )
+    url_mapping = setup_info.url_mapping
 
     # Add confirmed agency
     agency_id = await db_data_creator.agency_confirmed_suggestion(
@@ -343,7 +386,7 @@ async def test_approve_url_basic(db_data_creator: DBDataCreator):
     )
 
     # Confirm same agency id is listed as confirmed
-    urls = await adb_client.get_all(URL)
+    urls: list[URL] = await adb_client.get_all(URL)
     assert len(urls) == 1
     url = urls[0]
     assert url.id == url_mapping.url_id
@@ -353,17 +396,17 @@ async def test_approve_url_basic(db_data_creator: DBDataCreator):
     assert url.name == "Test Name"
     assert url.description == "Test Description"
 
-    confirmed_agency = await adb_client.get_all(ConfirmedURLAgency)
+    confirmed_agency: list[ConfirmedURLAgency] = await adb_client.get_all(ConfirmedURLAgency)
     assert len(confirmed_agency) == 1
     assert confirmed_agency[0].url_id == url_mapping.url_id
     assert confirmed_agency[0].agency_id == agency_id
 
-    approving_user_urls = await adb_client.get_all(ApprovingUserURL)
+    approving_user_urls: list[ApprovingUserURL] = await adb_client.get_all(ApprovingUserURL)
     assert len(approving_user_urls) == 1
     assert approving_user_urls[0].user_id == 1
     assert approving_user_urls[0].url_id == url_mapping.url_id
 
-    optional_metadata = await adb_client.get_all(URLOptionalDataSourceMetadata)
+    optional_metadata: list[URLOptionalDataSourceMetadata] = await adb_client.get_all(URLOptionalDataSourceMetadata)
     assert len(optional_metadata) == 1
     assert optional_metadata[0].url_id == url_mapping.url_id
     assert optional_metadata[0].record_formats == ["Test Record Format", "Test Record Format 2"]
@@ -372,12 +415,13 @@ async def test_approve_url_basic(db_data_creator: DBDataCreator):
 
 @pytest.mark.asyncio
 async def test_approval_url_error(db_data_creator: DBDataCreator):
-    url_mapping = await setup_for_get_next_url_for_final_review(
+    setup_info = await setup_for_get_next_url_for_final_review(
         db_data_creator=db_data_creator,
         annotation_count=3,
         include_user_annotations=True,
         include_miscellaneous_metadata=False
     )
+    url_mapping = setup_info.url_mapping
 
     # Set all required descriptors to none and receive an error
     adb_client = db_data_creator.adb_client
@@ -427,17 +471,12 @@ async def test_approval_url_error(db_data_creator: DBDataCreator):
 async def test_get_next_url_for_user_relevance_annotation_pending(
         db_data_creator: DBDataCreator
 ):
-
-    batch_id = db_data_creator.batch()
-
-    # Create 2 URLs with outcome `pending`
-    iui: InsertURLsInfo = db_data_creator.urls(
-        batch_id=batch_id,
-        url_count=1,
-        outcome=URLStatus.PENDING
+    setup_info = await setup_for_get_next_url_for_annotation(
+        db_data_creator=db_data_creator,
+        url_count=2
     )
 
-    url_1 = iui.url_mappings[0]
+    url_1 = setup_info.insert_urls_info.url_mappings[0]
 
     # Add `Relevancy` attribute with value `True`
     await db_data_creator.auto_relevant_suggestions(
@@ -445,14 +484,90 @@ async def test_get_next_url_for_user_relevance_annotation_pending(
         relevant=True
     )
 
-    # Add HTML data
-    await db_data_creator.html_data([url_1.url_id])
-
     adb_client = db_data_creator.adb_client
     url = await adb_client.get_next_url_for_relevance_annotation(
-        user_id=1
+        user_id=1,
+        batch_id=None
     )
     assert url is not None
+
+@pytest.mark.asyncio
+async def test_get_next_url_for_annotation_batch_filtering(
+        db_data_creator: DBDataCreator
+):
+    """
+    Test that for all annotation retrievals, batch filtering works as expected
+    """
+    setup_info_1 = await setup_for_get_next_url_for_annotation(
+        db_data_creator=db_data_creator,
+        url_count=1
+    )
+    setup_info_2 = await setup_for_get_next_url_for_annotation(
+        db_data_creator=db_data_creator,
+        url_count=1
+    )
+
+    url_1 = setup_info_1.insert_urls_info.url_mappings[0]
+    url_2 = setup_info_2.insert_urls_info.url_mappings[0]
+
+    # Test for relevance
+    # If a batch id is provided, return first valid URL with that batch id
+    result_with_batch_id = await db_data_creator.adb_client.get_next_url_for_relevance_annotation(
+        user_id=1,
+        batch_id=setup_info_2.batch_id
+    )
+
+    assert result_with_batch_id.url_info.url == url_2.url
+
+    # If no batch id is provided, return first valid URL
+    result_no_batch_id = await db_data_creator.adb_client.get_next_url_for_relevance_annotation(
+        user_id=1,
+        batch_id=None
+    )
+
+    assert result_no_batch_id.url_info.url == url_1.url
+
+    # Test for record type
+    # If a batch id is provided, return first valid URL with that batch id
+    result_with_batch_id = await db_data_creator.adb_client.get_next_url_for_record_type_annotation(
+        user_id=1,
+        batch_id=setup_info_2.batch_id
+    )
+
+    assert result_with_batch_id.url_info.url == url_2.url
+
+    # If no batch id is provided, return first valid URL
+    result_no_batch_id = await db_data_creator.adb_client.get_next_url_for_record_type_annotation(
+        user_id=1,
+        batch_id=None
+    )
+
+    assert result_no_batch_id.url_info.url == url_1.url
+
+    # Test for agency
+    for url in [url_1, url_2]:
+        await db_data_creator.auto_suggestions(
+            url_ids=[url.url_id],
+            num_suggestions=2,
+            suggestion_type=SuggestionType.AUTO_SUGGESTION
+        )
+
+    # If a batch id is provided, return first valid URL with that batch id
+    result_with_batch_id = await db_data_creator.adb_client.get_next_url_agency_for_annotation(
+        user_id=1,
+        batch_id=setup_info_2.batch_id
+    )
+
+    assert result_with_batch_id.next_annotation.url == url_2.url
+
+    # If no batch id is provided, return first valid URL
+    result_no_batch_id = await db_data_creator.adb_client.get_next_url_agency_for_annotation(
+        user_id=1,
+        batch_id=None
+    )
+
+    assert result_no_batch_id.next_annotation.url == url_1.url
+
 
 @pytest.mark.asyncio
 async def test_get_next_url_for_user_relevance_annotation_validated(
@@ -462,16 +577,14 @@ async def test_get_next_url_for_user_relevance_annotation_validated(
     A validated URL should not turn up in get_next_url_for_user_annotation
     """
 
-    batch_id = db_data_creator.batch()
-
-    # Create 2 URLs with outcome `pending`
-    iui: InsertURLsInfo = db_data_creator.urls(
-        batch_id=batch_id,
+    setup_info = await setup_for_get_next_url_for_annotation(
+        db_data_creator=db_data_creator,
         url_count=1,
         outcome=URLStatus.VALIDATED
     )
 
-    url_1 = iui.url_mappings[0]
+
+    url_1 = setup_info.insert_urls_info.url_mappings[0]
 
     # Add `Relevancy` attribute with value `True`
     await db_data_creator.auto_relevant_suggestions(
@@ -479,11 +592,9 @@ async def test_get_next_url_for_user_relevance_annotation_validated(
         relevant=True
     )
 
-    # Add HTML data
-    await db_data_creator.html_data([url_1.url_id])
-
     adb_client = db_data_creator.adb_client
     url = await adb_client.get_next_url_for_relevance_annotation(
-        user_id=1
+        user_id=1,
+        batch_id=None
     )
     assert url is None
