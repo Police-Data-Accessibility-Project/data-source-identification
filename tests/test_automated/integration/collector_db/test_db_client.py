@@ -1,23 +1,18 @@
 from datetime import datetime, timedelta
 
 import pytest
-from _pytest.outcomes import fail
 from fastapi import HTTPException
 
 from collector_db.AsyncDatabaseClient import AsyncDatabaseClient
 from collector_db.DTOs.BatchInfo import BatchInfo
-from collector_db.DTOs.InsertURLsInfo import InsertURLsInfo
 from collector_db.DTOs.LogInfo import LogInfo
 from collector_db.DTOs.URLErrorInfos import URLErrorPydanticInfo
 from collector_db.DTOs.URLInfo import URLInfo
-from collector_db.DTOs.URLMetadataInfo import URLMetadataInfo
-from collector_db.enums import URLMetadataAttributeType, ValidationStatus, ValidationSource
-from collector_db.models import URL, ApprovingUserURL, URLOptionalDataSourceMetadata, ConfirmedURLAgency, \
-    UserRelevantSuggestion
+from collector_db.models import URL, ApprovingUserURL, URLOptionalDataSourceMetadata, ConfirmedURLAgency
 from collector_manager.enums import URLStatus
 from core.DTOs.FinalReviewApprovalInfo import FinalReviewApprovalInfo
 from core.enums import BatchStatus, RecordType, SuggestionType
-from helpers.complex_test_data_functions import setup_for_get_next_url_for_annotation
+from tests.helpers.complex_test_data_functions import setup_for_get_next_url_for_annotation
 from tests.helpers.DBDataCreator import DBDataCreator
 from tests.helpers.complex_test_data_functions import setup_for_get_next_url_for_final_review
 
