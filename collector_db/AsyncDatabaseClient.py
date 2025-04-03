@@ -23,7 +23,7 @@ from collector_db.helper_functions import get_postgres_connection_string
 from collector_db.models import URL, URLErrorInfo, URLHTMLContent, Base, \
     RootURL, Task, TaskError, LinkTaskURL, Batch, Agency, AutomatedUrlAgencySuggestion, \
     UserUrlAgencySuggestion, AutoRelevantSuggestion, AutoRecordTypeSuggestion, UserRelevantSuggestion, \
-    UserRecordTypeSuggestion, ApprovingUserURL, URLOptionalDataSourceMetadata, ConfirmedURLAgency
+    UserRecordTypeSuggestion, ReviewingUserURL, URLOptionalDataSourceMetadata, ConfirmedURLAgency
 from collector_manager.enums import URLStatus, CollectorType
 from core.DTOs.FinalReviewApprovalInfo import FinalReviewApprovalInfo
 from core.DTOs.GetNextRecordTypeAnnotationResponseInfo import GetNextRecordTypeAnnotationResponseInfo
@@ -1182,12 +1182,6 @@ class AsyncDatabaseClient:
             approval_info.record_type.value if approval_info.record_type is not None else None,
             required=True
         )
-        update_if_not_none(
-            url,
-            "relevant",
-            approval_info.relevant,
-            required=True
-        )
 
         # Get existing agency ids
         existing_agencies = url.confirmed_agencies or []
@@ -1263,10 +1257,35 @@ class AsyncDatabaseClient:
             )
 
         # Add approving user
-
-        approving_user_url = ApprovingUserURL(
+        approving_user_url = ReviewingUserURL(
             user_id=user_id,
             url_id=approval_info.url_id
         )
 
         session.add(approving_user_url)
+
+    @session_manager
+    async def reject_url(
+            self,
+            session: AsyncSession,
+            url_id: int,
+            user_id: int
+    ) -> None:
+
+        query = (
+            Select(URL)
+            .where(URL.id == url_id)
+        )
+
+        url = await session.execute(query)
+        url = url.scalars().first()
+
+        url.outcome = URLStatus.REJECTED.value
+
+        # Add rejecting user
+        rejecting_user_url = ReviewingUserURL(
+            user_id=user_id,
+            url_id=url_id
+        )
+
+        session.add(rejecting_user_url)

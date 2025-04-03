@@ -3,7 +3,7 @@ import pytest
 from collector_db.constants import PLACEHOLDER_AGENCY_NAME
 from collector_db.models import URL, URLOptionalDataSourceMetadata, ConfirmedURLAgency, Agency
 from collector_manager.enums import URLStatus
-from core.DTOs.FinalReviewApprovalInfo import FinalReviewApprovalInfo
+from core.DTOs.FinalReviewApprovalInfo import FinalReviewApprovalInfo, FinalReviewBaseInfo
 from core.DTOs.GetNextURLForFinalReviewResponse import GetNextURLForFinalReviewOuterResponse
 from core.enums import RecordType
 from tests.helpers.complex_test_data_functions import setup_for_get_next_url_for_final_review
@@ -102,7 +102,6 @@ async def test_approve_and_get_next_source_for_review(api_test_helper):
         approval_info=FinalReviewApprovalInfo(
             url_id=url_mapping.url_id,
             record_type=RecordType.ARREST_RECORDS,
-            relevant=True,
             agency_ids=agency_ids,
             name="New Test Name",
             description="New Test Description",
@@ -121,7 +120,6 @@ async def test_approve_and_get_next_source_for_review(api_test_helper):
     url = urls[0]
     assert url.id == url_mapping.url_id
     assert url.record_type == RecordType.ARREST_RECORDS.value
-    assert url.relevant == True
     assert url.outcome == URLStatus.VALIDATED.value
     assert url.name == "New Test Name"
     assert url.description == "New Test Description"
@@ -144,4 +142,30 @@ async def test_approve_and_get_next_source_for_review(api_test_helper):
         if agency.agency_id == additional_agency:
             assert agency.name == PLACEHOLDER_AGENCY_NAME
 
+@pytest.mark.asyncio
+async def test_reject_and_get_next_source_for_review(api_test_helper):
+    ath = api_test_helper
+    db_data_creator = ath.db_data_creator
 
+    setup_info = await setup_for_get_next_url_for_final_review(
+        db_data_creator=db_data_creator,
+        annotation_count=3,
+        include_user_annotations=True
+    )
+    url_mapping = setup_info.url_mapping
+
+    result: GetNextURLForFinalReviewOuterResponse = await ath.request_validator.reject_and_get_next_source_for_review(
+        review_info=FinalReviewBaseInfo(
+            url_id=url_mapping.url_id,
+        )
+    )
+
+    assert result.next_source is None
+
+    adb_client = db_data_creator.adb_client
+    # Confirm same agency id is listed as rejected
+    urls = await adb_client.get_all(URL)
+    assert len(urls) == 1
+    url = urls[0]
+    assert url.id == url_mapping.url_id
+    assert url.outcome == URLStatus.REJECTED.value

@@ -9,22 +9,18 @@ from collector_db.DTOs.TaskInfo import TaskInfo
 from collector_db.enums import TaskType
 from collector_manager.DTOs.ExampleInputDTO import ExampleInputDTO
 from collector_manager.enums import CollectorType
-from core.DTOs.FinalReviewApprovalInfo import FinalReviewApprovalInfo
+from core.DTOs.FinalReviewApprovalInfo import FinalReviewApprovalInfo, FinalReviewBaseInfo
 from core.DTOs.GetBatchLogsResponse import GetBatchLogsResponse
 from core.DTOs.GetBatchStatusResponse import GetBatchStatusResponse
 from core.DTOs.GetDuplicatesByBatchResponse import GetDuplicatesByBatchResponse
 from core.DTOs.GetNextRecordTypeAnnotationResponseInfo import GetNextRecordTypeAnnotationResponseOuterInfo
-from core.DTOs.GetNextRelevanceAnnotationResponseInfo import GetNextRelevanceAnnotationResponseInfo, \
-    GetNextRelevanceAnnotationResponseOuterInfo
+from core.DTOs.GetNextRelevanceAnnotationResponseInfo import GetNextRelevanceAnnotationResponseOuterInfo
 from core.DTOs.GetNextURLForAgencyAnnotationResponse import GetNextURLForAgencyAnnotationResponse, \
     URLAgencyAnnotationPostInfo
-from core.DTOs.GetNextURLForAnnotationResponse import GetNextURLForAnnotationResponse
-from core.DTOs.GetNextURLForFinalReviewResponse import GetNextURLForFinalReviewResponse, \
-    GetNextURLForFinalReviewOuterResponse
+from core.DTOs.GetNextURLForFinalReviewResponse import GetNextURLForFinalReviewOuterResponse
 from core.DTOs.GetTasksResponse import GetTasksResponse
 from core.DTOs.GetURLsByBatchResponse import GetURLsByBatchResponse
 from core.DTOs.GetURLsResponseInfo import GetURLsResponseInfo
-from core.DTOs.MessageCountResponse import MessageCountResponse
 from core.DTOs.MessageResponse import MessageResponse
 from core.DTOs.RecordTypeAnnotationPostInfo import RecordTypeAnnotationPostInfo
 from core.DTOs.RelevanceAnnotationPostInfo import RelevanceAnnotationPostInfo
@@ -274,5 +270,15 @@ class RequestValidator:
         data = self.post(
             url=f"/review/approve-source",
             json=approval_info.model_dump(mode='json')
+        )
+        return GetNextURLForFinalReviewOuterResponse(**data)
+
+    async def reject_and_get_next_source_for_review(
+            self,
+            review_info: FinalReviewBaseInfo
+    ) -> GetNextURLForFinalReviewOuterResponse:
+        data = self.post(
+            url=f"/review/reject-source",
+            json=review_info.model_dump(mode='json')
         )
         return GetNextURLForFinalReviewOuterResponse(**data)

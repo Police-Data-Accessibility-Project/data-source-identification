@@ -251,17 +251,24 @@ class AsyncCore:
             batch_id=batch_id
         )
 
-    async def approve_and_get_next_source_for_review(
+    async def approve_url(
             self,
             approval_info: FinalReviewApprovalInfo,
-            access_info: AccessInfo,
-            batch_id: Optional[int]
+            access_info: AccessInfo
     ):
         await self.adb_client.approve_url(
             approval_info=approval_info,
             user_id=access_info.user_id
         )
-        return await self.get_next_source_for_review(
-            batch_id=batch_id
+
+
+    async def reject_url(
+            self,
+            url_id: int,
+            access_info: AccessInfo,
+    ):
+        await self.adb_client.reject_url(
+            url_id=url_id,
+            user_id=access_info.user_id
         )
 

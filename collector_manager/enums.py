@@ -15,3 +15,4 @@ class URLStatus(Enum):
     VALIDATED = "validated"
     ERROR = "error"
     DUPLICATE = "duplicate"
+    REJECTED = "rejected"
