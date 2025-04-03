@@ -95,6 +95,7 @@ class URL(Base):
             'pending',
             'submitted',
             'validated',
+            'rejected',
             'duplicate',
             'error',
             name='url_status'
@@ -102,7 +103,6 @@ class URL(Base):
         nullable=False
     )
     record_type = Column(postgresql.ENUM(*record_type_values, name='record_type'), nullable=True)
-    relevant = Column(Boolean, nullable=True)
     created_at = get_created_at_column()
     updated_at = get_updated_at_column()
 
@@ -128,8 +128,8 @@ class URL(Base):
         "AutoRelevantSuggestion", uselist=False, back_populates="url")
     user_relevant_suggestions = relationship(
         "UserRelevantSuggestion", back_populates="url")
-    approving_users = relationship(
-        "ApprovingUserURL", back_populates="url")
+    reviewing_users = relationship(
+        "ReviewingUserURL", back_populates="url")
     optional_data_source_metadata = relationship(
         "URLOptionalDataSourceMetadata", uselist=False, back_populates="url")
     confirmed_agencies = relationship(
@@ -149,8 +149,8 @@ class URLOptionalDataSourceMetadata(Base):
     # Relationships
     url = relationship("URL", uselist=False, back_populates="optional_data_source_metadata")
 
-class ApprovingUserURL(Base):
-    __tablename__ = 'approving_user_url'
+class ReviewingUserURL(Base):
+    __tablename__ = 'reviewing_user_url'
     __table_args__ = (
         UniqueConstraint(
         "url_id",
@@ -163,7 +163,7 @@ class ApprovingUserURL(Base):
     created_at = get_created_at_column()
 
     # Relationships
-    url = relationship("URL", back_populates="approving_users")
+    url = relationship("URL", back_populates="reviewing_users")
 
 class RootURL(Base):
     __tablename__ = 'root_url_cache'

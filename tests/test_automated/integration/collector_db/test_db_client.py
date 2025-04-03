@@ -8,7 +8,7 @@ from collector_db.DTOs.BatchInfo import BatchInfo
 from collector_db.DTOs.LogInfo import LogInfo
 from collector_db.DTOs.URLErrorInfos import URLErrorPydanticInfo
 from collector_db.DTOs.URLInfo import URLInfo
-from collector_db.models import URL, ApprovingUserURL, URLOptionalDataSourceMetadata, ConfirmedURLAgency
+from collector_db.models import URL, ReviewingUserURL, URLOptionalDataSourceMetadata, ConfirmedURLAgency
 from collector_manager.enums import URLStatus
 from core.DTOs.FinalReviewApprovalInfo import FinalReviewApprovalInfo
 from core.enums import BatchStatus, RecordType, SuggestionType
@@ -391,7 +391,6 @@ async def test_approve_url_basic(db_data_creator: DBDataCreator):
     url = urls[0]
     assert url.id == url_mapping.url_id
     assert url.record_type == RecordType.ARREST_RECORDS.value
-    assert url.relevant == True
     assert url.outcome == URLStatus.VALIDATED.value
     assert url.name == "Test Name"
     assert url.description == "Test Description"
@@ -401,7 +400,7 @@ async def test_approve_url_basic(db_data_creator: DBDataCreator):
     assert confirmed_agency[0].url_id == url_mapping.url_id
     assert confirmed_agency[0].agency_id == agency_id
 
-    approving_user_urls: list[ApprovingUserURL] = await adb_client.get_all(ApprovingUserURL)
+    approving_user_urls: list[ReviewingUserURL] = await adb_client.get_all(ReviewingUserURL)
     assert len(approving_user_urls) == 1
     assert approving_user_urls[0].user_id == 1
     assert approving_user_urls[0].url_id == url_mapping.url_id
