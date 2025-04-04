@@ -13,7 +13,7 @@ from core.DTOs.GetNextURLForAnnotationResponse import GetNextURLForAnnotationRes
 from core.DTOs.RecordTypeAnnotationPostInfo import RecordTypeAnnotationPostInfo
 from core.DTOs.RelevanceAnnotationPostInfo import RelevanceAnnotationPostInfo
 from core.enums import RecordType, SuggestionType
-from helpers.complex_test_data_functions import AnnotateAgencySetupInfo, setup_for_annotate_agency
+from tests.helpers.complex_test_data_functions import AnnotateAgencySetupInfo, setup_for_annotate_agency
 from html_tag_collector.DataClassTags import ResponseHTMLInfo
 from tests.helpers.DBDataCreator import BatchURLCreationInfo
 from tests.test_automated.integration.api.conftest import MOCK_USER_ID
