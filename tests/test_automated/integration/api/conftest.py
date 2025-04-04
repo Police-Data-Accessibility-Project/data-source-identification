@@ -6,8 +6,9 @@ import pytest
 from starlette.testclient import TestClient
 
 from api.main import app
+from api.routes.review import requires_final_review_permission
 from core.SourceCollectorCore import SourceCollectorCore
-from security_manager.SecurityManager import get_access_info, AccessInfo, Permissions
+from security_manager.SecurityManager import get_access_info, AccessInfo, Permissions, require_permission
 from tests.helpers.DBDataCreator import DBDataCreator
 from tests.test_automated.integration.api.helpers.RequestValidator import RequestValidator
 
@@ -27,12 +28,19 @@ MOCK_USER_ID = 1
 
 
 def override_access_info() -> AccessInfo:
-    return AccessInfo(user_id=MOCK_USER_ID, permissions=[Permissions.SOURCE_COLLECTOR])
+    return AccessInfo(
+        user_id=MOCK_USER_ID,
+        permissions=[
+            Permissions.SOURCE_COLLECTOR,
+            Permissions.SOURCE_COLLECTOR_FINAL_REVIEW
+        ]
+    )
 
 @pytest.fixture
 def client(db_client_test) -> Generator[TestClient, None, None]:
     with TestClient(app) as c:
         app.dependency_overrides[get_access_info] = override_access_info
+        app.dependency_overrides[requires_final_review_permission] = override_access_info
         core: SourceCollectorCore = c.app.state.core
         # core.shutdown()
         yield c
