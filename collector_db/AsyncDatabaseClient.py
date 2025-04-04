@@ -121,7 +121,8 @@ class AsyncDatabaseClient:
             user_suggestion_model_to_exclude: UserSuggestionModel,
             auto_suggestion_relationship: QueryableAttribute,
             user_id: int,
-            batch_id: Optional[int]
+            batch_id: Optional[int],
+            check_if_annotated_not_relevant: bool = False
     ) -> URL:
         url_query = (
             select(
@@ -142,6 +143,21 @@ class AsyncDatabaseClient:
                 )
             )
         )
+
+        if check_if_annotated_not_relevant:
+            url_query = url_query.where(
+                not_(
+                    exists(
+                        select(UserRelevantSuggestion)
+                        .where(
+                            UserRelevantSuggestion.url_id == URL.id,
+                            UserRelevantSuggestion.user_id == user_id,
+                            UserRelevantSuggestion.relevant == False
+                        )
+                    )
+                )
+            )
+
         if batch_id is not None:
             url_query = url_query.where(URL.batch_id == batch_id)
 
@@ -233,7 +249,8 @@ class AsyncDatabaseClient:
             user_suggestion_model_to_exclude=UserRecordTypeSuggestion,
             auto_suggestion_relationship=URL.auto_record_type_suggestion,
             user_id=user_id,
-            batch_id=batch_id
+            batch_id=batch_id,
+            check_if_annotated_not_relevant=True
         )
         if url is None:
             return None
@@ -830,6 +847,18 @@ class AsyncDatabaseClient:
                     select(ConfirmedURLAgency).
                     where(ConfirmedURLAgency.url_id == URL.id).
                     correlate(URL)
+                )
+            )
+            # Must not have been marked as "Not Relevant" by this user
+            .join(UserRelevantSuggestion, isouter=True)
+            .where(
+                ~exists(
+                    select(UserRelevantSuggestion).
+                    where(
+                        (UserRelevantSuggestion.user_id == user_id) &
+                        (UserRelevantSuggestion.url_id == URL.id) &
+                        (UserRelevantSuggestion.relevant == False)
+                    ).correlate(URL)
                 )
             )
         ).limit(1)
