@@ -4,7 +4,7 @@ from collector_db.DTOs.InsertURLsInfo import InsertURLsInfo
 from collector_db.DTOs.URLMapping import URLMapping
 from collector_manager.enums import URLStatus
 from core.enums import RecordType, SuggestionType
-from helpers.DBDataCreator import BatchURLCreationInfo
+from tests.helpers.DBDataCreator import BatchURLCreationInfo
 from tests.helpers.DBDataCreator import DBDataCreator
 
 class AnnotationSetupInfo(BaseModel):
