@@ -976,6 +976,18 @@ class AsyncDatabaseClient:
     ):
         if is_new and agency_id is not None:
             raise ValueError("agency_id must be None when is_new is True")
+
+        # Check if agency exists in database -- if not, add with placeholder
+        if agency_id is not None:
+            statement = select(Agency).where(Agency.agency_id == agency_id)
+            result = await session.execute(statement)
+            if len(result.all()) == 0:
+                agency = Agency(
+                    agency_id=agency_id,
+                    name=PLACEHOLDER_AGENCY_NAME
+                )
+                await session.merge(agency)
+
         url_agency_suggestion = UserUrlAgencySuggestion(
             url_id=url_id,
             agency_id=agency_id,

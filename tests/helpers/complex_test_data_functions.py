@@ -3,7 +3,8 @@ from pydantic import BaseModel
 from collector_db.DTOs.InsertURLsInfo import InsertURLsInfo
 from collector_db.DTOs.URLMapping import URLMapping
 from collector_manager.enums import URLStatus
-from core.enums import RecordType
+from core.enums import RecordType, SuggestionType
+from helpers.DBDataCreator import BatchURLCreationInfo
 from tests.helpers.DBDataCreator import DBDataCreator
 
 class AnnotationSetupInfo(BaseModel):
@@ -28,6 +29,26 @@ async def setup_for_get_next_url_for_annotation(
     )
     return AnnotationSetupInfo(batch_id=batch_id, insert_urls_info=insert_urls_info)
 
+class AnnotateAgencySetupInfo(BaseModel):
+    batch_id: int
+    url_ids: list[int]
+
+async def setup_for_annotate_agency(
+        db_data_creator: DBDataCreator,
+        url_count: int,
+        suggestion_type: SuggestionType = SuggestionType.UNKNOWN
+):
+    buci: BatchURLCreationInfo = await db_data_creator.batch_and_urls(
+        url_count=url_count,
+        with_html_content=True
+    )
+    await db_data_creator.auto_suggestions(
+        url_ids=buci.url_ids,
+        num_suggestions=1,
+        suggestion_type=suggestion_type
+    )
+
+    return AnnotateAgencySetupInfo(batch_id=buci.batch_id, url_ids=buci.url_ids)
 
 class FinalReviewSetupInfo(BaseModel):
     batch_id: int
