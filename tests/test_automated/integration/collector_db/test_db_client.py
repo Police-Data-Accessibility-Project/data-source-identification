@@ -8,6 +8,7 @@ from collector_db.DTOs.BatchInfo import BatchInfo
 from collector_db.DTOs.LogInfo import LogInfo
 from collector_db.DTOs.URLErrorInfos import URLErrorPydanticInfo
 from collector_db.DTOs.URLInfo import URLInfo
+from collector_db.DTOs.URLMapping import URLMapping
 from collector_db.models import URL, ReviewingUserURL, URLOptionalDataSourceMetadata, ConfirmedURLAgency
 from collector_manager.enums import URLStatus
 from core.DTOs.FinalReviewApprovalInfo import FinalReviewApprovalInfo
@@ -597,3 +598,61 @@ async def test_get_next_url_for_user_relevance_annotation_validated(
         batch_id=None
     )
     assert url is None
+
+@pytest.mark.asyncio
+async def test_annotate_url_marked_not_relevant(db_data_creator: DBDataCreator):
+    """
+    If a URL is marked not relevant by the user, they should not receive that URL
+    in calls to get an annotation for record type or agency
+    Other users should still receive the URL
+    """
+    setup_info = await setup_for_get_next_url_for_annotation(
+        db_data_creator=db_data_creator,
+        url_count=2
+    )
+    adb_client = db_data_creator.adb_client
+    url_to_mark_not_relevant: URLMapping = setup_info.insert_urls_info.url_mappings[0]
+    url_to_mark_relevant: URLMapping = setup_info.insert_urls_info.url_mappings[1]
+    for url_mapping in setup_info.insert_urls_info.url_mappings:
+        await db_data_creator.agency_auto_suggestions(
+            url_id=url_mapping.url_id,
+            count=3
+        )
+    await adb_client.add_user_relevant_suggestion(
+        user_id=1,
+        url_id=url_to_mark_not_relevant.url_id,
+        relevant=False
+    )
+    await adb_client.add_user_relevant_suggestion(
+        user_id=1,
+        url_id=url_to_mark_relevant.url_id,
+        relevant=True
+    )
+
+    # User should not receive the URL for record type annotation
+    record_type_annotation_info = await adb_client.get_next_url_for_record_type_annotation(
+        user_id=1,
+        batch_id=None
+    )
+    assert record_type_annotation_info.url_info.url_id != url_to_mark_not_relevant.url_id
+
+    # Other users should still receive the URL for record type annotation
+    record_type_annotation_info = await adb_client.get_next_url_for_record_type_annotation(
+        user_id=2,
+        batch_id=None
+    )
+    assert record_type_annotation_info.url_info.url_id == url_to_mark_not_relevant.url_id
+
+    # User should not receive the URL for agency annotation
+    agency_annotation_info = await adb_client.get_next_url_agency_for_annotation(
+        user_id=1,
+        batch_id=None
+    )
+    assert agency_annotation_info.next_annotation.url_id != url_to_mark_not_relevant.url_id
+
+    # Other users should still receive the URL for agency annotation
+    agency_annotation_info = await adb_client.get_next_url_agency_for_annotation(
+        user_id=2,
+        batch_id=None
+    )
+    assert agency_annotation_info.next_annotation.url_id == url_to_mark_not_relevant.url_id
