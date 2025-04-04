@@ -9,11 +9,12 @@ from collector_db.DTOs.LogInfo import LogInfo
 from collector_db.DTOs.URLErrorInfos import URLErrorPydanticInfo
 from collector_db.DTOs.URLInfo import URLInfo
 from collector_db.DTOs.URLMapping import URLMapping
-from collector_db.models import URL, ReviewingUserURL, URLOptionalDataSourceMetadata, ConfirmedURLAgency
+from collector_db.constants import PLACEHOLDER_AGENCY_NAME
+from collector_db.models import URL, ReviewingUserURL, URLOptionalDataSourceMetadata, ConfirmedURLAgency, Agency
 from collector_manager.enums import URLStatus
 from core.DTOs.FinalReviewApprovalInfo import FinalReviewApprovalInfo
 from core.enums import BatchStatus, RecordType, SuggestionType
-from tests.helpers.complex_test_data_functions import setup_for_get_next_url_for_annotation
+from tests.helpers.complex_test_data_functions import setup_for_get_next_url_for_annotation, setup_for_annotate_agency
 from tests.helpers.DBDataCreator import DBDataCreator
 from tests.helpers.complex_test_data_functions import setup_for_get_next_url_for_final_review
 
@@ -656,3 +657,22 @@ async def test_annotate_url_marked_not_relevant(db_data_creator: DBDataCreator):
         batch_id=None
     )
     assert agency_annotation_info.next_annotation.url_id == url_to_mark_not_relevant.url_id
+
+@pytest.mark.asyncio
+async def test_annotate_url_agency_agency_not_in_db(db_data_creator: DBDataCreator):
+    setup_info = await setup_for_annotate_agency(
+        db_data_creator,
+        url_count=1
+    )
+
+    url_id = setup_info.url_ids[0]
+    await db_data_creator.adb_client.add_agency_manual_suggestion(
+        agency_id=1,
+        url_id=url_id,
+        user_id=1,
+        is_new=False
+    )
+
+    agencies = await db_data_creator.adb_client.get_all(Agency)
+    assert len(agencies)
+    assert agencies[0].name == PLACEHOLDER_AGENCY_NAME
