@@ -410,7 +410,7 @@ class AsyncDatabaseClient:
         for result in all_results:
             tdo = URLMiscellaneousMetadataTDO(
                 url_id=result.id,
-                collector_metadata=result.collector_metadata,
+                collector_metadata=result.collector_metadata or {},
                 collector_type=CollectorType(result.batch.strategy),
             )
             html_info = URLHTMLMetadataInfo()

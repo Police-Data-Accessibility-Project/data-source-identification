@@ -1,3 +1,5 @@
+from typing import Optional
+
 from collector_db.AsyncDatabaseClient import AsyncDatabaseClient
 from collector_db.DTOs.URLErrorInfos import URLErrorPydanticInfo
 from collector_db.enums import TaskType
@@ -26,7 +28,10 @@ class URLMiscellaneousMetadataTaskOperator(TaskOperatorBase):
     async def meets_task_prerequisites(self):
         return await self.adb_client.has_pending_urls_missing_miscellaneous_metadata()
 
-    async def get_subtask(self, collector_type: CollectorType) -> MiscellaneousMetadataSubtaskBase:
+    async def get_subtask(
+            self,
+            collector_type: CollectorType
+    ) -> Optional[MiscellaneousMetadataSubtaskBase]:
         match collector_type:
             case CollectorType.MUCKROCK_SIMPLE_SEARCH:
                 return MuckrockMiscMetadataSubtask()
@@ -39,7 +44,7 @@ class URLMiscellaneousMetadataTaskOperator(TaskOperatorBase):
             case CollectorType.CKAN:
                 return CKANMiscMetadataSubtask()
             case _:
-                raise Exception(f"Unknown collector type: {collector_type}")
+                return None
 
     async def html_default_logic(self, tdo: URLMiscellaneousMetadataTDO):
         if tdo.name is None:
@@ -55,7 +60,8 @@ class URLMiscellaneousMetadataTaskOperator(TaskOperatorBase):
         for tdo in tdos:
             subtask = await self.get_subtask(tdo.collector_type)
             try:
-                subtask.process(tdo)
+                if subtask is not None:
+                    subtask.process(tdo)
                 await self.html_default_logic(tdo)
             except Exception as e:
                 error_info = URLErrorPydanticInfo(
