@@ -73,16 +73,7 @@ class StatementComposer:
                     URL.outcome == URLStatus.PENDING.value,
                     URL.name == None,
                     URL.description == None,
-                    URLOptionalDataSourceMetadata.url_id == None,
-                    Batch.strategy.in_(
-                        [
-                            CollectorType.AUTO_GOOGLER.value,
-                            CollectorType.CKAN.value,
-                            CollectorType.MUCKROCK_ALL_SEARCH.value,
-                            CollectorType.MUCKROCK_COUNTY_SEARCH.value,
-                            CollectorType.MUCKROCK_SIMPLE_SEARCH.value
-                        ]
-                    )
+                    URLOptionalDataSourceMetadata.url_id == None
                 )
             ).outerjoin(
                 URLOptionalDataSourceMetadata
