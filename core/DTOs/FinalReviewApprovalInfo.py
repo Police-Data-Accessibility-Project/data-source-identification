@@ -4,18 +4,14 @@ from pydantic import BaseModel, Field
 
 from core.enums import RecordType
 
-
-class FinalReviewApprovalInfo(BaseModel):
+class FinalReviewBaseInfo(BaseModel):
     url_id: int = Field(
         title="The id of the URL."
     )
+
+class FinalReviewApprovalInfo(FinalReviewBaseInfo):
     record_type: Optional[RecordType] = Field(
         title="The final record type of the URL."
-              "If none, defers to the existing value from the auto-labeler only if it exists.",
-        default=None
-    )
-    relevant: Optional[bool] = Field(
-        title="Final determination on whether the URL is relevant."
               "If none, defers to the existing value from the auto-labeler only if it exists.",
         default=None
     )

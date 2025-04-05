@@ -1,8 +1,10 @@
-from fastapi import APIRouter, Depends
+from typing import Optional
+
+from fastapi import APIRouter, Depends, Query
 
 from api.dependencies import get_async_core
 from core.AsyncCore import AsyncCore
-from core.DTOs.FinalReviewApprovalInfo import FinalReviewApprovalInfo
+from core.DTOs.FinalReviewApprovalInfo import FinalReviewApprovalInfo, FinalReviewBaseInfo
 from core.DTOs.GetNextURLForFinalReviewResponse import GetNextURLForFinalReviewResponse, \
     GetNextURLForFinalReviewOuterResponse
 from security_manager.SecurityManager import AccessInfo, get_access_info
@@ -17,18 +19,44 @@ review_router = APIRouter(
 async def get_next_source(
     core: AsyncCore = Depends(get_async_core),
     access_info: AccessInfo = Depends(get_access_info),
+    batch_id: Optional[int] = Query(
+        description="The batch id of the next URL to get. "
+                    "If not specified, defaults to first qualifying URL",
+        default=None),
 ) -> GetNextURLForFinalReviewOuterResponse:
-    next_source = await core.get_next_source_for_review()
+    next_source = await core.get_next_source_for_review(batch_id=batch_id)
     return GetNextURLForFinalReviewOuterResponse(next_source=next_source)
 
 @review_router.post("/approve-source")
 async def approve_source(
     core: AsyncCore = Depends(get_async_core),
     access_info: AccessInfo = Depends(get_access_info),
-    approval_info: FinalReviewApprovalInfo = FinalReviewApprovalInfo
+    approval_info: FinalReviewApprovalInfo = FinalReviewApprovalInfo,
+    batch_id: Optional[int] = Query(
+        description="The batch id of the next URL to get. "
+                    "If not specified, defaults to first qualifying URL",
+        default=None),
 ) -> GetNextURLForFinalReviewOuterResponse:
-    next_source = await core.approve_and_get_next_source_for_review(
+    await core.approve_url(
         approval_info,
-        access_info=access_info
+        access_info=access_info,
     )
+    next_source = await core.get_next_source_for_review(batch_id=batch_id)
+    return GetNextURLForFinalReviewOuterResponse(next_source=next_source)
+
+@review_router.post("/reject-source")
+async def reject_source(
+    core: AsyncCore = Depends(get_async_core),
+    access_info: AccessInfo = Depends(get_access_info),
+    review_info: FinalReviewBaseInfo = FinalReviewBaseInfo,
+    batch_id: Optional[int] = Query(
+        description="The batch id of the next URL to get. "
+                    "If not specified, defaults to first qualifying URL",
+        default=None),
+) -> GetNextURLForFinalReviewOuterResponse:
+    await core.reject_url(
+        url_id=review_info.url_id,
+        access_info=access_info,
+    )
+    next_source = await core.get_next_source_for_review(batch_id=batch_id)
     return GetNextURLForFinalReviewOuterResponse(next_source=next_source)

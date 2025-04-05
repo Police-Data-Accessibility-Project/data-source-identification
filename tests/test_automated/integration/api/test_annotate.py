@@ -13,6 +13,7 @@ from core.DTOs.GetNextURLForAnnotationResponse import GetNextURLForAnnotationRes
 from core.DTOs.RecordTypeAnnotationPostInfo import RecordTypeAnnotationPostInfo
 from core.DTOs.RelevanceAnnotationPostInfo import RelevanceAnnotationPostInfo
 from core.enums import RecordType, SuggestionType
+from tests.helpers.complex_test_data_functions import AnnotateAgencySetupInfo, setup_for_annotate_agency
 from html_tag_collector.DataClassTags import ResponseHTMLInfo
 from tests.helpers.DBDataCreator import BatchURLCreationInfo
 from tests.test_automated.integration.api.conftest import MOCK_USER_ID
@@ -221,7 +222,6 @@ async def test_annotate_agency_multiple_auto_suggestions(api_test_helper):
     The user should receive all of the auto suggestions with full detail
     """
     ath = api_test_helper
-    adb_client = ath.adb_client()
     buci: BatchURLCreationInfo = await ath.db_data_creator.batch_and_urls(
         url_count=1,
         with_html_content=True
@@ -264,7 +264,6 @@ async def test_annotate_agency_single_unknown_auto_suggestion(api_test_helper):
     The user should receive a single Unknown Auto Suggestion lacking other detail
     """
     ath = api_test_helper
-    adb_client = ath.adb_client()
     buci: BatchURLCreationInfo = await ath.db_data_creator.batch_and_urls(
         url_count=1,
         with_html_content=True
@@ -306,7 +305,6 @@ async def test_annotate_agency_single_confirmed_agency(api_test_helper):
     The user should not receive this URL to annotate
     """
     ath = api_test_helper
-    adb_client = ath.adb_client()
     buci: BatchURLCreationInfo = await ath.db_data_creator.batch_and_urls(
         url_count=1,
         with_html_content=True
@@ -325,20 +323,16 @@ async def test_annotate_agency_other_user_annotation(api_test_helper):
     Our user should still receive this URL to annotate
     """
     ath = api_test_helper
-    adb_client = ath.adb_client()
-    buci: BatchURLCreationInfo = await ath.db_data_creator.batch_and_urls(
-        url_count=1,
-        with_html_content=True
+    setup_info: AnnotateAgencySetupInfo = await setup_for_annotate_agency(
+        db_data_creator=ath.db_data_creator,
+        url_count=1
     )
-    await ath.db_data_creator.auto_suggestions(
-        url_ids=buci.url_ids,
-        num_suggestions=1,
-        suggestion_type=SuggestionType.UNKNOWN
-    )
+    url_ids = setup_info.url_ids
+
 
     await ath.db_data_creator.manual_suggestion(
         user_id=MOCK_USER_ID + 1,
-        url_id=buci.url_ids[0],
+        url_id=url_ids[0],
     )
 
     response = await ath.request_validator.get_next_agency_annotation()
@@ -346,7 +340,7 @@ async def test_annotate_agency_other_user_annotation(api_test_helper):
     assert response.next_annotation
     next_annotation = response.next_annotation
     # Check that url_id matches the one we inserted
-    assert next_annotation.url_id == buci.url_ids[0]
+    assert next_annotation.url_id == url_ids[0]
 
     # Check that html data is present
     assert next_annotation.html_info.description != ""
@@ -364,20 +358,15 @@ async def test_annotate_agency_submit_and_get_next(api_test_helper):
     Until another relevant URL is added
     """
     ath = api_test_helper
-    adb_client = ath.adb_client()
-    buci: BatchURLCreationInfo = await ath.db_data_creator.batch_and_urls(
-        url_count=2,
-        with_html_content=True
+    setup_info: AnnotateAgencySetupInfo = await setup_for_annotate_agency(
+        db_data_creator=ath.db_data_creator,
+        url_count=2
     )
-    await ath.db_data_creator.auto_suggestions(
-        url_ids=buci.url_ids,
-        num_suggestions=1,
-        suggestion_type=SuggestionType.UNKNOWN
-    )
+    url_ids = setup_info.url_ids
 
     # User should submit an annotation and receive the next
     response = await ath.request_validator.post_agency_annotation_and_get_next(
-        url_id=buci.url_ids[0],
+        url_id=url_ids[0],
         agency_annotation_post_info=URLAgencyAnnotationPostInfo(
             suggested_agency=await ath.db_data_creator.agency(),
             is_new=False
@@ -388,7 +377,7 @@ async def test_annotate_agency_submit_and_get_next(api_test_helper):
 
     # User should submit this annotation and receive none for the next
     response = await ath.request_validator.post_agency_annotation_and_get_next(
-        url_id=buci.url_ids[1],
+        url_id=url_ids[1],
         agency_annotation_post_info=URLAgencyAnnotationPostInfo(
             suggested_agency=await ath.db_data_creator.agency(),
             is_new=False
@@ -407,19 +396,15 @@ async def test_annotate_agency_submit_new(api_test_helper):
     """
     ath = api_test_helper
     adb_client = ath.adb_client()
-    buci: BatchURLCreationInfo = await ath.db_data_creator.batch_and_urls(
-        url_count=1,
-        with_html_content=True
+    setup_info: AnnotateAgencySetupInfo = await setup_for_annotate_agency(
+        db_data_creator=ath.db_data_creator,
+        url_count=1
     )
-    await ath.db_data_creator.auto_suggestions(
-        url_ids=buci.url_ids,
-        num_suggestions=1,
-        suggestion_type=SuggestionType.UNKNOWN
-    )
+    url_ids = setup_info.url_ids
 
     # User should submit an annotation and mark it as New
     response = await ath.request_validator.post_agency_annotation_and_get_next(
-        url_id=buci.url_ids[0],
+        url_id=url_ids[0],
         agency_annotation_post_info=URLAgencyAnnotationPostInfo(
             suggested_agency=await ath.db_data_creator.agency(),
             is_new=True

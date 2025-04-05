@@ -2,7 +2,7 @@ from functools import wraps
 from typing import Optional, Type, Any
 
 from fastapi import HTTPException
-from sqlalchemy import select, exists, func, case, desc, Select, not_, and_, or_, update, Delete, Insert
+from sqlalchemy import select, exists, func, case, desc, Select, not_, and_, or_, update, Delete, Insert, asc
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.orm import selectinload, joinedload, QueryableAttribute
 from sqlalchemy.sql.functions import coalesce
@@ -23,7 +23,7 @@ from collector_db.helper_functions import get_postgres_connection_string
 from collector_db.models import URL, URLErrorInfo, URLHTMLContent, Base, \
     RootURL, Task, TaskError, LinkTaskURL, Batch, Agency, AutomatedUrlAgencySuggestion, \
     UserUrlAgencySuggestion, AutoRelevantSuggestion, AutoRecordTypeSuggestion, UserRelevantSuggestion, \
-    UserRecordTypeSuggestion, ApprovingUserURL, URLOptionalDataSourceMetadata, ConfirmedURLAgency
+    UserRecordTypeSuggestion, ReviewingUserURL, URLOptionalDataSourceMetadata, ConfirmedURLAgency
 from collector_manager.enums import URLStatus, CollectorType
 from core.DTOs.FinalReviewApprovalInfo import FinalReviewApprovalInfo
 from core.DTOs.GetNextRecordTypeAnnotationResponseInfo import GetNextRecordTypeAnnotationResponseInfo
@@ -120,7 +120,9 @@ class AsyncDatabaseClient:
             session: AsyncSession,
             user_suggestion_model_to_exclude: UserSuggestionModel,
             auto_suggestion_relationship: QueryableAttribute,
-            user_id: int
+            user_id: int,
+            batch_id: Optional[int],
+            check_if_annotated_not_relevant: bool = False
     ) -> URL:
         url_query = (
             select(
@@ -139,12 +141,30 @@ class AsyncDatabaseClient:
                         )
                     )
                 )
-            ).options(
+            )
+        )
+
+        if check_if_annotated_not_relevant:
+            url_query = url_query.where(
+                not_(
+                    exists(
+                        select(UserRelevantSuggestion)
+                        .where(
+                            UserRelevantSuggestion.url_id == URL.id,
+                            UserRelevantSuggestion.user_id == user_id,
+                            UserRelevantSuggestion.relevant == False
+                        )
+                    )
+                )
+            )
+
+        if batch_id is not None:
+            url_query = url_query.where(URL.batch_id == batch_id)
+
+        url_query = url_query.options(
                 joinedload(auto_suggestion_relationship),
                 joinedload(URL.html_content)
-            ).
-            limit(1)
-        )
+            ).limit(1)
 
         raw_result = await session.execute(url_query)
 
@@ -179,14 +199,16 @@ class AsyncDatabaseClient:
     async def get_next_url_for_relevance_annotation(
             self,
             session: AsyncSession,
-            user_id: int
+            user_id: int,
+            batch_id: Optional[int]
     ) -> Optional[GetNextRelevanceAnnotationResponseInfo]:
 
         url = await self.get_next_url_for_user_annotation(
             session,
             user_suggestion_model_to_exclude=UserRelevantSuggestion,
             auto_suggestion_relationship=URL.auto_relevant_suggestion,
-            user_id=user_id
+            user_id=user_id,
+            batch_id=batch_id
         )
         if url is None:
             return None
@@ -218,14 +240,17 @@ class AsyncDatabaseClient:
     async def get_next_url_for_record_type_annotation(
             self,
             session: AsyncSession,
-            user_id: int
+            user_id: int,
+            batch_id: Optional[int]
     ) -> Optional[GetNextRecordTypeAnnotationResponseInfo]:
 
         url = await self.get_next_url_for_user_annotation(
             session,
             user_suggestion_model_to_exclude=UserRecordTypeSuggestion,
             auto_suggestion_relationship=URL.auto_record_type_suggestion,
-            user_id=user_id
+            user_id=user_id,
+            batch_id=batch_id,
+            check_if_annotated_not_relevant=True
         )
         if url is None:
             return None
@@ -767,7 +792,10 @@ class AsyncDatabaseClient:
 
     @session_manager
     async def get_next_url_agency_for_annotation(
-            self, session: AsyncSession, user_id: int
+            self,
+            session: AsyncSession,
+            user_id: int,
+            batch_id: Optional[int]
     ) -> GetNextURLForAgencyAnnotationResponse:
         """
         Retrieve URL for annotation
@@ -785,8 +813,14 @@ class AsyncDatabaseClient:
                     URL.outcome == URLStatus.PENDING.value
                 )
             )
-            # Must not have been annotated by this user
-            .join(UserUrlAgencySuggestion, isouter=True)
+        )
+
+        if batch_id is not None:
+            statement = statement.where(URL.batch_id == batch_id)
+
+        # Must not have been annotated by this user
+        statement = (
+            statement.join(UserUrlAgencySuggestion, isouter=True)
             .where(
                 ~exists(
                     select(UserUrlAgencySuggestion).
@@ -813,6 +847,18 @@ class AsyncDatabaseClient:
                     select(ConfirmedURLAgency).
                     where(ConfirmedURLAgency.url_id == URL.id).
                     correlate(URL)
+                )
+            )
+            # Must not have been marked as "Not Relevant" by this user
+            .join(UserRelevantSuggestion, isouter=True)
+            .where(
+                ~exists(
+                    select(UserRelevantSuggestion).
+                    where(
+                        (UserRelevantSuggestion.user_id == user_id) &
+                        (UserRelevantSuggestion.url_id == URL.id) &
+                        (UserRelevantSuggestion.relevant == False)
+                    ).correlate(URL)
                 )
             )
         ).limit(1)
@@ -930,6 +976,18 @@ class AsyncDatabaseClient:
     ):
         if is_new and agency_id is not None:
             raise ValueError("agency_id must be None when is_new is True")
+
+        # Check if agency exists in database -- if not, add with placeholder
+        if agency_id is not None:
+            statement = select(Agency).where(Agency.agency_id == agency_id)
+            result = await session.execute(statement)
+            if len(result.all()) == 0:
+                agency = Agency(
+                    agency_id=agency_id,
+                    name=PLACEHOLDER_AGENCY_NAME
+                )
+                await session.merge(agency)
+
         url_agency_suggestion = UserUrlAgencySuggestion(
             url_id=url_id,
             agency_id=agency_id,
@@ -947,7 +1005,8 @@ class AsyncDatabaseClient:
     @session_manager
     async def get_next_url_for_final_review(
             self,
-            session: AsyncSession
+            session: AsyncSession,
+            batch_id: Optional[int]
     ) -> Optional[GetNextURLForFinalReviewResponse]:
 
 
@@ -1029,6 +1088,10 @@ class AsyncDatabaseClient:
         url_query = url_query.where(
                 URL.outcome == URLStatus.PENDING.value
             )
+        if batch_id is not None:
+            url_query = url_query.where(
+                URL.batch_id == batch_id
+            )
 
         # The below relationships are joined directly to the URL
         single_join_relationships = [
@@ -1060,6 +1123,7 @@ class AsyncDatabaseClient:
         url_query = url_query.order_by(
             desc("total_distinct_annotation_count"),
             desc("total_overall_annotation_count"),
+            asc(URL.id)
         )
 
         # Apply limit
@@ -1159,12 +1223,6 @@ class AsyncDatabaseClient:
             approval_info.record_type.value if approval_info.record_type is not None else None,
             required=True
         )
-        update_if_not_none(
-            url,
-            "relevant",
-            approval_info.relevant,
-            required=True
-        )
 
         # Get existing agency ids
         existing_agencies = url.confirmed_agencies or []
@@ -1240,10 +1298,35 @@ class AsyncDatabaseClient:
             )
 
         # Add approving user
-
-        approving_user_url = ApprovingUserURL(
+        approving_user_url = ReviewingUserURL(
             user_id=user_id,
             url_id=approval_info.url_id
         )
 
         session.add(approving_user_url)
+
+    @session_manager
+    async def reject_url(
+            self,
+            session: AsyncSession,
+            url_id: int,
+            user_id: int
+    ) -> None:
+
+        query = (
+            Select(URL)
+            .where(URL.id == url_id)
+        )
+
+        url = await session.execute(query)
+        url = url.scalars().first()
+
+        url.outcome = URLStatus.REJECTED.value
+
+        # Add rejecting user
+        rejecting_user_url = ReviewingUserURL(
+            user_id=user_id,
+            url_id=url_id
+        )
+
+        session.add(rejecting_user_url)
