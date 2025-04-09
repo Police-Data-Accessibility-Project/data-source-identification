@@ -36,11 +36,12 @@ class AnnotateAgencySetupInfo(BaseModel):
 async def setup_for_annotate_agency(
         db_data_creator: DBDataCreator,
         url_count: int,
-        suggestion_type: SuggestionType = SuggestionType.UNKNOWN
+        suggestion_type: SuggestionType = SuggestionType.UNKNOWN,
+        with_html_content: bool = True
 ):
     buci: BatchURLCreationInfo = await db_data_creator.batch_and_urls(
         url_count=url_count,
-        with_html_content=True
+        with_html_content=with_html_content
     )
     await db_data_creator.auto_suggestions(
         url_ids=buci.url_ids,
