@@ -7,7 +7,7 @@ from sqlalchemy.orm import scoped_session, sessionmaker
 from collector_db.DatabaseClient import DatabaseClient
 from collector_db.helper_functions import get_postgres_connection_string
 from collector_db.models import Base
-from helpers.AlembicRunner import AlembicRunner
+from tests.helpers.AlembicRunner import AlembicRunner
 from tests.helpers.DBDataCreator import DBDataCreator
 
 
