@@ -129,7 +129,6 @@ class AsyncDatabaseClient:
                 URL,
             )
             .where(URL.outcome == URLStatus.PENDING.value)
-            .where(exists(select(URLHTMLContent).where(URLHTMLContent.url_id == URL.id)))
             # URL must not have metadata annotation by this user
             .where(
                 not_(
