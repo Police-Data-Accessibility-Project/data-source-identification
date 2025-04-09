@@ -6,9 +6,10 @@ from core.enums import RecordType
 
 
 class SubmitApprovedURLTDO(BaseModel):
+    url_id: int
     url: str
     record_type: RecordType
-    agency_id: Optional[int]
+    agency_ids: list[int]
     name: str
     description: str
     record_formats: Optional[list[str]] = None

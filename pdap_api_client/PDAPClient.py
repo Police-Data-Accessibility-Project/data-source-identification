@@ -1,5 +1,6 @@
 from typing import Optional
 
+from core.DTOs.task_data_objects.SubmitApprovedURLTDO import SubmitApprovedURLTDO
 from pdap_api_client.AccessManager import build_url, AccessManager
 from pdap_api_client.DTOs import MatchAgencyInfo, UniqueURLDuplicateInfo, UniqueURLResponseInfo, Namespaces, \
     RequestType, RequestInfo, MatchAgencyResponse
@@ -21,7 +22,6 @@ class PDAPClient:
             county: Optional[str] = None,
             locality: Optional[str] = None
     ) -> MatchAgencyResponse:
-        # TODO: Change to async
         """
         Returns agencies, if any, that match or partially match the search criteria
         """
@@ -84,3 +84,31 @@ class PDAPClient:
             is_unique=is_unique,
             duplicates=duplicates
         )
+
+    async def submit_url(
+            self,
+            tdo: SubmitApprovedURLTDO
+    ) -> int:
+        url = build_url(
+            namespace=Namespaces.DATA_SOURCES,
+        )
+        headers = await self.access_manager.jwt_header()
+        request_info = RequestInfo(
+            type_=RequestType.POST,
+            url=url,
+            headers=headers,
+            json={
+                "entry_data": {
+                    "name": tdo.name,
+                    "description": tdo.description,
+                    "source_url": tdo.url,
+                    "record_type_name": tdo.record_type.value,
+                    "record_formats": tdo.record_formats,
+                    "data_portal_type": tdo.data_portal_type,
+                    "supplying_entity": tdo.supplying_entity
+                },
+                "linked_agency_ids": tdo.agency_ids
+            }
+        )
+        response_info = await self.access_manager.make_request(request_info)
+        return response_info.data["id"]

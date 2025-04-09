@@ -36,6 +36,7 @@ class Namespaces(Enum):
     AUTH = "auth"
     MATCH = "match"
     CHECK = "check"
+    DATA_SOURCES = "data-sources"
 
 
 class RequestType(Enum):

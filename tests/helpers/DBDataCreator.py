@@ -61,7 +61,10 @@ class DBDataCreator:
         if with_html_content:
             await self.html_data(url_ids)
 
-        return BatchURLCreationInfo(batch_id=batch_id, url_ids=url_ids)
+        return BatchURLCreationInfo(
+            batch_id=batch_id,
+            url_ids=url_ids
+        )
 
     async def agency(self) -> int:
         agency_id = randint(1, 99999999)

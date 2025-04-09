@@ -15,7 +15,6 @@ from collector_db.DTOs.URLErrorInfos import URLErrorPydanticInfo
 from collector_db.DTOs.URLHTMLContentInfo import URLHTMLContentInfo, HTMLContentType
 from collector_db.DTOs.URLInfo import URLInfo
 from collector_db.DTOs.URLMapping import URLMapping
-from collector_db.DTOs.URLWithHTML import URLWithHTML
 from collector_db.StatementComposer import StatementComposer
 from collector_db.constants import PLACEHOLDER_AGENCY_NAME
 from collector_db.enums import URLMetadataAttributeType, TaskType
@@ -37,6 +36,7 @@ from core.DTOs.GetURLsResponseInfo import GetURLsResponseInfo, GetURLsResponseEr
     GetURLsResponseInnerInfo
 from core.DTOs.URLAgencySuggestionInfo import URLAgencySuggestionInfo
 from core.DTOs.task_data_objects.AgencyIdentificationTDO import AgencyIdentificationTDO
+from core.DTOs.task_data_objects.SubmitApprovedURLTDO import SubmitApprovedURLTDO
 from core.DTOs.task_data_objects.URLMiscellaneousMetadataTDO import URLMiscellaneousMetadataTDO, URLHTMLMetadataInfo
 from core.enums import BatchStatus, SuggestionType, RecordType
 from html_tag_collector.DataClassTags import convert_to_response_html_info
@@ -1338,3 +1338,63 @@ class AsyncDatabaseClient:
         )
 
         session.add(rejecting_user_url)
+
+    @session_manager
+    async def has_validated_urls(self, session: AsyncSession) -> bool:
+        query = (
+            select(URL)
+            .where(URL.outcome == URLStatus.VALIDATED.value)
+        )
+        urls = await session.execute(query)
+        urls = urls.scalars().all()
+        return len(urls) > 0
+
+    @session_manager
+    async def get_validated_urls(
+            self,
+            session: AsyncSession
+    ) -> list[SubmitApprovedURLTDO]:
+        query = (
+            select(URL)
+            .where(URL.outcome == URLStatus.VALIDATED.value)
+            .options(
+                selectinload(URL.optional_data_source_metadata),
+                selectinload(URL.confirmed_agencies)
+            )
+        )
+        urls = await session.execute(query)
+        urls = urls.scalars().all()
+        results: list[SubmitApprovedURLTDO] = []
+        for url in urls:
+            agency_ids = []
+            for agency in url.confirmed_agencies:
+                agency_ids.append(agency.agency_id)
+            tdo = SubmitApprovedURLTDO(
+                url_id=url.id,
+                url=url.url,
+                name=url.name,
+                agency_ids=agency_ids,
+                description=url.description,
+                record_type=url.record_type,
+                record_formats=url.optional_data_source_metadata.record_formats,
+                data_portal_type=url.optional_data_source_metadata.data_portal_type,
+                supplying_entity=url.optional_data_source_metadata.supplying_entity,
+            )
+            results.append(tdo)
+        return results
+
+    @session_manager
+    async def mark_urls_as_submitted(self, session: AsyncSession, tdos: list[SubmitApprovedURLTDO]):
+        for tdo in tdos:
+            url_id = tdo.url_id
+            data_source_id = tdo.data_source_id
+            query = (
+                update(URL)
+                .where(URL.id == url_id)
+                .values(
+                    data_source_id=data_source_id,
+                    outcome=URLStatus.SUBMITTED.value
+                )
+            )
+            await session.execute(query)
+
