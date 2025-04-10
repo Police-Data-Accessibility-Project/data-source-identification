@@ -1,12 +1,13 @@
 from transformers import pipeline
 
 from collector_db.DTOs.URLWithHTML import URLWithHTML
-
+import gc
 
 class HuggingFaceInterface:
 
-    def __init__(self):
-        self.relevance_pipe = pipeline("text-classification", model="PDAP/url-relevance")
+    @staticmethod
+    def load_relevancy_model() -> pipeline:
+        return pipeline("text-classification", model="PDAP/url-relevance")
 
     def get_url_relevancy(
             self,
@@ -14,7 +15,8 @@ class HuggingFaceInterface:
             threshold: float = 0.5
     ) -> list[bool]:
         urls = [url_with_html.url for url_with_html in urls_with_html]
-        results: list[dict] = self.relevance_pipe(urls)
+        relevance_pipe = self.load_relevancy_model()
+        results: list[dict] = relevance_pipe(urls)
 
         bool_results = []
         for result in results:
@@ -23,6 +25,8 @@ class HuggingFaceInterface:
                 bool_results.append(True)
             else:
                 bool_results.append(False)
+        del relevance_pipe
+        gc.collect()
         return bool_results
 
 
