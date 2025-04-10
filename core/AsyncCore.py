@@ -107,7 +107,7 @@ class AsyncCore:
 
     async def get_task_operators(self) -> list[TaskOperatorBase]:
         return [
-            await self.get_url_html_task_operator(),
+            # await self.get_url_html_task_operator(),
             await self.get_url_relevance_huggingface_task_operator(),
             await self.get_url_record_type_task_operator(),
             await self.get_agency_identification_task_operator(),
