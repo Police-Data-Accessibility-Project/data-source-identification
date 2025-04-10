@@ -46,7 +46,6 @@ class URLRequestInterface:
             return URLResponseInfo(success=False, exception=e)
 
     async def fetch_and_render(self, rr: RequestResources, url: str) -> URLResponseInfo:
-        print(f"Fetch and Rendering {url}")
         simple_response = await self.get_response(rr.session, url)
         if not simple_response.success:
             return simple_response
