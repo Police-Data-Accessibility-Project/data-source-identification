@@ -1,5 +1,5 @@
 import types
-from unittest.mock import MagicMock, AsyncMock
+from unittest.mock import MagicMock, AsyncMock, call
 
 import pytest
 
@@ -27,7 +27,8 @@ async def test_conclude_task_success(db_data_creator: DBDataCreator):
         adb_client=ddc.adb_client,
         huggingface_interface=MagicMock(),
         url_request_interface=MagicMock(),
-        html_parser=MagicMock()
+        html_parser=MagicMock(),
+        discord_poster=MagicMock()
     )
     await core.conclude_task(run_info=run_info)
 
@@ -53,7 +54,8 @@ async def test_conclude_task_success(db_data_creator: DBDataCreator):
         adb_client=ddc.adb_client,
         huggingface_interface=MagicMock(),
         url_request_interface=MagicMock(),
-        html_parser=MagicMock()
+        html_parser=MagicMock(),
+        discord_poster=MagicMock()
     )
     await core.conclude_task(run_info=run_info)
 
@@ -80,7 +82,8 @@ async def test_conclude_task_error(db_data_creator: DBDataCreator):
         adb_client=ddc.adb_client,
         huggingface_interface=MagicMock(),
         url_request_interface=MagicMock(),
-        html_parser=MagicMock()
+        html_parser=MagicMock(),
+        discord_poster=MagicMock()
     )
     await core.conclude_task(run_info=run_info)
 
@@ -96,7 +99,8 @@ async def test_run_task_prereq_not_met():
         adb_client=AsyncMock(),
         huggingface_interface=AsyncMock(),
         url_request_interface=AsyncMock(),
-        html_parser=AsyncMock()
+        html_parser=AsyncMock(),
+        discord_poster=MagicMock()
     )
 
     mock_operator = AsyncMock()
@@ -121,7 +125,52 @@ async def test_run_task_prereq_met(db_data_creator: DBDataCreator):
         adb_client=db_data_creator.adb_client,
         huggingface_interface=AsyncMock(),
         url_request_interface=AsyncMock(),
-        html_parser=AsyncMock()
+        html_parser=AsyncMock(),
+        discord_poster=MagicMock()
+    )
+    core.conclude_task = AsyncMock()
+
+    mock_operator = AsyncMock()
+    mock_operator.meets_task_prerequisites = AsyncMock(
+        side_effect=[True, False]
+    )
+    mock_operator.task_type = TaskType.HTML
+    mock_operator.run_task = types.MethodType(run_task, mock_operator)
+
+    AsyncCore.get_task_operators = AsyncMock(return_value=[mock_operator])
+    await core.run_tasks()
+
+    mock_operator.meets_task_prerequisites.assert_has_calls([call(), call()])
+
+    results = await db_data_creator.adb_client.get_all(Task)
+
+    assert len(results) == 1
+    assert results[0].task_status == BatchStatus.IN_PROCESS.value
+
+    core.conclude_task.assert_called_once()
+
+@pytest.mark.asyncio
+async def test_run_task_break_loop(db_data_creator: DBDataCreator):
+    """
+    If the task loop for a single task runs more than 20 times in a row,
+    this is considered suspicious and possibly indicative of a bug.
+    In this case, the task loop should be terminated
+    and an alert should be sent to discord
+    """
+
+    async def run_task(self, task_id: int) -> TaskOperatorRunInfo:
+        return TaskOperatorRunInfo(
+            task_id=task_id,
+            outcome=TaskOperatorOutcome.SUCCESS,
+            linked_url_ids=[1, 2, 3]
+        )
+
+    core = AsyncCore(
+        adb_client=db_data_creator.adb_client,
+        huggingface_interface=AsyncMock(),
+        url_request_interface=AsyncMock(),
+        html_parser=AsyncMock(),
+        discord_poster=MagicMock()
     )
     core.conclude_task = AsyncMock()
 
@@ -133,12 +182,6 @@ async def test_run_task_prereq_met(db_data_creator: DBDataCreator):
     AsyncCore.get_task_operators = AsyncMock(return_value=[mock_operator])
     await core.run_tasks()
 
-    mock_operator.meets_task_prerequisites.assert_called_once()
-
-    results = await db_data_creator.adb_client.get_all(Task)
-
-    assert len(results) == 1
-    assert results[0].task_status == BatchStatus.IN_PROCESS.value
-
-    core.conclude_task.assert_called_once()
-
+    core.discord_poster.post_to_discord.assert_called_once_with(
+        message="Task HTML has been run more than 20 times in a row. Task loop terminated."
+    )

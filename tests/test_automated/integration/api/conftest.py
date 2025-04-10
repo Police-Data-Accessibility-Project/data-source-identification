@@ -30,7 +30,8 @@ def override_access_info() -> AccessInfo:
     return AccessInfo(user_id=MOCK_USER_ID, permissions=[Permissions.SOURCE_COLLECTOR])
 
 @pytest.fixture
-def client(db_client_test) -> Generator[TestClient, None, None]:
+def client(db_client_test, monkeypatch) -> Generator[TestClient, None, None]:
+    monkeypatch.setenv("DISCORD_WEBHOOK_URL", "https://discord.com")
     with TestClient(app) as c:
         app.dependency_overrides[get_access_info] = override_access_info
         core: SourceCollectorCore = c.app.state.core

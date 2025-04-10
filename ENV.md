@@ -21,4 +21,5 @@ Please ensure these are properly defined in a `.env` file in the root directory.
 |`PDAP_EMAIL`| An email address for accessing the PDAP API.                                                                                                                                                                                                                      | `abc123@test.com`               |
 |`PDAP_PASSWORD`| A password for accessing the PDAP API.                                                                                                                                                                                                                            | `abc123`               |
 |`PDAP_API_KEY`| An API key for accessing the PDAP API.                                                                                                                                                                                                                            | `abc123`               |
+|`DISCORD_WEBHOOK_URL`| The URL for the Discord webhook used for notifications| `abc123`               |
 
