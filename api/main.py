@@ -20,6 +20,7 @@ from html_tag_collector.ResponseParser import HTMLResponseParser
 from html_tag_collector.RootURLCache import RootURLCache
 from html_tag_collector.URLRequestInterface import URLRequestInterface
 from hugging_face.HuggingFaceInterface import HuggingFaceInterface
+from util.DiscordNotifier import DiscordPoster
 from util.helper_functions import get_from_env
 
 
@@ -40,6 +41,9 @@ async def lifespan(app: FastAPI):
         url_request_interface=URLRequestInterface(),
         html_parser=HTMLResponseParser(
             root_url_cache=RootURLCache()
+        ),
+        discord_poster=DiscordPoster(
+            webhook_url=get_from_env("DISCORD_WEBHOOK_URL")
         )
     )
     async_scheduled_task_manager = AsyncScheduledTaskManager(async_core=async_core)

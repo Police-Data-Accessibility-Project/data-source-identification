@@ -1,22 +1,18 @@
 import logging
 from typing import Optional
 
-from aiohttp import ClientSession
 
 from agency_identifier.MuckrockAPIInterface import MuckrockAPIInterface
 from collector_db.AsyncDatabaseClient import AsyncDatabaseClient
 from collector_db.DTOs.TaskInfo import TaskInfo
-from collector_db.DTOs.URLAnnotationInfo import URLAnnotationInfo
-from collector_db.enums import TaskType, URLMetadataAttributeType
+from collector_db.enums import TaskType
 from core.DTOs.FinalReviewApprovalInfo import FinalReviewApprovalInfo
 from core.DTOs.GetNextRecordTypeAnnotationResponseInfo import GetNextRecordTypeAnnotationResponseOuterInfo
 from core.DTOs.GetNextRelevanceAnnotationResponseInfo import GetNextRelevanceAnnotationResponseOuterInfo
 from core.DTOs.GetNextURLForAgencyAnnotationResponse import GetNextURLForAgencyAnnotationResponse, \
     URLAgencyAnnotationPostInfo
-from core.DTOs.GetNextURLForAnnotationResponse import GetNextURLForAnnotationResponse
 from core.DTOs.GetTasksResponse import GetTasksResponse
 from core.DTOs.GetURLsResponseInfo import GetURLsResponseInfo
-from core.DTOs.AnnotationRequestInfo import AnnotationRequestInfo
 from core.DTOs.TaskOperatorRunInfo import TaskOperatorRunInfo, TaskOperatorOutcome
 from core.classes.AgencyIdentificationTaskOperator import AgencyIdentificationTaskOperator
 from core.classes.TaskOperatorBase import TaskOperatorBase
@@ -24,8 +20,7 @@ from core.classes.URLHTMLTaskOperator import URLHTMLTaskOperator
 from core.classes.URLMiscellaneousMetadataTaskOperator import URLMiscellaneousMetadataTaskOperator
 from core.classes.URLRecordTypeTaskOperator import URLRecordTypeTaskOperator
 from core.classes.URLRelevanceHuggingfaceTaskOperator import URLRelevanceHuggingfaceTaskOperator
-from core.enums import BatchStatus, SuggestionType, RecordType
-from html_tag_collector.DataClassTags import convert_to_response_html_info
+from core.enums import BatchStatus, RecordType
 from html_tag_collector.ResponseParser import HTMLResponseParser
 from html_tag_collector.URLRequestInterface import URLRequestInterface
 from hugging_face.HuggingFaceInterface import HuggingFaceInterface
@@ -33,8 +28,10 @@ from llm_api_logic.OpenAIRecordClassifier import OpenAIRecordClassifier
 from pdap_api_client.AccessManager import AccessManager
 from pdap_api_client.PDAPClient import PDAPClient
 from security_manager.SecurityManager import AccessInfo
+from util.DiscordNotifier import DiscordPoster
 from util.helper_functions import get_from_env
 
+TASK_REPEAT_THRESHOLD = 20
 
 class AsyncCore:
 
@@ -44,6 +41,7 @@ class AsyncCore:
             huggingface_interface: HuggingFaceInterface,
             url_request_interface: URLRequestInterface,
             html_parser: HTMLResponseParser,
+            discord_poster: DiscordPoster
     ):
         self.adb_client = adb_client
         self.huggingface_interface = huggingface_interface
@@ -52,6 +50,7 @@ class AsyncCore:
         self.logger = logging.getLogger(__name__)
         self.logger.addHandler(logging.StreamHandler())
         self.logger.setLevel(logging.INFO)
+        self.discord_poster = discord_poster
 
 
     async def get_urls(self, page: int, errors: bool) -> GetURLsResponseInfo:
@@ -119,14 +118,23 @@ class AsyncCore:
     #region Tasks
     async def run_tasks(self):
         operators = await self.get_task_operators()
+        count = 0
         for operator in operators:
+
             meets_prereq = await operator.meets_task_prerequisites()
-            if not meets_prereq:
-                self.logger.info(f"Skipping {operator.task_type.value} Task")
-                continue
-            task_id = await self.initiate_task_in_db(task_type=operator.task_type)
-            run_info: TaskOperatorRunInfo = await operator.run_task(task_id)
-            await self.conclude_task(run_info)
+            while meets_prereq:
+                if count > TASK_REPEAT_THRESHOLD:
+                    self.discord_poster.post_to_discord(
+                        message=f"Task {operator.task_type.value} has been run"
+                                f" more than {TASK_REPEAT_THRESHOLD} times in a row. "
+                                f"Task loop terminated.")
+                    break
+                task_id = await self.initiate_task_in_db(task_type=operator.task_type)
+                run_info: TaskOperatorRunInfo = await operator.run_task(task_id)
+                await self.conclude_task(run_info)
+                count += 1
+                meets_prereq = await operator.meets_task_prerequisites()
+
 
     async def conclude_task(self, run_info):
         await self.adb_client.link_urls_to_task(task_id=run_info.task_id, url_ids=run_info.linked_url_ids)
