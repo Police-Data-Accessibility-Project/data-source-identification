@@ -11,7 +11,6 @@ from collector_db.DTOs.BatchInfo import BatchInfo
 from collector_db.DTOs.TaskInfo import TaskInfo
 from collector_db.enums import TaskType
 from collector_manager.AsyncCollectorManager import AsyncCollectorManager
-from collector_manager.CollectorManager import CollectorManager
 from collector_manager.constants import ASYNC_COLLECTORS
 from collector_manager.enums import CollectorType
 from core.DTOs.CollectorStartInfo import CollectorStartInfo

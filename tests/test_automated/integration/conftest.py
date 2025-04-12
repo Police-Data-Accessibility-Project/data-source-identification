@@ -4,7 +4,6 @@ import pytest
 
 from collector_db.AsyncDatabaseClient import AsyncDatabaseClient
 from collector_manager.AsyncCollectorManager import AsyncCollectorManager
-from collector_manager.CollectorManager import CollectorManager
 from core.AsyncCore import AsyncCore
 from core.CoreLogger import CoreLogger
 from core.SourceCollectorCore import SourceCollectorCore
@@ -17,10 +16,6 @@ def test_core(db_client_test):
     ) as logger:
         core = SourceCollectorCore(
             db_client=db_client_test,
-            collector_manager=CollectorManager(
-                db_client=db_client_test,
-                logger=logger
-            ),
             core_logger=logger,
             dev_mode=True
         )

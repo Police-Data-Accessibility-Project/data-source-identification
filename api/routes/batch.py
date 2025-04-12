@@ -99,7 +99,4 @@ async def abort_batch(
         async_core: AsyncCore = Depends(get_async_core),
         access_info: AccessInfo = Depends(get_access_info),
 ) -> MessageResponse:
-    try:
-        return core.abort_batch(batch_id)
-    except InvalidCollectorError as e:
-        return await async_core.abort_batch(batch_id)
+    return await async_core.abort_batch(batch_id)

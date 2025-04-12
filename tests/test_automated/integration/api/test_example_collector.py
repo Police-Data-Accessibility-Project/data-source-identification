@@ -58,7 +58,7 @@ def test_example_collector(api_test_helper):
     assert bi.user_id is not None
 
     # Flush early to ensure logs are written
-    ath.core.collector_manager.logger.flush_all()
+    ath.core.core_logger.flush_all()
 
     lr: GetBatchLogsResponse = ath.request_validator.get_batch_logs(batch_id=batch_id)
 

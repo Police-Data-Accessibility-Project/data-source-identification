@@ -4,6 +4,7 @@ from alembic.config import Config
 from sqlalchemy import create_engine, inspect, MetaData
 from sqlalchemy.orm import scoped_session, sessionmaker
 
+from collector_db.AsyncDatabaseClient import AsyncDatabaseClient
 from collector_db.DatabaseClient import DatabaseClient
 from collector_db.helper_functions import get_postgres_connection_string
 from collector_db.models import Base
@@ -62,6 +63,13 @@ def db_client_test(wipe_database) -> DatabaseClient:
     db_client = DatabaseClient(db_url=conn)
     yield db_client
     db_client.engine.dispose()
+
+@pytest.fixture
+def adb_client_test(wipe_database) -> AsyncDatabaseClient:
+    conn = get_postgres_connection_string()
+    adb_client = AsyncDatabaseClient(db_url=conn)
+    yield adb_client
+    adb_client.engine.dispose()
 
 @pytest.fixture
 def db_data_creator(db_client_test):

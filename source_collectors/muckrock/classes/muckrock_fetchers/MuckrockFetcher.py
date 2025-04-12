@@ -22,10 +22,10 @@ class MuckrockFetcher(ABC):
                 response.raise_for_status()
                 return await response.json()
 
-    def fetch(self, request: FetchRequest) -> dict | None:
+    async def fetch(self, request: FetchRequest) -> dict | None:
         url = self.build_url(request)
         try:
-            return asyncio.run(self.get_async_request(url))
+            return await self.get_async_request(url)
         except requests.exceptions.HTTPError as e:
             print(f"Failed to get records on request `{url}`: {e}")
             # If code is 404, raise NoMoreData error

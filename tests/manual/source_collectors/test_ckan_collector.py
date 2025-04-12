@@ -34,14 +34,15 @@ async def test_ckan_collector_default():
         logger=MagicMock(spec=CoreLogger),
         adb_client=AsyncMock(spec=AsyncDatabaseClient),
         raise_error=True
-
     )
     await collector.run()
     schema = CKANSchema(many=True)
     schema.load(collector.data["results"])
-    print(collector.data)
+    print("Printing results")
+    print(collector.data["results"])
 
-def test_ckan_collector_custom():
+@pytest.mark.asyncio
+async def test_ckan_collector_custom():
     """
     Use this to test how CKAN behaves when using
     something other than the default options provided
@@ -80,9 +81,9 @@ def test_ckan_collector_custom():
             }
         ),
         logger=MagicMock(spec=CoreLogger),
-        db_client=MagicMock(spec=DatabaseClient),
+        adb_client=AsyncMock(spec=AsyncDatabaseClient),
         raise_error=True
     )
-    collector.run()
+    await collector.run()
     schema = CKANSchema(many=True)
     schema.load(collector.data["results"])

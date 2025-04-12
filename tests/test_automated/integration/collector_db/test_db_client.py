@@ -18,8 +18,11 @@ from tests.helpers.complex_test_data_functions import setup_for_get_next_url_for
 from tests.helpers.DBDataCreator import DBDataCreator
 from tests.helpers.complex_test_data_functions import setup_for_get_next_url_for_final_review
 
-
-def test_insert_urls(db_client_test):
+@pytest.mark.asyncio
+async def test_insert_urls(
+        db_client_test,
+        adb_client_test
+):
     # Insert batch
     batch_info = BatchInfo(
         strategy="ckan",
@@ -43,7 +46,7 @@ def test_insert_urls(db_client_test):
             collector_metadata={"name": "example_duplicate"},
         )
     ]
-    insert_urls_info = db_client_test.insert_urls(
+    insert_urls_info = await adb_client_test.insert_urls(
         url_infos=urls,
         batch_id=batch_id
     )

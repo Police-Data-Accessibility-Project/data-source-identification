@@ -8,7 +8,7 @@ class MuckrockGeneratorFetcher(MuckrockIterFetcherBase):
     as a generator instead of a loop
     """
 
-    def generator_fetch(self) -> str:
+    async def generator_fetch(self) -> str:
         """
         Fetches data and yields status messages between requests
         """
@@ -16,7 +16,7 @@ class MuckrockGeneratorFetcher(MuckrockIterFetcherBase):
         final_message = "No more records found. Exiting..."
         while url is not None:
             try:
-                data = self.get_response(url)
+                data = await self.get_response(url)
             except RequestFailureException:
                 final_message = "Request unexpectedly failed. Exiting..."
                 break

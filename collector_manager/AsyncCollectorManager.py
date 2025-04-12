@@ -6,7 +6,7 @@ from fastapi import HTTPException
 from pydantic import BaseModel
 
 from collector_db.AsyncDatabaseClient import AsyncDatabaseClient
-from collector_manager.CollectorBase import CollectorBase
+from collector_manager.AsyncCollectorBase import AsyncCollectorBase
 from collector_manager.CollectorManager import InvalidCollectorError
 from collector_manager.collector_mapping import COLLECTOR_MAPPING
 from collector_manager.enums import CollectorType
@@ -21,7 +21,7 @@ class AsyncCollectorManager:
             adb_client: AsyncDatabaseClient,
             dev_mode: bool = False
     ):
-        self.collectors: Dict[int, CollectorBase] = {}
+        self.collectors: Dict[int, AsyncCollectorBase] = {}
         self.adb_client = adb_client
         self.logger = logger
         self.async_tasks: dict[int, asyncio.Task] = {}

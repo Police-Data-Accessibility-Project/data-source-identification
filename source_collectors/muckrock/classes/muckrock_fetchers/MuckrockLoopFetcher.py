@@ -7,11 +7,11 @@ from source_collectors.muckrock.classes.muckrock_fetchers.MuckrockIterFetcherBas
 
 class MuckrockLoopFetcher(MuckrockIterFetcherBase):
 
-    def loop_fetch(self):
+    async def loop_fetch(self):
         url = self.build_url(self.initial_request)
         while url is not None:
             try:
-                data = self.get_response(url)
+                data = await self.get_response(url)
             except RequestFailureException:
                 break
 

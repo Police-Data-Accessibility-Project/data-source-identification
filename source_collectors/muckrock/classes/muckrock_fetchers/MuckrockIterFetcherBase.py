@@ -19,9 +19,9 @@ class MuckrockIterFetcherBase(ABC):
                 response.raise_for_status()
                 return await response.json()
 
-    def get_response(self, url) -> dict:
+    async def get_response(self, url) -> dict:
         try:
-            return asyncio.run(self.get_response_async(url))
+            return await self.get_response_async(url)
         except requests.exceptions.HTTPError as e:
             print(f"Failed to get records on request `{url}`: {e}")
             raise RequestFailureException

@@ -2,6 +2,7 @@ from unittest import mock
 
 import pytest
 
+from collector_db.AsyncDatabaseClient import AsyncDatabaseClient
 from collector_db.DTOs.URLInfo import URLInfo
 from collector_db.DatabaseClient import DatabaseClient
 from core.CoreLogger import CoreLogger
@@ -23,20 +24,21 @@ def mock_get_common_crawl_search_results():
         mock_get_common_crawl_search_results.return_value = mock_results
         yield mock_get_common_crawl_search_results
 
-
-def test_common_crawl_collector(mock_get_common_crawl_search_results):
+@pytest.mark.asyncio
+async def test_common_crawl_collector(mock_get_common_crawl_search_results):
     collector = CommonCrawlerCollector(
         batch_id=1,
         dto=CommonCrawlerInputDTO(
             search_term="keyword",
         ),
         logger=mock.MagicMock(spec=CoreLogger),
-        db_client=mock.MagicMock(spec=DatabaseClient)
+        adb_client=mock.AsyncMock(spec=AsyncDatabaseClient),
+        raise_error=True
     )
-    collector.run()
+    await collector.run()
     mock_get_common_crawl_search_results.assert_called_once()
 
-    collector.db_client.insert_urls.assert_called_once_with(
+    collector.adb_client.insert_urls.assert_called_once_with(
         url_infos=[
             URLInfo(url="http://keyword.com"),
             URLInfo(url="http://keyword.com/page3")

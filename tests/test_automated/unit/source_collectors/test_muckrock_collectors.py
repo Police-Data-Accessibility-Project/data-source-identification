@@ -1,8 +1,9 @@
 from unittest import mock
-from unittest.mock import MagicMock, call
+from unittest.mock import MagicMock, call, AsyncMock
 
 import pytest
 
+from collector_db.AsyncDatabaseClient import AsyncDatabaseClient
 from collector_db.DTOs.URLInfo import URLInfo
 from collector_db.DatabaseClient import DatabaseClient
 from core.CoreLogger import CoreLogger
@@ -24,15 +25,15 @@ def patch_muckrock_fetcher(monkeypatch):
     test_data = {
         "results": inner_test_data
     }
-    mock = MagicMock()
+    mock = AsyncMock()
 
     mock.return_value = test_data
     monkeypatch.setattr(patch_path, mock)
     return mock
 
 
-
-def test_muckrock_simple_collector(patch_muckrock_fetcher):
+@pytest.mark.asyncio
+async def test_muckrock_simple_collector(patch_muckrock_fetcher):
     collector = MuckrockSimpleSearchCollector(
         batch_id=1,
         dto=MuckrockSimpleSearchCollectorInputDTO(
@@ -40,16 +41,16 @@ def test_muckrock_simple_collector(patch_muckrock_fetcher):
             max_results=2
         ),
         logger=mock.MagicMock(spec=CoreLogger),
-        db_client=mock.MagicMock(spec=DatabaseClient),
+        adb_client=mock.AsyncMock(spec=AsyncDatabaseClient),
         raise_error=True
     )
-    collector.run()
+    await collector.run()
     patch_muckrock_fetcher.assert_has_calls(
         [
             call(FOIAFetchRequest(page=1, page_size=100)),
         ]
     )
-    collector.db_client.insert_urls.assert_called_once_with(
+    collector.adb_client.insert_urls.assert_called_once_with(
         url_infos=[
             URLInfo(
                 url='https://include.com/1',
@@ -80,13 +81,14 @@ def patch_muckrock_county_level_search_collector_methods(monkeypatch):
         {"absolute_url": "https://include.com/3", "title": "lemon"},
     ]
     mock = MagicMock()
-    mock.get_jurisdiction_ids = MagicMock(return_value=get_jurisdiction_ids_data)
-    mock.get_foia_records = MagicMock(return_value=get_foia_records_data)
+    mock.get_jurisdiction_ids = AsyncMock(return_value=get_jurisdiction_ids_data)
+    mock.get_foia_records = AsyncMock(return_value=get_foia_records_data)
     monkeypatch.setattr(patch_path_get_jurisdiction_ids, mock.get_jurisdiction_ids)
     monkeypatch.setattr(patch_path_get_foia_records, mock.get_foia_records)
     return mock
 
-def test_muckrock_county_search_collector(patch_muckrock_county_level_search_collector_methods):
+@pytest.mark.asyncio
+async def test_muckrock_county_search_collector(patch_muckrock_county_level_search_collector_methods):
     mock_methods = patch_muckrock_county_level_search_collector_methods
 
     collector = MuckrockCountyLevelSearchCollector(
@@ -96,15 +98,15 @@ def test_muckrock_county_search_collector(patch_muckrock_county_level_search_col
             town_names=["test"]
         ),
         logger=MagicMock(spec=CoreLogger),
-        db_client=MagicMock(spec=DatabaseClient),
+        adb_client=AsyncMock(spec=AsyncDatabaseClient),
         raise_error=True
     )
-    collector.run()
+    await collector.run()
 
     mock_methods.get_jurisdiction_ids.assert_called_once()
     mock_methods.get_foia_records.assert_called_once_with({"Alpha": 1, "Beta": 2})
 
-    collector.db_client.insert_urls.assert_called_once_with(
+    collector.adb_client.insert_urls.assert_called_once_with(
         url_infos=[
             URLInfo(
                 url='https://include.com/1',
@@ -142,9 +144,9 @@ def patch_muckrock_full_search_collector(monkeypatch):
             }
         ]
     }]
-    mock = MagicMock()
+    mock = AsyncMock()
     mock.return_value = test_data
-    mock.get_page_data = MagicMock(return_value=test_data)
+    mock.get_page_data = AsyncMock(return_value=test_data)
     monkeypatch.setattr(patch_path, mock.get_page_data)
 
     patch_path = ("source_collectors.muckrock.classes.MuckrockCollector."
@@ -155,7 +157,8 @@ def patch_muckrock_full_search_collector(monkeypatch):
 
     return mock
 
-def test_muckrock_all_foia_requests_collector(patch_muckrock_full_search_collector):
+@pytest.mark.asyncio
+async def test_muckrock_all_foia_requests_collector(patch_muckrock_full_search_collector):
     mock = patch_muckrock_full_search_collector
     collector = MuckrockAllFOIARequestsCollector(
         batch_id=1,
@@ -164,14 +167,14 @@ def test_muckrock_all_foia_requests_collector(patch_muckrock_full_search_collect
             total_pages=2
         ),
         logger=MagicMock(spec=CoreLogger),
-        db_client=MagicMock(spec=DatabaseClient),
+        adb_client=AsyncMock(spec=AsyncDatabaseClient),
         raise_error=True
     )
-    collector.run()
+    await collector.run()
 
     mock.get_page_data.assert_called_once_with(mock.foia_fetcher.return_value, 1, 2)
 
-    collector.db_client.insert_urls.assert_called_once_with(
+    collector.adb_client.insert_urls.assert_called_once_with(
         url_infos=[
             URLInfo(
                 url='https://include.com/1',

@@ -35,11 +35,11 @@ async def async_make_request(
         return None
 
 
-def make_request(
+async def make_request(
         search_url: 'URLWithParameters'
 ) -> Union[aiohttp.ClientResponse, None]:
     """Synchronous wrapper around the async function."""
-    return asyncio.run(async_make_request(search_url))
+    return await async_make_request(search_url)
 
 
 def process_response(response, url: str, page: int) -> Union[list[str], None]:
@@ -64,12 +64,12 @@ def process_response(response, url: str, page: int) -> Union[list[str], None]:
     return None
 
 
-def get_common_crawl_search_results(
+async def get_common_crawl_search_results(
         search_url: 'URLWithParameters',
         query_url: str,
         page: int
 ) -> Union[list[str], None]:
-    response = make_request(search_url)
+    response = await make_request(search_url)
     return process_response(response, query_url, page)
 
 
@@ -100,10 +100,10 @@ class CommonCrawler:
         self.num_pages = num_pages
         self.url_results = None
 
-    def run(self):
+    async def run(self):
         url_results = []
         for page in range(self.start_page, self.start_page + self.num_pages):
-            urls = self.search_common_crawl_index(query_url=self.url, page=page)
+            urls = await self.search_common_crawl_index(query_url=self.url, page=page)
 
             # If records were found, filter them and add to results
             if not urls:
@@ -121,7 +121,7 @@ class CommonCrawler:
         self.url_results = url_results
 
 
-    def search_common_crawl_index(
+    async def search_common_crawl_index(
         self, query_url: str, page: int = 0, max_retries: int = 20
     ) -> list[str] or None:
         """
@@ -144,7 +144,7 @@ class CommonCrawler:
 
         # put HTTP GET request in re-try loop in case of rate limiting. Once per second is nice enough per common crawl doc.
         while retries < max_retries:
-            results = get_common_crawl_search_results(
+            results = await get_common_crawl_search_results(
                 search_url=search_url, query_url=query_url, page=page)
             if results is not None:
                 return results
