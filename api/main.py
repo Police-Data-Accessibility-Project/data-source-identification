@@ -18,6 +18,7 @@ from core.AsyncCore import AsyncCore
 from core.CoreLogger import CoreLogger
 from core.ScheduledTaskManager import AsyncScheduledTaskManager
 from core.SourceCollectorCore import SourceCollectorCore
+from core.TaskManager import TaskManager
 from html_tag_collector.ResponseParser import HTMLResponseParser
 from html_tag_collector.RootURLCache import RootURLCache
 from html_tag_collector.URLRequestInterface import URLRequestInterface
@@ -45,13 +46,16 @@ async def lifespan(app: FastAPI):
     )
     async_core = AsyncCore(
         adb_client=adb_client,
-        huggingface_interface=HuggingFaceInterface(),
-        url_request_interface=URLRequestInterface(),
-        html_parser=HTMLResponseParser(
-            root_url_cache=RootURLCache()
-        ),
-        discord_poster=DiscordPoster(
-            webhook_url=get_from_env("DISCORD_WEBHOOK_URL")
+        task_manager=TaskManager(
+            adb_client=adb_client,
+            huggingface_interface=HuggingFaceInterface(),
+            url_request_interface=URLRequestInterface(),
+            html_parser=HTMLResponseParser(
+                root_url_cache=RootURLCache()
+            ),
+            discord_poster=DiscordPoster(
+                webhook_url=get_from_env("DISCORD_WEBHOOK_URL")
+            ),
         ),
         collector_manager=async_collector_manager
     )

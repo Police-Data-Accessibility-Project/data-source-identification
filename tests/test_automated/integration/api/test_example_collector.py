@@ -60,6 +60,8 @@ def test_example_collector(api_test_helper):
     # Flush early to ensure logs are written
     ath.core.core_logger.flush_all()
 
+    time.sleep(10)
+
     lr: GetBatchLogsResponse = ath.request_validator.get_batch_logs(batch_id=batch_id)
 
     assert len(lr.logs) > 0

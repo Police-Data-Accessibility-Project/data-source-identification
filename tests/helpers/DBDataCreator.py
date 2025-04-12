@@ -190,10 +190,10 @@ class DBDataCreator:
                 )
             )
 
-        return asyncio.run(self.adb_client.insert_urls(
+        return self.db_client.insert_urls(
             url_infos=url_infos,
             batch_id=batch_id,
-        ))
+        )
 
     async def url_miscellaneous_metadata(
             self,

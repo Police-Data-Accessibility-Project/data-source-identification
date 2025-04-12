@@ -4,7 +4,6 @@ Exists as a proof of concept for collector functionality
 
 """
 import asyncio
-import time
 
 from collector_manager.AsyncCollectorBase import AsyncCollectorBase
 from collector_manager.DTOs.ExampleInputDTO import ExampleInputDTO

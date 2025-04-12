@@ -25,10 +25,8 @@ async def test_conclude_task_success(db_data_creator: DBDataCreator):
 
     core = AsyncCore(
         adb_client=ddc.adb_client,
-        huggingface_interface=MagicMock(),
-        url_request_interface=MagicMock(),
-        html_parser=MagicMock(),
-        discord_poster=MagicMock()
+        task_manager=MagicMock(),
+        collector_manager=MagicMock()
     )
     await core.conclude_task(run_info=run_info)
 
@@ -52,13 +50,10 @@ async def test_conclude_task_success(db_data_creator: DBDataCreator):
 
     core = AsyncCore(
         adb_client=ddc.adb_client,
-        huggingface_interface=MagicMock(),
-        url_request_interface=MagicMock(),
-        html_parser=MagicMock(),
-        discord_poster=MagicMock(),
+        task_manager=MagicMock(),
         collector_manager=MagicMock()
     )
-    await core.conclude_task(run_info=run_info)
+    await core.task_manager.conclude_task(run_info=run_info)
 
     task_info = await ddc.adb_client.get_task_info(task_id=task_id)
 
@@ -81,13 +76,10 @@ async def test_conclude_task_error(db_data_creator: DBDataCreator):
 
     core = AsyncCore(
         adb_client=ddc.adb_client,
-        huggingface_interface=MagicMock(),
-        url_request_interface=MagicMock(),
-        html_parser=MagicMock(),
-        discord_poster=MagicMock(),
+        task_manager=MagicMock(),
         collector_manager=MagicMock()
     )
-    await core.conclude_task(run_info=run_info)
+    await core.task_manager.conclude_task(run_info=run_info)
 
     task_info = await ddc.adb_client.get_task_info(task_id=task_id)
 
@@ -99,10 +91,7 @@ async def test_conclude_task_error(db_data_creator: DBDataCreator):
 async def test_run_task_prereq_not_met():
     core = AsyncCore(
         adb_client=AsyncMock(),
-        huggingface_interface=AsyncMock(),
-        url_request_interface=AsyncMock(),
-        html_parser=AsyncMock(),
-        discord_poster=MagicMock(),
+        task_manager=MagicMock(),
         collector_manager=MagicMock()
     )
 
@@ -126,10 +115,7 @@ async def test_run_task_prereq_met(db_data_creator: DBDataCreator):
 
     core = AsyncCore(
         adb_client=db_data_creator.adb_client,
-        huggingface_interface=AsyncMock(),
-        url_request_interface=AsyncMock(),
-        html_parser=AsyncMock(),
-        discord_poster=MagicMock(),
+        task_manager=MagicMock(),
         collector_manager=MagicMock()
     )
     core.conclude_task = AsyncMock()
@@ -171,10 +157,7 @@ async def test_run_task_break_loop(db_data_creator: DBDataCreator):
 
     core = AsyncCore(
         adb_client=db_data_creator.adb_client,
-        huggingface_interface=AsyncMock(),
-        url_request_interface=AsyncMock(),
-        html_parser=AsyncMock(),
-        discord_poster=MagicMock(),
+        task_manager=MagicMock(),
         collector_manager=MagicMock()
     )
     core.conclude_task = AsyncMock()

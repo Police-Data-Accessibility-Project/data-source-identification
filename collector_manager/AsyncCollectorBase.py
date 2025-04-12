@@ -11,6 +11,7 @@ from collector_db.DTOs.InsertURLsInfo import InsertURLsInfo
 from collector_db.DTOs.LogInfo import LogInfo
 from collector_manager.enums import CollectorType
 from core.CoreLogger import CoreLogger
+from core.TaskManager import TaskManager
 from core.enums import BatchStatus
 from core.preprocessors.PreprocessorBase import PreprocessorBase
 
@@ -26,8 +27,12 @@ class AsyncCollectorBase(ABC):
             dto: BaseModel,
             logger: CoreLogger,
             adb_client: AsyncDatabaseClient,
-            raise_error: bool = False
+            raise_error: bool = False,
+            trigger_followup_tasks: bool = False,
+            task_manager: TaskManager = None
     ) -> None:
+        self.trigger_followup_tasks = trigger_followup_tasks
+        self.task_manager = task_manager
         self.batch_id = batch_id
         self.adb_client = adb_client
         self.dto = dto

@@ -3,13 +3,16 @@ from functools import wraps
 from typing import Optional, List
 
 from sqlalchemy import create_engine, Row
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import sessionmaker, scoped_session, aliased
 
 from collector_db.ConfigManager import ConfigManager
 from collector_db.DTOs.BatchInfo import BatchInfo
 from collector_db.DTOs.DuplicateInfo import DuplicateInfo, DuplicateInsertInfo
+from collector_db.DTOs.InsertURLsInfo import InsertURLsInfo
 from collector_db.DTOs.LogInfo import LogInfo, LogOutputInfo
 from collector_db.DTOs.URLInfo import URLInfo
+from collector_db.DTOs.URLMapping import URLMapping
 from collector_db.helper_functions import get_postgres_connection_string
 from collector_db.models import Base, Batch, URL, Log, Duplicate
 from collector_manager.enums import CollectorType
@@ -89,6 +92,61 @@ class DatabaseClient:
             )
             session.add(duplicate)
 
+
+    @session_manager
+    def get_url_info_by_url(self, session, url: str) -> Optional[URLInfo]:
+        url = session.query(URL).filter_by(url=url).first()
+        return URLInfo(**url.__dict__)
+
+    @session_manager
+    def insert_url(self, session, url_info: URLInfo) -> int:
+        """Insert a new URL into the database."""
+        url_entry = URL(
+            batch_id=url_info.batch_id,
+            url=url_info.url,
+            collector_metadata=url_info.collector_metadata,
+            outcome=url_info.outcome.value
+        )
+        session.add(url_entry)
+        session.commit()
+        session.refresh(url_entry)
+        return url_entry.id
+
+    @session_manager
+    def add_duplicate_info(self, session, duplicate_infos: list[DuplicateInfo]):
+        # TODO: Add test for this method when testing CollectorDatabaseProcessor
+        for duplicate_info in duplicate_infos:
+            duplicate = Duplicate(
+                batch_id=duplicate_info.original_batch_id,
+                original_url_id=duplicate_info.original_url_id,
+            )
+            session.add(duplicate)
+
+
+    def insert_urls(self, url_infos: List[URLInfo], batch_id: int) -> InsertURLsInfo:
+        url_mappings = []
+        duplicates = []
+        for url_info in url_infos:
+            url_info.batch_id = batch_id
+            try:
+                url_id = self.insert_url(url_info)
+                url_mappings.append(URLMapping(url_id=url_id, url=url_info.url))
+            except IntegrityError:
+                orig_url_info = self.get_url_info_by_url(url_info.url)
+                duplicate_info = DuplicateInsertInfo(
+                    duplicate_batch_id=batch_id,
+                    original_url_id=orig_url_info.id
+                )
+                duplicates.append(duplicate_info)
+        self.insert_duplicates(duplicates)
+
+        return InsertURLsInfo(
+            url_mappings=url_mappings,
+            total_count=len(url_infos),
+            original_count=len(url_mappings),
+            duplicate_count=len(duplicates),
+            url_ids=[url_mapping.url_id for url_mapping in url_mappings]
+        )
 
     @session_manager
     def get_urls_by_batch(self, session, batch_id: int, page: int = 1) -> List[URLInfo]:

@@ -31,10 +31,7 @@ def test_async_core(db_client_test):
         adb_client = AsyncDatabaseClient()
         core = AsyncCore(
             adb_client=adb_client,
-            huggingface_interface=MagicMock(),
-            url_request_interface=MagicMock(),
-            html_parser=MagicMock(),
-            discord_poster=MagicMock(),
+            task_manager=MagicMock(),
             collector_manager=AsyncCollectorManager(
                 adb_client=adb_client,
                 logger=logger,

@@ -66,7 +66,7 @@ def db_client_test(wipe_database) -> DatabaseClient:
 
 @pytest.fixture
 def adb_client_test(wipe_database) -> AsyncDatabaseClient:
-    conn = get_postgres_connection_string()
+    conn = get_postgres_connection_string(is_async=True)
     adb_client = AsyncDatabaseClient(db_url=conn)
     yield adb_client
     adb_client.engine.dispose()
