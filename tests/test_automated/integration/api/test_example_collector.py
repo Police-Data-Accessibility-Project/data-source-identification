@@ -25,7 +25,9 @@ def test_example_collector(api_test_helper):
     assert batch_id is not None
     assert data["message"] == "Started example collector."
 
-    bsr: GetBatchStatusResponse = ath.request_validator.get_batch_statuses(status=BatchStatus.IN_PROCESS)
+    bsr: GetBatchStatusResponse = ath.request_validator.get_batch_statuses(
+        status=BatchStatus.IN_PROCESS
+    )
 
     assert len(bsr.results) == 1
     bsi: BatchStatusInfo = bsr.results[0]
@@ -36,7 +38,10 @@ def test_example_collector(api_test_helper):
 
     time.sleep(2)
 
-    csr: GetBatchStatusResponse = ath.request_validator.get_batch_statuses(collector_type=CollectorType.EXAMPLE, status=BatchStatus.COMPLETE)
+    csr: GetBatchStatusResponse = ath.request_validator.get_batch_statuses(
+        collector_type=CollectorType.EXAMPLE,
+        status=BatchStatus.COMPLETE
+    )
 
     assert len(csr.results) == 1
     bsi: BatchStatusInfo = csr.results[0]
@@ -56,7 +61,6 @@ def test_example_collector(api_test_helper):
     ath.core.collector_manager.logger.flush_all()
 
     lr: GetBatchLogsResponse = ath.request_validator.get_batch_logs(batch_id=batch_id)
-
 
     assert len(lr.logs) > 0
 
@@ -90,6 +94,8 @@ def test_example_collector_error(api_test_helper, monkeypatch):
 
 
     ath.core.core_logger.flush_all()
+
+    time.sleep(10)
 
     gbl: GetBatchLogsResponse = ath.request_validator.get_batch_logs(batch_id=batch_id)
     assert gbl.logs[-1].log == "Error: Collector failed!"

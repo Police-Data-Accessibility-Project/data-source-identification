@@ -1,3 +1,5 @@
+import asyncio
+
 from source_collectors.auto_googler.DTOs import GoogleSearchQueryResultsInnerDTO
 from source_collectors.auto_googler.GoogleSearcher import GoogleSearcher
 from source_collectors.auto_googler.SearchConfig import SearchConfig
@@ -16,14 +18,14 @@ class AutoGoogler:
             query : [] for query in search_config.queries
         }
 
-    def run(self) -> str:
+    async def run(self) -> str:
         """
         Runs the AutoGoogler
         Yields status messages
         """
         for query in self.search_config.queries:
             yield f"Searching for '{query}' ..."
-            results = self.google_searcher.search(query)
+            results = await self.google_searcher.search(query)
             yield f"Found {len(results)} results for '{query}'."
             if results is not None:
                 self.data[query] = results

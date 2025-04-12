@@ -6,24 +6,24 @@ from source_collectors.ckan.search_terms import package_search, group_search, or
 
 
 
-def main():
+async def main():
     """
     Main function.
     """
     results = []
 
     print("Gathering results...")
-    results = perform_search(
+    results = await perform_search(
         search_func=ckan_package_search,
         search_terms=package_search,
         results=results,
     )
-    results = perform_search(
+    results = await perform_search(
         search_func=ckan_group_package_show,
         search_terms=group_search,
         results=results,
     )
-    results = perform_search(
+    results = await perform_search(
         search_func=ckan_package_search_from_organization,
         search_terms=organization_search,
         results=results,

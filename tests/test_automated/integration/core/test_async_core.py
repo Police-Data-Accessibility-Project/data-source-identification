@@ -55,7 +55,8 @@ async def test_conclude_task_success(db_data_creator: DBDataCreator):
         huggingface_interface=MagicMock(),
         url_request_interface=MagicMock(),
         html_parser=MagicMock(),
-        discord_poster=MagicMock()
+        discord_poster=MagicMock(),
+        collector_manager=MagicMock()
     )
     await core.conclude_task(run_info=run_info)
 
@@ -83,7 +84,8 @@ async def test_conclude_task_error(db_data_creator: DBDataCreator):
         huggingface_interface=MagicMock(),
         url_request_interface=MagicMock(),
         html_parser=MagicMock(),
-        discord_poster=MagicMock()
+        discord_poster=MagicMock(),
+        collector_manager=MagicMock()
     )
     await core.conclude_task(run_info=run_info)
 
@@ -100,7 +102,8 @@ async def test_run_task_prereq_not_met():
         huggingface_interface=AsyncMock(),
         url_request_interface=AsyncMock(),
         html_parser=AsyncMock(),
-        discord_poster=MagicMock()
+        discord_poster=MagicMock(),
+        collector_manager=MagicMock()
     )
 
     mock_operator = AsyncMock()
@@ -126,7 +129,8 @@ async def test_run_task_prereq_met(db_data_creator: DBDataCreator):
         huggingface_interface=AsyncMock(),
         url_request_interface=AsyncMock(),
         html_parser=AsyncMock(),
-        discord_poster=MagicMock()
+        discord_poster=MagicMock(),
+        collector_manager=MagicMock()
     )
     core.conclude_task = AsyncMock()
 
@@ -170,7 +174,8 @@ async def test_run_task_break_loop(db_data_creator: DBDataCreator):
         huggingface_interface=AsyncMock(),
         url_request_interface=AsyncMock(),
         html_parser=AsyncMock(),
-        discord_poster=MagicMock()
+        discord_poster=MagicMock(),
+        collector_manager=MagicMock()
     )
     core.conclude_task = AsyncMock()
 

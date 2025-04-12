@@ -19,4 +19,5 @@ def test_common_crawler_collector():
         db_client=MagicMock(spec=DatabaseClient)
     )
     collector.run()
+    print(collector.data)
     CommonCrawlerSchema().load(collector.data)

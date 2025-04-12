@@ -1,18 +1,29 @@
 import logging
+from http import HTTPStatus
+from http.client import HTTPException
 from typing import Optional
 
+from pydantic import BaseModel
 
 from agency_identifier.MuckrockAPIInterface import MuckrockAPIInterface
 from collector_db.AsyncDatabaseClient import AsyncDatabaseClient
+from collector_db.DTOs.BatchInfo import BatchInfo
 from collector_db.DTOs.TaskInfo import TaskInfo
 from collector_db.enums import TaskType
+from collector_manager.AsyncCollectorManager import AsyncCollectorManager
+from collector_manager.CollectorManager import CollectorManager
+from collector_manager.constants import ASYNC_COLLECTORS
+from collector_manager.enums import CollectorType
+from core.DTOs.CollectorStartInfo import CollectorStartInfo
 from core.DTOs.FinalReviewApprovalInfo import FinalReviewApprovalInfo
 from core.DTOs.GetNextRecordTypeAnnotationResponseInfo import GetNextRecordTypeAnnotationResponseOuterInfo
 from core.DTOs.GetNextRelevanceAnnotationResponseInfo import GetNextRelevanceAnnotationResponseOuterInfo
 from core.DTOs.GetNextURLForAgencyAnnotationResponse import GetNextURLForAgencyAnnotationResponse, \
     URLAgencyAnnotationPostInfo
 from core.DTOs.GetTasksResponse import GetTasksResponse
+from core.DTOs.GetURLsByBatchResponse import GetURLsByBatchResponse
 from core.DTOs.GetURLsResponseInfo import GetURLsResponseInfo
+from core.DTOs.MessageResponse import MessageResponse
 from core.DTOs.TaskOperatorRunInfo import TaskOperatorRunInfo, TaskOperatorOutcome
 from core.classes.AgencyIdentificationTaskOperator import AgencyIdentificationTaskOperator
 from core.classes.TaskOperatorBase import TaskOperatorBase
@@ -41,7 +52,8 @@ class AsyncCore:
             huggingface_interface: HuggingFaceInterface,
             url_request_interface: URLRequestInterface,
             html_parser: HTMLResponseParser,
-            discord_poster: DiscordPoster
+            discord_poster: DiscordPoster,
+            collector_manager: AsyncCollectorManager
     ):
         self.adb_client = adb_client
         self.huggingface_interface = huggingface_interface
@@ -51,10 +63,65 @@ class AsyncCore:
         self.logger.addHandler(logging.StreamHandler())
         self.logger.setLevel(logging.INFO)
         self.discord_poster = discord_poster
+        self.collector_manager = collector_manager
 
 
     async def get_urls(self, page: int, errors: bool) -> GetURLsResponseInfo:
         return await self.adb_client.get_urls(page=page, errors=errors)
+
+    async def shutdown(self):
+        await self.collector_manager.shutdown_all_collectors()
+
+    #region Batch
+    async def get_batch_info(self, batch_id: int) -> BatchInfo:
+        return await self.adb_client.get_batch_by_id(batch_id)
+
+    async def get_urls_by_batch(self, batch_id: int, page: int = 1) -> GetURLsByBatchResponse:
+        url_infos = await self.adb_client.get_urls_by_batch(batch_id, page)
+        return GetURLsByBatchResponse(urls=url_infos)
+
+    async def abort_batch(self, batch_id: int) -> MessageResponse:
+        await self.collector_manager.abort_collector_async(cid=batch_id)
+        return MessageResponse(message=f"Batch aborted.")
+
+    #endregion
+
+    # region Collector
+    async def initiate_collector(
+            self,
+            collector_type: CollectorType,
+            user_id: int,
+        dto: Optional[BaseModel] = None,
+    ):
+        """
+        Reserves a batch ID from the database
+        and starts the requisite collector
+        """
+        if collector_type not in ASYNC_COLLECTORS:
+            raise HTTPException(
+                f"Collector type {collector_type} is not supported",
+                HTTPStatus.BAD_REQUEST
+            )
+
+        batch_info = BatchInfo(
+            strategy=collector_type.value,
+            status=BatchStatus.IN_PROCESS,
+            parameters=dto.model_dump(),
+            user_id=user_id
+        )
+
+        batch_id = await self.adb_client.insert_batch(batch_info)
+        await self.collector_manager.start_async_collector(
+            collector_type=collector_type,
+            batch_id=batch_id,
+            dto=dto
+        )
+        return CollectorStartInfo(
+            batch_id=batch_id,
+            message=f"Started {collector_type.value} collector."
+        )
+
+    # endregion
 
 
     #region Task Operators

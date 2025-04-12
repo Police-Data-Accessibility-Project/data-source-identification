@@ -1,3 +1,4 @@
+import asyncio
 from dataclasses import dataclass
 from typing import Generator
 from unittest.mock import MagicMock
@@ -38,6 +39,7 @@ def client(db_client_test, monkeypatch) -> Generator[TestClient, None, None]:
         # core.shutdown()
         yield c
         core.shutdown()
+
 
 @pytest.fixture
 def api_test_helper(client: TestClient, db_data_creator, monkeypatch) -> APITestHelper:

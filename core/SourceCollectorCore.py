@@ -21,26 +21,17 @@ class SourceCollectorCore:
     def __init__(
         self,
         core_logger: CoreLogger,
+        collector_manager: CollectorManager,
         db_client: DatabaseClient = DatabaseClient(),
         dev_mode: bool = False
     ):
         self.db_client = db_client
         self.core_logger = core_logger
-        self.collector_manager = CollectorManager(
-            logger=core_logger,
-            db_client=db_client
-        )
+        self.collector_manager = collector_manager
         if not dev_mode:
             self.scheduled_task_manager = ScheduledTaskManager(db_client=db_client)
         else:
             self.scheduled_task_manager = None
-
-    def get_batch_info(self, batch_id: int) -> BatchInfo:
-        return self.db_client.get_batch_by_id(batch_id)
-
-    def get_urls_by_batch(self, batch_id: int, page: int = 1) -> GetURLsByBatchResponse:
-        url_infos = self.db_client.get_urls_by_batch(batch_id, page)
-        return GetURLsByBatchResponse(urls=url_infos)
 
     def get_duplicate_urls_by_batch(self, batch_id: int, page: int = 1) -> GetDuplicatesByBatchResponse:
         dup_infos = self.db_client.get_duplicates_by_batch_id(batch_id, page=page)

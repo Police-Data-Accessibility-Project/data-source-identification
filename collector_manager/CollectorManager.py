@@ -3,12 +3,16 @@ Manager for all collectors
 Can start, stop, and get info on running collectors
 And manages the retrieval of collector info
 """
+import asyncio
 import threading
 from concurrent.futures import Future, ThreadPoolExecutor
+from http import HTTPStatus
 from typing import Dict, List
 
+from fastapi import HTTPException
 from pydantic import BaseModel
 
+from collector_db.AsyncDatabaseClient import AsyncDatabaseClient
 from collector_db.DatabaseClient import DatabaseClient
 from collector_manager.CollectorBase import CollectorBase
 from collector_manager.collector_mapping import COLLECTOR_MAPPING
@@ -38,11 +42,12 @@ class CollectorManager:
         self.dev_mode = dev_mode
         self.executor = ThreadPoolExecutor(max_workers=self.max_workers)
 
+    async def has_collector(self, cid: int) -> bool:
+        return cid in self.collectors
+
+
     def restart_executor(self):
         self.executor = ThreadPoolExecutor(max_workers=self.max_workers)
-
-    def list_collectors(self) -> List[str]:
-        return [cm.value for cm in list(COLLECTOR_MAPPING.keys())]
 
     def start_collector(
             self,
@@ -73,18 +78,6 @@ class CollectorManager:
             future = self.executor.submit(collector.run)
             self.futures[batch_id] = future
 
-            # thread = threading.Thread(target=collector.run)
-            # self.threads[batch_id] = thread
-            # thread.start()
-
-    def get_info(self, cid: str) -> str:
-        collector = self.collectors.get(cid)
-        if not collector:
-            return f"Collector with CID {cid} not found."
-        logs = "\n".join(collector.logs[-3:])  # Show the last 3 logs
-        return f"{cid} ({collector.name}) - {collector.status}\nLogs:\n{logs}"
-
-
     def try_getting_collector(self, cid):
         collector = self.collectors.get(cid)
         if collector is None:
@@ -93,6 +86,7 @@ class CollectorManager:
 
     def abort_collector(self, cid: int) -> None:
         collector = self.try_getting_collector(cid)
+
         # Get collector thread
         thread = self.threads.get(cid)
         future = self.futures.get(cid)

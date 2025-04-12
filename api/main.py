@@ -1,6 +1,7 @@
 from contextlib import asynccontextmanager
 
 import uvicorn
+from adodbapi.ado_consts import adBSTR
 from fastapi import FastAPI
 
 from api.routes.annotate import annotate_router
@@ -12,6 +13,8 @@ from api.routes.task import task_router
 from api.routes.url import url_router
 from collector_db.AsyncDatabaseClient import AsyncDatabaseClient
 from collector_db.DatabaseClient import DatabaseClient
+from collector_manager.AsyncCollectorManager import AsyncCollectorManager
+from collector_manager.CollectorManager import CollectorManager
 from core.AsyncCore import AsyncCore
 from core.CoreLogger import CoreLogger
 from core.ScheduledTaskManager import AsyncScheduledTaskManager
@@ -28,15 +31,26 @@ from util.helper_functions import get_from_env
 async def lifespan(app: FastAPI):
     # Initialize shared dependencies
     db_client = DatabaseClient()
+    adb_client = AsyncDatabaseClient()
     await setup_database(db_client)
+    core_logger = CoreLogger(db_client=db_client)
+    collector_manager = CollectorManager(
+        logger=core_logger,
+        db_client=db_client,
+    )
+    async_collector_manager = AsyncCollectorManager(
+        logger=core_logger,
+        adb_client=adb_client,
+    )
     source_collector_core = SourceCollectorCore(
         core_logger=CoreLogger(
             db_client=db_client
         ),
         db_client=DatabaseClient(),
+        collector_manager=collector_manager
     )
     async_core = AsyncCore(
-        adb_client=AsyncDatabaseClient(),
+        adb_client=adb_client,
         huggingface_interface=HuggingFaceInterface(),
         url_request_interface=URLRequestInterface(),
         html_parser=HTMLResponseParser(
@@ -44,7 +58,8 @@ async def lifespan(app: FastAPI):
         ),
         discord_poster=DiscordPoster(
             webhook_url=get_from_env("DISCORD_WEBHOOK_URL")
-        )
+        ),
+        collector_manager=async_collector_manager
     )
     async_scheduled_task_manager = AsyncScheduledTaskManager(async_core=async_core)
 

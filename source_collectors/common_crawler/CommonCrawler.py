@@ -1,64 +1,76 @@
+import asyncio
 import json
 import time
 from http import HTTPStatus
+from typing import Union
 from urllib.parse import quote_plus
 
-import requests
+import aiohttp
 
 from source_collectors.common_crawler.utils import URLWithParameters
 
-
-def make_request(search_url: URLWithParameters) -> requests.Response:
+async def async_make_request(
+        search_url: 'URLWithParameters'
+) -> Union[aiohttp.ClientResponse, None]:
     """
-    Makes the HTTP GET request to the given search URL.
-    Return the response if successful, None if rate-limited.
+    Makes the HTTP GET request to the given search URL using aiohttp.
+    Return the response if successful, None if rate-limited or failed.
     """
     try:
-        response = requests.get(str(search_url))
-        response.raise_for_status()
-        return response
-    except requests.exceptions.RequestException as e:
-        if (
-            response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
-            and "SlowDown" in response.text
-        ):
-            return None
-        else:
-            print(f"Failed to get records: {e}")
-            return None
+        async with aiohttp.ClientSession() as session:
+            async with session.get(str(search_url)) as response:
+                text = await response.text()
+                if (
+                    response.status == HTTPStatus.INTERNAL_SERVER_ERROR
+                    and "SlowDown" in text
+                ):
+                    return None
+                response.raise_for_status()
+                # simulate requests.Response interface for downstream compatibility
+                response.text_content = text  # custom attribute for downstream use
+                response.status_code = response.status
+                return response
+    except aiohttp.ClientError as e:
+        print(f"Failed to get records: {e}")
+        return None
 
 
-def process_response(
-        response: requests.Response, url: str, page: int
-) -> list[str] or None:
+def make_request(
+        search_url: 'URLWithParameters'
+) -> Union[aiohttp.ClientResponse, None]:
+    """Synchronous wrapper around the async function."""
+    return asyncio.run(async_make_request(search_url))
+
+
+def process_response(response, url: str, page: int) -> Union[list[str], None]:
     """Processes the HTTP response and returns the parsed records if successful."""
+    if response is None:
+        return None
+
     if response.status_code == HTTPStatus.OK:
-        records = response.text.strip().split("\n")
+        records = response.text_content.strip().split("\n")
         print(f"Found {len(records)} records for {url} on page {page}")
         results = []
         for record in records:
             d = json.loads(record)
             results.append(d["url"])
         return results
-    if "First Page is 0, Last Page is 0" in response.text:
+
+    if "First Page is 0, Last Page is 0" in response.text_content:
         print("No records exist in index matching the url search term")
         return None
+
     print(f"Unexpected response: {response.status_code}")
     return None
 
+
 def get_common_crawl_search_results(
-        search_url: URLWithParameters,
+        search_url: 'URLWithParameters',
         query_url: str,
         page: int
-) -> list[str] or None:
+) -> Union[list[str], None]:
     response = make_request(search_url)
-    processed_data = process_response(
-        response=response,
-        url=query_url,
-        page=page
-    )
-    # TODO: POINT OF MOCK
-    return processed_data
+    return process_response(response, query_url, page)
 
 
 

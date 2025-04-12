@@ -1,7 +1,9 @@
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, AsyncMock
 
+import pytest
 from marshmallow import Schema, fields
 
+from collector_db.AsyncDatabaseClient import AsyncDatabaseClient
 from collector_db.DatabaseClient import DatabaseClient
 from core.CoreLogger import CoreLogger
 from source_collectors.ckan.CKANCollector import CKANCollector
@@ -18,8 +20,8 @@ class CKANSchema(Schema):
     data_portal_type = fields.String()
     source_last_updated = fields.String()
 
-
-def test_ckan_collector_default():
+@pytest.mark.asyncio
+async def test_ckan_collector_default():
     collector = CKANCollector(
         batch_id=1,
         dto=CKANInputDTO(
@@ -30,15 +32,20 @@ def test_ckan_collector_default():
             }
         ),
         logger=MagicMock(spec=CoreLogger),
-        db_client=MagicMock(spec=DatabaseClient),
+        adb_client=AsyncMock(spec=AsyncDatabaseClient),
         raise_error=True
 
     )
-    collector.run()
+    await collector.run()
     schema = CKANSchema(many=True)
     schema.load(collector.data["results"])
+    print(collector.data)
 
 def test_ckan_collector_custom():
+    """
+    Use this to test how CKAN behaves when using
+    something other than the default options provided
+    """
     collector = CKANCollector(
         batch_id=1,
         dto=CKANInputDTO(

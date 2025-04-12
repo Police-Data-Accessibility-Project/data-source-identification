@@ -1,7 +1,9 @@
 import abc
+import asyncio
 from abc import ABC
 
 import requests
+import aiohttp
 
 from source_collectors.muckrock.classes.fetch_requests.FetchRequestBase import FetchRequest
 
@@ -12,30 +14,18 @@ class MuckrockNoMoreDataError(Exception):
 class MuckrockServerError(Exception):
     pass
 
-def fetch_muckrock_data_from_url(url: str) -> dict | None:
-    response = requests.get(url)
-    try:
-        response.raise_for_status()
-    except requests.exceptions.HTTPError as e:
-        print(f"Failed to get records on request `{url}`: {e}")
-        # If code is 404, raise NoMoreData error
-        if e.response.status_code == 404:
-            raise MuckrockNoMoreDataError
-        if 500 <= e.response.status_code < 600:
-            raise MuckrockServerError
-        return None
-
-    # TODO: POINT OF MOCK
-    data = response.json()
-    return data
-
 class MuckrockFetcher(ABC):
+
+    async def get_async_request(self, url: str) -> dict | None:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url) as response:
+                response.raise_for_status()
+                return await response.json()
 
     def fetch(self, request: FetchRequest) -> dict | None:
         url = self.build_url(request)
-        response = requests.get(url)
         try:
-            response.raise_for_status()
+            return asyncio.run(self.get_async_request(url))
         except requests.exceptions.HTTPError as e:
             print(f"Failed to get records on request `{url}`: {e}")
             # If code is 404, raise NoMoreData error
@@ -44,10 +34,6 @@ class MuckrockFetcher(ABC):
             if 500 <= e.response.status_code < 600:
                 raise MuckrockServerError
             return None
-
-        # TODO: POINT OF MOCK
-        data = response.json()
-        return data
 
     @abc.abstractmethod
     def build_url(self, request: FetchRequest) -> str:
