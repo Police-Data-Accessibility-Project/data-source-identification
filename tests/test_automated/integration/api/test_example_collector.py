@@ -9,7 +9,7 @@ from core.DTOs.BatchStatusInfo import BatchStatusInfo
 from core.DTOs.GetBatchLogsResponse import GetBatchLogsResponse
 from core.DTOs.GetBatchStatusResponse import GetBatchStatusResponse
 from core.enums import BatchStatus
-from test_automated.integration.api.conftest import disable_task_trigger
+from tests.test_automated.integration.api.conftest import disable_task_trigger
 
 
 def test_example_collector(api_test_helper):

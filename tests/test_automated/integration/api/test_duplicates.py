@@ -3,7 +3,7 @@ from unittest.mock import AsyncMock
 
 from collector_db.DTOs.BatchInfo import BatchInfo
 from collector_manager.DTOs.ExampleInputDTO import ExampleInputDTO
-from test_automated.integration.api.conftest import disable_task_trigger
+from tests.test_automated.integration.api.conftest import disable_task_trigger
 
 
 def test_duplicates(api_test_helper):
