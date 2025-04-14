@@ -5,6 +5,7 @@ import pytest
 from collector_db.AsyncDatabaseClient import AsyncDatabaseClient
 from collector_db.DTOs.URLInfo import URLInfo
 from collector_db.DatabaseClient import DatabaseClient
+from core.AsyncCoreLogger import AsyncCoreLogger
 from core.CoreLogger import CoreLogger
 from source_collectors.common_crawler.CommonCrawlerCollector import CommonCrawlerCollector
 from source_collectors.common_crawler.DTOs import CommonCrawlerInputDTO
@@ -31,7 +32,7 @@ async def test_common_crawl_collector(mock_get_common_crawl_search_results):
         dto=CommonCrawlerInputDTO(
             search_term="keyword",
         ),
-        logger=mock.MagicMock(spec=CoreLogger),
+        logger=mock.AsyncMock(spec=AsyncCoreLogger),
         adb_client=mock.AsyncMock(spec=AsyncDatabaseClient),
         raise_error=True
     )

@@ -10,7 +10,7 @@ from collector_manager.AsyncCollectorBase import AsyncCollectorBase
 from collector_manager.CollectorManager import InvalidCollectorError
 from collector_manager.collector_mapping import COLLECTOR_MAPPING
 from collector_manager.enums import CollectorType
-from core.CoreLogger import CoreLogger
+from core.AsyncCoreLogger import AsyncCoreLogger
 from core.FunctionTrigger import FunctionTrigger
 
 
@@ -18,7 +18,7 @@ class AsyncCollectorManager:
 
     def __init__(
             self,
-            logger: CoreLogger,
+            logger: AsyncCoreLogger,
             adb_client: AsyncDatabaseClient,
             dev_mode: bool = False,
             post_collection_function_trigger: FunctionTrigger = None
@@ -79,10 +79,16 @@ class AsyncCollectorManager:
         self.async_tasks.pop(cid)
 
     async def shutdown_all_collectors(self) -> None:
-        for cid, task in self.async_tasks.items():
+        while self.async_tasks:
+            cid, task = self.async_tasks.popitem()
             if task.done():
                 try:
                     task.result()
                 except Exception as e:
                     raise e
-            await self.abort_collector_async(cid)
+            else:
+                task.cancel()
+                try:
+                    await task  # Await so cancellation propagates
+                except asyncio.CancelledError:
+                    pass

@@ -47,9 +47,9 @@ class MuckrockSimpleSearchCollector(AsyncCollectorBase):
                 self.check_for_count_break(results_count, max_count)
             except SearchCompleteException:
                 break
-            self.log(f"Search {search_count}: Found {len(results)} results")
+            await self.log(f"Search {search_count}: Found {len(results)} results")
 
-        self.log(f"Search Complete. Total results: {results_count}")
+        await self.log(f"Search Complete. Total results: {results_count}")
         self.data = {"urls": self.format_results(all_results)}
 
     def format_results(self, results: list[dict]) -> list[dict]:

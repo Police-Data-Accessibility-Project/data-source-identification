@@ -5,6 +5,7 @@ from marshmallow import Schema, fields
 
 from collector_db.AsyncDatabaseClient import AsyncDatabaseClient
 from collector_db.DatabaseClient import DatabaseClient
+from core.AsyncCoreLogger import AsyncCoreLogger
 from core.CoreLogger import CoreLogger
 from source_collectors.common_crawler.CommonCrawlerCollector import CommonCrawlerCollector
 from source_collectors.common_crawler.DTOs import CommonCrawlerInputDTO
@@ -18,7 +19,7 @@ async def test_common_crawler_collector():
     collector = CommonCrawlerCollector(
         batch_id=1,
         dto=CommonCrawlerInputDTO(),
-        logger=MagicMock(spec=CoreLogger),
+        logger=AsyncMock(spec=AsyncCoreLogger),
         adb_client=AsyncMock(spec=AsyncDatabaseClient),
         raise_error=True
     )

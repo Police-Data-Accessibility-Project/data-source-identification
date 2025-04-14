@@ -3,7 +3,6 @@ from typing import Optional, Any
 
 from collector_db.DatabaseClient import DatabaseClient
 from collector_manager.enums import CollectorType
-from core.CoreLogger import CoreLogger
 from core.DTOs.GetBatchLogsResponse import GetBatchLogsResponse
 from core.DTOs.GetBatchStatusResponse import GetBatchStatusResponse
 from core.DTOs.GetDuplicatesByBatchResponse import GetDuplicatesByBatchResponse
@@ -14,13 +13,12 @@ from core.enums import BatchStatus
 class SourceCollectorCore:
     def __init__(
         self,
-        core_logger: CoreLogger,
-        collector_manager: Optional[Any] = None,
+        core_logger: Optional[Any] = None,  # Deprecated
+        collector_manager: Optional[Any] = None,  # Deprecated
         db_client: DatabaseClient = DatabaseClient(),
         dev_mode: bool = False
     ):
         self.db_client = db_client
-        self.core_logger = core_logger
         if not dev_mode:
             self.scheduled_task_manager = ScheduledTaskManager(db_client=db_client)
         else:

@@ -5,6 +5,7 @@ import pytest
 from collector_db.AsyncDatabaseClient import AsyncDatabaseClient
 from collector_db.DTOs.URLInfo import URLInfo
 from collector_db.DatabaseClient import DatabaseClient
+from core.AsyncCoreLogger import AsyncCoreLogger
 from core.CoreLogger import CoreLogger
 from source_collectors.auto_googler.AutoGooglerCollector import AutoGooglerCollector
 from source_collectors.auto_googler.DTOs import GoogleSearchQueryResultsInnerDTO, AutoGooglerInputDTO
@@ -29,7 +30,7 @@ async def test_auto_googler_collector(patch_get_query_results):
         dto=AutoGooglerInputDTO(
             queries=["keyword"]
         ),
-        logger=AsyncMock(spec=CoreLogger),
+        logger=AsyncMock(spec=AsyncCoreLogger),
         adb_client=AsyncMock(spec=AsyncDatabaseClient),
         raise_error=True
     )

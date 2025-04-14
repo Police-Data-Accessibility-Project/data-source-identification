@@ -27,7 +27,7 @@ class AutoGooglerCollector(AsyncCollectorBase):
             )
         )
         async for log in auto_googler.run():
-            self.log(log)
+            await self.log(log)
         return auto_googler
 
     async def run_implementation(self) -> None:

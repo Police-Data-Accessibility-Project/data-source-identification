@@ -14,6 +14,7 @@ from collector_db.DTOConverter import DTOConverter
 from collector_db.DTOs.BatchInfo import BatchInfo
 from collector_db.DTOs.DuplicateInfo import DuplicateInsertInfo
 from collector_db.DTOs.InsertURLsInfo import InsertURLsInfo
+from collector_db.DTOs.LogInfo import LogInfo
 from collector_db.DTOs.TaskInfo import TaskInfo
 from collector_db.DTOs.URLErrorInfos import URLErrorPydanticInfo
 from collector_db.DTOs.URLHTMLContentInfo import URLHTMLContentInfo, HTMLContentType
@@ -27,7 +28,7 @@ from collector_db.helper_functions import get_postgres_connection_string
 from collector_db.models import URL, URLErrorInfo, URLHTMLContent, Base, \
     RootURL, Task, TaskError, LinkTaskURL, Batch, Agency, AutomatedUrlAgencySuggestion, \
     UserUrlAgencySuggestion, AutoRelevantSuggestion, AutoRecordTypeSuggestion, UserRelevantSuggestion, \
-    UserRecordTypeSuggestion, ReviewingUserURL, URLOptionalDataSourceMetadata, ConfirmedURLAgency, Duplicate
+    UserRecordTypeSuggestion, ReviewingUserURL, URLOptionalDataSourceMetadata, ConfirmedURLAgency, Duplicate, Log
 from collector_manager.enums import URLStatus, CollectorType
 from core.DTOs.FinalReviewApprovalInfo import FinalReviewApprovalInfo
 from core.DTOs.GetNextRecordTypeAnnotationResponseInfo import GetNextRecordTypeAnnotationResponseInfo
@@ -1377,6 +1378,14 @@ class AsyncDatabaseClient:
         raw_result = await session.execute(query)
         url = raw_result.scalars().first()
         return URLInfo(**url.__dict__)
+
+    @session_manager
+    async def insert_logs(self, session, log_infos: List[LogInfo]):
+        for log_info in log_infos:
+            log = Log(log=log_info.log, batch_id=log_info.batch_id)
+            if log_info.created_at is not None:
+                log.created_at = log_info.created_at
+            session.add(log)
 
     @session_manager
     async def insert_duplicates(self, session, duplicate_infos: list[DuplicateInsertInfo]):
