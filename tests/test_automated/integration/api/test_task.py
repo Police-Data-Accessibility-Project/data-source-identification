@@ -39,3 +39,17 @@ async def test_get_tasks(api_test_helper):
         assert task.type == TaskType.HTML
         assert task.url_count == 3
         assert task.url_error_count == 1
+
+@pytest.mark.asyncio
+async def test_get_task_status(api_test_helper):
+    ath = api_test_helper
+
+    response = await ath.request_validator.get_current_task_status()
+
+    assert response.status == TaskType.IDLE
+
+    for task in [task for task in TaskType]:
+        await ath.async_core.task_manager.set_task_status(task)
+        response = await ath.request_validator.get_current_task_status()
+
+        assert response.status == task

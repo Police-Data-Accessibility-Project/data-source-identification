@@ -29,7 +29,6 @@ class URLHTMLTaskOperator(TaskOperatorBase):
         return await self.adb_client.has_pending_urls_without_html_data()
 
     async def inner_task_logic(self):
-        print("Running URL HTML Task...")
         tdos = await self.get_pending_urls_without_html_data()
         url_ids = [task_info.url_info.id for task_info in tdos]
         await self.link_urls_to_task(url_ids=url_ids)

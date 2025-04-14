@@ -5,6 +5,7 @@ from pydantic import BaseModel
 from starlette.testclient import TestClient
 
 from collector_db.DTOs.BatchInfo import BatchInfo
+from collector_db.DTOs.GetTaskStatusResponseInfo import GetTaskStatusResponseInfo
 from collector_db.DTOs.TaskInfo import TaskInfo
 from collector_db.enums import TaskType
 from collector_manager.DTOs.ExampleInputDTO import ExampleInputDTO
@@ -282,3 +283,9 @@ class RequestValidator:
             json=review_info.model_dump(mode='json')
         )
         return GetNextURLForFinalReviewOuterResponse(**data)
+
+    async def get_current_task_status(self) -> GetTaskStatusResponseInfo:
+        data = self.get(
+            url=f"/task/status"
+        )
+        return GetTaskStatusResponseInfo(**data)

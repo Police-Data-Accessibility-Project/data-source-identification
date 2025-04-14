@@ -4,6 +4,7 @@ from pydantic import BaseModel
 
 from collector_db.AsyncDatabaseClient import AsyncDatabaseClient
 from collector_db.DTOs.BatchInfo import BatchInfo
+from collector_db.DTOs.GetTaskStatusResponseInfo import GetTaskStatusResponseInfo
 from collector_db.enums import TaskType
 from collector_manager.AsyncCollectorManager import AsyncCollectorManager
 from collector_manager.enums import CollectorType
@@ -87,6 +88,8 @@ class AsyncCore:
         )
 
     # endregion
+    async def get_current_task_status(self) -> GetTaskStatusResponseInfo:
+        return GetTaskStatusResponseInfo(status=self.task_manager.task_status)
 
     async def run_tasks(self):
         await self.task_manager.trigger_task_run()

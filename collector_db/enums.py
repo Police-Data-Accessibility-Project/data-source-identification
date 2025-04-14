@@ -38,6 +38,7 @@ class TaskType(PyEnum):
     RECORD_TYPE = "Record Type"
     AGENCY_IDENTIFICATION = "Agency Identification"
     MISC_METADATA = "Misc Metadata"
+    IDLE = "Idle"
 
 class PGEnum(TypeDecorator):
     impl = postgresql.ENUM
