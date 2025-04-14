@@ -5,6 +5,7 @@ from marshmallow import Schema, fields
 
 from collector_db.AsyncDatabaseClient import AsyncDatabaseClient
 from collector_db.DatabaseClient import DatabaseClient
+from core.AsyncCoreLogger import AsyncCoreLogger
 from core.CoreLogger import CoreLogger
 from source_collectors.ckan.CKANCollector import CKANCollector
 from source_collectors.ckan.DTOs import CKANInputDTO
@@ -31,7 +32,7 @@ async def test_ckan_collector_default():
                 "organization_search": organization_search
             }
         ),
-        logger=MagicMock(spec=CoreLogger),
+        logger=AsyncMock(spec=AsyncCoreLogger),
         adb_client=AsyncMock(spec=AsyncDatabaseClient),
         raise_error=True
     )
@@ -80,7 +81,7 @@ async def test_ckan_collector_custom():
               ]
             }
         ),
-        logger=MagicMock(spec=CoreLogger),
+        logger=AsyncMock(spec=AsyncCoreLogger),
         adb_client=AsyncMock(spec=AsyncDatabaseClient),
         raise_error=True
     )

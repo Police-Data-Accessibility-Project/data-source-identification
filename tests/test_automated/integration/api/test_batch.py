@@ -20,8 +20,6 @@ def test_abort_batch(api_test_helper):
 
     assert response.message == "Batch aborted."
 
-    time.sleep(3)
-
     bi: BatchInfo = ath.request_validator.get_batch_info(batch_id=batch_id)
 
     assert bi.status == BatchStatus.ABORTED

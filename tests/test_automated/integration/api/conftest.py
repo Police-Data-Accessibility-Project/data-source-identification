@@ -6,10 +6,12 @@ from typing import Generator
 from unittest.mock import MagicMock, AsyncMock
 
 import pytest
+import pytest_asyncio
 from starlette.testclient import TestClient
 
 from api.main import app
 from core.AsyncCore import AsyncCore
+from core.AsyncCoreLogger import AsyncCoreLogger
 from core.SourceCollectorCore import SourceCollectorCore
 from security_manager.SecurityManager import get_access_info, AccessInfo, Permissions
 from tests.helpers.DBDataCreator import DBDataCreator
@@ -51,7 +53,6 @@ def client() -> Generator[TestClient, None, None]:
     os.environ["DISCORD_WEBHOOK_URL"] = "https://discord.com"
     with TestClient(app) as c:
         app.dependency_overrides[get_access_info] = override_access_info
-        core: SourceCollectorCore = c.app.state.core
         async_core: AsyncCore = c.app.state.async_core
 
         # Interfaces to the web should be mocked
@@ -63,17 +64,16 @@ def client() -> Generator[TestClient, None, None]:
         task_manager.logger.disabled = True
         # Set trigger to fail immediately if called, to force it to be manually specified in tests
         task_manager.task_trigger._func = fail_task_trigger
-        # core.shutdown()
         yield c
-        core.shutdown()
+
     # Reset environment variables back to original state
     os.environ.clear()
     os.environ.update(_original_env)
 
 
-@pytest.fixture
-def api_test_helper(client: TestClient, db_data_creator, monkeypatch) -> APITestHelper:
-    return APITestHelper(
+@pytest_asyncio.fixture
+async def api_test_helper(client: TestClient, db_data_creator, monkeypatch) -> APITestHelper:
+    yield APITestHelper(
         request_validator=RequestValidator(client=client),
         core=client.app.state.core,
         async_core=client.app.state.async_core,
@@ -81,3 +81,4 @@ def api_test_helper(client: TestClient, db_data_creator, monkeypatch) -> APITest
         mock_huggingface_interface=MagicMock(),
         mock_label_studio_interface=MagicMock()
     )
+    await client.app.state.async_core.collector_manager.logger.clear_log_queue()

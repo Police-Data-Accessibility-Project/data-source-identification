@@ -39,6 +39,7 @@ async def test_example_collector_lifecycle(
     assert core.get_status(batch_id) == BatchStatus.IN_PROCESS
     print("Sleeping for 1.5 seconds...")
     await asyncio.sleep(1.5)
+    await acore.collector_manager.logger.flush_all()
     print("Done sleeping...")
     assert core.get_status(batch_id) == BatchStatus.COMPLETE
 

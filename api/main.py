@@ -14,7 +14,7 @@ from collector_db.AsyncDatabaseClient import AsyncDatabaseClient
 from collector_db.DatabaseClient import DatabaseClient
 from collector_manager.AsyncCollectorManager import AsyncCollectorManager
 from core.AsyncCore import AsyncCore
-from core.CoreLogger import CoreLogger
+from core.AsyncCoreLogger import AsyncCoreLogger
 from core.ScheduledTaskManager import AsyncScheduledTaskManager
 from core.SourceCollectorCore import SourceCollectorCore
 from core.TaskManager import TaskManager
@@ -32,12 +32,10 @@ async def lifespan(app: FastAPI):
     db_client = DatabaseClient()
     adb_client = AsyncDatabaseClient()
     await setup_database(db_client)
-    core_logger = CoreLogger(db_client=db_client)
+    core_logger = AsyncCoreLogger(adb_client=adb_client)
+
 
     source_collector_core = SourceCollectorCore(
-        core_logger=CoreLogger(
-            db_client=db_client
-        ),
         db_client=DatabaseClient(),
     )
     task_manager = TaskManager(
@@ -68,13 +66,15 @@ async def lifespan(app: FastAPI):
     app.state.core = source_collector_core
     app.state.async_core = async_core
     app.state.async_scheduled_task_manager = async_scheduled_task_manager
+    app.state.logger = core_logger
 
     # Startup logic
     yield  # Code here runs before shutdown
 
     # Shutdown logic (if needed)
-    core_logger.shutdown()
-    app.state.core.shutdown()
+    await core_logger.shutdown()
+    await async_core.shutdown()
+    source_collector_core.shutdown()
     # Clean up resources, close connections, etc.
     pass
 

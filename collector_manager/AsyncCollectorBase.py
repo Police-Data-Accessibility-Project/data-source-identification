@@ -10,7 +10,7 @@ from collector_db.AsyncDatabaseClient import AsyncDatabaseClient
 from collector_db.DTOs.InsertURLsInfo import InsertURLsInfo
 from collector_db.DTOs.LogInfo import LogInfo
 from collector_manager.enums import CollectorType
-from core.CoreLogger import CoreLogger
+from core.AsyncCoreLogger import AsyncCoreLogger
 from core.FunctionTrigger import FunctionTrigger
 from core.enums import BatchStatus
 from core.preprocessors.PreprocessorBase import PreprocessorBase
@@ -25,7 +25,7 @@ class AsyncCollectorBase(ABC):
             self,
             batch_id: int,
             dto: BaseModel,
-            logger: CoreLogger,
+            logger: AsyncCoreLogger,
             adb_client: AsyncDatabaseClient,
             raise_error: bool = False,
             post_collection_function_trigger: Optional[FunctionTrigger] = None,
@@ -120,8 +120,12 @@ class AsyncCollectorBase(ABC):
             self.status = BatchStatus.ERROR
             await self.handle_error(e)
 
-    async def log(self, message: str, allow_abort = True) -> None:
-        self.logger.log(LogInfo(
+    async def log(
+            self,
+            message: str,
+            allow_abort = True  # Deprecated
+    ) -> None:
+        await self.logger.log(LogInfo(
             batch_id=self.batch_id,
             log=message
         ))

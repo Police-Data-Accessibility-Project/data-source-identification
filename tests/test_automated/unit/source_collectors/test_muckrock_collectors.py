@@ -6,6 +6,7 @@ import pytest
 from collector_db.AsyncDatabaseClient import AsyncDatabaseClient
 from collector_db.DTOs.URLInfo import URLInfo
 from collector_db.DatabaseClient import DatabaseClient
+from core.AsyncCoreLogger import AsyncCoreLogger
 from core.CoreLogger import CoreLogger
 from source_collectors.muckrock.DTOs import MuckrockSimpleSearchCollectorInputDTO, \
     MuckrockCountySearchCollectorInputDTO, MuckrockAllFOIARequestsCollectorInputDTO
@@ -40,7 +41,7 @@ async def test_muckrock_simple_collector(patch_muckrock_fetcher):
             search_string="keyword",
             max_results=2
         ),
-        logger=mock.MagicMock(spec=CoreLogger),
+        logger=mock.AsyncMock(spec=AsyncCoreLogger),
         adb_client=mock.AsyncMock(spec=AsyncDatabaseClient),
         raise_error=True
     )
@@ -97,7 +98,7 @@ async def test_muckrock_county_search_collector(patch_muckrock_county_level_sear
             parent_jurisdiction_id=1,
             town_names=["test"]
         ),
-        logger=MagicMock(spec=CoreLogger),
+        logger=AsyncMock(spec=AsyncCoreLogger),
         adb_client=AsyncMock(spec=AsyncDatabaseClient),
         raise_error=True
     )
@@ -166,7 +167,7 @@ async def test_muckrock_all_foia_requests_collector(patch_muckrock_full_search_c
             start_page=1,
             total_pages=2
         ),
-        logger=MagicMock(spec=CoreLogger),
+        logger=AsyncMock(spec=AsyncCoreLogger),
         adb_client=AsyncMock(spec=AsyncDatabaseClient),
         raise_error=True
     )

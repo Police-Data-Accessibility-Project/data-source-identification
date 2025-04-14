@@ -3,6 +3,7 @@ from unittest.mock import MagicMock, AsyncMock
 import pytest
 
 from collector_db.AsyncDatabaseClient import AsyncDatabaseClient
+from core.AsyncCoreLogger import AsyncCoreLogger
 from core.CoreLogger import CoreLogger
 from source_collectors.muckrock.DTOs import MuckrockSimpleSearchCollectorInputDTO, \
     MuckrockCountySearchCollectorInputDTO, MuckrockAllFOIARequestsCollectorInputDTO
@@ -22,7 +23,7 @@ async def test_muckrock_simple_search_collector():
             search_string="police",
             max_results=10
         ),
-        logger=MagicMock(spec=CoreLogger),
+        logger=AsyncMock(spec=AsyncCoreLogger),
         adb_client=AsyncMock(spec=AsyncDatabaseClient),
         raise_error=True
     )
@@ -41,7 +42,7 @@ async def test_muckrock_county_level_search_collector():
             parent_jurisdiction_id=ALLEGHENY_COUNTY_MUCKROCK_ID,
             town_names=ALLEGHENY_COUNTY_TOWN_NAMES
         ),
-        logger=MagicMock(spec=CoreLogger),
+        logger=AsyncMock(spec=AsyncCoreLogger),
         adb_client=AsyncMock(spec=AsyncDatabaseClient),
         raise_error=True
     )
@@ -61,7 +62,7 @@ async def test_muckrock_full_search_collector():
             start_page=1,
             total_pages=2
         ),
-        logger=MagicMock(spec=CoreLogger),
+        logger=AsyncMock(spec=AsyncCoreLogger),
         adb_client=AsyncMock(spec=AsyncDatabaseClient),
         raise_error=True
     )
