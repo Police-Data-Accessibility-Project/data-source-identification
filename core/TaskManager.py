@@ -1,4 +1,5 @@
 import logging
+from typing import Optional
 
 from agency_identifier.MuckrockAPIInterface import MuckrockAPIInterface
 from collector_db.AsyncDatabaseClient import AsyncDatabaseClient
@@ -44,12 +45,12 @@ class TaskManager:
         self.logger.addHandler(logging.StreamHandler())
         self.logger.setLevel(logging.INFO)
         self.task_trigger = FunctionTrigger(self.run_tasks)
+        self.task_status: TaskType = TaskType.IDLE
 
 
 
     #region Task Operators
     async def get_url_html_task_operator(self):
-        self.logger.info("Running URL HTML Task")
         operator = URLHTMLTaskOperator(
             adb_client=self.adb_client,
             url_request_interface=self.url_request_interface,
@@ -58,7 +59,6 @@ class TaskManager:
         return operator
 
     async def get_url_relevance_huggingface_task_operator(self):
-        self.logger.info("Running URL Relevance Huggingface Task")
         operator = URLRelevanceHuggingfaceTaskOperator(
             adb_client=self.adb_client,
             huggingface_interface=self.huggingface_interface
@@ -106,13 +106,18 @@ class TaskManager:
     #endregion
 
     #region Tasks
+    async def set_task_status(self, task_type: TaskType):
+        self.task_status = task_type
+
     async def run_tasks(self):
         operators = await self.get_task_operators()
         count = 0
         for operator in operators:
+            await self.set_task_status(task_type=operator.task_type)
 
             meets_prereq = await operator.meets_task_prerequisites()
             while meets_prereq:
+                print(f"Running {operator.task_type.value} Task")
                 if count > TASK_REPEAT_THRESHOLD:
                     self.discord_poster.post_to_discord(
                         message=f"Task {operator.task_type.value} has been run"
@@ -124,6 +129,7 @@ class TaskManager:
                 await self.conclude_task(run_info)
                 count += 1
                 meets_prereq = await operator.meets_task_prerequisites()
+        await self.set_task_status(task_type=TaskType.IDLE)
 
     async def trigger_task_run(self):
         await self.task_trigger.trigger_or_rerun()
