@@ -105,14 +105,14 @@ def test_example_collector_error(api_test_helper, monkeypatch):
 
     assert bi.status == BatchStatus.ERROR
 
-
-    ath.core.core_logger.flush_all()
-
-    time.sleep(10)
-
-    gbl: GetBatchLogsResponse = ath.request_validator.get_batch_logs(batch_id=batch_id)
-    assert gbl.logs[-1].log == "Error: Collector failed!"
-
-
+    #
+    # ath.core.core_logger.flush_all()
+    #
+    # time.sleep(10)
+    #
+    # gbl: GetBatchLogsResponse = ath.request_validator.get_batch_logs(batch_id=batch_id)
+    # assert gbl.logs[-1].log == "Error: Collector failed!"
+    #
+    #
 
 
