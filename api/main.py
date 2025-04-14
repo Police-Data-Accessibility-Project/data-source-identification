@@ -1,7 +1,6 @@
 from contextlib import asynccontextmanager
 
 import uvicorn
-from adodbapi.ado_consts import adBSTR
 from fastapi import FastAPI
 
 from api.routes.annotate import annotate_router
