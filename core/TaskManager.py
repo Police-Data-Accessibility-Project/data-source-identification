@@ -6,6 +6,7 @@ from collector_db.DTOs.TaskInfo import TaskInfo
 from collector_db.enums import TaskType
 from core.DTOs.GetTasksResponse import GetTasksResponse
 from core.DTOs.TaskOperatorRunInfo import TaskOperatorRunInfo, TaskOperatorOutcome
+from core.FunctionTrigger import FunctionTrigger
 from core.classes.AgencyIdentificationTaskOperator import AgencyIdentificationTaskOperator
 from core.classes.TaskOperatorBase import TaskOperatorBase
 from core.classes.URLHTMLTaskOperator import URLHTMLTaskOperator
@@ -42,6 +43,7 @@ class TaskManager:
         self.logger = logging.getLogger(__name__)
         self.logger.addHandler(logging.StreamHandler())
         self.logger.setLevel(logging.INFO)
+        self.task_trigger = FunctionTrigger(self.run_tasks)
 
 
 
@@ -122,6 +124,9 @@ class TaskManager:
                 await self.conclude_task(run_info)
                 count += 1
                 meets_prereq = await operator.meets_task_prerequisites()
+
+    async def trigger_task_run(self):
+        await self.task_trigger.trigger_or_rerun()
 
 
     async def conclude_task(self, run_info):

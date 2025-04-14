@@ -89,7 +89,7 @@ class AsyncCore:
     # endregion
 
     async def run_tasks(self):
-        await self.task_manager.run_tasks()
+        await self.task_manager.trigger_task_run()
 
     async def get_tasks(
             self,

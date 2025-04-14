@@ -9,10 +9,14 @@ from core.DTOs.BatchStatusInfo import BatchStatusInfo
 from core.DTOs.GetBatchLogsResponse import GetBatchLogsResponse
 from core.DTOs.GetBatchStatusResponse import GetBatchStatusResponse
 from core.enums import BatchStatus
+from test_automated.integration.api.conftest import disable_task_trigger
 
 
 def test_example_collector(api_test_helper):
     ath = api_test_helper
+
+    # Temporarily disable task trigger
+    disable_task_trigger(ath)
 
     dto = ExampleInputDTO(
             sleep_time=1
@@ -65,6 +69,12 @@ def test_example_collector(api_test_helper):
     lr: GetBatchLogsResponse = ath.request_validator.get_batch_logs(batch_id=batch_id)
 
     assert len(lr.logs) > 0
+
+    # Check that task was triggered
+    ath.async_core.collector_manager.\
+        post_collection_function_trigger.\
+        trigger_or_rerun.assert_called_once()
+
 
 def test_example_collector_error(api_test_helper, monkeypatch):
     """

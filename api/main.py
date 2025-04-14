@@ -34,29 +34,33 @@ async def lifespan(app: FastAPI):
     adb_client = AsyncDatabaseClient()
     await setup_database(db_client)
     core_logger = CoreLogger(db_client=db_client)
-    async_collector_manager = AsyncCollectorManager(
-        logger=core_logger,
-        adb_client=adb_client,
-    )
+
     source_collector_core = SourceCollectorCore(
         core_logger=CoreLogger(
             db_client=db_client
         ),
         db_client=DatabaseClient(),
     )
+    task_manager = TaskManager(
+        adb_client=adb_client,
+        huggingface_interface=HuggingFaceInterface(),
+        url_request_interface=URLRequestInterface(),
+        html_parser=HTMLResponseParser(
+            root_url_cache=RootURLCache()
+        ),
+        discord_poster=DiscordPoster(
+            webhook_url=get_from_env("DISCORD_WEBHOOK_URL")
+        )
+    )
+    async_collector_manager = AsyncCollectorManager(
+        logger=core_logger,
+        adb_client=adb_client,
+        post_collection_function_trigger=task_manager.task_trigger
+    )
+
     async_core = AsyncCore(
         adb_client=adb_client,
-        task_manager=TaskManager(
-            adb_client=adb_client,
-            huggingface_interface=HuggingFaceInterface(),
-            url_request_interface=URLRequestInterface(),
-            html_parser=HTMLResponseParser(
-                root_url_cache=RootURLCache()
-            ),
-            discord_poster=DiscordPoster(
-                webhook_url=get_from_env("DISCORD_WEBHOOK_URL")
-            ),
-        ),
+        task_manager=task_manager,
         collector_manager=async_collector_manager
     )
     async_scheduled_task_manager = AsyncScheduledTaskManager(async_core=async_core)

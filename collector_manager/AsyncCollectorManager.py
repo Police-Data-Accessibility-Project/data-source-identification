@@ -11,6 +11,7 @@ from collector_manager.CollectorManager import InvalidCollectorError
 from collector_manager.collector_mapping import COLLECTOR_MAPPING
 from collector_manager.enums import CollectorType
 from core.CoreLogger import CoreLogger
+from core.FunctionTrigger import FunctionTrigger
 
 
 class AsyncCollectorManager:
@@ -19,13 +20,15 @@ class AsyncCollectorManager:
             self,
             logger: CoreLogger,
             adb_client: AsyncDatabaseClient,
-            dev_mode: bool = False
+            dev_mode: bool = False,
+            post_collection_function_trigger: FunctionTrigger = None
     ):
         self.collectors: Dict[int, AsyncCollectorBase] = {}
         self.adb_client = adb_client
         self.logger = logger
         self.async_tasks: dict[int, asyncio.Task] = {}
         self.dev_mode = dev_mode
+        self.post_collection_function_trigger = post_collection_function_trigger
 
     async def has_collector(self, cid: int) -> bool:
         return cid in self.collectors
@@ -34,7 +37,7 @@ class AsyncCollectorManager:
             self,
             collector_type: CollectorType,
             batch_id: int,
-            dto: BaseModel
+            dto: BaseModel,
     ) -> None:
         if batch_id in self.collectors:
             raise ValueError(f"Collector with batch_id {batch_id} is already running.")
@@ -45,7 +48,8 @@ class AsyncCollectorManager:
                 dto=dto,
                 logger=self.logger,
                 adb_client=self.adb_client,
-                raise_error=True if self.dev_mode else False
+                raise_error=True if self.dev_mode else False,
+                post_collection_function_trigger=self.post_collection_function_trigger
             )
         except KeyError:
             raise InvalidCollectorError(f"Collector {collector_type.value} not found.")

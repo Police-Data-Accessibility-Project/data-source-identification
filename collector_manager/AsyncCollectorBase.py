@@ -11,7 +11,7 @@ from collector_db.DTOs.InsertURLsInfo import InsertURLsInfo
 from collector_db.DTOs.LogInfo import LogInfo
 from collector_manager.enums import CollectorType
 from core.CoreLogger import CoreLogger
-from core.TaskManager import TaskManager
+from core.FunctionTrigger import FunctionTrigger
 from core.enums import BatchStatus
 from core.preprocessors.PreprocessorBase import PreprocessorBase
 
@@ -28,11 +28,9 @@ class AsyncCollectorBase(ABC):
             logger: CoreLogger,
             adb_client: AsyncDatabaseClient,
             raise_error: bool = False,
-            trigger_followup_tasks: bool = False,
-            task_manager: TaskManager = None
+            post_collection_function_trigger: Optional[FunctionTrigger] = None,
     ) -> None:
-        self.trigger_followup_tasks = trigger_followup_tasks
-        self.task_manager = task_manager
+        self.post_collection_function_trigger = post_collection_function_trigger
         self.batch_id = batch_id
         self.adb_client = adb_client
         self.dto = dto
@@ -94,6 +92,9 @@ class AsyncCollectorBase(ABC):
             compute_time=self.compute_time
         )
         await self.log("Done processing collector.", allow_abort=False)
+
+        if self.post_collection_function_trigger is not None:
+            await self.post_collection_function_trigger.trigger_or_rerun()
 
     async def run(self) -> None:
         try:
