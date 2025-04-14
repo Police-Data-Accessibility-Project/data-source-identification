@@ -1,3 +1,4 @@
+import asyncio
 from random import randint
 from typing import List, Optional
 
@@ -10,9 +11,8 @@ from collector_db.DTOs.InsertURLsInfo import InsertURLsInfo
 from collector_db.DTOs.URLErrorInfos import URLErrorPydanticInfo
 from collector_db.DTOs.URLHTMLContentInfo import URLHTMLContentInfo, HTMLContentType
 from collector_db.DTOs.URLInfo import URLInfo
-from collector_db.DTOs.URLMetadataInfo import URLMetadataInfo
 from collector_db.DatabaseClient import DatabaseClient
-from collector_db.enums import URLMetadataAttributeType, ValidationStatus, ValidationSource, TaskType
+from collector_db.enums import TaskType
 from collector_manager.enums import CollectorType, URLStatus
 from core.DTOs.URLAgencySuggestionInfo import URLAgencySuggestionInfo
 from core.DTOs.task_data_objects.URLMiscellaneousMetadataTDO import URLMiscellaneousMetadataTDO
@@ -282,17 +282,24 @@ class DBDataCreator:
         if suggestion_type == SuggestionType.UNKNOWN:
             count = 1  # Can only be one auto suggestion if unknown
 
-        await self.adb_client.add_agency_auto_suggestions(
-            suggestions=[
-                URLAgencySuggestionInfo(
+        suggestions = []
+        for _ in range(count):
+            if suggestion_type == SuggestionType.UNKNOWN:
+                pdap_agency_id = None
+            else:
+                pdap_agency_id = await self.agency()
+            suggestion = URLAgencySuggestionInfo(
                     url_id=url_id,
                     suggestion_type=suggestion_type,
-                    pdap_agency_id=None if suggestion_type == SuggestionType.UNKNOWN else await self.agency(),
+                    pdap_agency_id=pdap_agency_id,
                     state="Test State",
                     county="Test County",
                     locality="Test Locality"
-                ) for _ in range(count)
-            ]
+            )
+            suggestions.append(suggestion)
+
+        await self.adb_client.add_agency_auto_suggestions(
+            suggestions=suggestions
         )
 
     async def agency_confirmed_suggestion(

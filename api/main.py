@@ -12,10 +12,12 @@ from api.routes.task import task_router
 from api.routes.url import url_router
 from collector_db.AsyncDatabaseClient import AsyncDatabaseClient
 from collector_db.DatabaseClient import DatabaseClient
+from collector_manager.AsyncCollectorManager import AsyncCollectorManager
 from core.AsyncCore import AsyncCore
 from core.CoreLogger import CoreLogger
 from core.ScheduledTaskManager import AsyncScheduledTaskManager
 from core.SourceCollectorCore import SourceCollectorCore
+from core.TaskManager import TaskManager
 from html_tag_collector.ResponseParser import HTMLResponseParser
 from html_tag_collector.RootURLCache import RootURLCache
 from html_tag_collector.URLRequestInterface import URLRequestInterface
@@ -28,15 +30,18 @@ from util.helper_functions import get_from_env
 async def lifespan(app: FastAPI):
     # Initialize shared dependencies
     db_client = DatabaseClient()
+    adb_client = AsyncDatabaseClient()
     await setup_database(db_client)
+    core_logger = CoreLogger(db_client=db_client)
+
     source_collector_core = SourceCollectorCore(
         core_logger=CoreLogger(
             db_client=db_client
         ),
         db_client=DatabaseClient(),
     )
-    async_core = AsyncCore(
-        adb_client=AsyncDatabaseClient(),
+    task_manager = TaskManager(
+        adb_client=adb_client,
         huggingface_interface=HuggingFaceInterface(),
         url_request_interface=URLRequestInterface(),
         html_parser=HTMLResponseParser(
@@ -45,6 +50,17 @@ async def lifespan(app: FastAPI):
         discord_poster=DiscordPoster(
             webhook_url=get_from_env("DISCORD_WEBHOOK_URL")
         )
+    )
+    async_collector_manager = AsyncCollectorManager(
+        logger=core_logger,
+        adb_client=adb_client,
+        post_collection_function_trigger=task_manager.task_trigger
+    )
+
+    async_core = AsyncCore(
+        adb_client=adb_client,
+        task_manager=task_manager,
+        collector_manager=async_collector_manager
     )
     async_scheduled_task_manager = AsyncScheduledTaskManager(async_core=async_core)
 
@@ -57,6 +73,7 @@ async def lifespan(app: FastAPI):
     yield  # Code here runs before shutdown
 
     # Shutdown logic (if needed)
+    core_logger.shutdown()
     app.state.core.shutdown()
     # Clean up resources, close connections, etc.
     pass

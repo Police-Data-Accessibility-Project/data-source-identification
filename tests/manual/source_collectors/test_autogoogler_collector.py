@@ -1,12 +1,15 @@
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, AsyncMock
 
+import pytest
+
+from collector_db.AsyncDatabaseClient import AsyncDatabaseClient
 from collector_db.DatabaseClient import DatabaseClient
 from core.CoreLogger import CoreLogger
 from source_collectors.auto_googler.AutoGooglerCollector import AutoGooglerCollector
 from source_collectors.auto_googler.DTOs import AutoGooglerInputDTO
 
-
-def test_autogoogler_collector():
+@pytest.mark.asyncio
+async def test_autogoogler_collector():
     collector = AutoGooglerCollector(
         batch_id=1,
         dto=AutoGooglerInputDTO(
@@ -14,8 +17,8 @@ def test_autogoogler_collector():
             queries=["police"],
         ),
         logger = MagicMock(spec=CoreLogger),
-        db_client=MagicMock(spec=DatabaseClient),
+        adb_client=AsyncMock(spec=AsyncDatabaseClient),
         raise_error=True
     )
-    collector.run()
+    await collector.run()
     print(collector.data)

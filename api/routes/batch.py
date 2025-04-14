@@ -1,11 +1,13 @@
 from typing import Optional
 
-from fastapi import Path, APIRouter
+from fastapi import Path, APIRouter, HTTPException
 from fastapi.params import Query, Depends
 
-from api.dependencies import get_core
+from api.dependencies import get_core, get_async_core
 from collector_db.DTOs.BatchInfo import BatchInfo
+from collector_manager.CollectorManager import InvalidCollectorError
 from collector_manager.enums import CollectorType
+from core.AsyncCore import AsyncCore
 from core.DTOs.GetBatchLogsResponse import GetBatchLogsResponse
 from core.DTOs.GetBatchStatusResponse import GetBatchStatusResponse
 from core.DTOs.GetDuplicatesByBatchResponse import GetDuplicatesByBatchResponse
@@ -46,24 +48,25 @@ def get_batch_status(
 
 
 @batch_router.get("/{batch_id}")
-def get_batch_info(
+async def get_batch_info(
         batch_id: int = Path(description="The batch id"),
-        core: SourceCollectorCore = Depends(get_core),
+        core: AsyncCore = Depends(get_async_core),
         access_info: AccessInfo = Depends(get_access_info),
 ) -> BatchInfo:
-    return core.get_batch_info(batch_id)
+    result = await core.get_batch_info(batch_id)
+    return result
 
 @batch_router.get("/{batch_id}/urls")
-def get_urls_by_batch(
+async def get_urls_by_batch(
         batch_id: int = Path(description="The batch id"),
         page: int = Query(
             description="The page number",
             default=1
         ),
-        core: SourceCollectorCore = Depends(get_core),
+        core: AsyncCore = Depends(get_async_core),
         access_info: AccessInfo = Depends(get_access_info),
 ) -> GetURLsByBatchResponse:
-    return core.get_urls_by_batch(batch_id, page=page)
+    return await core.get_urls_by_batch(batch_id, page=page)
 
 @batch_router.get("/{batch_id}/duplicates")
 def get_duplicates_by_batch(
@@ -90,9 +93,10 @@ def get_batch_logs(
     return core.get_batch_logs(batch_id)
 
 @batch_router.post("/{batch_id}/abort")
-def abort_batch(
+async def abort_batch(
         batch_id: int = Path(description="The batch id"),
         core: SourceCollectorCore = Depends(get_core),
+        async_core: AsyncCore = Depends(get_async_core),
         access_info: AccessInfo = Depends(get_access_info),
 ) -> MessageResponse:
-    return core.abort_batch(batch_id)
+    return await async_core.abort_batch(batch_id)

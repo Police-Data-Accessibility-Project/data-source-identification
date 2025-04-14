@@ -1,3 +1,4 @@
+import asyncio
 import time
 
 from collector_db.DTOs.BatchInfo import BatchInfo

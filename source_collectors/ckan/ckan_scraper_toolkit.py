@@ -1,16 +1,14 @@
 """Toolkit of functions that use ckanapi to retrieve packages from CKAN data portals"""
-
+import asyncio
 import math
 import sys
-import time
-from concurrent.futures import as_completed, ThreadPoolExecutor
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Optional
 from urllib.parse import urljoin
 
-import requests
-from bs4 import BeautifulSoup
+import aiohttp
+from bs4 import BeautifulSoup, ResultSet, Tag
 
 from source_collectors.ckan.CKANAPIInterface import CKANAPIInterface
 
@@ -46,7 +44,7 @@ class Package:
         }
 
 
-def ckan_package_search(
+async def ckan_package_search(
     base_url: str,
     query: Optional[str] = None,
     rows: Optional[int] = sys.maxsize,
@@ -69,7 +67,7 @@ def ckan_package_search(
 
     while start < rows:
         num_rows = rows - start + offset
-        packages: dict = interface.package_search(
+        packages: dict = await interface.package_search(
             query=query, rows=num_rows, start=start, **kwargs
         )
         add_base_url_to_packages(base_url, packages)
@@ -94,7 +92,7 @@ def add_base_url_to_packages(base_url, packages):
     [package.update(base_url=base_url) for package in packages["results"]]
 
 
-def ckan_package_search_from_organization(
+async def ckan_package_search_from_organization(
     base_url: str, organization_id: str
 ) -> list[dict[str, Any]]:
     """Returns a list of CKAN packages from an organization. Only 10 packages are able to be returned.
@@ -104,22 +102,22 @@ def ckan_package_search_from_organization(
     :return: List of dictionaries representing the packages associated with the organization.
     """
     interface = CKANAPIInterface(base_url)
-    organization = interface.get_organization(organization_id)
+    organization = await interface.get_organization(organization_id)
     packages = organization["packages"]
-    results = search_for_results(base_url, packages)
+    results = await search_for_results(base_url, packages)
 
     return results
 
 
-def search_for_results(base_url, packages):
+async def search_for_results(base_url, packages):
     results = []
     for package in packages:
         query = f"id:{package['id']}"
-        results += ckan_package_search(base_url=base_url, query=query)
+        results += await ckan_package_search(base_url=base_url, query=query)
     return results
 
 
-def ckan_group_package_show(
+async def ckan_group_package_show(
     base_url: str, id: str, limit: Optional[int] = sys.maxsize
 ) -> list[dict[str, Any]]:
     """Returns a list of CKAN packages from a group.
@@ -130,13 +128,13 @@ def ckan_group_package_show(
     :return: List of dictionaries representing the packages associated with the group.
     """
     interface = CKANAPIInterface(base_url)
-    results = interface.get_group_package(group_package_id=id, limit=limit)
+    results = await interface.get_group_package(group_package_id=id, limit=limit)
     # Add the base_url to each package
     [package.update(base_url=base_url) for package in results]
     return results
 
 
-def ckan_collection_search(base_url: str, collection_id: str) -> list[Package]:
+async def ckan_collection_search(base_url: str, collection_id: str) -> list[Package]:
     """Returns a list of CKAN packages from a collection.
 
     :param base_url: Base URL of the CKAN portal before the collection ID. e.g. "https://catalog.data.gov/dataset/"
@@ -144,50 +142,36 @@ def ckan_collection_search(base_url: str, collection_id: str) -> list[Package]:
     :return: List of Package objects representing the packages associated with the collection.
     """
     url = f"{base_url}?collection_package_id={collection_id}"
-    soup = _get_soup(url)
+    soup = await _get_soup(url)
 
     # Calculate the total number of pages of packages
     num_results = int(soup.find(class_="new-results").text.split()[0].replace(",", ""))
     pages = math.ceil(num_results / 20)
 
-    packages = get_packages(base_url, collection_id, pages)
+    packages = await get_packages(base_url, collection_id, pages)
 
     return packages
 
 
-def get_packages(base_url, collection_id, pages):
+async def get_packages(base_url, collection_id, pages):
     packages = []
     for page in range(1, pages + 1):
         url = f"{base_url}?collection_package_id={collection_id}&page={page}"
-        soup = _get_soup(url)
+        soup = await _get_soup(url)
 
-        futures = get_futures(base_url, packages, soup)
+        packages = []
+        for dataset_content in soup.find_all(class_="dataset-content"):
+            await asyncio.sleep(1)
+            package = await _collection_search_get_package_data(dataset_content, base_url)
+            packages.append(package)
 
-        # Take a break to avoid being timed out
-        if len(futures) >= 15:
-            time.sleep(10)
     return packages
 
-
-def get_futures(base_url: str, packages: list[Package], soup: BeautifulSoup) -> list[Any]:
-    """Returns a list of futures for the collection search."""
-    with ThreadPoolExecutor(max_workers=10) as executor:
-        futures = [
-            executor.submit(
-                _collection_search_get_package_data, dataset_content, base_url
-            )
-            for dataset_content in soup.find_all(class_="dataset-content")
-        ]
-
-        [packages.append(package.result()) for package in as_completed(futures)]
-    return futures
-
-
-def _collection_search_get_package_data(dataset_content, base_url: str):
+async def _collection_search_get_package_data(dataset_content, base_url: str):
     """Parses the dataset content and returns a Package object."""
     package = Package()
     joined_url = urljoin(base_url, dataset_content.a.get("href"))
-    dataset_soup = _get_soup(joined_url)
+    dataset_soup = await _get_soup(joined_url)
     # Determine if the dataset url should be the linked page to an external site or the current site
     resources = get_resources(dataset_soup)
     button = get_button(resources)
@@ -214,7 +198,9 @@ def get_data(dataset_soup):
     return dataset_soup.find(property="dct:modified").text.strip()
 
 
-def get_button(resources):
+def get_button(resources: ResultSet) -> Optional[Tag]:
+    if len(resources) == 0:
+        return None
     return resources[0].find(class_="btn-group")
 
 
@@ -224,7 +210,12 @@ def get_resources(dataset_soup):
     )
 
 
-def set_url_and_data_portal_type(button, joined_url, package, resources):
+def set_url_and_data_portal_type(
+        button: Optional[Tag],
+        joined_url: str,
+        package: Package,
+        resources: ResultSet
+):
     if len(resources) == 1 and button is not None and button.a.text == "Visit page":
         package.url = button.a.get("href")
     else:
@@ -255,8 +246,9 @@ def set_description(dataset_soup, package):
     package.description = dataset_soup.find(class_="notes").p.text
 
 
-def _get_soup(url: str) -> BeautifulSoup:
+async def _get_soup(url: str) -> BeautifulSoup:
     """Returns a BeautifulSoup object for the given URL."""
-    time.sleep(1)
-    response = requests.get(url)
-    return BeautifulSoup(response.content, "lxml")
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url) as response:
+            response.raise_for_status()
+            return BeautifulSoup(await response.text(), "lxml")

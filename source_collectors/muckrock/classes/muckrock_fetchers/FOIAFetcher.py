@@ -30,12 +30,12 @@ class FOIAFetcher(MuckrockFetcher):
     def build_url(self, request: FOIAFetchRequest) -> str:
         return f"{FOIA_BASE_URL}?page={request.page}&page_size={request.page_size}&format=json"
 
-    def fetch_next_page(self) -> dict | None:
+    async def fetch_next_page(self) -> dict | None:
         """
         Fetches data from a specific page of the MuckRock FOIA API.
         """
         page = self.current_page
         self.current_page += 1
         request = FOIAFetchRequest(page=page, page_size=self.per_page)
-        return self.fetch(request)
+        return await self.fetch(request)
 

@@ -1,8 +1,9 @@
 from functools import wraps
-from typing import Optional, Type, Any
+from typing import Optional, Type, Any, List
 
 from fastapi import HTTPException
 from sqlalchemy import select, exists, func, case, desc, Select, not_, and_, or_, update, Delete, Insert, asc
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.orm import selectinload, joinedload, QueryableAttribute
 from sqlalchemy.sql.functions import coalesce
@@ -10,6 +11,9 @@ from starlette import status
 
 from collector_db.ConfigManager import ConfigManager
 from collector_db.DTOConverter import DTOConverter
+from collector_db.DTOs.BatchInfo import BatchInfo
+from collector_db.DTOs.DuplicateInfo import DuplicateInsertInfo
+from collector_db.DTOs.InsertURLsInfo import InsertURLsInfo
 from collector_db.DTOs.TaskInfo import TaskInfo
 from collector_db.DTOs.URLErrorInfos import URLErrorPydanticInfo
 from collector_db.DTOs.URLHTMLContentInfo import URLHTMLContentInfo, HTMLContentType
@@ -23,7 +27,7 @@ from collector_db.helper_functions import get_postgres_connection_string
 from collector_db.models import URL, URLErrorInfo, URLHTMLContent, Base, \
     RootURL, Task, TaskError, LinkTaskURL, Batch, Agency, AutomatedUrlAgencySuggestion, \
     UserUrlAgencySuggestion, AutoRelevantSuggestion, AutoRecordTypeSuggestion, UserRelevantSuggestion, \
-    UserRecordTypeSuggestion, ReviewingUserURL, URLOptionalDataSourceMetadata, ConfirmedURLAgency
+    UserRecordTypeSuggestion, ReviewingUserURL, URLOptionalDataSourceMetadata, ConfirmedURLAgency, Duplicate
 from collector_manager.enums import URLStatus, CollectorType
 from core.DTOs.FinalReviewApprovalInfo import FinalReviewApprovalInfo
 from core.DTOs.GetNextRecordTypeAnnotationResponseInfo import GetNextRecordTypeAnnotationResponseInfo
@@ -1337,3 +1341,118 @@ class AsyncDatabaseClient:
         )
 
         session.add(rejecting_user_url)
+
+    @session_manager
+    async def get_batch_by_id(self, session, batch_id: int) -> Optional[BatchInfo]:
+        """Retrieve a batch by ID."""
+        query = Select(Batch).where(Batch.id == batch_id)
+        result = await session.execute(query)
+        batch = result.scalars().first()
+        return BatchInfo(**batch.__dict__)
+
+    @session_manager
+    async def get_urls_by_batch(self, session, batch_id: int, page: int = 1) -> List[URLInfo]:
+        """Retrieve all URLs associated with a batch."""
+        query = Select(URL).where(URL.batch_id == batch_id).order_by(URL.id).limit(100).offset((page - 1) * 100)
+        result = await session.execute(query)
+        urls = result.scalars().all()
+        return ([URLInfo(**url.__dict__) for url in urls])
+
+    @session_manager
+    async def insert_url(self, session: AsyncSession, url_info: URLInfo) -> int:
+        """Insert a new URL into the database."""
+        url_entry = URL(
+            batch_id=url_info.batch_id,
+            url=url_info.url,
+            collector_metadata=url_info.collector_metadata,
+            outcome=url_info.outcome.value
+        )
+        session.add(url_entry)
+        await session.flush()
+        return url_entry.id
+
+    @session_manager
+    async def get_url_info_by_url(self, session: AsyncSession, url: str) -> Optional[URLInfo]:
+        query = Select(URL).where(URL.url == url)
+        raw_result = await session.execute(query)
+        url = raw_result.scalars().first()
+        return URLInfo(**url.__dict__)
+
+    @session_manager
+    async def insert_duplicates(self, session, duplicate_infos: list[DuplicateInsertInfo]):
+        for duplicate_info in duplicate_infos:
+            duplicate = Duplicate(
+                batch_id=duplicate_info.duplicate_batch_id,
+                original_url_id=duplicate_info.original_url_id,
+            )
+            session.add(duplicate)
+
+    @session_manager
+    async def insert_batch(self, session: AsyncSession, batch_info: BatchInfo) -> int:
+        """Insert a new batch into the database and return its ID."""
+        batch = Batch(
+            strategy=batch_info.strategy,
+            user_id=batch_info.user_id,
+            status=batch_info.status.value,
+            parameters=batch_info.parameters,
+            total_url_count=batch_info.total_url_count,
+            original_url_count=batch_info.original_url_count,
+            duplicate_url_count=batch_info.duplicate_url_count,
+            compute_time=batch_info.compute_time,
+            strategy_success_rate=batch_info.strategy_success_rate,
+            metadata_success_rate=batch_info.metadata_success_rate,
+            agency_match_rate=batch_info.agency_match_rate,
+            record_type_match_rate=batch_info.record_type_match_rate,
+            record_category_match_rate=batch_info.record_category_match_rate,
+        )
+        session.add(batch)
+        await session.flush()
+        return batch.id
+
+
+    async def insert_urls(self, url_infos: List[URLInfo], batch_id: int) -> InsertURLsInfo:
+        url_mappings = []
+        duplicates = []
+        for url_info in url_infos:
+            url_info.batch_id = batch_id
+            try:
+                url_id = await self.insert_url(url_info)
+                url_mappings.append(URLMapping(url_id=url_id, url=url_info.url))
+            except IntegrityError:
+                orig_url_info = await self.get_url_info_by_url(url_info.url)
+                duplicate_info = DuplicateInsertInfo(
+                    duplicate_batch_id=batch_id,
+                    original_url_id=orig_url_info.id
+                )
+                duplicates.append(duplicate_info)
+        await self.insert_duplicates(duplicates)
+
+        return InsertURLsInfo(
+            url_mappings=url_mappings,
+            total_count=len(url_infos),
+            original_count=len(url_mappings),
+            duplicate_count=len(duplicates),
+            url_ids=[url_mapping.url_id for url_mapping in url_mappings]
+        )
+
+    @session_manager
+    async def update_batch_post_collection(
+        self,
+        session,
+        batch_id: int,
+        total_url_count: int,
+        original_url_count: int,
+        duplicate_url_count: int,
+        batch_status: BatchStatus,
+        compute_time: float = None,
+    ):
+
+        query = Select(Batch).where(Batch.id == batch_id)
+        result = await session.execute(query)
+        batch = result.scalars().first()
+
+        batch.total_url_count = total_url_count
+        batch.original_url_count = original_url_count
+        batch.duplicate_url_count = duplicate_url_count
+        batch.status = batch_status.value
+        batch.compute_time = compute_time

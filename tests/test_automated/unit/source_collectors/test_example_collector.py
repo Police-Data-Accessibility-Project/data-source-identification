@@ -13,7 +13,7 @@ def test_example_collector():
             sleep_time=1
         ),
         logger=MagicMock(spec=CoreLogger),
-        db_client=MagicMock(spec=DatabaseClient),
+        adb_client=MagicMock(spec=DatabaseClient),
         raise_error=True
     )
     collector.run()

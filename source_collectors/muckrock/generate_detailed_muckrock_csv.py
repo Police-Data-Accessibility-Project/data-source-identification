@@ -67,22 +67,22 @@ class AgencyInfo(BaseModel):
         return list(self.model_dump().keys())
 
 
-def main():
+async def main():
     json_filename = get_json_filename()
     json_data = load_json_file(json_filename)
     output_csv = format_filename_json_to_csv(json_filename)
-    agency_infos = get_agency_infos(json_data)
+    agency_infos = await get_agency_infos(json_data)
     write_to_csv(agency_infos, output_csv)
 
 
-def get_agency_infos(json_data):
+async def get_agency_infos(json_data):
     a_fetcher = AgencyFetcher()
     j_fetcher = JurisdictionByIDFetcher()
     agency_infos = []
     # Iterate through the JSON data
     for item in json_data:
         print(f"Writing data for {item.get('title')}")
-        agency_data = a_fetcher.get_agency(agency_id=item.get("agency"))
+        agency_data = await a_fetcher.get_agency(agency_id=item.get("agency"))
         time.sleep(1)
         jurisdiction_data = j_fetcher.get_jurisdiction(
             jurisdiction_id=agency_data.get("jurisdiction")

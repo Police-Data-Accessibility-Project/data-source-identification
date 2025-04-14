@@ -11,5 +11,5 @@ class JurisdictionByIDFetcher(MuckrockFetcher):
     def build_url(self, request: JurisdictionByIDFetchRequest) -> str:
         return f"{BASE_MUCKROCK_URL}/jurisdiction/{request.jurisdiction_id}/"
 
-    def get_jurisdiction(self, jurisdiction_id: int) -> dict:
-        return self.fetch(request=JurisdictionByIDFetchRequest(jurisdiction_id=jurisdiction_id))
+    async def get_jurisdiction(self, jurisdiction_id: int) -> dict:
+        return await self.fetch(request=JurisdictionByIDFetchRequest(jurisdiction_id=jurisdiction_id))

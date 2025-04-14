@@ -1,172 +1,110 @@
-import logging
 from typing import Optional
 
+from pydantic import BaseModel
 
-from agency_identifier.MuckrockAPIInterface import MuckrockAPIInterface
 from collector_db.AsyncDatabaseClient import AsyncDatabaseClient
-from collector_db.DTOs.TaskInfo import TaskInfo
+from collector_db.DTOs.BatchInfo import BatchInfo
 from collector_db.enums import TaskType
+from collector_manager.AsyncCollectorManager import AsyncCollectorManager
+from collector_manager.enums import CollectorType
+from core.DTOs.CollectorStartInfo import CollectorStartInfo
 from core.DTOs.FinalReviewApprovalInfo import FinalReviewApprovalInfo
 from core.DTOs.GetNextRecordTypeAnnotationResponseInfo import GetNextRecordTypeAnnotationResponseOuterInfo
 from core.DTOs.GetNextRelevanceAnnotationResponseInfo import GetNextRelevanceAnnotationResponseOuterInfo
 from core.DTOs.GetNextURLForAgencyAnnotationResponse import GetNextURLForAgencyAnnotationResponse, \
     URLAgencyAnnotationPostInfo
 from core.DTOs.GetTasksResponse import GetTasksResponse
+from core.DTOs.GetURLsByBatchResponse import GetURLsByBatchResponse
 from core.DTOs.GetURLsResponseInfo import GetURLsResponseInfo
-from core.DTOs.TaskOperatorRunInfo import TaskOperatorRunInfo, TaskOperatorOutcome
-from core.classes.AgencyIdentificationTaskOperator import AgencyIdentificationTaskOperator
-from core.classes.TaskOperatorBase import TaskOperatorBase
-from core.classes.URLHTMLTaskOperator import URLHTMLTaskOperator
-from core.classes.URLMiscellaneousMetadataTaskOperator import URLMiscellaneousMetadataTaskOperator
-from core.classes.URLRecordTypeTaskOperator import URLRecordTypeTaskOperator
-from core.classes.URLRelevanceHuggingfaceTaskOperator import URLRelevanceHuggingfaceTaskOperator
+from core.DTOs.MessageResponse import MessageResponse
+from core.TaskManager import TaskManager
 from core.enums import BatchStatus, RecordType
-from html_tag_collector.ResponseParser import HTMLResponseParser
-from html_tag_collector.URLRequestInterface import URLRequestInterface
-from hugging_face.HuggingFaceInterface import HuggingFaceInterface
-from llm_api_logic.OpenAIRecordClassifier import OpenAIRecordClassifier
-from pdap_api_client.AccessManager import AccessManager
-from pdap_api_client.PDAPClient import PDAPClient
 from security_manager.SecurityManager import AccessInfo
-from util.DiscordNotifier import DiscordPoster
-from util.helper_functions import get_from_env
 
-TASK_REPEAT_THRESHOLD = 20
 
 class AsyncCore:
 
     def __init__(
             self,
             adb_client: AsyncDatabaseClient,
-            huggingface_interface: HuggingFaceInterface,
-            url_request_interface: URLRequestInterface,
-            html_parser: HTMLResponseParser,
-            discord_poster: DiscordPoster
+            collector_manager: AsyncCollectorManager,
+            task_manager: TaskManager
     ):
+        self.task_manager = task_manager
         self.adb_client = adb_client
-        self.huggingface_interface = huggingface_interface
-        self.url_request_interface = url_request_interface
-        self.html_parser = html_parser
-        self.logger = logging.getLogger(__name__)
-        self.logger.addHandler(logging.StreamHandler())
-        self.logger.setLevel(logging.INFO)
-        self.discord_poster = discord_poster
+
+        self.collector_manager = collector_manager
 
 
     async def get_urls(self, page: int, errors: bool) -> GetURLsResponseInfo:
         return await self.adb_client.get_urls(page=page, errors=errors)
 
+    async def shutdown(self):
+        await self.collector_manager.shutdown_all_collectors()
 
-    #region Task Operators
-    async def get_url_html_task_operator(self):
-        self.logger.info("Running URL HTML Task")
-        operator = URLHTMLTaskOperator(
-            adb_client=self.adb_client,
-            url_request_interface=self.url_request_interface,
-            html_parser=self.html_parser
-        )
-        return operator
+    #region Batch
+    async def get_batch_info(self, batch_id: int) -> BatchInfo:
+        return await self.adb_client.get_batch_by_id(batch_id)
 
-    async def get_url_relevance_huggingface_task_operator(self):
-        self.logger.info("Running URL Relevance Huggingface Task")
-        operator = URLRelevanceHuggingfaceTaskOperator(
-            adb_client=self.adb_client,
-            huggingface_interface=self.huggingface_interface
-        )
-        return operator
+    async def get_urls_by_batch(self, batch_id: int, page: int = 1) -> GetURLsByBatchResponse:
+        url_infos = await self.adb_client.get_urls_by_batch(batch_id, page)
+        return GetURLsByBatchResponse(urls=url_infos)
 
-    async def get_url_record_type_task_operator(self):
-        operator = URLRecordTypeTaskOperator(
-            adb_client=self.adb_client,
-            classifier=OpenAIRecordClassifier()
-        )
-        return operator
-
-    async def get_agency_identification_task_operator(self):
-        pdap_client = PDAPClient(
-            access_manager=AccessManager(
-                email=get_from_env("PDAP_EMAIL"),
-                password=get_from_env("PDAP_PASSWORD"),
-                api_key=get_from_env("PDAP_API_KEY"),
-            ),
-        )
-        muckrock_api_interface = MuckrockAPIInterface()
-        operator = AgencyIdentificationTaskOperator(
-            adb_client=self.adb_client,
-            pdap_client=pdap_client,
-            muckrock_api_interface=muckrock_api_interface
-        )
-        return operator
-
-    async def get_url_miscellaneous_metadata_task_operator(self):
-        operator = URLMiscellaneousMetadataTaskOperator(
-            adb_client=self.adb_client
-        )
-        return operator
-
-    async def get_task_operators(self) -> list[TaskOperatorBase]:
-        return [
-            await self.get_url_html_task_operator(),
-            await self.get_url_relevance_huggingface_task_operator(),
-            await self.get_url_record_type_task_operator(),
-            await self.get_agency_identification_task_operator(),
-            await self.get_url_miscellaneous_metadata_task_operator()
-        ]
+    async def abort_batch(self, batch_id: int) -> MessageResponse:
+        await self.collector_manager.abort_collector_async(cid=batch_id)
+        return MessageResponse(message=f"Batch aborted.")
 
     #endregion
 
-    #region Tasks
+    # region Collector
+    async def initiate_collector(
+            self,
+            collector_type: CollectorType,
+            user_id: int,
+        dto: Optional[BaseModel] = None,
+    ):
+        """
+        Reserves a batch ID from the database
+        and starts the requisite collector
+        """
+
+        batch_info = BatchInfo(
+            strategy=collector_type.value,
+            status=BatchStatus.IN_PROCESS,
+            parameters=dto.model_dump(),
+            user_id=user_id
+        )
+
+        batch_id = await self.adb_client.insert_batch(batch_info)
+        await self.collector_manager.start_async_collector(
+            collector_type=collector_type,
+            batch_id=batch_id,
+            dto=dto
+        )
+        return CollectorStartInfo(
+            batch_id=batch_id,
+            message=f"Started {collector_type.value} collector."
+        )
+
+    # endregion
+
     async def run_tasks(self):
-        operators = await self.get_task_operators()
-        count = 0
-        for operator in operators:
+        await self.task_manager.trigger_task_run()
 
-            meets_prereq = await operator.meets_task_prerequisites()
-            while meets_prereq:
-                if count > TASK_REPEAT_THRESHOLD:
-                    self.discord_poster.post_to_discord(
-                        message=f"Task {operator.task_type.value} has been run"
-                                f" more than {TASK_REPEAT_THRESHOLD} times in a row. "
-                                f"Task loop terminated.")
-                    break
-                task_id = await self.initiate_task_in_db(task_type=operator.task_type)
-                run_info: TaskOperatorRunInfo = await operator.run_task(task_id)
-                await self.conclude_task(run_info)
-                count += 1
-                meets_prereq = await operator.meets_task_prerequisites()
+    async def get_tasks(
+            self,
+            page: int,
+            task_type: TaskType,
+            task_status: BatchStatus
+    ) -> GetTasksResponse:
+        return await self.task_manager.get_tasks(
+            page=page,
+            task_type=task_type,
+            task_status=task_status
+        )
 
-
-    async def conclude_task(self, run_info):
-        await self.adb_client.link_urls_to_task(task_id=run_info.task_id, url_ids=run_info.linked_url_ids)
-        await self.handle_outcome(run_info)
-
-    async def initiate_task_in_db(self, task_type: TaskType) -> int:
-        self.logger.info(f"Initiating {task_type.value} Task")
-        task_id = await self.adb_client.initiate_task(task_type=task_type)
-        return task_id
-
-    async def handle_outcome(self, run_info: TaskOperatorRunInfo):
-        match run_info.outcome:
-            case TaskOperatorOutcome.ERROR:
-                await self.handle_task_error(run_info)
-            case TaskOperatorOutcome.SUCCESS:
-                await self.adb_client.update_task_status(
-                    task_id=run_info.task_id,
-                    status=BatchStatus.COMPLETE
-                )
-
-    async def handle_task_error(self, run_info: TaskOperatorRunInfo):
-        await self.adb_client.update_task_status(task_id=run_info.task_id, status=BatchStatus.ERROR)
-        await self.adb_client.add_task_error(task_id=run_info.task_id, error=run_info.message)
-
-    async def get_task_info(self, task_id: int) -> TaskInfo:
-        return await self.adb_client.get_task_info(task_id=task_id)
-
-    async def get_tasks(self, page: int, task_type: TaskType, task_status: BatchStatus) -> GetTasksResponse:
-        return await self.adb_client.get_tasks(page=page, task_type=task_type, task_status=task_status)
-
-
-    #endregion
+    async def get_task_info(self, task_id):
+        return await self.task_manager.get_task_info(task_id)
 
     #region Annotations and Review
 
@@ -279,4 +217,6 @@ class AsyncCore:
             url_id=url_id,
             user_id=access_info.user_id
         )
+
+
 
