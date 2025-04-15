@@ -1,6 +1,6 @@
 from typing import Optional
 
-from core.DTOs.task_data_objects.SubmitApprovedURLTDO import SubmitApprovedURLTDO
+from core.DTOs.task_data_objects.SubmitApprovedURLTDO import SubmitApprovedURLTDO, SubmittedURLInfo
 from pdap_api_client.AccessManager import build_url, AccessManager
 from pdap_api_client.DTOs import MatchAgencyInfo, UniqueURLDuplicateInfo, UniqueURLResponseInfo, Namespaces, \
     RequestType, RequestInfo, MatchAgencyResponse
@@ -85,30 +85,59 @@ class PDAPClient:
             duplicates=duplicates
         )
 
-    async def submit_url(
+    async def submit_urls(
             self,
-            tdo: SubmitApprovedURLTDO
-    ) -> int:
-        url = build_url(
-            namespace=Namespaces.DATA_SOURCES,
+            tdos: list[SubmitApprovedURLTDO]
+    ) -> list[SubmittedURLInfo]:
+        """
+        Submits URLs to Data Sources App,
+        modifying tdos in-place with data source id or error
+        """
+        request_url = build_url(
+            namespace=Namespaces.SOURCE_COLLECTOR,
+            subdomains=["data-sources"]
         )
+
+        # Build url-id dictionary
+        url_id_dict = {}
+        for tdo in tdos:
+            url_id_dict[tdo.url] = tdo.url_id
+
+        data_sources_json = []
+        for tdo in tdos:
+            data_sources_json.append({
+                "name": tdo.name,
+                "description": tdo.description,
+                "source_url": tdo.url,
+                "record_type": tdo.record_type.value,
+                "record_formats": tdo.record_formats,
+                "data_portal_type": tdo.data_portal_type,
+                "last_approval_editor": tdo.approving_user_id,
+                "supplying_entity": tdo.supplying_entity,
+                "agency_ids": tdo.agency_ids
+            })
+
+
         headers = await self.access_manager.jwt_header()
         request_info = RequestInfo(
             type_=RequestType.POST,
-            url=url,
+            url=request_url,
             headers=headers,
             json={
-                "entry_data": {
-                    "name": tdo.name,
-                    "description": tdo.description,
-                    "source_url": tdo.url,
-                    "record_type_name": tdo.record_type.value,
-                    "record_formats": tdo.record_formats,
-                    "data_portal_type": tdo.data_portal_type,
-                    "supplying_entity": tdo.supplying_entity
-                },
-                "linked_agency_ids": tdo.agency_ids
+                "data_sources": data_sources_json
             }
         )
         response_info = await self.access_manager.make_request(request_info)
-        return response_info.data["id"]
+        data_sources_response_json = response_info.data["data_sources"]
+
+        results = []
+        for data_source in data_sources_response_json:
+            url = data_source["url"]
+            response_object = SubmittedURLInfo(
+                url_id=url_id_dict[url],
+                data_source_id=data_source["data_source_id"],
+                request_error=data_source["error"]
+            )
+            results.append(response_object)
+
+        return results

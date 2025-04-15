@@ -1,5 +1,4 @@
 import time
-from unittest.mock import AsyncMock
 
 from collector_db.DTOs.BatchInfo import BatchInfo
 from collector_manager.DTOs.ExampleInputDTO import ExampleInputDTO
@@ -30,7 +29,7 @@ def test_duplicates(api_test_helper):
 
     assert batch_id_2 is not None
 
-    time.sleep(2)
+    time.sleep(1.5)
 
     bi_1: BatchInfo = ath.request_validator.get_batch_info(batch_id_1)
     bi_2: BatchInfo = ath.request_validator.get_batch_info(batch_id_2)

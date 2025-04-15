@@ -1,9 +1,6 @@
-import asyncio
-import logging
-import os
 from dataclasses import dataclass
 from typing import Generator
-from unittest.mock import MagicMock, AsyncMock
+from unittest.mock import MagicMock, AsyncMock, patch
 
 import pytest
 import pytest_asyncio
@@ -11,7 +8,6 @@ from starlette.testclient import TestClient
 
 from api.main import app
 from core.AsyncCore import AsyncCore
-from core.AsyncCoreLogger import AsyncCoreLogger
 from core.SourceCollectorCore import SourceCollectorCore
 from security_manager.SecurityManager import get_access_info, AccessInfo, Permissions
 from tests.helpers.DBDataCreator import DBDataCreator
@@ -48,9 +44,7 @@ def override_access_info() -> AccessInfo:
 
 @pytest.fixture(scope="session")
 def client() -> Generator[TestClient, None, None]:
-    # Mock envioronment
-    _original_env = dict(os.environ)
-    os.environ["DISCORD_WEBHOOK_URL"] = "https://discord.com"
+    # Mock environment
     with TestClient(app) as c:
         app.dependency_overrides[get_access_info] = override_access_info
         async_core: AsyncCore = c.app.state.async_core
@@ -67,8 +61,6 @@ def client() -> Generator[TestClient, None, None]:
         yield c
 
     # Reset environment variables back to original state
-    os.environ.clear()
-    os.environ.update(_original_env)
 
 
 @pytest_asyncio.fixture

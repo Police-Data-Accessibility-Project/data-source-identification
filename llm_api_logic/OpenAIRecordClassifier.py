@@ -1,17 +1,16 @@
-from typing import Any
 
 from openai.types.chat import ParsedChatCompletion
 
+from core.EnvVarManager import EnvVarManager
 from llm_api_logic.LLMRecordClassifierBase import RecordClassifierBase
 from llm_api_logic.RecordTypeStructuredOutput import RecordTypeStructuredOutput
-from util.helper_functions import get_from_env
 
 
 class OpenAIRecordClassifier(RecordClassifierBase):
 
     @property
     def api_key(self):
-        return get_from_env("OPENAI_API_KEY")
+        return EnvVarManager.get().openai_api_key
 
     @property
     def model_name(self):

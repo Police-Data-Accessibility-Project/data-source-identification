@@ -23,13 +23,17 @@ from tests.helpers.simple_test_data_functions import generate_test_urls
 class BatchURLCreationInfo(BaseModel):
     batch_id: int
     url_ids: list[int]
+    urls: list[str]
 
 class DBDataCreator:
     """
     Assists in the creation of test data
     """
-    def __init__(self, db_client: DatabaseClient = DatabaseClient()):
-        self.db_client = db_client
+    def __init__(self, db_client: Optional[DatabaseClient] = None):
+        if db_client is not None:
+            self.db_client = db_client
+        else:
+            self.db_client = DatabaseClient()
         self.adb_client: AsyncDatabaseClient = AsyncDatabaseClient()
 
     def batch(self, strategy: CollectorType = CollectorType.EXAMPLE) -> int:
@@ -63,7 +67,8 @@ class DBDataCreator:
 
         return BatchURLCreationInfo(
             batch_id=batch_id,
-            url_ids=url_ids
+            url_ids=url_ids,
+            urls=[iui.url for iui in iuis.url_mappings]
         )
 
     async def agency(self) -> int:
@@ -189,6 +194,7 @@ class DBDataCreator:
                 URLInfo(
                     url=url,
                     outcome=outcome,
+                    name="Test Name" if outcome == URLStatus.VALIDATED else None,
                     collector_metadata=collector_metadata
                 )
             )

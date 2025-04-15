@@ -1,5 +1,4 @@
 import pytest
-from alembic import command
 from alembic.config import Config
 from sqlalchemy import create_engine, inspect, MetaData
 from sqlalchemy.orm import scoped_session, sessionmaker
@@ -8,12 +7,42 @@ from collector_db.AsyncDatabaseClient import AsyncDatabaseClient
 from collector_db.DatabaseClient import DatabaseClient
 from collector_db.helper_functions import get_postgres_connection_string
 from collector_db.models import Base
+from core.EnvVarManager import EnvVarManager
 from tests.helpers.AlembicRunner import AlembicRunner
 from tests.helpers.DBDataCreator import DBDataCreator
+from util.helper_functions import load_from_environment
 
 
 @pytest.fixture(autouse=True, scope="session")
 def setup_and_teardown():
+    # Set up environment variables that must be defined
+    # outside of tests
+    required_env_vars: dict = load_from_environment(
+            keys=[
+                "POSTGRES_USER",
+                "POSTGRES_PASSWORD",
+                "POSTGRES_HOST",
+                "POSTGRES_PORT",
+                "POSTGRES_DB",
+            ]
+        )
+    # Add test environment variables
+    test_env_vars = [
+        "GOOGLE_API_KEY",
+        "GOOGLE_CSE_ID",
+        "PDAP_EMAIL",
+        "PDAP_PASSWORD",
+        "PDAP_API_KEY",
+        "PDAP_API_URL",
+        "DISCORD_WEBHOOK_URL",
+        "OPENAI_API_KEY",
+    ]
+    all_env_vars = required_env_vars.copy()
+    for env_var in test_env_vars:
+        all_env_vars[env_var] = "TEST"
+
+    EnvVarManager.override(all_env_vars)
+
     conn = get_postgres_connection_string()
     engine = create_engine(conn)
     alembic_cfg = Config("alembic.ini")

@@ -19,7 +19,7 @@ import uvicorn
 import docker
 from docker.errors import APIError, NotFound
 from docker.models.containers import Container
-from pydantic import BaseModel, model_validator, AfterValidator
+from pydantic import BaseModel, AfterValidator
 
 from apply_migrations import apply_migrations
 from util.helper_functions import get_from_env
@@ -193,7 +193,7 @@ class DockerManager:
     def run_container(
             self,
             docker_info: DockerInfo,
-    ):
+    ) -> Container:
         print(f"Running container {docker_info.name}")
         try:
             container = self.client.containers.get(docker_info.name)
@@ -255,24 +255,11 @@ class TimestampChecker:
         with open("local_state/last_run.txt", "w") as f:
             f.write(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
 
-
-
-def main():
-    docker_manager = DockerManager()
-    # Ensure docker is running, and start if not
-    if not is_docker_running():
-        start_docker_engine()
-
-
-    # Ensure Dockerfile for database is running, and if not, start it
-    database_docker_info = DockerInfo(
+def get_database_docker_info() -> DockerInfo:
+    return DockerInfo(
         dockerfile_info=DockerfileInfo(
             image_tag="postgres:15",
         ),
-        # volume_info=VolumeInfo(
-        #     host_path="dbscripts",
-        #     container_path="/var/lib/postgresql/data"
-        # ),
         name="data_source_identification_db",
         ports={
             "5432/tcp": 5432
@@ -290,12 +277,9 @@ def main():
             start_period=2
         )
     )
-    container = docker_manager.run_container(database_docker_info)
-    wait_for_pg_to_be_ready(container)
 
-
-    # Start dockerfile for Datadumper
-    data_dumper_docker_info = DockerInfo(
+def get_data_dumper_docker_info() -> DockerInfo:
+    return DockerInfo(
         dockerfile_info=DockerfileInfo(
             image_tag="datadumper",
             dockerfile_directory="local_database/DataDumper"
@@ -320,6 +304,21 @@ def main():
         command="bash"
     )
 
+def main():
+    docker_manager = DockerManager()
+    # Ensure docker is running, and start if not
+    if not is_docker_running():
+        start_docker_engine()
+
+    # Ensure Dockerfile for database is running, and if not, start it
+    database_docker_info = get_database_docker_info()
+    container = docker_manager.run_container(database_docker_info)
+    wait_for_pg_to_be_ready(container)
+
+
+    # Start dockerfile for Datadumper
+    data_dumper_docker_info = get_data_dumper_docker_info()
+
     # If not last run within 24 hours, run dump operation in Datadumper
     # Check cache if exists and
     checker = TimestampChecker()
@@ -343,11 +342,20 @@ def main():
     apply_migrations()
 
     # Run `fastapi dev main.py`
-    uvicorn.run(
-        "api.main:app",
-        host="0.0.0.0",
-        port=8000
-    )
+    try:
+        uvicorn.run(
+            "api.main:app",
+            host="0.0.0.0",
+            port=8000
+        )
+    finally:
+        # Add feature to stop all running containers
+        print("Stopping containers...")
+        for container in docker_manager.client.containers.list():
+            container.stop()
+
+        print("Containers stopped.")
+
 
 
 

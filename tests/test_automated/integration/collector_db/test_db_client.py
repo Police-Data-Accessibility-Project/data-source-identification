@@ -60,11 +60,12 @@ async def test_insert_urls(
     assert insert_urls_info.original_count == 2
     assert insert_urls_info.duplicate_count == 1
 
-
-def test_insert_logs(db_data_creator: DBDataCreator):
+@pytest.mark.asyncio
+async def test_insert_logs(db_data_creator: DBDataCreator):
     batch_id_1 = db_data_creator.batch()
     batch_id_2 = db_data_creator.batch()
 
+    adb_client = db_data_creator.adb_client
     db_client = db_data_creator.db_client
     db_client.insert_logs(
         log_infos=[
@@ -74,26 +75,28 @@ def test_insert_logs(db_data_creator: DBDataCreator):
         ]
     )
 
-    logs = db_client.get_logs_by_batch_id(batch_id_1)
+    logs = await adb_client.get_logs_by_batch_id(batch_id_1)
     assert len(logs) == 2
 
-    logs = db_client.get_logs_by_batch_id(batch_id_2)
+    logs = await adb_client.get_logs_by_batch_id(batch_id_2)
     assert len(logs) == 1
 
-def test_delete_old_logs(db_data_creator: DBDataCreator):
+@pytest.mark.asyncio
+async def test_delete_old_logs(db_data_creator: DBDataCreator):
     batch_id = db_data_creator.batch()
 
     old_datetime = datetime.now() - timedelta(days=1)
     db_client = db_data_creator.db_client
+    adb_client = db_data_creator.adb_client
     log_infos = []
     for i in range(3):
         log_infos.append(LogInfo(log="test log", batch_id=batch_id, created_at=old_datetime))
     db_client.insert_logs(log_infos=log_infos)
-    logs = db_client.get_logs_by_batch_id(batch_id=batch_id)
+    logs = await adb_client.get_logs_by_batch_id(batch_id=batch_id)
     assert len(logs) == 3
     db_client.delete_old_logs()
 
-    logs = db_client.get_logs_by_batch_id(batch_id=batch_id)
+    logs = await adb_client.get_logs_by_batch_id(batch_id=batch_id)
     assert len(logs) == 0
 
 def test_delete_url_updated_at(db_data_creator: DBDataCreator):

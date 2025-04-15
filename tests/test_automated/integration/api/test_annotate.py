@@ -1,15 +1,12 @@
-from typing import Any
 
 import pytest
 
 from collector_db.DTOs.InsertURLsInfo import InsertURLsInfo
 from collector_db.DTOs.URLMapping import URLMapping
-from collector_db.enums import URLMetadataAttributeType, ValidationStatus, ValidationSource
 from collector_db.models import UserUrlAgencySuggestion, UserRelevantSuggestion, UserRecordTypeSuggestion
 from core.DTOs.GetNextRecordTypeAnnotationResponseInfo import GetNextRecordTypeAnnotationResponseOuterInfo
 from core.DTOs.GetNextRelevanceAnnotationResponseInfo import GetNextRelevanceAnnotationResponseOuterInfo
 from core.DTOs.GetNextURLForAgencyAnnotationResponse import URLAgencyAnnotationPostInfo
-from core.DTOs.GetNextURLForAnnotationResponse import GetNextURLForAnnotationResponse
 from core.DTOs.RecordTypeAnnotationPostInfo import RecordTypeAnnotationPostInfo
 from core.DTOs.RelevanceAnnotationPostInfo import RelevanceAnnotationPostInfo
 from core.enums import RecordType, SuggestionType
