@@ -22,5 +22,6 @@ Please ensure these are properly defined in a `.env` file in the root directory.
 |`PDAP_PASSWORD`| A password for accessing the PDAP API.[^1]                                                                                                                                                                                                                        | `abc123`               |
 |`PDAP_API_KEY`| An API key for accessing the PDAP API.                                                                                                                                                                                                                            | `abc123`               |
 |`PDAP_API_URL`| The URL for the PDAP API| `https://data-sources-v2.pdap.dev/api`|
+|`DISCORD_WEBHOOK_URL`| The URL for the Discord webhook used for notifications| `abc123`               |
 
 [^1:] The user account in question will require elevated permissions to access certain endpoints. At a minimum, the user will require the `source_collector` and `db_write` permissions.

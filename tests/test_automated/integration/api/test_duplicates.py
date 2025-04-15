@@ -1,11 +1,16 @@
 import time
+from unittest.mock import AsyncMock
 
 from collector_db.DTOs.BatchInfo import BatchInfo
 from collector_manager.DTOs.ExampleInputDTO import ExampleInputDTO
+from tests.test_automated.integration.api.conftest import disable_task_trigger
 
 
 def test_duplicates(api_test_helper):
     ath = api_test_helper
+
+    # Temporarily disable task trigger
+    disable_task_trigger(ath)
 
     dto = ExampleInputDTO(
             sleep_time=1

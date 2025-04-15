@@ -18,12 +18,16 @@ SECRET_KEY = "test_secret_key"
 VALID_TOKEN = "valid_token"
 INVALID_TOKEN = "invalid_token"
 FAKE_PAYLOAD = {
-    "sub": 1,
+    "sub": "1",
     "permissions": [Permissions.SOURCE_COLLECTOR.value]
 }
 
-def test_api_with_valid_token(mock_get_secret_key):
+def test_api_with_valid_token(
+        mock_get_secret_key,
+        monkeypatch
+):
 
+    monkeypatch.setenv("DISCORD_WEBHOOK_URL", "https://discord.com")
     token = jwt.encode(FAKE_PAYLOAD, SECRET_KEY, algorithm=ALGORITHM)
 
     # Create Test Client

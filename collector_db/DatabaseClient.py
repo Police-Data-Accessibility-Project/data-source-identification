@@ -19,9 +19,6 @@ from collector_manager.enums import CollectorType
 from core.enums import BatchStatus
 
 
-# SQLAlchemy ORM models
-
-
 # Database Client
 class DatabaseClient:
     def __init__(self, db_url: str = get_postgres_connection_string()):
@@ -80,28 +77,51 @@ class DatabaseClient:
         return batch.id
 
     @session_manager
-    def update_batch_post_collection(
-        self,
-        session,
-        batch_id: int,
-        total_url_count: int,
-        original_url_count: int,
-        duplicate_url_count: int,
-        batch_status: BatchStatus,
-        compute_time: float = None,
-    ):
-        batch = session.query(Batch).filter_by(id=batch_id).first()
-        batch.total_url_count = total_url_count
-        batch.original_url_count = original_url_count
-        batch.duplicate_url_count = duplicate_url_count
-        batch.status = batch_status.value
-        batch.compute_time = compute_time
-
-    @session_manager
     def get_batch_by_id(self, session, batch_id: int) -> Optional[BatchInfo]:
         """Retrieve a batch by ID."""
         batch = session.query(Batch).filter_by(id=batch_id).first()
         return BatchInfo(**batch.__dict__)
+
+
+    @session_manager
+    def insert_duplicates(self, session, duplicate_infos: list[DuplicateInsertInfo]):
+        for duplicate_info in duplicate_infos:
+            duplicate = Duplicate(
+                batch_id=duplicate_info.duplicate_batch_id,
+                original_url_id=duplicate_info.original_url_id,
+            )
+            session.add(duplicate)
+
+
+    @session_manager
+    def get_url_info_by_url(self, session, url: str) -> Optional[URLInfo]:
+        url = session.query(URL).filter_by(url=url).first()
+        return URLInfo(**url.__dict__)
+
+    @session_manager
+    def insert_url(self, session, url_info: URLInfo) -> int:
+        """Insert a new URL into the database."""
+        url_entry = URL(
+            batch_id=url_info.batch_id,
+            url=url_info.url,
+            collector_metadata=url_info.collector_metadata,
+            outcome=url_info.outcome.value
+        )
+        session.add(url_entry)
+        session.commit()
+        session.refresh(url_entry)
+        return url_entry.id
+
+    @session_manager
+    def add_duplicate_info(self, session, duplicate_infos: list[DuplicateInfo]):
+        # TODO: Add test for this method when testing CollectorDatabaseProcessor
+        for duplicate_info in duplicate_infos:
+            duplicate = Duplicate(
+                batch_id=duplicate_info.original_batch_id,
+                original_url_id=duplicate_info.original_url_id,
+            )
+            session.add(duplicate)
+
 
     def insert_urls(self, url_infos: List[URLInfo], batch_id: int) -> InsertURLsInfo:
         url_mappings = []
@@ -129,47 +149,11 @@ class DatabaseClient:
         )
 
     @session_manager
-    def insert_duplicates(self, session, duplicate_infos: list[DuplicateInsertInfo]):
-        for duplicate_info in duplicate_infos:
-            duplicate = Duplicate(
-                batch_id=duplicate_info.duplicate_batch_id,
-                original_url_id=duplicate_info.original_url_id,
-            )
-            session.add(duplicate)
-
-
-
-    @session_manager
-    def get_url_info_by_url(self, session, url: str) -> Optional[URLInfo]:
-        url = session.query(URL).filter_by(url=url).first()
-        return URLInfo(**url.__dict__)
-
-    @session_manager
-    def insert_url(self, session, url_info: URLInfo) -> int:
-        """Insert a new URL into the database."""
-        url_entry = URL(
-            batch_id=url_info.batch_id,
-            url=url_info.url,
-            collector_metadata=url_info.collector_metadata,
-            outcome=url_info.outcome.value
-        )
-        session.add(url_entry)
-        session.commit()
-        session.refresh(url_entry)
-        return url_entry.id
-
-
-    @session_manager
     def get_urls_by_batch(self, session, batch_id: int, page: int = 1) -> List[URLInfo]:
         """Retrieve all URLs associated with a batch."""
         urls = (session.query(URL).filter_by(batch_id=batch_id)
                 .order_by(URL.id).limit(100).offset((page - 1) * 100).all())
         return ([URLInfo(**url.__dict__) for url in urls])
-
-    @session_manager
-    def is_duplicate_url(self, session, url: str) -> bool:
-        result = session.query(URL).filter_by(url=url).first()
-        return result is not None
 
     @session_manager
     def insert_logs(self, session, log_infos: List[LogInfo]):
@@ -188,16 +172,6 @@ class DatabaseClient:
     def get_all_logs(self, session) -> List[LogInfo]:
         logs = session.query(Log).all()
         return ([LogInfo(**log.__dict__) for log in logs])
-
-    @session_manager
-    def add_duplicate_info(self, session, duplicate_infos: list[DuplicateInfo]):
-        # TODO: Add test for this method when testing CollectorDatabaseProcessor
-        for duplicate_info in duplicate_infos:
-            duplicate = Duplicate(
-                batch_id=duplicate_info.original_batch_id,
-                original_url_id=duplicate_info.original_url_id,
-            )
-            session.add(duplicate)
 
     @session_manager
     def get_batch_status(self, session, batch_id: int) -> BatchStatus:

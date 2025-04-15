@@ -3,10 +3,11 @@ from typing import Any
 from sqlalchemy import Select, select, exists, Table, func, Subquery, and_
 from sqlalchemy.orm import aliased
 
-from collector_db.enums import URLMetadataAttributeType, ValidationStatus
+from collector_db.enums import URLMetadataAttributeType, ValidationStatus, TaskType
 from collector_db.models import URL, URLHTMLContent, AutomatedUrlAgencySuggestion, URLOptionalDataSourceMetadata, Batch, \
-    ConfirmedURLAgency
+    ConfirmedURLAgency, LinkTaskURL, Task
 from collector_manager.enums import URLStatus, CollectorType
+from core.enums import BatchStatus
 
 
 class StatementComposer:
@@ -16,11 +17,23 @@ class StatementComposer:
 
     @staticmethod
     def pending_urls_without_html_data() -> Select:
-        return (select(URL).
-                     outerjoin(URLHTMLContent).
-                     where(URLHTMLContent.id == None).
-                     where(URL.outcome == URLStatus.PENDING.value))
+        exclude_subquery = (select(1).
+                     select_from(LinkTaskURL).
+                     join(Task, LinkTaskURL.task_id == Task.id).
+                     where(LinkTaskURL.url_id == URL.id).
+                     where(Task.task_type == TaskType.HTML.value).
+                     where(Task.task_status == BatchStatus.COMPLETE.value)
+                     )
+        query = (
+            select(URL).
+            outerjoin(URLHTMLContent).
+            where(URLHTMLContent.id == None).
+            where(~exists(exclude_subquery)).
+            where(URL.outcome == URLStatus.PENDING.value)
+        )
 
+
+        return query
 
 
     @staticmethod

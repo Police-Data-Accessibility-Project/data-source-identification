@@ -11,5 +11,5 @@ class AgencyFetcher(MuckrockFetcher):
     def build_url(self, request: AgencyFetchRequest) -> str:
         return f"{BASE_MUCKROCK_URL}/agency/{request.agency_id}/"
 
-    def get_agency(self, agency_id: int):
-        return self.fetch(AgencyFetchRequest(agency_id=agency_id))
+    async def get_agency(self, agency_id: int):
+        return await self.fetch(AgencyFetchRequest(agency_id=agency_id))

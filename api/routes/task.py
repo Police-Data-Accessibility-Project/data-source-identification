@@ -3,6 +3,7 @@ from typing import Optional
 from fastapi import APIRouter, Depends, Query, Path
 
 from api.dependencies import get_async_core
+from collector_db.DTOs.GetTaskStatusResponseInfo import GetTaskStatusResponseInfo
 from collector_db.DTOs.TaskInfo import TaskInfo
 from collector_db.enums import TaskType
 from core.AsyncCore import AsyncCore
@@ -39,6 +40,12 @@ async def get_tasks(
         task_status=task_status
     )
 
+@task_router.get("/status")
+async def get_task_status(
+        async_core: AsyncCore = Depends(get_async_core),
+        access_info: AccessInfo = Depends(get_access_info)
+) -> GetTaskStatusResponseInfo:
+    return await async_core.get_current_task_status()
 
 @task_router.get("/{task_id}")
 async def get_task_info(
@@ -47,3 +54,5 @@ async def get_task_info(
         access_info: AccessInfo = Depends(get_access_info)
 ) -> TaskInfo:
     return await async_core.get_task_info(task_id)
+
+

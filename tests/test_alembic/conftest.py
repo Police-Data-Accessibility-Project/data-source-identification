@@ -4,7 +4,7 @@ from sqlalchemy import create_engine, inspect, MetaData
 from sqlalchemy.orm import scoped_session, sessionmaker
 
 from collector_db.helper_functions import get_postgres_connection_string
-from tests.test_alembic.AlembicRunner import AlembicRunner
+from tests.helpers.AlembicRunner import AlembicRunner
 
 
 @pytest.fixture()

@@ -1,3 +1,4 @@
+import asyncio
 import time
 
 from collector_db.DTOs.BatchInfo import BatchInfo
@@ -18,8 +19,6 @@ def test_abort_batch(api_test_helper):
     response = ath.request_validator.abort_batch(batch_id=batch_id)
 
     assert response.message == "Batch aborted."
-
-    time.sleep(3)
 
     bi: BatchInfo = ath.request_validator.get_batch_info(batch_id=batch_id)
 

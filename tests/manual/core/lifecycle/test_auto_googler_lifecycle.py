@@ -10,6 +10,7 @@ from test_automated.integration.core.helpers.common_test_procedures import run_c
 
 
 def test_auto_googler_collector_lifecycle(test_core):
+    # TODO: Rework for Async
     ci = test_core
     db_client = api.dependencies.db_client
 
