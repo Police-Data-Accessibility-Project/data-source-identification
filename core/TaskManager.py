@@ -111,8 +111,8 @@ class TaskManager:
 
     async def run_tasks(self):
         operators = await self.get_task_operators()
-        count = 0
         for operator in operators:
+            count = 0
             await self.set_task_status(task_type=operator.task_type)
 
             meets_prereq = await operator.meets_task_prerequisites()
