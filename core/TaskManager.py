@@ -111,8 +111,8 @@ class TaskManager:
 
     async def run_tasks(self):
         operators = await self.get_task_operators()
-        count = 0
         for operator in operators:
+            count = 0
             await self.set_task_status(task_type=operator.task_type)
 
             meets_prereq = await operator.meets_task_prerequisites()
@@ -127,6 +127,8 @@ class TaskManager:
                 task_id = await self.initiate_task_in_db(task_type=operator.task_type)
                 run_info: TaskOperatorRunInfo = await operator.run_task(task_id)
                 await self.conclude_task(run_info)
+                if run_info.outcome == TaskOperatorOutcome.ERROR:
+                    break
                 count += 1
                 meets_prereq = await operator.meets_task_prerequisites()
         await self.set_task_status(task_type=TaskType.IDLE)
@@ -165,6 +167,8 @@ class TaskManager:
             task_id=run_info.task_id,
             error=run_info.message
         )
+        await self.discord_poster.post_to_discord(
+            message=f"Task {run_info.task_id} ({self.task_status.value}) failed with error.")
 
     async def get_task_info(self, task_id: int) -> TaskInfo:
         return await self.adb_client.get_task_info(task_id=task_id)

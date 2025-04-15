@@ -5,9 +5,7 @@ import pytest
 
 from collector_db.AsyncDatabaseClient import AsyncDatabaseClient
 from collector_db.DTOs.URLInfo import URLInfo
-from collector_db.DatabaseClient import DatabaseClient
 from core.AsyncCoreLogger import AsyncCoreLogger
-from core.CoreLogger import CoreLogger
 from source_collectors.muckrock.DTOs import MuckrockSimpleSearchCollectorInputDTO, \
     MuckrockCountySearchCollectorInputDTO, MuckrockAllFOIARequestsCollectorInputDTO
 from source_collectors.muckrock.classes.MuckrockCollector import MuckrockSimpleSearchCollector, \
