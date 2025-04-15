@@ -10,7 +10,7 @@ from core.DTOs.FinalReviewApprovalInfo import FinalReviewApprovalInfo
 from core.DTOs.TaskOperatorRunInfo import TaskOperatorOutcome
 from core.classes.SubmitApprovedURLTaskOperator import SubmitApprovedURLTaskOperator
 from core.enums import RecordType, SubmitResponseStatus
-from helpers.DBDataCreator import BatchURLCreationInfo, DBDataCreator
+from tests.helpers.DBDataCreator import BatchURLCreationInfo, DBDataCreator
 from pdap_api_client.AccessManager import AccessManager
 from pdap_api_client.DTOs import RequestInfo, RequestType, ResponseInfo
 from pdap_api_client.PDAPClient import PDAPClient
