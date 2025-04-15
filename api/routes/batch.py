@@ -25,7 +25,7 @@ batch_router = APIRouter(
 
 
 @batch_router.get("")
-def get_batch_status(
+async def get_batch_status(
         collector_type: Optional[CollectorType] = Query(
             description="Filter by collector type",
             default=None
@@ -38,13 +38,13 @@ def get_batch_status(
             description="The page number",
             default=1
         ),
-        core: SourceCollectorCore = Depends(get_core),
+        core: AsyncCore = Depends(get_async_core),
         access_info: AccessInfo = Depends(get_access_info),
 ) -> GetBatchStatusResponse:
     """
     Get the status of recent batches
     """
-    return core.get_batch_statuses(collector_type=collector_type, status=status, page=page)
+    return await core.get_batch_statuses(collector_type=collector_type, status=status, page=page)
 
 
 @batch_router.get("/{batch_id}")
@@ -69,28 +69,28 @@ async def get_urls_by_batch(
     return await core.get_urls_by_batch(batch_id, page=page)
 
 @batch_router.get("/{batch_id}/duplicates")
-def get_duplicates_by_batch(
+async def get_duplicates_by_batch(
         batch_id: int = Path(description="The batch id"),
         page: int = Query(
             description="The page number",
             default=1
         ),
-        core: SourceCollectorCore = Depends(get_core),
+        core: AsyncCore = Depends(get_async_core),
         access_info: AccessInfo = Depends(get_access_info),
 ) -> GetDuplicatesByBatchResponse:
-    return core.get_duplicate_urls_by_batch(batch_id, page=page)
+    return await core.get_duplicate_urls_by_batch(batch_id, page=page)
 
 @batch_router.get("/{batch_id}/logs")
-def get_batch_logs(
+async def get_batch_logs(
         batch_id: int = Path(description="The batch id"),
-        core: SourceCollectorCore = Depends(get_core),
+        async_core: AsyncCore = Depends(get_async_core),
         access_info: AccessInfo = Depends(get_access_info),
 ) -> GetBatchLogsResponse:
     """
     Retrieve the logs for a recent batch.
     Note that for later batches, the logs may not be available.
     """
-    return core.get_batch_logs(batch_id)
+    return await async_core.get_batch_logs(batch_id)
 
 @batch_router.post("/{batch_id}/abort")
 async def abort_batch(

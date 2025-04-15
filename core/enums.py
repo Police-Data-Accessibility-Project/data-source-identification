@@ -7,11 +7,10 @@ class BatchStatus(Enum):
     ERROR = "error"
     ABORTED = "aborted"
 
-class LabelStudioTaskStatus(Enum):
-    PENDING = "pending"
-    COMPLETED = "completed"
-
 class RecordType(Enum):
+    """
+    All available URL record types
+    """
     ACCIDENT_REPORTS = "Accident Reports"
     ARREST_RECORDS = "Arrest Records"
     CALLS_FOR_SERVICE = "Calls for Service"
@@ -51,8 +50,19 @@ class RecordType(Enum):
 
 
 class SuggestionType(Enum):
+    """
+    Identifies the specific kind of suggestion made for a URL
+    """
     AUTO_SUGGESTION = "Auto Suggestion"
     MANUAL_SUGGESTION = "Manual Suggestion"
     UNKNOWN = "Unknown"
     NEW_AGENCY = "New Agency"
     CONFIRMED = "Confirmed"
+
+class SubmitResponseStatus(Enum):
+    """
+    Response statuses from the /source-collector/data-sources endpoint
+    """
+    SUCCESS = "success"
+    FAILURE = "FAILURE"
+    ALREADY_EXISTS = "already_exists"

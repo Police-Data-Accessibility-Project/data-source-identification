@@ -13,3 +13,4 @@ class URLInfo(BaseModel):
     collector_metadata: Optional[dict] = None
     outcome: URLStatus = URLStatus.PENDING
     updated_at: Optional[datetime.datetime] = None
+    name: Optional[str] = None

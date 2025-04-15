@@ -21,6 +21,7 @@ def setup_async_core(adb_client: AsyncDatabaseClient):
             url_request_interface=AsyncMock(),
             html_parser=AsyncMock(),
             discord_poster=AsyncMock(),
+            pdap_client=AsyncMock()
         ),
         collector_manager=AsyncMock()
     )

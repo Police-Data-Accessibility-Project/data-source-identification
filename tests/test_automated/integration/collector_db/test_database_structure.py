@@ -52,9 +52,11 @@ class TableTester:
             self,
             columns: list[ColumnTester],
             table_name: str,
-            engine: sa.Engine = create_engine(get_postgres_connection_string()),
+            engine: Optional[sa.Engine] = None,
             constraints: Optional[list[ConstraintTester]] = None,
     ):
+        if engine is None:
+            engine = create_engine(get_postgres_connection_string(is_async=True))
         self.columns = columns
         self.table_name = table_name
         self.constraints = constraints
@@ -228,6 +230,11 @@ def test_url(db_data_creator: DBDataCreator):
                 column_name="outcome",
                 type_=postgresql.ENUM,
                 allowed_values=get_enum_values(URLStatus)
+            ),
+            ColumnTester(
+                column_name="name",
+                type_=sa.String,
+                allowed_values=['test'],
             )
         ],
         engine=db_data_creator.db_client.engine

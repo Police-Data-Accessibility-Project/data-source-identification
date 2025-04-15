@@ -10,6 +10,9 @@ from collector_manager.AsyncCollectorManager import AsyncCollectorManager
 from collector_manager.enums import CollectorType
 from core.DTOs.CollectorStartInfo import CollectorStartInfo
 from core.DTOs.FinalReviewApprovalInfo import FinalReviewApprovalInfo
+from core.DTOs.GetBatchLogsResponse import GetBatchLogsResponse
+from core.DTOs.GetBatchStatusResponse import GetBatchStatusResponse
+from core.DTOs.GetDuplicatesByBatchResponse import GetDuplicatesByBatchResponse
 from core.DTOs.GetNextRecordTypeAnnotationResponseInfo import GetNextRecordTypeAnnotationResponseOuterInfo
 from core.DTOs.GetNextRelevanceAnnotationResponseInfo import GetNextRelevanceAnnotationResponseOuterInfo
 from core.DTOs.GetNextURLForAgencyAnnotationResponse import GetNextURLForAgencyAnnotationResponse, \
@@ -20,6 +23,7 @@ from core.DTOs.GetURLsResponseInfo import GetURLsResponseInfo
 from core.DTOs.MessageResponse import MessageResponse
 from core.TaskManager import TaskManager
 from core.enums import BatchStatus, RecordType
+
 from security_manager.SecurityManager import AccessInfo
 
 
@@ -54,6 +58,27 @@ class AsyncCore:
     async def abort_batch(self, batch_id: int) -> MessageResponse:
         await self.collector_manager.abort_collector_async(cid=batch_id)
         return MessageResponse(message=f"Batch aborted.")
+
+    async def get_duplicate_urls_by_batch(self, batch_id: int, page: int = 1) -> GetDuplicatesByBatchResponse:
+        dup_infos = await self.adb_client.get_duplicates_by_batch_id(batch_id, page=page)
+        return GetDuplicatesByBatchResponse(duplicates=dup_infos)
+
+    async def get_batch_statuses(
+            self,
+            collector_type: Optional[CollectorType],
+            status: Optional[BatchStatus],
+            page: int
+    ) -> GetBatchStatusResponse:
+        results = await self.adb_client.get_recent_batch_status_info(
+            collector_type=collector_type,
+            status=status,
+            page=page
+        )
+        return GetBatchStatusResponse(results=results)
+
+    async def get_batch_logs(self, batch_id: int) -> GetBatchLogsResponse:
+        logs = await self.adb_client.get_logs_by_batch_id(batch_id)
+        return GetBatchLogsResponse(logs=logs)
 
     #endregion
 

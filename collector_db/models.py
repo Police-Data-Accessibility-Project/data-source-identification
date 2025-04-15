@@ -105,6 +105,7 @@ class URL(Base):
     record_type = Column(postgresql.ENUM(*record_type_values, name='record_type'), nullable=True)
     created_at = get_created_at_column()
     updated_at = get_updated_at_column()
+    data_source_id = Column(Integer, nullable=True)
 
     # Relationships
     batch = relationship("Batch", back_populates="urls")
@@ -128,8 +129,8 @@ class URL(Base):
         "AutoRelevantSuggestion", uselist=False, back_populates="url")
     user_relevant_suggestions = relationship(
         "UserRelevantSuggestion", back_populates="url")
-    reviewing_users = relationship(
-        "ReviewingUserURL", back_populates="url")
+    reviewing_user = relationship(
+        "ReviewingUserURL", uselist=False, back_populates="url")
     optional_data_source_metadata = relationship(
         "URLOptionalDataSourceMetadata", uselist=False, back_populates="url")
     confirmed_agencies = relationship(
@@ -163,7 +164,7 @@ class ReviewingUserURL(Base):
     created_at = get_created_at_column()
 
     # Relationships
-    url = relationship("URL", back_populates="reviewing_users")
+    url = relationship("URL", uselist=False, back_populates="reviewing_user")
 
 class RootURL(Base):
     __tablename__ = 'root_url_cache'

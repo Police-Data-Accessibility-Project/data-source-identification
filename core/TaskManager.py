@@ -1,5 +1,4 @@
 import logging
-from typing import Optional
 
 from agency_identifier.MuckrockAPIInterface import MuckrockAPIInterface
 from collector_db.AsyncDatabaseClient import AsyncDatabaseClient
@@ -9,6 +8,7 @@ from core.DTOs.GetTasksResponse import GetTasksResponse
 from core.DTOs.TaskOperatorRunInfo import TaskOperatorRunInfo, TaskOperatorOutcome
 from core.FunctionTrigger import FunctionTrigger
 from core.classes.AgencyIdentificationTaskOperator import AgencyIdentificationTaskOperator
+from core.classes.SubmitApprovedURLTaskOperator import SubmitApprovedURLTaskOperator
 from core.classes.TaskOperatorBase import TaskOperatorBase
 from core.classes.URLHTMLTaskOperator import URLHTMLTaskOperator
 from core.classes.URLMiscellaneousMetadataTaskOperator import URLMiscellaneousMetadataTaskOperator
@@ -19,10 +19,8 @@ from html_tag_collector.ResponseParser import HTMLResponseParser
 from html_tag_collector.URLRequestInterface import URLRequestInterface
 from hugging_face.HuggingFaceInterface import HuggingFaceInterface
 from llm_api_logic.OpenAIRecordClassifier import OpenAIRecordClassifier
-from pdap_api_client.AccessManager import AccessManager
 from pdap_api_client.PDAPClient import PDAPClient
 from util.DiscordNotifier import DiscordPoster
-from util.helper_functions import get_from_env
 
 TASK_REPEAT_THRESHOLD = 20
 
@@ -35,12 +33,16 @@ class TaskManager:
             url_request_interface: URLRequestInterface,
             html_parser: HTMLResponseParser,
             discord_poster: DiscordPoster,
+            pdap_client: PDAPClient
     ):
+        # Dependencies
         self.adb_client = adb_client
+        self.pdap_client = pdap_client
         self.huggingface_interface = huggingface_interface
         self.url_request_interface = url_request_interface
         self.html_parser = html_parser
         self.discord_poster = discord_poster
+
         self.logger = logging.getLogger(__name__)
         self.logger.addHandler(logging.StreamHandler())
         self.logger.setLevel(logging.INFO)
@@ -73,18 +75,18 @@ class TaskManager:
         return operator
 
     async def get_agency_identification_task_operator(self):
-        pdap_client = PDAPClient(
-            access_manager=AccessManager(
-                email=get_from_env("PDAP_EMAIL"),
-                password=get_from_env("PDAP_PASSWORD"),
-                api_key=get_from_env("PDAP_API_KEY"),
-            ),
-        )
         muckrock_api_interface = MuckrockAPIInterface()
         operator = AgencyIdentificationTaskOperator(
             adb_client=self.adb_client,
-            pdap_client=pdap_client,
+            pdap_client=self.pdap_client,
             muckrock_api_interface=muckrock_api_interface
+        )
+        return operator
+
+    async def get_submit_approved_url_task_operator(self):
+        operator = SubmitApprovedURLTaskOperator(
+            adb_client=self.adb_client,
+            pdap_client=self.pdap_client
         )
         return operator
 
@@ -96,11 +98,12 @@ class TaskManager:
 
     async def get_task_operators(self) -> list[TaskOperatorBase]:
         return [
-            # await self.get_url_html_task_operator(),
+            await self.get_url_html_task_operator(),
             await self.get_url_relevance_huggingface_task_operator(),
             await self.get_url_record_type_task_operator(),
             await self.get_agency_identification_task_operator(),
-            await self.get_url_miscellaneous_metadata_task_operator()
+            await self.get_url_miscellaneous_metadata_task_operator(),
+            await self.get_submit_approved_url_task_operator()
         ]
 
     #endregion

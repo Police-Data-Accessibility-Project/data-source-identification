@@ -5,22 +5,21 @@ from fastapi import HTTPException
 from sqlalchemy import select, exists, func, case, desc, Select, not_, and_, or_, update, Delete, Insert, asc
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
-from sqlalchemy.orm import selectinload, joinedload, QueryableAttribute
+from sqlalchemy.orm import selectinload, joinedload, QueryableAttribute, aliased
 from sqlalchemy.sql.functions import coalesce
 from starlette import status
 
 from collector_db.ConfigManager import ConfigManager
 from collector_db.DTOConverter import DTOConverter
 from collector_db.DTOs.BatchInfo import BatchInfo
-from collector_db.DTOs.DuplicateInfo import DuplicateInsertInfo
+from collector_db.DTOs.DuplicateInfo import DuplicateInsertInfo, DuplicateInfo
 from collector_db.DTOs.InsertURLsInfo import InsertURLsInfo
-from collector_db.DTOs.LogInfo import LogInfo
+from collector_db.DTOs.LogInfo import LogInfo, LogOutputInfo
 from collector_db.DTOs.TaskInfo import TaskInfo
 from collector_db.DTOs.URLErrorInfos import URLErrorPydanticInfo
 from collector_db.DTOs.URLHTMLContentInfo import URLHTMLContentInfo, HTMLContentType
 from collector_db.DTOs.URLInfo import URLInfo
 from collector_db.DTOs.URLMapping import URLMapping
-from collector_db.DTOs.URLWithHTML import URLWithHTML
 from collector_db.StatementComposer import StatementComposer
 from collector_db.constants import PLACEHOLDER_AGENCY_NAME
 from collector_db.enums import URLMetadataAttributeType, TaskType
@@ -42,7 +41,9 @@ from core.DTOs.GetURLsResponseInfo import GetURLsResponseInfo, GetURLsResponseEr
     GetURLsResponseInnerInfo
 from core.DTOs.URLAgencySuggestionInfo import URLAgencySuggestionInfo
 from core.DTOs.task_data_objects.AgencyIdentificationTDO import AgencyIdentificationTDO
+from core.DTOs.task_data_objects.SubmitApprovedURLTDO import SubmitApprovedURLTDO, SubmittedURLInfo
 from core.DTOs.task_data_objects.URLMiscellaneousMetadataTDO import URLMiscellaneousMetadataTDO, URLHTMLMetadataInfo
+from core.EnvVarManager import EnvVarManager
 from core.enums import BatchStatus, SuggestionType, RecordType
 from html_tag_collector.DataClassTags import convert_to_response_html_info
 
@@ -58,7 +59,9 @@ def add_standard_limit_and_offset(statement, page, limit=100):
 
 
 class AsyncDatabaseClient:
-    def __init__(self, db_url: str = get_postgres_connection_string(is_async=True)):
+    def __init__(self, db_url: Optional[str] = None):
+        if db_url is None:
+            db_url = EnvVarManager.get().get_postgres_connection_string(is_async=True)
         self.engine = create_async_engine(
             url=db_url,
             echo=ConfigManager.get_sqlalchemy_echo(),
@@ -1465,3 +1468,144 @@ class AsyncDatabaseClient:
         batch.duplicate_url_count = duplicate_url_count
         batch.status = batch_status.value
         batch.compute_time = compute_time
+
+
+    @session_manager
+    async def has_validated_urls(self, session: AsyncSession) -> bool:
+        query = (
+            select(URL)
+            .where(URL.outcome == URLStatus.VALIDATED.value)
+        )
+        urls = await session.execute(query)
+        urls = urls.scalars().all()
+        return len(urls) > 0
+
+    @session_manager
+    async def get_validated_urls(
+            self,
+            session: AsyncSession
+    ) -> list[SubmitApprovedURLTDO]:
+        query = (
+            select(URL)
+            .where(URL.outcome == URLStatus.VALIDATED.value)
+            .options(
+                selectinload(URL.optional_data_source_metadata),
+                selectinload(URL.confirmed_agencies),
+                selectinload(URL.reviewing_user)
+            ).limit(100)
+        )
+        urls = await session.execute(query)
+        urls = urls.scalars().all()
+        results: list[SubmitApprovedURLTDO] = []
+        for url in urls:
+            agency_ids = []
+            for agency in url.confirmed_agencies:
+                agency_ids.append(agency.agency_id)
+            optional_metadata = url.optional_data_source_metadata
+
+            if optional_metadata is None:
+                record_formats = None
+                data_portal_type = None
+                supplying_entity = None
+            else:
+                record_formats = optional_metadata.record_formats
+                data_portal_type = optional_metadata.data_portal_type
+                supplying_entity = optional_metadata.supplying_entity
+
+            tdo = SubmitApprovedURLTDO(
+                url_id=url.id,
+                url=url.url,
+                name=url.name,
+                agency_ids=agency_ids,
+                description=url.description,
+                record_type=url.record_type,
+                record_formats=record_formats,
+                data_portal_type=data_portal_type,
+                supplying_entity=supplying_entity,
+                approving_user_id=url.reviewing_user.user_id
+            )
+            results.append(tdo)
+        return results
+
+    @session_manager
+    async def mark_urls_as_submitted(self, session: AsyncSession, infos: list[SubmittedURLInfo]):
+        for info in infos:
+            url_id = info.url_id
+            data_source_id = info.data_source_id
+            query = (
+                update(URL)
+                .where(URL.id == url_id)
+                .values(
+                    data_source_id=data_source_id,
+                    outcome=URLStatus.SUBMITTED.value
+                )
+            )
+            await session.execute(query)
+
+    @session_manager
+    async def get_duplicates_by_batch_id(self, session, batch_id: int, page: int) -> List[DuplicateInfo]:
+        original_batch = aliased(Batch)
+        duplicate_batch = aliased(Batch)
+
+        query = (
+            Select(
+                URL.url.label("source_url"),
+                URL.id.label("original_url_id"),
+                duplicate_batch.id.label("duplicate_batch_id"),
+                duplicate_batch.parameters.label("duplicate_batch_parameters"),
+                original_batch.id.label("original_batch_id"),
+                original_batch.parameters.label("original_batch_parameters"),
+            )
+            .select_from(Duplicate)
+            .join(URL, Duplicate.original_url_id == URL.id)
+            .join(duplicate_batch, Duplicate.batch_id == duplicate_batch.id)
+            .join(original_batch, URL.batch_id == original_batch.id)
+            .filter(duplicate_batch.id == batch_id)
+            .limit(100)
+            .offset((page - 1) * 100)
+        )
+        raw_results = await session.execute(query)
+        results = raw_results.all()
+        final_results = []
+        for result in results:
+            final_results.append(
+                DuplicateInfo(
+                    source_url=result.source_url,
+                    duplicate_batch_id=result.duplicate_batch_id,
+                    duplicate_metadata=result.duplicate_batch_parameters,
+                    original_batch_id=result.original_batch_id,
+                    original_metadata=result.original_batch_parameters,
+                    original_url_id=result.original_url_id
+                )
+            )
+        return final_results
+
+    @session_manager
+    async def get_recent_batch_status_info(
+        self,
+        session,
+        page: int,
+        collector_type: Optional[CollectorType] = None,
+        status: Optional[BatchStatus] = None,
+    ) -> List[BatchInfo]:
+        # Get only the batch_id, collector_type, status, and created_at
+        limit = 100
+        query = (Select(Batch)
+                 .order_by(Batch.date_generated.desc()))
+        if collector_type:
+            query = query.filter(Batch.strategy == collector_type.value)
+        if status:
+            query = query.filter(Batch.status == status.value)
+        query = (query.limit(limit)
+                 .offset((page - 1) * limit))
+        raw_results = await session.execute(query)
+        batches = raw_results.scalars().all()
+        return [BatchInfo(**batch.__dict__) for batch in batches]
+
+    @session_manager
+    async def get_logs_by_batch_id(self, session, batch_id: int) -> List[LogOutputInfo]:
+        query = Select(Log).filter_by(batch_id=batch_id).order_by(Log.created_at.asc())
+        raw_results = await session.execute(query)
+        logs = raw_results.scalars().all()
+        return ([LogOutputInfo(**log.__dict__) for log in logs])
+

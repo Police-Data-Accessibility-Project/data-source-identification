@@ -1,5 +1,6 @@
 from contextlib import asynccontextmanager
 
+import aiohttp
 import uvicorn
 from fastapi import FastAPI
 
@@ -15,6 +16,7 @@ from collector_db.DatabaseClient import DatabaseClient
 from collector_manager.AsyncCollectorManager import AsyncCollectorManager
 from core.AsyncCore import AsyncCore
 from core.AsyncCoreLogger import AsyncCoreLogger
+from core.EnvVarManager import EnvVarManager
 from core.ScheduledTaskManager import AsyncScheduledTaskManager
 from core.SourceCollectorCore import SourceCollectorCore
 from core.TaskManager import TaskManager
@@ -22,18 +24,27 @@ from html_tag_collector.ResponseParser import HTMLResponseParser
 from html_tag_collector.RootURLCache import RootURLCache
 from html_tag_collector.URLRequestInterface import URLRequestInterface
 from hugging_face.HuggingFaceInterface import HuggingFaceInterface
+from pdap_api_client.AccessManager import AccessManager
+from pdap_api_client.PDAPClient import PDAPClient
 from util.DiscordNotifier import DiscordPoster
-from util.helper_functions import get_from_env
+
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    env_var_manager = EnvVarManager.get()
+
     # Initialize shared dependencies
-    db_client = DatabaseClient()
-    adb_client = AsyncDatabaseClient()
+    db_client = DatabaseClient(
+        db_url=env_var_manager.get_postgres_connection_string()
+    )
+    adb_client = AsyncDatabaseClient(
+        db_url=env_var_manager.get_postgres_connection_string(is_async=True)
+    )
     await setup_database(db_client)
     core_logger = AsyncCoreLogger(adb_client=adb_client)
 
+    session = aiohttp.ClientSession()
 
     source_collector_core = SourceCollectorCore(
         db_client=DatabaseClient(),
@@ -46,7 +57,15 @@ async def lifespan(app: FastAPI):
             root_url_cache=RootURLCache()
         ),
         discord_poster=DiscordPoster(
-            webhook_url=get_from_env("DISCORD_WEBHOOK_URL")
+            webhook_url=env_var_manager.discord_webhook_url
+        ),
+        pdap_client=PDAPClient(
+            access_manager=AccessManager(
+                email=env_var_manager.pdap_email,
+                password=env_var_manager.pdap_password,
+                api_key=env_var_manager.pdap_api_key,
+                session=session
+            )
         )
     )
     async_collector_manager = AsyncCollectorManager(
@@ -72,17 +91,17 @@ async def lifespan(app: FastAPI):
     yield  # Code here runs before shutdown
 
     # Shutdown logic (if needed)
+    # Clean up resources, close connections, etc.
     await core_logger.shutdown()
     await async_core.shutdown()
     source_collector_core.shutdown()
-    # Clean up resources, close connections, etc.
+    await session.close()
     pass
 
 
 async def setup_database(db_client):
     # Initialize database if dev environment, otherwise apply migrations
     try:
-        get_from_env("DEV")
         db_client.init_db()
     except Exception as e:
         return
@@ -94,6 +113,7 @@ app = FastAPI(
     version="0.1.0",
     lifespan=lifespan
 )
+
 
 routers = [
     root_router,
