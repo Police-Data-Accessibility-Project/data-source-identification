@@ -39,7 +39,6 @@ class SecurityManager:
     def validate_token(self, token: str) -> AccessInfo:
         try:
             payload = jwt.decode(token, self.secret_key, algorithms=[ALGORITHM])
-            print(payload)
             return self.payload_to_access_info(payload)
         except InvalidTokenError as e:
             raise HTTPException(

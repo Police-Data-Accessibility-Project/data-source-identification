@@ -24,7 +24,7 @@ async def test_example_collector(api_test_helper):
     # Temporarily disable task trigger
     disable_task_trigger(ath)
 
-    logger = AsyncCoreLogger(adb_client=AsyncDatabaseClient())
+    logger = AsyncCoreLogger(adb_client=AsyncDatabaseClient(), flush_interval=1)
     await logger.__aenter__()
     ath.async_core.collector_manager.logger = logger
 
@@ -93,7 +93,7 @@ async def test_example_collector_error(api_test_helper, monkeypatch):
     """
     ath = api_test_helper
 
-    logger = AsyncCoreLogger(adb_client=AsyncDatabaseClient())
+    logger = AsyncCoreLogger(adb_client=AsyncDatabaseClient(), flush_interval=1)
     await logger.__aenter__()
     ath.async_core.collector_manager.logger = logger
 
