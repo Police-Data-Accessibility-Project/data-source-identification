@@ -4,9 +4,7 @@ import pytest
 
 from collector_db.AsyncDatabaseClient import AsyncDatabaseClient
 from collector_db.DTOs.URLInfo import URLInfo
-from collector_db.DatabaseClient import DatabaseClient
 from core.AsyncCoreLogger import AsyncCoreLogger
-from core.CoreLogger import CoreLogger
 from source_collectors.common_crawler.CommonCrawlerCollector import CommonCrawlerCollector
 from source_collectors.common_crawler.DTOs import CommonCrawlerInputDTO
 

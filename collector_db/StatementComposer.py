@@ -17,17 +17,21 @@ class StatementComposer:
 
     @staticmethod
     def pending_urls_without_html_data() -> Select:
-        subquery = (select(1).
+        exclude_subquery = (select(1).
                      select_from(LinkTaskURL).
                      join(Task, LinkTaskURL.task_id == Task.id).
                      where(LinkTaskURL.url_id == URL.id).
                      where(Task.task_type == TaskType.HTML.value).
                      where(Task.task_status == BatchStatus.COMPLETE.value)
                      )
-
-        query = select(URL).where(
-            ~exists(subquery)
+        query = (
+            select(URL).
+            outerjoin(URLHTMLContent).
+            where(URLHTMLContent.id == None).
+            where(~exists(exclude_subquery)).
+            where(URL.outcome == URLStatus.PENDING.value)
         )
+
 
         return query
 
