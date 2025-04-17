@@ -1,6 +1,6 @@
 from typing import Optional
 
-from agency_identifier.MuckrockAPIInterface import MuckrockAPIInterface, AgencyLookupResponse, AgencyLookupResponseType
+from source_collectors.muckrock.MuckrockAPIInterface import MuckrockAPIInterface, AgencyLookupResponse, AgencyLookupResponseType
 from core.DTOs.URLAgencySuggestionInfo import URLAgencySuggestionInfo
 from core.exceptions import MuckrockAPIError
 from core.helpers import process_match_agency_response_to_suggestions

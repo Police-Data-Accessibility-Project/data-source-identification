@@ -17,7 +17,6 @@ class ValidationStatus(PyEnum):
 
 class ValidationSource(PyEnum):
     MACHINE_LEARNING = "Machine Learning"
-    LABEL_STUDIO = "Label Studio"
     MANUAL = "Manual"
 
 

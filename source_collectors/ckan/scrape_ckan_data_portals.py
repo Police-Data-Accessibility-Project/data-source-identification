@@ -4,7 +4,6 @@ import sys
 from itertools import chain
 from typing import Any, Callable, Optional
 
-import pandas as pd
 from from_root import from_root
 from tqdm import tqdm
 
@@ -41,26 +40,6 @@ async def perform_search(
     return results
 
 
-async def get_collection_child_packages(
-    results: list[dict[str, Any]]
-) -> list[dict[str, Any]]:
-    """Retrieves the child packages of each collection.
-
-    :param results: List of results.
-    :return: List of results containing child packages.
-    """
-    new_list = []
-
-    for result in tqdm(results):
-        if "extras" in result.keys():
-            collections = await get_collections(result)
-            if collections:
-                new_list += collections[0]
-                continue
-
-        new_list.append(result)
-
-    return new_list
 
 
 async def get_collections(result):
@@ -264,8 +243,4 @@ def deduplicate_entries(flat_list):
     flat_list = [i for n, i in enumerate(flat_list) if i not in flat_list[n + 1:]]
     return flat_list
 
-
-def write_to_csv(parsed_results):
-    df = pd.DataFrame(parsed_results)
-    df.to_csv("results.csv")
 
