@@ -3,6 +3,7 @@ from contextlib import asynccontextmanager
 import aiohttp
 import uvicorn
 from fastapi import FastAPI
+from starlette.responses import RedirectResponse
 
 from api.routes.annotate import annotate_router
 from api.routes.batch import batch_router
@@ -110,9 +111,14 @@ async def setup_database(db_client):
 app = FastAPI(
     title="Source Collector API",
     description="API for collecting data sources",
+    docs_url='/api',
     version="0.1.0",
     lifespan=lifespan
 )
+
+@app.get("/docs", include_in_schema=False)
+async def redirect_docs():
+    return RedirectResponse(url="/api")
 
 
 routers = [
