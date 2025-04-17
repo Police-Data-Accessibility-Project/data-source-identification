@@ -137,14 +137,13 @@ class AsyncDatabaseClient:
                 URL,
             )
             .where(URL.outcome == URLStatus.PENDING.value)
-            # URL must not have metadata annotation by this user
+            # URL must not have user suggestion
             .where(
                 not_(
                     exists(
                         select(user_suggestion_model_to_exclude)
                         .where(
                             user_suggestion_model_to_exclude.url_id == URL.id,
-                            user_suggestion_model_to_exclude.user_id == user_id
                         )
                     )
                 )
@@ -158,7 +157,6 @@ class AsyncDatabaseClient:
                         select(UserRelevantSuggestion)
                         .where(
                             UserRelevantSuggestion.url_id == URL.id,
-                            UserRelevantSuggestion.user_id == user_id,
                             UserRelevantSuggestion.relevant == False
                         )
                     )
@@ -833,15 +831,14 @@ class AsyncDatabaseClient:
         if batch_id is not None:
             statement = statement.where(URL.batch_id == batch_id)
 
-        # Must not have been annotated by this user
+        # Must not have been annotated by a user
         statement = (
             statement.join(UserUrlAgencySuggestion, isouter=True)
             .where(
                 ~exists(
                     select(UserUrlAgencySuggestion).
                     where(
-                        (UserUrlAgencySuggestion.user_id == user_id) &
-                        (UserUrlAgencySuggestion.url_id == URL.id)
+                        UserUrlAgencySuggestion.url_id == URL.id
                     ).
                     correlate(URL)
                 )

@@ -4,7 +4,7 @@ from collector_db.DTOs.URLInfo import URLInfo
 from collector_db.enums import TaskType
 from core.DTOs.task_data_objects.UrlHtmlTDO import UrlHtmlTDO
 from core.classes.HTMLContentInfoGetter import HTMLContentInfoGetter
-from core.classes.TaskOperatorBase import TaskOperatorBase
+from core.classes.task_operators.TaskOperatorBase import TaskOperatorBase
 from html_tag_collector.ResponseParser import HTMLResponseParser
 from html_tag_collector.URLRequestInterface import URLRequestInterface
 

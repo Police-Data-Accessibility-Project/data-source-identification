@@ -1,4 +1,3 @@
-import types
 from copy import deepcopy
 from typing import Optional
 from unittest.mock import MagicMock, AsyncMock, patch
@@ -11,7 +10,7 @@ from collector_db.models import Agency, AutomatedUrlAgencySuggestion
 from collector_manager.enums import CollectorType
 from core.DTOs.TaskOperatorRunInfo import TaskOperatorOutcome
 from core.DTOs.URLAgencySuggestionInfo import URLAgencySuggestionInfo
-from core.classes.AgencyIdentificationTaskOperator import AgencyIdentificationTaskOperator
+from core.classes.task_operators.AgencyIdentificationTaskOperator import AgencyIdentificationTaskOperator
 from core.classes.subtasks.AutoGooglerAgencyIdentificationSubtask import AutoGooglerAgencyIdentificationSubtask
 from core.classes.subtasks.CKANAgencyIdentificationSubtask import CKANAgencyIdentificationSubtask
 from core.classes.subtasks.CommonCrawlerAgencyIdentificationSubtask import CommonCrawlerAgencyIdentificationSubtask

@@ -68,6 +68,9 @@ async def test_annotate_relevancy(api_test_helper):
     # Validate that the correct relevant value is returned
     assert inner_info_1.suggested_relevant is True
 
+    # A second user should see the same URL
+
+
     #  Annotate with value 'False' and get next URL
     request_info_2: GetNextRelevanceAnnotationResponseOuterInfo = api_test_helper.request_validator.post_relevance_annotation_and_get_next(
         url_id=inner_info_1.url_info.url_id,
@@ -106,7 +109,6 @@ async def test_annotate_relevancy(api_test_helper):
     assert result_2.relevant is True
 
     # If user submits annotation for same URL, the URL should be overwritten
-
     request_info_4: GetNextRelevanceAnnotationResponseOuterInfo = api_test_helper.request_validator.post_relevance_annotation_and_get_next(
         url_id=inner_info_1.url_info.url_id,
         relevance_annotation_post_info=RelevanceAnnotationPostInfo(
@@ -420,12 +422,6 @@ async def test_annotate_agency_other_user_annotation(api_test_helper):
     )
     url_ids = setup_info.url_ids
 
-
-    await ath.db_data_creator.manual_suggestion(
-        user_id=MOCK_USER_ID + 1,
-        url_id=url_ids[0],
-    )
-
     response = await ath.request_validator.get_next_agency_annotation()
 
     assert response.next_annotation
@@ -439,6 +435,16 @@ async def test_annotate_agency_other_user_annotation(api_test_helper):
 
     # Check that one agency_suggestion exists
     assert len(next_annotation.agency_suggestions) == 1
+
+    # Test that another user can insert a suggestion
+    await ath.db_data_creator.manual_suggestion(
+        user_id=MOCK_USER_ID + 1,
+        url_id=url_ids[0],
+    )
+
+    # After this, text that our user does not receive this URL
+    response = await ath.request_validator.get_next_agency_annotation()
+    assert response.next_annotation is None
 
 @pytest.mark.asyncio
 async def test_annotate_agency_submit_and_get_next(api_test_helper):

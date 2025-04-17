@@ -1,9 +1,8 @@
 from collector_db.AsyncDatabaseClient import AsyncDatabaseClient
-from collector_db.DTOs.URLMetadataInfo import URLMetadataInfo
 from collector_db.DTOs.URLWithHTML import URLWithHTML
-from collector_db.enums import URLMetadataAttributeType, ValidationStatus, ValidationSource, TaskType
+from collector_db.enums import TaskType
 from core.DTOs.task_data_objects.URLRelevanceHuggingfaceTDO import URLRelevanceHuggingfaceTDO
-from core.classes.TaskOperatorBase import TaskOperatorBase
+from core.classes.task_operators.TaskOperatorBase import TaskOperatorBase
 from hugging_face.HuggingFaceInterface import HuggingFaceInterface
 
 

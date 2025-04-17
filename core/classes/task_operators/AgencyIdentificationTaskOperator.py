@@ -7,7 +7,7 @@ from collector_db.enums import TaskType
 from collector_manager.enums import CollectorType
 from core.DTOs.URLAgencySuggestionInfo import URLAgencySuggestionInfo
 from core.DTOs.task_data_objects.AgencyIdentificationTDO import AgencyIdentificationTDO
-from core.classes.TaskOperatorBase import TaskOperatorBase
+from core.classes.task_operators.TaskOperatorBase import TaskOperatorBase
 from core.classes.subtasks.AutoGooglerAgencyIdentificationSubtask import AutoGooglerAgencyIdentificationSubtask
 from core.classes.subtasks.CKANAgencyIdentificationSubtask import CKANAgencyIdentificationSubtask
 from core.classes.subtasks.CommonCrawlerAgencyIdentificationSubtask import CommonCrawlerAgencyIdentificationSubtask

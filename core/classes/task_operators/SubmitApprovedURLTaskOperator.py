@@ -2,7 +2,7 @@ from collector_db.AsyncDatabaseClient import AsyncDatabaseClient
 from collector_db.DTOs.URLErrorInfos import URLErrorPydanticInfo
 from collector_db.enums import TaskType
 from core.DTOs.task_data_objects.SubmitApprovedURLTDO import SubmitApprovedURLTDO
-from core.classes.TaskOperatorBase import TaskOperatorBase
+from core.classes.task_operators.TaskOperatorBase import TaskOperatorBase
 from pdap_api_client.PDAPClient import PDAPClient
 
 
