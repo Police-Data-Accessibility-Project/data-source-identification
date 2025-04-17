@@ -54,7 +54,7 @@ class SuggestionType(Enum):
     Identifies the specific kind of suggestion made for a URL
     """
     AUTO_SUGGESTION = "Auto Suggestion"
-    MANUAL_SUGGESTION = "Manual Suggestion"
+    USER_SUGGESTION = "User Suggestion"
     UNKNOWN = "Unknown"
     NEW_AGENCY = "New Agency"
     CONFIRMED = "Confirmed"
