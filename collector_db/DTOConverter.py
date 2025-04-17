@@ -100,7 +100,7 @@ class DTOConverter:
         if suggestion is None:
             return None
         return GetNextURLForAgencyAgencyInfo(
-            suggestion_type=SuggestionType.MANUAL_SUGGESTION,
+            suggestion_type=SuggestionType.USER_SUGGESTION,
             pdap_agency_id=suggestion.agency_id,
             agency_name=suggestion.agency.name,
             state=suggestion.agency.state,
