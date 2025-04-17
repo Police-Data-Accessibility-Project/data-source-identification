@@ -120,13 +120,19 @@ class RequestValidator:
             expected_response=expected_response,
             **kwargs)
 
-    def get_batch_statuses(self, collector_type: Optional[CollectorType] = None, status: Optional[BatchStatus] = None) -> GetBatchStatusResponse:
+    def get_batch_statuses(
+            self,
+            collector_type: Optional[CollectorType] = None,
+            status: Optional[BatchStatus] = None,
+            has_pending_urls: Optional[bool] = None
+    ) -> GetBatchStatusResponse:
         params = {}
         update_if_not_none(
             target=params,
             source={
                 "collector_type": collector_type.value if collector_type else None,
-                "status": status.value if status else None
+                "status": status.value if status else None,
+                "has_pending_urls": has_pending_urls
             }
         )
         data = self.get(

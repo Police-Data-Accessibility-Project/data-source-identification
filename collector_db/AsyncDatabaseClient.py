@@ -1567,17 +1567,37 @@ class AsyncDatabaseClient:
         page: int,
         collector_type: Optional[CollectorType] = None,
         status: Optional[BatchStatus] = None,
+        has_pending_urls: Optional[bool] = None
     ) -> List[BatchInfo]:
         # Get only the batch_id, collector_type, status, and created_at
         limit = 100
-        query = (Select(Batch)
-                 .order_by(Batch.date_generated.desc()))
+        query = Select(Batch)
+        if has_pending_urls is not None:
+            if has_pending_urls:
+                # Query for all that have pending URLs
+                query = query.join(URL, Batch.id == URL.batch_id).filter(URL.outcome == URLStatus.PENDING.value)
+            else:
+                # Query for all that DO NOT have pending URLs
+                # (or that have no URLs at all)
+                query = query.join(
+                    URL,
+                    Batch.id == URL.batch_id,
+                    isouter=True
+                ).filter(
+                    or_(
+                        URL.outcome != URLStatus.PENDING.value,
+                        URL.outcome.is_(None)
+                    )
+                )
         if collector_type:
             query = query.filter(Batch.strategy == collector_type.value)
         if status:
             query = query.filter(Batch.status == status.value)
-        query = (query.limit(limit)
-                 .offset((page - 1) * limit))
+
+        query = (query.
+                 order_by(Batch.date_generated.desc()).
+                 limit(limit).
+                 offset((page - 1) * limit))
         raw_results = await session.execute(query)
         batches = raw_results.scalars().all()
         return [BatchInfo(**batch.__dict__) for batch in batches]

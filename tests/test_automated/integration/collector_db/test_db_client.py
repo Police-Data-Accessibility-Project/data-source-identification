@@ -269,10 +269,6 @@ async def test_get_next_url_for_final_review_favor_more_components(db_data_creat
 
     assert result.id == url_mapping_with_user_anno.url_id
 
-
-
-
-
 @pytest.mark.asyncio
 async def test_get_next_url_for_final_review_no_annotations(db_data_creator: DBDataCreator):
     """

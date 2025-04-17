@@ -1,11 +1,10 @@
 from typing import Optional
 
-from fastapi import Path, APIRouter, HTTPException
+from fastapi import Path, APIRouter
 from fastapi.params import Query, Depends
 
 from api.dependencies import get_core, get_async_core
 from collector_db.DTOs.BatchInfo import BatchInfo
-from collector_manager.CollectorManager import InvalidCollectorError
 from collector_manager.enums import CollectorType
 from core.AsyncCore import AsyncCore
 from core.DTOs.GetBatchLogsResponse import GetBatchLogsResponse
@@ -34,6 +33,10 @@ async def get_batch_status(
             description="Filter by status",
             default=None
         ),
+        has_pending_urls: Optional[bool] = Query(
+            description="Filter by whether the batch has pending URLs",
+            default=None
+        ),
         page: int = Query(
             description="The page number",
             default=1
@@ -44,7 +47,12 @@ async def get_batch_status(
     """
     Get the status of recent batches
     """
-    return await core.get_batch_statuses(collector_type=collector_type, status=status, page=page)
+    return await core.get_batch_statuses(
+        collector_type=collector_type,
+        status=status,
+        has_pending_urls=has_pending_urls,
+        page=page
+    )
 
 
 @batch_router.get("/{batch_id}")
