@@ -34,7 +34,7 @@ def test_common_crawler_lifecycle(test_core: SourceCollectorCore):
 
     batch_info = db_client.get_batch_by_id(1)
     assert batch_info.strategy == "common_crawler"
-    assert batch_info.status == BatchStatus.COMPLETE
+    assert batch_info.status == BatchStatus.READY_TO_LABEL
     assert batch_info.parameters == config
 
     url_infos = db_client.get_urls_by_batch(1)

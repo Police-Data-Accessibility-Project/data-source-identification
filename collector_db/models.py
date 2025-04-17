@@ -17,7 +17,7 @@ status_check_string = ", ".join([f"'{status}'" for status in get_enum_values(Bat
 
 CURRENT_TIME_SERVER_DEFAULT = func.now()
 
-batch_status_enum = PGEnum('complete', 'error', 'in-process', 'aborted', name='batch_status')
+batch_status_enum = PGEnum('ready to label', 'error', 'in-process', 'aborted', name='batch_status')
 
 record_type_values = get_enum_values(RecordType)
 

@@ -54,7 +54,7 @@ async def test_example_collector(api_test_helper):
 
     csr: GetBatchStatusResponse = ath.request_validator.get_batch_statuses(
         collector_type=CollectorType.EXAMPLE,
-        status=BatchStatus.COMPLETE
+        status=BatchStatus.READY_TO_LABEL
     )
 
     assert len(csr.results) == 1
@@ -62,10 +62,10 @@ async def test_example_collector(api_test_helper):
 
     assert bsi.id == batch_id
     assert bsi.strategy == CollectorType.EXAMPLE.value
-    assert bsi.status == BatchStatus.COMPLETE
+    assert bsi.status == BatchStatus.READY_TO_LABEL
 
     bi: BatchInfo = ath.request_validator.get_batch_info(batch_id=batch_id)
-    assert bi.status == BatchStatus.COMPLETE
+    assert bi.status == BatchStatus.READY_TO_LABEL
     assert bi.total_url_count == 2
     assert bi.parameters == dto.model_dump()
     assert bi.strategy == CollectorType.EXAMPLE.value

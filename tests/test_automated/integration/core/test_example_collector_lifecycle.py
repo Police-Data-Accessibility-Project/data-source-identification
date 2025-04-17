@@ -41,11 +41,11 @@ async def test_example_collector_lifecycle(
     await asyncio.sleep(1.5)
     await acore.collector_manager.logger.flush_all()
     print("Done sleeping...")
-    assert core.get_status(batch_id) == BatchStatus.COMPLETE
+    assert core.get_status(batch_id) == BatchStatus.READY_TO_LABEL
 
     batch_info: BatchInfo = db_client.get_batch_by_id(batch_id)
     assert batch_info.strategy == "example"
-    assert batch_info.status == BatchStatus.COMPLETE
+    assert batch_info.status == BatchStatus.READY_TO_LABEL
     assert batch_info.total_url_count == 2
     assert batch_info.parameters == dto.model_dump()
     assert batch_info.compute_time > 1
@@ -90,4 +90,4 @@ async def test_example_collector_lifecycle_multiple_batches(
     await asyncio.sleep(3)
 
     for csi in csis:
-        assert core.get_status(csi.batch_id) == BatchStatus.COMPLETE
+        assert core.get_status(csi.batch_id) == BatchStatus.READY_TO_LABEL
