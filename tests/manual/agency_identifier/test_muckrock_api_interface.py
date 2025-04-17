@@ -1,7 +1,7 @@
 import pytest
 from aiohttp import ClientSession
 
-from agency_identifier.MuckrockAPIInterface import MuckrockAPIInterface
+from source_collectors.muckrock.MuckrockAPIInterface import MuckrockAPIInterface
 
 
 @pytest.mark.asyncio

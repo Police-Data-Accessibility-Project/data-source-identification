@@ -19,28 +19,6 @@ Running the scraper will output a list of packages to a CSV file using the searc
 * `search_terms.py` - The search terms and CKAN portals to search from.
 * `ckan_scraper_toolkit.py` - Toolkit of functions that use ckanapi to retrieve packages from CKAN data portals.
 
-## Setup
-
-1. In a terminal, navigate to the CKAN scraper folder
-    ```cmd
-    cd scrapers_library/data_portals/ckan/
-    ```
-2. Create and activate a Python virtual environment
-    ```cmd
-    python -m venv venv
-    source venv/bin/activate
-    ```
-
-3. Install the requirements
-    ```cmd
-    pip install -r requirements.txt
-    ```
-4. Run the multi-portal CKAN scraper
-    ```cmd
-    python scrape_ckan_data_portals.py
-    ```
-5. Review the generated `results.csv` file.
-
 ## How can I tell if a website I want to scrape is hosted using CKAN?
 
 There's no easy way to tell, some websites will reference CKAN or link back to the CKAN documentation while others will not. There doesn't seem to be a database of all CKAN instances either.

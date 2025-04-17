@@ -9,8 +9,6 @@ from core.enums import BatchStatus
 class SourceCollectorCore:
     def __init__(
         self,
-        core_logger: Optional[Any] = None,  # Deprecated
-        collector_manager: Optional[Any] = None,  # Deprecated
         db_client: Optional[DatabaseClient] = None,
         dev_mode: bool = False
     ):

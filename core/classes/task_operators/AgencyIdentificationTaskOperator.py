@@ -1,6 +1,6 @@
 from aiohttp import ClientSession
 
-from agency_identifier.MuckrockAPIInterface import MuckrockAPIInterface
+from source_collectors.muckrock.MuckrockAPIInterface import MuckrockAPIInterface
 from collector_db.AsyncDatabaseClient import AsyncDatabaseClient
 from collector_db.DTOs.URLErrorInfos import URLErrorPydanticInfo
 from collector_db.enums import TaskType

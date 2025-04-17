@@ -72,17 +72,17 @@ class AsyncCollectorBase(ABC):
         )
 
     async def process(self) -> None:
-        await self.log("Processing collector...", allow_abort=False)
+        await self.log("Processing collector...")
         preprocessor = self.preprocessor()
         url_infos = preprocessor.preprocess(self.data)
-        await self.log(f"URLs processed: {len(url_infos)}", allow_abort=False)
+        await self.log(f"URLs processed: {len(url_infos)}")
 
-        await self.log("Inserting URLs...", allow_abort=False)
+        await self.log("Inserting URLs...")
         insert_urls_info: InsertURLsInfo = await self.adb_client.insert_urls(
             url_infos=url_infos,
             batch_id=self.batch_id
         )
-        await self.log("Updating batch...", allow_abort=False)
+        await self.log("Updating batch...")
         await self.adb_client.update_batch_post_collection(
             batch_id=self.batch_id,
             total_url_count=insert_urls_info.total_count,
@@ -91,7 +91,7 @@ class AsyncCollectorBase(ABC):
             batch_status=self.status,
             compute_time=self.compute_time
         )
-        await self.log("Done processing collector.", allow_abort=False)
+        await self.log("Done processing collector.")
 
         if self.post_collection_function_trigger is not None:
             await self.post_collection_function_trigger.trigger_or_rerun()
@@ -123,7 +123,6 @@ class AsyncCollectorBase(ABC):
     async def log(
             self,
             message: str,
-            allow_abort = True  # Deprecated
     ) -> None:
         await self.logger.log(LogInfo(
             batch_id=self.batch_id,

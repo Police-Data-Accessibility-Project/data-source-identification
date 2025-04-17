@@ -103,7 +103,6 @@ async def get_batch_logs(
 @batch_router.post("/{batch_id}/abort")
 async def abort_batch(
         batch_id: int = Path(description="The batch id"),
-        core: SourceCollectorCore = Depends(get_core),
         async_core: AsyncCore = Depends(get_async_core),
         access_info: AccessInfo = Depends(get_access_info),
 ) -> MessageResponse:
