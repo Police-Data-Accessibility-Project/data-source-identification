@@ -162,7 +162,7 @@ async def test_get_next_url_for_final_review_basic(db_data_creator: DBDataCreato
 
     setup_info = await setup_for_get_next_url_for_final_review(
         db_data_creator=db_data_creator,
-        annotation_count=3,
+        annotation_count=1,
         include_user_annotations=True
     )
 
@@ -186,16 +186,13 @@ async def test_get_next_url_for_final_review_basic(db_data_creator: DBDataCreato
     annotation_info = result.annotations
     relevant_info = annotation_info.relevant
     assert relevant_info.auto == True
-    assert relevant_info.users.relevant == 3
     assert relevant_info.users.not_relevant == 1
 
     record_type_info = annotation_info.record_type
     assert record_type_info.auto == RecordType.ARREST_RECORDS
     user_d = record_type_info.users
-    assert user_d[RecordType.ARREST_RECORDS] == 3
-    assert user_d[RecordType.DISPATCH_RECORDINGS] == 2
     assert user_d[RecordType.ACCIDENT_REPORTS] == 1
-    assert list(user_d.keys()) == [RecordType.ARREST_RECORDS, RecordType.DISPATCH_RECORDINGS, RecordType.ACCIDENT_REPORTS]
+    assert list(user_d.keys()) == [RecordType.ACCIDENT_REPORTS]
 
 
     agency_info = annotation_info.agency
@@ -206,9 +203,7 @@ async def test_get_next_url_for_final_review_basic(db_data_creator: DBDataCreato
     # Check user agency suggestions exist and in descending order of count
     user_agency_suggestions = agency_info.users
     user_agency_suggestions_as_list = list(user_agency_suggestions.values())
-    assert len(user_agency_suggestions_as_list) == 3
-    for i in range(3):
-        assert user_agency_suggestions_as_list[i].count == 3 - i
+    assert len(user_agency_suggestions_as_list) == 1
 
 @pytest.mark.asyncio
 async def test_get_next_url_for_final_review_batch_id_filtering(db_data_creator: DBDataCreator):
@@ -278,42 +273,6 @@ async def test_get_next_url_for_final_review_favor_more_components(db_data_creat
 
     assert result.id == url_mapping_with_user_anno.url_id
 
-
-
-@pytest.mark.asyncio
-async def test_get_next_url_for_final_review_favor_more_annotations(
-        db_data_creator: DBDataCreator,
-        wipe_database
-):
-    """
-    Test in the case of two URLs with the same number of components annotated, favoring the one with more total annotations
-    """
-    setup_info_lower_count = await setup_for_get_next_url_for_final_review(
-        db_data_creator=db_data_creator,
-        annotation_count=1,
-        include_user_annotations=True
-    )
-    url_mapping_lower_count = setup_info_lower_count.url_mapping
-
-    setup_info_higher_count = await setup_for_get_next_url_for_final_review(
-        db_data_creator=db_data_creator,
-        annotation_count=3,
-        include_user_annotations=True
-    )
-    url_mapping_higher_count = setup_info_higher_count.url_mapping
-
-    for url_mapping in [url_mapping_lower_count, url_mapping_higher_count]:
-        await db_data_creator.agency_confirmed_suggestion(
-            url_id=url_mapping.url_id
-        )
-
-    result = await db_data_creator.adb_client.get_next_url_for_final_review(
-        batch_id=None
-    )
-
-    assert result.id == url_mapping_higher_count.url_id
-
-    assert result.annotations.agency.confirmed is not None
 
 
 

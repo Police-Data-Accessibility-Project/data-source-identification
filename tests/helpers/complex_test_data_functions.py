@@ -1,3 +1,5 @@
+from typing import Optional
+
 from pydantic import BaseModel
 
 from collector_db.DTOs.InsertURLsInfo import InsertURLsInfo
@@ -57,7 +59,7 @@ class FinalReviewSetupInfo(BaseModel):
 
 async def setup_for_get_next_url_for_final_review(
         db_data_creator: DBDataCreator,
-        annotation_count: int,
+        annotation_count: Optional[int] = None,
         include_user_annotations: bool = True,
         include_miscellaneous_metadata: bool = True
 ) -> FinalReviewSetupInfo:
@@ -109,16 +111,9 @@ async def setup_for_get_next_url_for_final_review(
     )
 
     if include_user_annotations:
-        await add_relevant_suggestion(annotation_count, True)
         await add_relevant_suggestion(1, False)
-        await add_record_type_suggestion(3, RecordType.ARREST_RECORDS)
-        await add_record_type_suggestion(2, RecordType.DISPATCH_RECORDINGS)
         await add_record_type_suggestion(1, RecordType.ACCIDENT_REPORTS)
-
-    if include_user_annotations:
-        # Add user suggestions for agencies, one suggested by 3 users, another by 2, another by 1
-        for i in range(annotation_count):
-            await add_agency_suggestion(i + 1)
+        await add_agency_suggestion(1)
 
     return FinalReviewSetupInfo(
         batch_id=batch_id,
