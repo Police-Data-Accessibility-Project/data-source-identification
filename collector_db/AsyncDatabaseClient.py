@@ -1573,20 +1573,26 @@ class AsyncDatabaseClient:
         limit = 100
         query = Select(Batch)
         if has_pending_urls is not None:
+            pending_url_subquery = Select(URL).where(
+                and_(
+                    URL.batch_id == Batch.id,
+                    URL.outcome == URLStatus.PENDING.value
+                )
+            )
+
             if has_pending_urls:
                 # Query for all that have pending URLs
-                query = query.join(URL, Batch.id == URL.batch_id).filter(URL.outcome == URLStatus.PENDING.value)
+                query = query.where(exists(
+                    pending_url_subquery
+                ))
             else:
                 # Query for all that DO NOT have pending URLs
                 # (or that have no URLs at all)
-                query = query.join(
-                    URL,
-                    Batch.id == URL.batch_id,
-                    isouter=True
-                ).filter(
-                    or_(
-                        URL.outcome != URLStatus.PENDING.value,
-                        URL.outcome.is_(None)
+                query = query.where(
+                    not_(
+                        exists(
+                            pending_url_subquery
+                        )
                     )
                 )
         if collector_type:

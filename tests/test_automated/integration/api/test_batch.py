@@ -16,14 +16,14 @@ async def test_get_batch_status_pending_url_filter(api_test_helper):
     # Add an errored out batch
     batch_error = await ath.db_data_creator.batch_and_urls(
         strategy=CollectorType.EXAMPLE,
-        url_count=1,
+        url_count=2,
         batch_status=BatchStatus.ERROR
     )
 
     # Add a batch with pending urls
     batch_pending = await ath.db_data_creator.batch_and_urls(
         strategy=CollectorType.EXAMPLE,
-        url_count=1,
+        url_count=2,
         batch_status=BatchStatus.READY_TO_LABEL,
         with_html_content=True,
         url_status=URLStatus.PENDING
@@ -32,7 +32,7 @@ async def test_get_batch_status_pending_url_filter(api_test_helper):
     # Add a batch with submitted URLs
     batch_submitted = await ath.db_data_creator.batch_and_urls(
         strategy=CollectorType.EXAMPLE,
-        url_count=1,
+        url_count=2,
         batch_status=BatchStatus.READY_TO_LABEL,
         with_html_content=True,
         url_status=URLStatus.SUBMITTED
@@ -41,14 +41,14 @@ async def test_get_batch_status_pending_url_filter(api_test_helper):
     # Add an aborted batch
     batch_aborted = await ath.db_data_creator.batch_and_urls(
         strategy=CollectorType.EXAMPLE,
-        url_count=1,
+        url_count=2,
         batch_status=BatchStatus.ABORTED
     )
 
     # Add a batch with validated URLs
     batch_validated = await ath.db_data_creator.batch_and_urls(
         strategy=CollectorType.EXAMPLE,
-        url_count=1,
+        url_count=2,
         batch_status=BatchStatus.READY_TO_LABEL,
         with_html_content=True,
         url_status=URLStatus.VALIDATED
