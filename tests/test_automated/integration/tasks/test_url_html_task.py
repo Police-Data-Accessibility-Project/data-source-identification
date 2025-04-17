@@ -6,7 +6,7 @@ import pytest
 from collector_db.AsyncDatabaseClient import AsyncDatabaseClient
 from collector_db.enums import TaskType
 from core.DTOs.TaskOperatorRunInfo import TaskOperatorOutcome
-from core.classes.URLHTMLTaskOperator import URLHTMLTaskOperator
+from core.classes.task_operators.URLHTMLTaskOperator import URLHTMLTaskOperator
 from tests.helpers.DBDataCreator import DBDataCreator
 from html_tag_collector.DataClassTags import ResponseHTMLInfo
 from html_tag_collector.ResponseParser import HTMLResponseParser

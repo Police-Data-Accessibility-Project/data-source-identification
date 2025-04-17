@@ -5,8 +5,8 @@ import pytest
 from collector_db.enums import TaskType
 from collector_db.models import AutoRecordTypeSuggestion
 from core.DTOs.TaskOperatorRunInfo import TaskOperatorOutcome
-from core.classes.URLRecordTypeTaskOperator import URLRecordTypeTaskOperator
-from core.enums import RecordType, BatchStatus
+from core.classes.task_operators.URLRecordTypeTaskOperator import URLRecordTypeTaskOperator
+from core.enums import RecordType
 from tests.helpers.DBDataCreator import DBDataCreator
 from llm_api_logic.DeepSeekRecordClassifier import DeepSeekRecordClassifier
 

@@ -23,6 +23,7 @@ class FinalReviewAnnotationRecordTypeInfo(BaseModel):
         title="A dictionary, sorted by size and omitting zero values, of all record types suggested by users",
     )
 
+# region Agency
 class FinalReviewAnnotationAgencyUserInfo(GetNextURLForAgencyAgencyInfo):
     count: int = Field(title="Number of times suggested by users")
 
@@ -41,6 +42,7 @@ class FinalReviewAnnotationAgencyInfo(BaseModel):
     users: Optional[dict[int, FinalReviewAnnotationAgencyUserInfo]] = Field(
         title="A list, sorted by size, of all agencies suggested by users",
     )
+# endregion
 
 class FinalReviewAnnotationInfo(BaseModel):
     relevant: FinalReviewAnnotationRelevantInfo = Field(

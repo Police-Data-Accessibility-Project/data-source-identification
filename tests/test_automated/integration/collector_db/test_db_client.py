@@ -167,7 +167,7 @@ async def test_get_next_url_for_final_review_basic(db_data_creator: DBDataCreato
     )
 
     url_mapping = setup_info.url_mapping
-
+    # Add agency auto suggestions
     await db_data_creator.agency_auto_suggestions(
         url_id=url_mapping.url_id,
         count=3
@@ -478,6 +478,11 @@ async def test_approval_url_error(db_data_creator: DBDataCreator):
 async def test_get_next_url_for_user_relevance_annotation_pending(
         db_data_creator: DBDataCreator
 ):
+    """
+    Users should receive a valid URL to annotate
+    All users should receive the same next URL
+    Once any user annotates that URL, none of the users should receive it again
+    """
     setup_info = await setup_for_get_next_url_for_annotation(
         db_data_creator=db_data_creator,
         url_count=2
@@ -492,11 +497,45 @@ async def test_get_next_url_for_user_relevance_annotation_pending(
     )
 
     adb_client = db_data_creator.adb_client
-    url = await adb_client.get_next_url_for_relevance_annotation(
+    url_1 = await adb_client.get_next_url_for_relevance_annotation(
         user_id=1,
         batch_id=None
     )
-    assert url is not None
+    assert url_1 is not None
+
+    url_2 = await adb_client.get_next_url_for_relevance_annotation(
+        user_id=2,
+        batch_id=None
+    )
+    assert url_2 is not None
+
+    assert url_1.url_info.url == url_2.url_info.url
+
+    # Annotate this URL, then check that the second URL is returned
+    await adb_client.add_user_relevant_suggestion(
+        url_id=url_1.url_info.url_id,
+        user_id=1,
+        relevant=True
+    )
+
+    url_3 = await adb_client.get_next_url_for_relevance_annotation(
+        user_id=1,
+        batch_id=None
+    )
+    assert url_3 is not None
+
+    assert url_1 != url_3
+
+    # Check that the second URL is also returned for another user
+    url_4 = await adb_client.get_next_url_for_relevance_annotation(
+        user_id=2,
+        batch_id=None
+    )
+    assert url_4 is not None
+
+
+    assert url_4 == url_3
+
 
 @pytest.mark.asyncio
 async def test_get_next_url_for_annotation_batch_filtering(
@@ -643,26 +682,27 @@ async def test_annotate_url_marked_not_relevant(db_data_creator: DBDataCreator):
     )
     assert record_type_annotation_info.url_info.url_id != url_to_mark_not_relevant.url_id
 
-    # Other users should still receive the URL for record type annotation
+    # Other users also should not receive the URL for record type annotation
     record_type_annotation_info = await adb_client.get_next_url_for_record_type_annotation(
         user_id=2,
         batch_id=None
     )
-    assert record_type_annotation_info.url_info.url_id == url_to_mark_not_relevant.url_id
+    assert record_type_annotation_info.url_info.url_id != \
+           url_to_mark_not_relevant.url_id, "Other users should not receive the URL for record type annotation"
 
     # User should not receive the URL for agency annotation
-    agency_annotation_info = await adb_client.get_next_url_agency_for_annotation(
+    agency_annotation_info_user_1 = await adb_client.get_next_url_agency_for_annotation(
         user_id=1,
         batch_id=None
     )
-    assert agency_annotation_info.next_annotation.url_id != url_to_mark_not_relevant.url_id
+    assert agency_annotation_info_user_1.next_annotation.url_id != url_to_mark_not_relevant.url_id
 
-    # Other users should still receive the URL for agency annotation
-    agency_annotation_info = await adb_client.get_next_url_agency_for_annotation(
+    # Other users also should not receive the URL for agency annotation
+    agency_annotation_info_user_2 = await adb_client.get_next_url_agency_for_annotation(
         user_id=2,
         batch_id=None
     )
-    assert agency_annotation_info.next_annotation.url_id == url_to_mark_not_relevant.url_id
+    assert agency_annotation_info_user_1.next_annotation.url_id != url_to_mark_not_relevant.url_id
 
 @pytest.mark.asyncio
 async def test_annotate_url_agency_agency_not_in_db(db_data_creator: DBDataCreator):
@@ -682,3 +722,116 @@ async def test_annotate_url_agency_agency_not_in_db(db_data_creator: DBDataCreat
     agencies = await db_data_creator.adb_client.get_all(Agency)
     assert len(agencies)
     assert agencies[0].name == PLACEHOLDER_AGENCY_NAME
+
+@pytest.mark.asyncio
+async def test_get_next_url_for_user_record_type_annotation(db_data_creator: DBDataCreator):
+    """
+    All users should receive the same next valid URL for record type annotation
+    Once any user annotates that URL, none of the users should receive it
+    """
+    setup_info = await setup_for_get_next_url_for_annotation(
+        db_data_creator,
+        url_count=2
+    )
+
+    # All users should receive the same URL
+    url_1 = setup_info.insert_urls_info.url_mappings[0]
+    url_2 = setup_info.insert_urls_info.url_mappings[1]
+
+    adb_client = db_data_creator.adb_client
+
+    url_user_1 = await adb_client.get_next_url_for_record_type_annotation(
+        user_id=1,
+        batch_id=None
+    )
+    assert url_user_1 is not None
+
+    url_user_2 = await adb_client.get_next_url_for_record_type_annotation(
+        user_id=2,
+        batch_id=None
+    )
+
+    assert url_user_2 is not None
+
+    # Check that the URLs are the same
+    assert url_user_1 == url_user_2
+
+    # After annotating, both users should receive a different URL
+    await adb_client.add_user_record_type_suggestion(
+        user_id=1,
+        url_id=url_1.url_id,
+        record_type=RecordType.ARREST_RECORDS
+    )
+
+    next_url_user_1 = await adb_client.get_next_url_for_record_type_annotation(
+        user_id=1,
+        batch_id=None
+    )
+
+    next_url_user_2 = await adb_client.get_next_url_for_record_type_annotation(
+        user_id=2,
+        batch_id=None
+    )
+
+    assert next_url_user_1 != url_user_1
+    assert next_url_user_1 == next_url_user_2
+
+
+
+
+
+@pytest.mark.asyncio
+async def test_get_next_url_for_user_agency_annotation(db_data_creator: DBDataCreator):
+    """
+    All users should receive the same next valid URL for agency annotation
+    Once any user annotates that URL, none of the users should receive it
+    """
+    setup_info = await setup_for_annotate_agency(
+        db_data_creator,
+        url_count=2
+    )
+
+    # All users should receive the same URL
+    url_1 = setup_info.url_ids[0]
+    url_2 = setup_info.url_ids[1]
+
+    adb_client = db_data_creator.adb_client
+    url_user_1 = await adb_client.get_next_url_agency_for_annotation(
+        user_id=1,
+        batch_id=None
+    )
+    assert url_user_1 is not None
+
+    url_user_2 = await adb_client.get_next_url_agency_for_annotation(
+        user_id=2,
+        batch_id=None
+    )
+
+    assert url_user_2 is not None
+
+    # Check that the URLs are the same
+    assert url_user_1 == url_user_2
+
+    # Annotate the URL
+    await adb_client.add_agency_manual_suggestion(
+        url_id=url_1,
+        user_id=1,
+        is_new=True,
+        agency_id=None
+    )
+
+    # Both users should receive the next URL
+    next_url_user_1 = await adb_client.get_next_url_agency_for_annotation(
+        user_id=1,
+        batch_id=None
+    )
+    assert next_url_user_1 is not None
+
+    next_url_user_2 = await adb_client.get_next_url_agency_for_annotation(
+        user_id=2,
+        batch_id=None
+    )
+    assert next_url_user_2 is not None
+
+    assert url_user_1 != next_url_user_1
+    assert next_url_user_1 == next_url_user_2

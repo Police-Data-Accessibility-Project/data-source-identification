@@ -4,10 +4,9 @@ import pytest
 
 from collector_db.AsyncDatabaseClient import AsyncDatabaseClient
 from collector_db.DTOs.URLWithHTML import URLWithHTML
-from collector_db.enums import ValidationStatus, ValidationSource
 from collector_db.models import AutoRelevantSuggestion
 from core.DTOs.TaskOperatorRunInfo import TaskOperatorRunInfo, TaskOperatorOutcome
-from core.classes.URLRelevanceHuggingfaceTaskOperator import URLRelevanceHuggingfaceTaskOperator
+from core.classes.task_operators.URLRelevanceHuggingfaceTaskOperator import URLRelevanceHuggingfaceTaskOperator
 from tests.helpers.assert_functions import assert_database_has_no_tasks
 from hugging_face.HuggingFaceInterface import HuggingFaceInterface
 

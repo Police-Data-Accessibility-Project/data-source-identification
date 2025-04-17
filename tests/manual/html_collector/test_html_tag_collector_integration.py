@@ -2,7 +2,7 @@ import pytest
 
 from collector_db.AsyncDatabaseClient import AsyncDatabaseClient
 from collector_db.DTOs.URLInfo import URLInfo
-from core.classes.URLHTMLTaskOperator import URLHTMLTaskOperator
+from core.classes.task_operators.URLHTMLTaskOperator import URLHTMLTaskOperator
 from helpers.DBDataCreator import DBDataCreator
 from html_tag_collector.ResponseParser import HTMLResponseParser
 from html_tag_collector.RootURLCache import RootURLCache
