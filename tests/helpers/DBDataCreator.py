@@ -36,11 +36,15 @@ class DBDataCreator:
             self.db_client = DatabaseClient()
         self.adb_client: AsyncDatabaseClient = AsyncDatabaseClient()
 
-    def batch(self, strategy: CollectorType = CollectorType.EXAMPLE) -> int:
+    def batch(
+            self,
+            strategy: CollectorType = CollectorType.EXAMPLE,
+            batch_status: BatchStatus = BatchStatus.IN_PROCESS
+    ) -> int:
         return self.db_client.insert_batch(
             BatchInfo(
                 strategy=strategy.value,
-                status=BatchStatus.IN_PROCESS,
+                status=batch_status,
                 total_url_count=1,
                 parameters={"test_key": "test_value"},
                 user_id=1
@@ -56,11 +60,26 @@ class DBDataCreator:
     async def batch_and_urls(
             self,
             strategy: CollectorType = CollectorType.EXAMPLE,
-            url_count: int = 1,
-            with_html_content: bool = False
+            url_count: int = 3,
+            with_html_content: bool = False,
+            batch_status: BatchStatus = BatchStatus.READY_TO_LABEL,
+            url_status: URLStatus = URLStatus.PENDING
     ) -> BatchURLCreationInfo:
-        batch_id = self.batch(strategy=strategy)
-        iuis: InsertURLsInfo = self.urls(batch_id=batch_id, url_count=url_count)
+        batch_id = self.batch(
+            strategy=strategy,
+            batch_status=batch_status
+        )
+        if batch_status in (BatchStatus.ERROR, BatchStatus.ABORTED):
+            return BatchURLCreationInfo(
+                batch_id=batch_id,
+                url_ids=[],
+                urls=[]
+            )
+        iuis: InsertURLsInfo = self.urls(
+            batch_id=batch_id,
+            url_count=url_count,
+            outcome=url_status
+        )
         url_ids = [iui.url_id for iui in iuis.url_mappings]
         if with_html_content:
             await self.html_data(url_ids)

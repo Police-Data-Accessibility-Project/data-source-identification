@@ -67,12 +67,14 @@ class AsyncCore:
             self,
             collector_type: Optional[CollectorType],
             status: Optional[BatchStatus],
+            has_pending_urls: Optional[bool],
             page: int
     ) -> GetBatchStatusResponse:
         results = await self.adb_client.get_recent_batch_status_info(
             collector_type=collector_type,
             status=status,
-            page=page
+            page=page,
+            has_pending_urls=has_pending_urls
         )
         return GetBatchStatusResponse(results=results)
 
