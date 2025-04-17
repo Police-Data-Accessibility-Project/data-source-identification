@@ -2,16 +2,15 @@ from typing import Optional
 
 from collector_db.DTOs.URLHTMLContentInfo import HTMLContentType, URLHTMLContentInfo
 from collector_db.DTOs.URLWithHTML import URLWithHTML
-from collector_db.enums import ValidationStatus, ValidationSource, URLMetadataAttributeType
 from collector_db.models import AutomatedUrlAgencySuggestion, UserUrlAgencySuggestion, URLHTMLContent, URL, Agency, \
     AutoRecordTypeSuggestion, UserRecordTypeSuggestion, UserRelevantSuggestion, AutoRelevantSuggestion, \
     ConfirmedURLAgency
 from core.DTOs.GetNextURLForAgencyAnnotationResponse import GetNextURLForAgencyAgencyInfo
 from core.DTOs.GetNextURLForFinalReviewResponse import FinalReviewAnnotationRelevantInfo, \
-    FinalReviewAnnotationRelevantUsersInfo, FinalReviewAnnotationRecordTypeInfo, FinalReviewAnnotationAgencyAutoInfo, \
-    FinalReviewAnnotationAgencyInfo, FinalReviewAnnotationAgencyUserInfo
+    FinalReviewAnnotationRecordTypeInfo, FinalReviewAnnotationAgencyAutoInfo, \
+    FinalReviewAnnotationAgencyInfo
 from core.enums import RecordType, SuggestionType
-from html_tag_collector.DataClassTags import convert_to_response_html_info, ResponseHTMLInfo, ENUM_TO_ATTRIBUTE_MAPPING
+from html_tag_collector.DataClassTags import ResponseHTMLInfo, ENUM_TO_ATTRIBUTE_MAPPING
 
 class DTOConverter:
 
@@ -21,49 +20,35 @@ class DTOConverter:
 
     @staticmethod
     def final_review_annotation_relevant_info(
-        user_suggestions: list[UserRelevantSuggestion],
+        user_suggestion: UserRelevantSuggestion,
         auto_suggestion: AutoRelevantSuggestion
     ) -> FinalReviewAnnotationRelevantInfo:
 
         auto_value = auto_suggestion.relevant if auto_suggestion else None
-
-        relevant_count = 0
-        not_relevant_count = 0
-        for suggestion in user_suggestions:
-            if suggestion.relevant:
-                relevant_count += 1
-            else:
-                not_relevant_count += 1
+        user_value = user_suggestion.relevant if user_suggestion else None
         return FinalReviewAnnotationRelevantInfo(
             auto=auto_value,
-            users=FinalReviewAnnotationRelevantUsersInfo(
-                relevant=relevant_count,
-                not_relevant=not_relevant_count
-            )
+            user=user_value
         )
 
     @staticmethod
     def final_review_annotation_record_type_info(
-        user_suggestions: list[UserRecordTypeSuggestion],
+        user_suggestion: UserRecordTypeSuggestion,
         auto_suggestion: AutoRecordTypeSuggestion
     ):
 
-        user_count = {}
         if auto_suggestion is None:
             auto_value = None
         else:
             auto_value = RecordType(auto_suggestion.record_type)
-        for suggestion in user_suggestions:
-            value = RecordType(suggestion.record_type)
-            if value not in user_count:
-                user_count[value] = 0
-            user_count[value] += 1
-        # Sort users by count, descending
-        user_count = dict(sorted(user_count.items(), key=lambda x: x[1], reverse=True))
+        if user_suggestion is None:
+            user_value = None
+        else:
+            user_value = RecordType(user_suggestion.record_type)
 
         return FinalReviewAnnotationRecordTypeInfo(
             auto=auto_value,
-            users=user_count
+            user=user_value
         )
 
     @staticmethod
@@ -109,27 +94,20 @@ class DTOConverter:
 
     @staticmethod
     def user_url_agency_suggestion_to_final_review_annotation_agency_user_info(
-        user_url_agency_suggestions: list[UserUrlAgencySuggestion]
-    ) -> dict[int, FinalReviewAnnotationAgencyUserInfo]:
-        d = {}
-        for suggestion in user_url_agency_suggestions:
-            agency = suggestion.agency
-            agency_id = agency.agency_id
-            if agency.agency_id not in d:
-                d[agency_id] = FinalReviewAnnotationAgencyUserInfo(
-                    suggestion_type=SuggestionType.MANUAL_SUGGESTION,
-                    agency_name=agency.name,
-                    pdap_agency_id=agency_id,
-                    state=agency.state,
-                    county=agency.county,
-                    locality=agency.locality,
-                    count=1
-                )
-            else:
-                d[agency_id].count += 1
+        user_url_agency_suggestion: UserUrlAgencySuggestion
+    ) -> Optional[GetNextURLForAgencyAgencyInfo]:
+        suggestion = user_url_agency_suggestion
+        if suggestion is None:
+            return None
+        return GetNextURLForAgencyAgencyInfo(
+            suggestion_type=SuggestionType.MANUAL_SUGGESTION,
+            pdap_agency_id=suggestion.agency_id,
+            agency_name=suggestion.agency.name,
+            state=suggestion.agency.state,
+            county=suggestion.agency.county,
+            locality=suggestion.agency.locality
+        )
 
-        # Return sorted
-        return dict(sorted(d.items(), key=lambda x: x[1].count, reverse=True))
 
     @staticmethod
     def confirmed_agencies_to_final_review_annotation_agency_info(
@@ -154,7 +132,7 @@ class DTOConverter:
     def final_review_annotation_agency_info(
         automated_agency_suggestions: list[AutomatedUrlAgencySuggestion],
         confirmed_agencies: list[ConfirmedURLAgency],
-        user_agency_suggestions: list[UserUrlAgencySuggestion]
+        user_agency_suggestion: UserUrlAgencySuggestion
     ):
 
         confirmed_agency_info = DTOConverter.confirmed_agencies_to_final_review_annotation_agency_info(
@@ -166,12 +144,12 @@ class DTOConverter:
         )
 
         agency_user_info = DTOConverter.user_url_agency_suggestion_to_final_review_annotation_agency_user_info(
-            user_agency_suggestions
+            user_agency_suggestion
         )
 
         return FinalReviewAnnotationAgencyInfo(
             confirmed=confirmed_agency_info,
-            users=agency_user_info,
+            user=agency_user_info,
             auto=agency_auto_info
         )
 

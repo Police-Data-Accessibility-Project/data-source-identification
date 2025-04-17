@@ -119,16 +119,16 @@ class URL(Base):
     )
     automated_agency_suggestions = relationship(
         "AutomatedUrlAgencySuggestion", back_populates="url")
-    user_agency_suggestions = relationship(
-        "UserUrlAgencySuggestion", back_populates="url")
+    user_agency_suggestion = relationship(
+        "UserUrlAgencySuggestion", uselist=False, back_populates="url")
     auto_record_type_suggestion = relationship(
         "AutoRecordTypeSuggestion", uselist=False, back_populates="url")
-    user_record_type_suggestions = relationship(
-        "UserRecordTypeSuggestion", back_populates="url")
+    user_record_type_suggestion = relationship(
+        "UserRecordTypeSuggestion", uselist=False, back_populates="url")
     auto_relevant_suggestion = relationship(
         "AutoRelevantSuggestion", uselist=False, back_populates="url")
-    user_relevant_suggestions = relationship(
-        "UserRelevantSuggestion", back_populates="url")
+    user_relevant_suggestion = relationship(
+        "UserRelevantSuggestion", uselist=False, back_populates="url")
     reviewing_user = relationship(
         "ReviewingUserURL", uselist=False, back_populates="url")
     optional_data_source_metadata = relationship(
@@ -375,7 +375,7 @@ class UserUrlAgencySuggestion(Base):
     is_new = Column(Boolean, nullable=True)
 
     agency = relationship("Agency", back_populates="user_suggestions")
-    url = relationship("URL", back_populates="user_agency_suggestions")
+    url = relationship("URL", back_populates="user_agency_suggestion")
 
     __table_args__ = (
         UniqueConstraint("agency_id", "url_id", "user_id", name="uq_user_url_agency_suggestions"),
@@ -432,7 +432,7 @@ class UserRelevantSuggestion(Base):
 
     # Relationships
 
-    url = relationship("URL", back_populates="user_relevant_suggestions")
+    url = relationship("URL", back_populates="user_relevant_suggestion")
 
 
 class UserRecordTypeSuggestion(Base):
@@ -451,4 +451,4 @@ class UserRecordTypeSuggestion(Base):
 
     # Relationships
 
-    url = relationship("URL", back_populates="user_record_type_suggestions")
+    url = relationship("URL", back_populates="user_record_type_suggestion")

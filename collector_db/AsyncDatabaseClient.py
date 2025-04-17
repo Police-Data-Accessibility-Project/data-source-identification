@@ -1065,19 +1065,6 @@ class AsyncDatabaseClient:
             )
         )
 
-        count_subqueries = [
-            count_subquery(model=model)
-            for model in models
-        ]
-
-        sum_of_count_subqueries = (
-            sum(
-                [
-                    coalesce(subquery.c.count, 0)
-                    for subquery in count_subqueries
-                ]
-            )
-        )
 
         # Basic URL query
         url_query = (
@@ -1086,13 +1073,10 @@ class AsyncDatabaseClient:
                 (
                     sum_of_exist_subqueries
                 ).label("total_distinct_annotation_count"),
-                (
-                    sum_of_count_subqueries
-                ).label("total_overall_annotation_count")
             )
         )
 
-        for subquery in (exist_subqueries + count_subqueries):
+        for subquery in exist_subqueries:
             url_query = url_query.outerjoin(
                 subquery, URL.id == subquery.c.url_id
             )
@@ -1110,8 +1094,8 @@ class AsyncDatabaseClient:
             URL.html_content,
             URL.auto_record_type_suggestion,
             URL.auto_relevant_suggestion,
-            URL.user_relevant_suggestions,
-            URL.user_record_type_suggestions,
+            URL.user_relevant_suggestion,
+            URL.user_record_type_suggestion,
             URL.optional_data_source_metadata,
         ]
 
@@ -1122,7 +1106,7 @@ class AsyncDatabaseClient:
         # The below relationships are joined to entities that are joined to the URL
         double_join_relationships = [
             (URL.automated_agency_suggestions, AutomatedUrlAgencySuggestion.agency),
-            (URL.user_agency_suggestions, UserUrlAgencySuggestion.agency),
+            (URL.user_agency_suggestion, UserUrlAgencySuggestion.agency),
             (URL.confirmed_agencies, ConfirmedURLAgency.agency)
         ]
         for primary, secondary in double_join_relationships:
@@ -1134,7 +1118,6 @@ class AsyncDatabaseClient:
         # Apply order clause
         url_query = url_query.order_by(
             desc("total_distinct_annotation_count"),
-            desc("total_overall_annotation_count"),
             asc(URL.id)
         )
 
@@ -1173,16 +1156,16 @@ class AsyncDatabaseClient:
             description=result.description,
             annotations=FinalReviewAnnotationInfo(
                 relevant=DTOConverter.final_review_annotation_relevant_info(
-                    user_suggestions=result.user_relevant_suggestions,
+                    user_suggestion=result.user_relevant_suggestion,
                     auto_suggestion=result.auto_relevant_suggestion
                 ),
                 record_type=DTOConverter.final_review_annotation_record_type_info(
-                    user_suggestions=result.user_record_type_suggestions,
+                    user_suggestion=result.user_record_type_suggestion,
                     auto_suggestion=result.auto_record_type_suggestion
                 ),
                 agency=DTOConverter.final_review_annotation_agency_info(
                     automated_agency_suggestions=result.automated_agency_suggestions,
-                    user_agency_suggestions=result.user_agency_suggestions,
+                    user_agency_suggestion=result.user_agency_suggestion,
                     confirmed_agencies=result.confirmed_agencies
                 )
             ),
