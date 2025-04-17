@@ -186,24 +186,20 @@ async def test_get_next_url_for_final_review_basic(db_data_creator: DBDataCreato
     annotation_info = result.annotations
     relevant_info = annotation_info.relevant
     assert relevant_info.auto == True
-    assert relevant_info.users.not_relevant == 1
+    assert relevant_info.user == False
 
     record_type_info = annotation_info.record_type
     assert record_type_info.auto == RecordType.ARREST_RECORDS
-    user_d = record_type_info.users
-    assert user_d[RecordType.ACCIDENT_REPORTS] == 1
-    assert list(user_d.keys()) == [RecordType.ACCIDENT_REPORTS]
-
+    assert record_type_info.user == RecordType.ACCIDENT_REPORTS
 
     agency_info = annotation_info.agency
     auto_agency_suggestions = agency_info.auto
     assert auto_agency_suggestions.unknown == False
     assert len(auto_agency_suggestions.suggestions) == 3
 
-    # Check user agency suggestions exist and in descending order of count
-    user_agency_suggestions = agency_info.users
-    user_agency_suggestions_as_list = list(user_agency_suggestions.values())
-    assert len(user_agency_suggestions_as_list) == 1
+    # Check user agency suggestion exists and is correct
+    assert agency_info.user.pdap_agency_id == setup_info.user_agency_id
+
 
 @pytest.mark.asyncio
 async def test_get_next_url_for_final_review_batch_id_filtering(db_data_creator: DBDataCreator):
@@ -301,12 +297,11 @@ async def test_get_next_url_for_final_review_no_annotations(db_data_creator: DBD
 
     record_type = annotations.record_type
     assert record_type.auto is None
-    assert record_type.users == {}
+    assert record_type.user is None
 
     relevant = annotations.relevant
     assert relevant.auto is None
-    assert relevant.users.relevant == 0
-    assert relevant.users.not_relevant == 0
+    assert relevant.user is None
 
 @pytest.mark.asyncio
 async def test_get_next_url_for_final_review_only_confirmed_urls(db_data_creator: DBDataCreator):
