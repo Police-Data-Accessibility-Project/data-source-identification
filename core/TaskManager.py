@@ -159,7 +159,7 @@ class TaskManager:
             case TaskOperatorOutcome.SUCCESS:
                 await self.adb_client.update_task_status(
                     task_id=run_info.task_id,
-                    status=BatchStatus.COMPLETE
+                    status=BatchStatus.READY_TO_LABEL
                 )
 
     async def handle_task_error(self, run_info: TaskOperatorRunInfo):

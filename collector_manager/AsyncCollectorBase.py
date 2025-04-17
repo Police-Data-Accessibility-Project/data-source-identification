@@ -131,4 +131,4 @@ class AsyncCollectorBase(ABC):
         ))
 
     async def close(self) -> None:
-        self.status = BatchStatus.COMPLETE
+        self.status = BatchStatus.READY_TO_LABEL

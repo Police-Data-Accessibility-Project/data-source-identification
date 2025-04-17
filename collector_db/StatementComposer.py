@@ -22,7 +22,7 @@ class StatementComposer:
                      join(Task, LinkTaskURL.task_id == Task.id).
                      where(LinkTaskURL.url_id == URL.id).
                      where(Task.task_type == TaskType.HTML.value).
-                     where(Task.task_status == BatchStatus.COMPLETE.value)
+                     where(Task.task_status == BatchStatus.READY_TO_LABEL.value)
                      )
         query = (
             select(URL).

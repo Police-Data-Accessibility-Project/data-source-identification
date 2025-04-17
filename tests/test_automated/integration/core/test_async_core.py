@@ -44,7 +44,7 @@ async def test_conclude_task_success(db_data_creator: DBDataCreator):
 
     task_info = await ddc.adb_client.get_task_info(task_id=task_id)
 
-    assert task_info.task_status == BatchStatus.COMPLETE
+    assert task_info.task_status == BatchStatus.READY_TO_LABEL
     assert len(task_info.urls) == 3
 
 @pytest.mark.asyncio
@@ -65,7 +65,7 @@ async def test_conclude_task_success(db_data_creator: DBDataCreator):
 
     task_info = await ddc.adb_client.get_task_info(task_id=task_id)
 
-    assert task_info.task_status == BatchStatus.COMPLETE
+    assert task_info.task_status == BatchStatus.READY_TO_LABEL
     assert len(task_info.urls) == 3
 
 @pytest.mark.asyncio

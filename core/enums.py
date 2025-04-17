@@ -2,7 +2,7 @@ from enum import Enum
 
 
 class BatchStatus(Enum):
-    COMPLETE = "complete"
+    READY_TO_LABEL = "ready to label"
     IN_PROCESS = "in-process"
     ERROR = "error"
     ABORTED = "aborted"
