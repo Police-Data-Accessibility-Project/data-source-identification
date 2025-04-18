@@ -9,11 +9,14 @@ from core.AsyncCore import AsyncCore
 from core.DTOs.CollectorStartInfo import CollectorStartInfo
 from core.SourceCollectorCore import SourceCollectorCore
 from core.enums import BatchStatus
+from tests.helpers.patch_functions import block_sleep
+
 
 @pytest.mark.asyncio
 async def test_example_collector_lifecycle(
     test_core: SourceCollectorCore,
-    test_async_core: AsyncCore
+    test_async_core: AsyncCore,
+    monkeypatch
 ):
     """
     Test the flow of an example collector, which generates fake urls
@@ -22,6 +25,9 @@ async def test_example_collector_lifecycle(
     acore = test_async_core
     core = test_core
     db_client = core.db_client
+
+    barrier = await block_sleep(monkeypatch)
+
     dto = ExampleInputDTO(
         example_field="example_value",
         sleep_time=1
@@ -36,11 +42,13 @@ async def test_example_collector_lifecycle(
 
     batch_id = csi.batch_id
 
+    # Yield control so coroutine runs up to the barrier
+    await asyncio.sleep(0)
+
     assert core.get_status(batch_id) == BatchStatus.IN_PROCESS
-    print("Sleeping for 1.5 seconds...")
-    await asyncio.sleep(1.5)
+    # Release the barrier to resume execution
+    barrier.release()
     await acore.collector_manager.logger.flush_all()
-    print("Done sleeping...")
     assert core.get_status(batch_id) == BatchStatus.READY_TO_LABEL
 
     batch_info: BatchInfo = db_client.get_batch_by_id(batch_id)
@@ -48,7 +56,7 @@ async def test_example_collector_lifecycle(
     assert batch_info.status == BatchStatus.READY_TO_LABEL
     assert batch_info.total_url_count == 2
     assert batch_info.parameters == dto.model_dump()
-    assert batch_info.compute_time > 1
+    assert batch_info.compute_time > 0
 
     url_infos = db_client.get_urls_by_batch(batch_id)
     assert len(url_infos) == 2
@@ -61,15 +69,19 @@ async def test_example_collector_lifecycle(
 @pytest.mark.asyncio
 async def test_example_collector_lifecycle_multiple_batches(
         test_core: SourceCollectorCore,
-        test_async_core: AsyncCore
+        test_async_core: AsyncCore,
+        monkeypatch
 ):
     """
     Test the flow of an example collector, which generates fake urls
     and saves them to the database
     """
+    barrier = await block_sleep(monkeypatch)
     acore = test_async_core
     core = test_core
     csis: list[CollectorStartInfo] = []
+
+
     for i in range(3):
         dto = ExampleInputDTO(
             example_field="example_value",
@@ -82,12 +94,16 @@ async def test_example_collector_lifecycle_multiple_batches(
         )
         csis.append(csi)
 
+    await asyncio.sleep(0)
 
     for csi in csis:
         print("Batch ID:", csi.batch_id)
         assert core.get_status(csi.batch_id) == BatchStatus.IN_PROCESS
 
-    await asyncio.sleep(3)
+    barrier.release()
+
+    await asyncio.sleep(0.15)
 
     for csi in csis:
         assert core.get_status(csi.batch_id) == BatchStatus.READY_TO_LABEL
+

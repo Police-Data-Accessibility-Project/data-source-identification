@@ -1,18 +1,22 @@
+import asyncio
 import time
+
+import pytest
 
 from collector_db.DTOs.BatchInfo import BatchInfo
 from collector_manager.DTOs.ExampleInputDTO import ExampleInputDTO
 from tests.test_automated.integration.api.conftest import disable_task_trigger
 
 
-def test_duplicates(api_test_helper):
+@pytest.mark.asyncio
+async def test_duplicates(api_test_helper):
     ath = api_test_helper
 
     # Temporarily disable task trigger
     disable_task_trigger(ath)
 
     dto = ExampleInputDTO(
-            sleep_time=1
+            sleep_time=0
         )
 
     batch_id_1 = ath.request_validator.example_collector(
@@ -21,15 +25,14 @@ def test_duplicates(api_test_helper):
 
     assert batch_id_1 is not None
 
-    time.sleep(1)
-
     batch_id_2 = ath.request_validator.example_collector(
         dto=dto
     )["batch_id"]
 
     assert batch_id_2 is not None
 
-    time.sleep(1.5)
+    await ath.wait_for_all_batches_to_complete()
+
 
     bi_1: BatchInfo = ath.request_validator.get_batch_info(batch_id_1)
     bi_2: BatchInfo = ath.request_validator.get_batch_info(batch_id_2)

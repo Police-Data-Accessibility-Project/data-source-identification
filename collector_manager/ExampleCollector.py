@@ -21,9 +21,14 @@ class ExampleCollector(AsyncCollectorBase):
         sleep_time = dto.sleep_time
         for i in range(sleep_time):  # Simulate a task
             await self.log(f"Step {i + 1}/{sleep_time}")
-            await asyncio.sleep(1)  # Simulate work
+            await self.sleep()
         self.data = ExampleOutputDTO(
             message=f"Data collected by {self.batch_id}",
             urls=["https://example.com", "https://example.com/2"],
             parameters=self.dto.model_dump(),
         )
+
+    @staticmethod
+    async def sleep():
+        # Simulate work
+        await asyncio.sleep(1)
