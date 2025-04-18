@@ -94,7 +94,7 @@ async def test_delete_old_logs(db_data_creator: DBDataCreator):
     db_client.insert_logs(log_infos=log_infos)
     logs = await adb_client.get_logs_by_batch_id(batch_id=batch_id)
     assert len(logs) == 3
-    db_client.delete_old_logs()
+    await adb_client.delete_old_logs()
 
     logs = await adb_client.get_logs_by_batch_id(batch_id=batch_id)
     assert len(logs) == 0

@@ -13,10 +13,8 @@ from core.SourceCollectorCore import SourceCollectorCore
 def test_core(db_client_test):
     core = SourceCollectorCore(
         db_client=db_client_test,
-        dev_mode=True
     )
     yield core
-    core.shutdown()
 
 
 @pytest.fixture

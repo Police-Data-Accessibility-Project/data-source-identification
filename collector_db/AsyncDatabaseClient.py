@@ -1,8 +1,9 @@
+from datetime import datetime, timedelta
 from functools import wraps
 from typing import Optional, Type, Any, List
 
 from fastapi import HTTPException
-from sqlalchemy import select, exists, func, case, desc, Select, not_, and_, or_, update, Delete, Insert, asc
+from sqlalchemy import select, exists, func, case, desc, Select, not_, and_, or_, update, Delete, Insert, asc, delete
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.orm import selectinload, joinedload, QueryableAttribute, aliased
@@ -1614,4 +1615,16 @@ class AsyncDatabaseClient:
         raw_results = await session.execute(query)
         logs = raw_results.scalars().all()
         return ([LogOutputInfo(**log.__dict__) for log in logs])
+
+    @session_manager
+    async def delete_old_logs(self, session):
+        """
+        Delete logs older than a day
+        """
+        statement = delete(Log).where(
+            Log.created_at < datetime.now() - timedelta(days=1)
+        )
+        await session.execute(statement)
+
+
 
