@@ -159,15 +159,6 @@ class DatabaseClient:
         return BatchStatus(batch.status)
 
     @session_manager
-    def delete_old_logs(self, session):
-        """
-        Delete logs older than a day
-        """
-        session.query(Log).filter(
-            Log.created_at < datetime.now() - timedelta(days=1)
-        ).delete()
-
-    @session_manager
     def update_url(self, session, url_info: URLInfo):
         url = session.query(URL).filter_by(id=url_info.id).first()
         url.collector_metadata = url_info.collector_metadata

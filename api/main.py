@@ -96,7 +96,6 @@ async def lifespan(app: FastAPI):
     # Clean up resources, close connections, etc.
     await core_logger.shutdown()
     await async_core.shutdown()
-    source_collector_core.shutdown()
     await session.close()
     pass
 
