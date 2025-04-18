@@ -1,3 +1,5 @@
+from typing import Optional
+
 from pydantic import BaseModel
 
 from collector_db.DTOs.InsertURLsInfo import InsertURLsInfo
@@ -36,11 +38,12 @@ class AnnotateAgencySetupInfo(BaseModel):
 async def setup_for_annotate_agency(
         db_data_creator: DBDataCreator,
         url_count: int,
-        suggestion_type: SuggestionType = SuggestionType.UNKNOWN
+        suggestion_type: SuggestionType = SuggestionType.UNKNOWN,
+        with_html_content: bool = True
 ):
     buci: BatchURLCreationInfo = await db_data_creator.batch_and_urls(
         url_count=url_count,
-        with_html_content=True
+        with_html_content=with_html_content
     )
     await db_data_creator.auto_suggestions(
         url_ids=buci.url_ids,
@@ -53,10 +56,11 @@ async def setup_for_annotate_agency(
 class FinalReviewSetupInfo(BaseModel):
     batch_id: int
     url_mapping: URLMapping
+    user_agency_id: Optional[int]
 
 async def setup_for_get_next_url_for_final_review(
         db_data_creator: DBDataCreator,
-        annotation_count: int,
+        annotation_count: Optional[int] = None,
         include_user_annotations: bool = True,
         include_miscellaneous_metadata: bool = True
 ) -> FinalReviewSetupInfo:
@@ -75,27 +79,25 @@ async def setup_for_get_next_url_for_final_review(
         await db_data_creator.url_miscellaneous_metadata(url_id=url_mapping.url_id)
     await db_data_creator.html_data([url_mapping.url_id])
 
-    async def add_agency_suggestion(count: int):
+    async def add_agency_suggestion() -> int:
         agency_id = await db_data_creator.agency()
-        for i in range(count):
-            await db_data_creator.agency_user_suggestions(
-                url_id=url_mapping.url_id,
-                agency_id=agency_id
-            )
+        await db_data_creator.agency_user_suggestions(
+            url_id=url_mapping.url_id,
+            agency_id=agency_id
+        )
+        return agency_id
 
-    async def add_record_type_suggestion(count: int, record_type: RecordType):
-        for i in range(count):
-            await db_data_creator.user_record_type_suggestion(
-                url_id=url_mapping.url_id,
-                record_type=record_type
-            )
+    async def add_record_type_suggestion(record_type: RecordType):
+        await db_data_creator.user_record_type_suggestion(
+            url_id=url_mapping.url_id,
+            record_type=record_type
+        )
 
-    async def add_relevant_suggestion(count: int, relevant: bool):
-        for i in range(count):
-            await db_data_creator.user_relevant_suggestion(
-                url_id=url_mapping.url_id,
-                relevant=relevant
-            )
+    async def add_relevant_suggestion(relevant: bool):
+        await db_data_creator.user_relevant_suggestion(
+            url_id=url_mapping.url_id,
+            relevant=relevant
+        )
 
     await db_data_creator.auto_relevant_suggestions(
         url_id=url_mapping.url_id,
@@ -108,18 +110,14 @@ async def setup_for_get_next_url_for_final_review(
     )
 
     if include_user_annotations:
-        await add_relevant_suggestion(annotation_count, True)
-        await add_relevant_suggestion(1, False)
-        await add_record_type_suggestion(3, RecordType.ARREST_RECORDS)
-        await add_record_type_suggestion(2, RecordType.DISPATCH_RECORDINGS)
-        await add_record_type_suggestion(1, RecordType.ACCIDENT_REPORTS)
-
-    if include_user_annotations:
-        # Add user suggestions for agencies, one suggested by 3 users, another by 2, another by 1
-        for i in range(annotation_count):
-            await add_agency_suggestion(i + 1)
+        await add_relevant_suggestion(False)
+        await add_record_type_suggestion(RecordType.ACCIDENT_REPORTS)
+        user_agency_id = await add_agency_suggestion()
+    else:
+        user_agency_id = None
 
     return FinalReviewSetupInfo(
         batch_id=batch_id,
-        url_mapping=url_mapping
+        url_mapping=url_mapping,
+        user_agency_id=user_agency_id
     )

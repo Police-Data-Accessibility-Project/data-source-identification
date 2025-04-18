@@ -1,15 +1,12 @@
-from typing import Any
 
 import pytest
 
 from collector_db.DTOs.InsertURLsInfo import InsertURLsInfo
 from collector_db.DTOs.URLMapping import URLMapping
-from collector_db.enums import URLMetadataAttributeType, ValidationStatus, ValidationSource
 from collector_db.models import UserUrlAgencySuggestion, UserRelevantSuggestion, UserRecordTypeSuggestion
 from core.DTOs.GetNextRecordTypeAnnotationResponseInfo import GetNextRecordTypeAnnotationResponseOuterInfo
 from core.DTOs.GetNextRelevanceAnnotationResponseInfo import GetNextRelevanceAnnotationResponseOuterInfo
 from core.DTOs.GetNextURLForAgencyAnnotationResponse import URLAgencyAnnotationPostInfo
-from core.DTOs.GetNextURLForAnnotationResponse import GetNextURLForAnnotationResponse
 from core.DTOs.RecordTypeAnnotationPostInfo import RecordTypeAnnotationPostInfo
 from core.DTOs.RelevanceAnnotationPostInfo import RelevanceAnnotationPostInfo
 from core.enums import RecordType, SuggestionType
@@ -28,8 +25,12 @@ def check_url_mappings_match(
 def check_html_info_not_empty(
     html_info: ResponseHTMLInfo
 ):
-    assert html_info.description != ""
-    assert html_info.title != ""
+    assert not html_info_empty(html_info)
+
+def html_info_empty(
+    html_info: ResponseHTMLInfo
+) -> bool:
+    return html_info.description == "" and html_info.title == ""
 
 @pytest.mark.asyncio
 async def test_annotate_relevancy(api_test_helper):
@@ -66,6 +67,9 @@ async def test_annotate_relevancy(api_test_helper):
 
     # Validate that the correct relevant value is returned
     assert inner_info_1.suggested_relevant is True
+
+    # A second user should see the same URL
+
 
     #  Annotate with value 'False' and get next URL
     request_info_2: GetNextRelevanceAnnotationResponseOuterInfo = api_test_helper.request_validator.post_relevance_annotation_and_get_next(
@@ -105,7 +109,6 @@ async def test_annotate_relevancy(api_test_helper):
     assert result_2.relevant is True
 
     # If user submits annotation for same URL, the URL should be overwritten
-
     request_info_4: GetNextRelevanceAnnotationResponseOuterInfo = api_test_helper.request_validator.post_relevance_annotation_and_get_next(
         url_id=inner_info_1.url_info.url_id,
         relevance_annotation_post_info=RelevanceAnnotationPostInfo(
@@ -123,6 +126,36 @@ async def test_annotate_relevancy(api_test_helper):
             assert results[0].relevant is True
 
 
+@pytest.mark.asyncio
+async def test_annotate_relevancy_no_html(api_test_helper):
+    ath = api_test_helper
+
+    batch_id = ath.db_data_creator.batch()
+
+    # Create 2 URLs with outcome `pending`
+    iui: InsertURLsInfo = ath.db_data_creator.urls(batch_id=batch_id, url_count=2)
+
+    url_1 = iui.url_mappings[0]
+    url_2 = iui.url_mappings[1]
+
+    # Add `Relevancy` attribute with value `True` to 1st URL
+    await ath.db_data_creator.auto_relevant_suggestions(
+        url_id=url_1.url_id,
+        relevant=True
+    )
+
+    # Add 'Relevancy' attribute with value `False` to 2nd URL
+    await ath.db_data_creator.auto_relevant_suggestions(
+        url_id=url_2.url_id,
+        relevant=False
+    )
+
+    # Call `GET` `/annotate/relevance` and receive next URL
+    request_info_1: GetNextRelevanceAnnotationResponseOuterInfo = api_test_helper.request_validator.get_next_relevance_annotation()
+    inner_info_1 = request_info_1.next_annotation
+
+    check_url_mappings_match(inner_info_1.url_info, url_1)
+    assert html_info_empty(inner_info_1.html_info)
 
 @pytest.mark.asyncio
 async def test_annotate_record_type(api_test_helper):
@@ -213,6 +246,36 @@ async def test_annotate_record_type(api_test_helper):
         if result.url_id == inner_info_1.url_info.url_id:
             assert result.record_type == RecordType.BOOKING_REPORTS.value
 
+@pytest.mark.asyncio
+async def test_annotate_record_type_no_html_info(api_test_helper):
+    ath = api_test_helper
+
+    batch_id = ath.db_data_creator.batch()
+
+    # Create 2 URLs with outcome `pending`
+    iui: InsertURLsInfo = ath.db_data_creator.urls(batch_id=batch_id, url_count=2)
+
+    url_1 = iui.url_mappings[0]
+    url_2 = iui.url_mappings[1]
+
+    # Add record type attribute with value `Accident Reports` to 1st URL
+    await ath.db_data_creator.auto_record_type_suggestions(
+        url_id=url_1.url_id,
+        record_type=RecordType.ACCIDENT_REPORTS
+    )
+
+    # Add 'Record Type' attribute with value `Dispatch Recordings` to 2nd URL
+    await ath.db_data_creator.auto_record_type_suggestions(
+        url_id=url_2.url_id,
+        record_type=RecordType.DISPATCH_RECORDINGS
+    )
+
+    # Call `GET` `/annotate/record-type` and receive next URL
+    request_info_1: GetNextRecordTypeAnnotationResponseOuterInfo = api_test_helper.request_validator.get_next_record_type_annotation()
+    inner_info_1 = request_info_1.next_annotation
+
+    check_url_mappings_match(inner_info_1.url_info, url_1)
+    assert html_info_empty(inner_info_1.html_info)
 
 @pytest.mark.asyncio
 async def test_annotate_agency_multiple_auto_suggestions(api_test_helper):
@@ -255,6 +318,36 @@ async def test_annotate_agency_multiple_auto_suggestions(api_test_helper):
         assert agency_suggestion.county is not None
         assert agency_suggestion.locality is not None
 
+
+@pytest.mark.asyncio
+async def test_annotate_agency_multiple_auto_suggestions_no_html(api_test_helper):
+    """
+    Test Scenario: Multiple Auto Suggestions
+    A URL has multiple Agency Auto Suggestion and has not been annotated by the User
+    The user should receive all of the auto suggestions with full detail
+    """
+    ath = api_test_helper
+    buci: BatchURLCreationInfo = await ath.db_data_creator.batch_and_urls(
+        url_count=1,
+        with_html_content=False
+    )
+    await ath.db_data_creator.auto_suggestions(
+        url_ids=buci.url_ids,
+        num_suggestions=2,
+        suggestion_type=SuggestionType.AUTO_SUGGESTION
+    )
+
+    # User requests next annotation
+    response = await ath.request_validator.get_next_agency_annotation()
+
+    assert response.next_annotation
+    next_annotation = response.next_annotation
+    # Check that url_id matches the one we inserted
+    assert next_annotation.url_id == buci.url_ids[0]
+
+    # Check that html data is not present
+    assert next_annotation.html_info.description == ""
+    assert next_annotation.html_info.title == ""
 
 @pytest.mark.asyncio
 async def test_annotate_agency_single_unknown_auto_suggestion(api_test_helper):
@@ -329,12 +422,6 @@ async def test_annotate_agency_other_user_annotation(api_test_helper):
     )
     url_ids = setup_info.url_ids
 
-
-    await ath.db_data_creator.manual_suggestion(
-        user_id=MOCK_USER_ID + 1,
-        url_id=url_ids[0],
-    )
-
     response = await ath.request_validator.get_next_agency_annotation()
 
     assert response.next_annotation
@@ -348,6 +435,16 @@ async def test_annotate_agency_other_user_annotation(api_test_helper):
 
     # Check that one agency_suggestion exists
     assert len(next_annotation.agency_suggestions) == 1
+
+    # Test that another user can insert a suggestion
+    await ath.db_data_creator.manual_suggestion(
+        user_id=MOCK_USER_ID + 1,
+        url_id=url_ids[0],
+    )
+
+    # After this, text that our user does not receive this URL
+    response = await ath.request_validator.get_next_agency_annotation()
+    assert response.next_annotation is None
 
 @pytest.mark.asyncio
 async def test_annotate_agency_submit_and_get_next(api_test_helper):

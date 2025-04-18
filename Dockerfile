@@ -13,7 +13,6 @@ RUN playwright install chromium
 RUN playwright install-deps chromium
 
 # Copy project files
-COPY agency_identifier ./agency_identifier
 COPY api ./api
 COPY collector_db ./collector_db
 COPY collector_manager ./collector_manager

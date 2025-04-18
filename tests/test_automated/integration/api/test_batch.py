@@ -1,9 +1,87 @@
+import asyncio
 import time
+
+import pytest
 
 from collector_db.DTOs.BatchInfo import BatchInfo
 from collector_db.DTOs.InsertURLsInfo import InsertURLsInfo
 from collector_manager.DTOs.ExampleInputDTO import ExampleInputDTO
+from collector_manager.enums import CollectorType, URLStatus
 from core.enums import BatchStatus
+
+@pytest.mark.asyncio
+async def test_get_batch_status_pending_url_filter(api_test_helper):
+    ath = api_test_helper
+
+    # Add an errored out batch
+    batch_error = await ath.db_data_creator.batch_and_urls(
+        strategy=CollectorType.EXAMPLE,
+        url_count=2,
+        batch_status=BatchStatus.ERROR
+    )
+
+    # Add a batch with pending urls
+    batch_pending = await ath.db_data_creator.batch_and_urls(
+        strategy=CollectorType.EXAMPLE,
+        url_count=2,
+        batch_status=BatchStatus.READY_TO_LABEL,
+        with_html_content=True,
+        url_status=URLStatus.PENDING
+    )
+
+    # Add a batch with submitted URLs
+    batch_submitted = await ath.db_data_creator.batch_and_urls(
+        strategy=CollectorType.EXAMPLE,
+        url_count=2,
+        batch_status=BatchStatus.READY_TO_LABEL,
+        with_html_content=True,
+        url_status=URLStatus.SUBMITTED
+    )
+
+    # Add an aborted batch
+    batch_aborted = await ath.db_data_creator.batch_and_urls(
+        strategy=CollectorType.EXAMPLE,
+        url_count=2,
+        batch_status=BatchStatus.ABORTED
+    )
+
+    # Add a batch with validated URLs
+    batch_validated = await ath.db_data_creator.batch_and_urls(
+        strategy=CollectorType.EXAMPLE,
+        url_count=2,
+        batch_status=BatchStatus.READY_TO_LABEL,
+        with_html_content=True,
+        url_status=URLStatus.VALIDATED
+    )
+
+    # Test filter for pending URLs and only retrieve the second batch
+    pending_urls_results = ath.request_validator.get_batch_statuses(
+        has_pending_urls=True
+    )
+
+    assert len(pending_urls_results.results) == 1
+    assert pending_urls_results.results[0].id == batch_pending.batch_id
+
+    # Test filter without pending URLs and retrieve the other four batches
+    no_pending_urls_results = ath.request_validator.get_batch_statuses(
+        has_pending_urls=False
+    )
+
+    assert len(no_pending_urls_results.results) == 4
+    for result in no_pending_urls_results.results:
+        assert result.id in [
+            batch_error.batch_id,
+            batch_submitted.batch_id,
+            batch_validated.batch_id,
+            batch_aborted.batch_id
+        ]
+
+    # Test no filter for pending URLs and retrieve all batches
+    no_filter_results = ath.request_validator.get_batch_statuses()
+
+    assert len(no_filter_results.results) == 5
+
+
 
 
 def test_abort_batch(api_test_helper):
@@ -18,8 +96,6 @@ def test_abort_batch(api_test_helper):
     response = ath.request_validator.abort_batch(batch_id=batch_id)
 
     assert response.message == "Batch aborted."
-
-    time.sleep(3)
 
     bi: BatchInfo = ath.request_validator.get_batch_info(batch_id=batch_id)
 

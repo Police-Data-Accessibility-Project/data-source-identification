@@ -2,7 +2,7 @@ from collector_db.AsyncDatabaseClient import AsyncDatabaseClient
 from collector_db.DTOs.URLErrorInfos import URLErrorPydanticInfo
 from collector_db.enums import TaskType
 from core.DTOs.task_data_objects.URLRecordTypeTDO import URLRecordTypeTDO
-from core.classes.TaskOperatorBase import TaskOperatorBase
+from core.classes.task_operators.TaskOperatorBase import TaskOperatorBase
 from core.enums import RecordType
 from llm_api_logic.OpenAIRecordClassifier import OpenAIRecordClassifier
 

@@ -23,7 +23,7 @@ def test_muckrock_simple_search_collector_lifecycle(test_core):
 
     batch_info: BatchInfo = db_client.get_batch_by_id(1)
     assert batch_info.strategy == "muckrock_simple_search"
-    assert batch_info.status == BatchStatus.COMPLETE
+    assert batch_info.status == BatchStatus.READY_TO_LABEL
     assert batch_info.total_url_count >= 10
 
     url_infos = db_client.get_urls_by_batch(1)
@@ -45,7 +45,7 @@ def test_muckrock_county_level_search_collector_lifecycle(test_core):
 
     batch_info: BatchInfo = db_client.get_batch_by_id(1)
     assert batch_info.strategy == "muckrock_county_search"
-    assert batch_info.status == BatchStatus.COMPLETE
+    assert batch_info.status == BatchStatus.READY_TO_LABEL
     assert batch_info.total_url_count >= 10
 
     url_infos = db_client.get_urls_by_batch(1)
@@ -67,7 +67,7 @@ def test_muckrock_full_search_collector_lifecycle(test_core):
 
     batch_info: BatchInfo = db_client.get_batch_by_id(1)
     assert batch_info.strategy == CollectorType.MUCKROCK_ALL_SEARCH.value
-    assert batch_info.status == BatchStatus.COMPLETE
+    assert batch_info.status == BatchStatus.READY_TO_LABEL
     assert batch_info.total_url_count >= 1
 
     url_infos = db_client.get_urls_by_batch(1)

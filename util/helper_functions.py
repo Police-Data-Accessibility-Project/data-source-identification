@@ -16,6 +16,19 @@ def get_from_env(key: str, allow_none: bool = False):
         raise ValueError(f"Environment variable {key} is not set")
     return val
 
+def load_from_environment(keys: list[str]) -> dict[str, str]:
+    """
+    Load selected keys from environment, returning a dictionary
+    """
+    original_environment = os.environ.copy()
+    try:
+        load_dotenv()
+        return {key: os.getenv(key) for key in keys}
+    finally:
+        # Restore the original environment
+        os.environ.clear()
+        os.environ.update(original_environment)
+
 def base_model_list_dump(model_list: list[BaseModel]) -> list[dict]:
     return [model.model_dump() for model in model_list]
 

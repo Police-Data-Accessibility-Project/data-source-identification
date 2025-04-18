@@ -24,7 +24,7 @@ def test_ckan_lifecycle(test_core):
 
     batch_info: BatchInfo = db_client.get_batch_by_id(1)
     assert batch_info.strategy == "ckan"
-    assert batch_info.status == BatchStatus.COMPLETE
+    assert batch_info.status == BatchStatus.READY_TO_LABEL
     assert batch_info.total_url_count >= 3000
 
     url_infos = db_client.get_urls_by_batch(1)

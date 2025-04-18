@@ -17,11 +17,11 @@ class FOIASearcher:
         self.fetcher = fetcher
         self.search_term = search_term
 
-    def fetch_page(self) -> list[dict] | None:
+    async def fetch_page(self) -> list[dict] | None:
         """
         Fetches the next page of results using the fetcher.
         """
-        data = self.fetcher.fetch_next_page()
+        data = await self.fetcher.fetch_next_page()
         if data is None or data.get("results") is None:
             return None
         return data.get("results")
@@ -43,7 +43,7 @@ class FOIASearcher:
         pbar.update(num_results)
         return num_results
 
-    def search_to_count(self, max_count: int) -> list[dict]:
+    async def search_to_count(self, max_count: int) -> list[dict]:
         """
         Fetches and processes results up to a maximum count.
         """
@@ -52,7 +52,7 @@ class FOIASearcher:
         with tqdm(total=max_count, desc="Fetching results", unit="result") as pbar:
             while count > 0:
                 try:
-                    results = self.get_next_page_results()
+                    results = await self.get_next_page_results()
                 except SearchCompleteException:
                     break
 
@@ -61,11 +61,11 @@ class FOIASearcher:
 
         return all_results
 
-    def get_next_page_results(self) -> list[dict]:
+    async def get_next_page_results(self) -> list[dict]:
         """
         Fetches and processes the next page of results.
         """
-        results = self.fetch_page()
+        results = await self.fetch_page()
         if not results:
             raise SearchCompleteException
         return self.filter_results(results)

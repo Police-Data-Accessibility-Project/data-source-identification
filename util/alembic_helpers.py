@@ -6,7 +6,8 @@ def switch_enum_type(
         column_name,
         enum_name,
         new_enum_values,
-        drop_old_enum=True
+        drop_old_enum=True,
+        cast_dict: dict = None
 ):
     """
     Switches an ENUM type in a PostgreSQL column by:
@@ -36,3 +37,13 @@ def switch_enum_type(
     # Drop the old enum type
     if drop_old_enum:
         op.execute(f'DROP TYPE "{old_enum_temp_name}"')
+
+def alter_enum_value(
+        enum_name,
+        old_value,
+        new_value
+):
+    """
+    Changes one value of an enum type
+    """
+    op.execute(f"ALTER TYPE {enum_name} RENAME VALUE '{old_value}' TO '{new_value}'")

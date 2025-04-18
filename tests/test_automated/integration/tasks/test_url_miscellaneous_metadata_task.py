@@ -5,7 +5,7 @@ import pytest
 from collector_db.models import URL, URLOptionalDataSourceMetadata
 from collector_manager.enums import CollectorType
 from core.DTOs.TaskOperatorRunInfo import TaskOperatorOutcome
-from core.classes.URLMiscellaneousMetadataTaskOperator import URLMiscellaneousMetadataTaskOperator
+from core.classes.task_operators.URLMiscellaneousMetadataTaskOperator import URLMiscellaneousMetadataTaskOperator
 from tests.helpers.DBDataCreator import DBDataCreator
 
 
@@ -84,6 +84,8 @@ async def test_url_miscellaneous_metadata_task(db_data_creator: DBDataCreator):
         CollectorType.COMMON_CRAWLER,
         collector_metadata=None
     )
+    # Add URL HTML
+    await db_data_creator.html_data([common_crawler_url_id])
     # example
 
     # Check that task now meets prerequisites
@@ -96,7 +98,7 @@ async def test_url_miscellaneous_metadata_task(db_data_creator: DBDataCreator):
 
     # Check that each URL has the expected name/description and optional metadata
     expected_urls = {
-        common_crawler_url_id: (None, None),
+        common_crawler_url_id: ("test html content", "test description"),
         auto_googler_url_id: ("Test Auto Googler Title", "Test Auto Googler Snippet"),
         ckan_url_id: ("Test CKAN Name", "Test CKAN Description"),
         muckrock_simple_url_id: ("Test Muckrock Simple Title", "Test Muckrock Simple Title"),

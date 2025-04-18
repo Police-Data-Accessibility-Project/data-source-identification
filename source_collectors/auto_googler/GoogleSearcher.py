@@ -1,5 +1,7 @@
+import asyncio
 from typing import Union
 
+import aiohttp
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 
@@ -28,8 +30,7 @@ class GoogleSearcher:
             search results as dictionaries or None if the daily quota for the API has been exceeded. Raises a RuntimeError
             if any other error occurs during the search.
     """
-    GOOGLE_SERVICE_NAME = "customsearch"
-    GOOGLE_SERVICE_VERSION = "v1"
+    GOOGLE_SEARCH_URL = "https://www.googleapis.com/customsearch/v1"
 
     def __init__(
             self,
@@ -41,11 +42,7 @@ class GoogleSearcher:
         self.api_key = api_key
         self.cse_id = cse_id
 
-        self.service = build(self.GOOGLE_SERVICE_NAME,
-                             self.GOOGLE_SERVICE_VERSION,
-                             developerKey=self.api_key)
-
-    def search(self, query: str) -> Union[list[dict], None]:
+    async def search(self, query: str) -> Union[list[dict], None]:
         """
         Searches for results using the specified query.
 
@@ -56,7 +53,7 @@ class GoogleSearcher:
             If the daily quota is exceeded, None is returned.
         """
         try:
-            return self.get_query_results(query)
+            return await self.get_query_results(query)
             # Process your results
         except HttpError as e:
             if "Quota exceeded" in str(e):
@@ -64,11 +61,23 @@ class GoogleSearcher:
             else:
                 raise RuntimeError(f"An error occurred: {str(e)}")
 
-    def get_query_results(self, query) -> list[GoogleSearchQueryResultsInnerDTO] or None:
-        results = self.service.cse().list(q=query, cx=self.cse_id).execute()
+    async def get_query_results(self, query) -> list[GoogleSearchQueryResultsInnerDTO] or None:
+        params = {
+            "key": self.api_key,
+            "cx": self.cse_id,
+            "q": query,
+        }
+
+        async with aiohttp.ClientSession() as session:
+            async with session.get(self.GOOGLE_SEARCH_URL, params=params) as response:
+                response.raise_for_status()
+                results = await response.json()
+
         if "items" not in results:
             return None
+
         items = []
+
         for item in results["items"]:
             inner_dto = GoogleSearchQueryResultsInnerDTO(
                 url=item["link"],

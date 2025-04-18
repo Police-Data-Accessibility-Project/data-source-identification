@@ -17,7 +17,6 @@ class ValidationStatus(PyEnum):
 
 class ValidationSource(PyEnum):
     MACHINE_LEARNING = "Machine Learning"
-    LABEL_STUDIO = "Label Studio"
     MANUAL = "Manual"
 
 
@@ -38,6 +37,8 @@ class TaskType(PyEnum):
     RECORD_TYPE = "Record Type"
     AGENCY_IDENTIFICATION = "Agency Identification"
     MISC_METADATA = "Misc Metadata"
+    SUBMIT_APPROVED = "Submit Approved URLs"
+    IDLE = "Idle"
 
 class PGEnum(TypeDecorator):
     impl = postgresql.ENUM

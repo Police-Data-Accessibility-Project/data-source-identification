@@ -4,9 +4,9 @@ from typing import Optional
 import requests
 from aiohttp import ClientSession
 
+from core.EnvVarManager import EnvVarManager
 from pdap_api_client.DTOs import RequestType, Namespaces, RequestInfo, ResponseInfo
 
-API_URL = "https://data-sources-v2.pdap.dev/api"
 request_methods = {
     RequestType.POST: ClientSession.post,
     RequestType.PUT: ClientSession.put,
@@ -23,7 +23,8 @@ def build_url(
     namespace: Namespaces,
     subdomains: Optional[list[str]] = None
 ):
-    url = f"{API_URL}/{namespace.value}"
+    api_url = EnvVarManager.get().pdap_api_url
+    url = f"{api_url}/{namespace.value}"
     if subdomains is not None:
         url = f"{url}/{'/'.join(subdomains)}"
     return url

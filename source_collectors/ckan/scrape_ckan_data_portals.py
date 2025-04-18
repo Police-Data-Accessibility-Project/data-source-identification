@@ -4,7 +4,6 @@ import sys
 from itertools import chain
 from typing import Any, Callable, Optional
 
-import pandas as pd
 from from_root import from_root
 from tqdm import tqdm
 
@@ -15,7 +14,7 @@ p = from_root(".pydocstyle").parent
 sys.path.insert(1, str(p))
 
 
-def perform_search(
+async def perform_search(
     search_func: Callable,
     search_terms: list[dict[str, Any]],
     results: list[dict[str, Any]],
@@ -34,44 +33,26 @@ def perform_search(
     for search in tqdm(search_terms):
         item_results = []
         for item in search[key]:
-            item_result = search_func(search["url"], item)
+            item_result = await search_func(search["url"], item)
             item_results.append(item_result)
         results += item_results
 
     return results
 
 
-def get_collection_child_packages(
-    results: list[dict[str, Any]]
-) -> list[dict[str, Any]]:
-    """Retrieves the child packages of each collection.
-
-    :param results: List of results.
-    :return: List of results containing child packages.
-    """
-    new_list = []
-
-    for result in tqdm(results):
-        if "extras" in result.keys():
-            collections = get_collections(result)
-            if collections:
-                new_list += collections[0]
-                continue
-
-        new_list.append(result)
-
-    return new_list
 
 
-def get_collections(result):
-    collections = [
-        ckan_collection_search(
-            base_url="https://catalog.data.gov/dataset/",
-            collection_id=result["id"],
-        )
-        for extra in result["extras"]
-        if parent_package_has_no_resources(extra=extra, result=result)
-    ]
+async def get_collections(result):
+    if "extras" not in result.keys():
+        return []
+
+    collections = []
+    for extra in result["extras"]:
+        if parent_package_has_no_resources(extra=extra, result=result):
+            collections.append(await ckan_collection_search(
+                base_url="https://catalog.data.gov/dataset/",
+                collection_id=result["id"],
+            ))
     return collections
 
 
@@ -262,8 +243,4 @@ def deduplicate_entries(flat_list):
     flat_list = [i for n, i in enumerate(flat_list) if i not in flat_list[n + 1:]]
     return flat_list
 
-
-def write_to_csv(parsed_results):
-    df = pd.DataFrame(parsed_results)
-    df.to_csv("results.csv")
 

@@ -1,7 +1,8 @@
+import asyncio
 from random import randint
 from typing import List, Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, model_validator
 
 from collector_db.AsyncDatabaseClient import AsyncDatabaseClient
 from collector_db.DTOs.BatchInfo import BatchInfo
@@ -10,9 +11,8 @@ from collector_db.DTOs.InsertURLsInfo import InsertURLsInfo
 from collector_db.DTOs.URLErrorInfos import URLErrorPydanticInfo
 from collector_db.DTOs.URLHTMLContentInfo import URLHTMLContentInfo, HTMLContentType
 from collector_db.DTOs.URLInfo import URLInfo
-from collector_db.DTOs.URLMetadataInfo import URLMetadataInfo
 from collector_db.DatabaseClient import DatabaseClient
-from collector_db.enums import URLMetadataAttributeType, ValidationStatus, ValidationSource, TaskType
+from collector_db.enums import TaskType
 from collector_manager.enums import CollectorType, URLStatus
 from core.DTOs.URLAgencySuggestionInfo import URLAgencySuggestionInfo
 from core.DTOs.task_data_objects.URLMiscellaneousMetadataTDO import URLMiscellaneousMetadataTDO
@@ -23,20 +23,28 @@ from tests.helpers.simple_test_data_functions import generate_test_urls
 class BatchURLCreationInfo(BaseModel):
     batch_id: int
     url_ids: list[int]
+    urls: list[str]
 
 class DBDataCreator:
     """
     Assists in the creation of test data
     """
-    def __init__(self, db_client: DatabaseClient = DatabaseClient()):
-        self.db_client = db_client
+    def __init__(self, db_client: Optional[DatabaseClient] = None):
+        if db_client is not None:
+            self.db_client = db_client
+        else:
+            self.db_client = DatabaseClient()
         self.adb_client: AsyncDatabaseClient = AsyncDatabaseClient()
 
-    def batch(self, strategy: CollectorType = CollectorType.EXAMPLE) -> int:
+    def batch(
+            self,
+            strategy: CollectorType = CollectorType.EXAMPLE,
+            batch_status: BatchStatus = BatchStatus.IN_PROCESS
+    ) -> int:
         return self.db_client.insert_batch(
             BatchInfo(
                 strategy=strategy.value,
-                status=BatchStatus.IN_PROCESS,
+                status=batch_status,
                 total_url_count=1,
                 parameters={"test_key": "test_value"},
                 user_id=1
@@ -52,16 +60,35 @@ class DBDataCreator:
     async def batch_and_urls(
             self,
             strategy: CollectorType = CollectorType.EXAMPLE,
-            url_count: int = 1,
-            with_html_content: bool = False
+            url_count: int = 3,
+            with_html_content: bool = False,
+            batch_status: BatchStatus = BatchStatus.READY_TO_LABEL,
+            url_status: URLStatus = URLStatus.PENDING
     ) -> BatchURLCreationInfo:
-        batch_id = self.batch(strategy=strategy)
-        iuis: InsertURLsInfo = self.urls(batch_id=batch_id, url_count=url_count)
+        batch_id = self.batch(
+            strategy=strategy,
+            batch_status=batch_status
+        )
+        if batch_status in (BatchStatus.ERROR, BatchStatus.ABORTED):
+            return BatchURLCreationInfo(
+                batch_id=batch_id,
+                url_ids=[],
+                urls=[]
+            )
+        iuis: InsertURLsInfo = self.urls(
+            batch_id=batch_id,
+            url_count=url_count,
+            outcome=url_status
+        )
         url_ids = [iui.url_id for iui in iuis.url_mappings]
         if with_html_content:
             await self.html_data(url_ids)
 
-        return BatchURLCreationInfo(batch_id=batch_id, url_ids=url_ids)
+        return BatchURLCreationInfo(
+            batch_id=batch_id,
+            url_ids=url_ids,
+            urls=[iui.url for iui in iuis.url_mappings]
+        )
 
     async def agency(self) -> int:
         agency_id = randint(1, 99999999)
@@ -186,6 +213,7 @@ class DBDataCreator:
                 URLInfo(
                     url=url,
                     outcome=outcome,
+                    name="Test Name" if outcome == URLStatus.VALIDATED else None,
                     collector_metadata=collector_metadata
                 )
             )
@@ -282,17 +310,24 @@ class DBDataCreator:
         if suggestion_type == SuggestionType.UNKNOWN:
             count = 1  # Can only be one auto suggestion if unknown
 
-        await self.adb_client.add_agency_auto_suggestions(
-            suggestions=[
-                URLAgencySuggestionInfo(
+        suggestions = []
+        for _ in range(count):
+            if suggestion_type == SuggestionType.UNKNOWN:
+                pdap_agency_id = None
+            else:
+                pdap_agency_id = await self.agency()
+            suggestion = URLAgencySuggestionInfo(
                     url_id=url_id,
                     suggestion_type=suggestion_type,
-                    pdap_agency_id=None if suggestion_type == SuggestionType.UNKNOWN else await self.agency(),
+                    pdap_agency_id=pdap_agency_id,
                     state="Test State",
                     county="Test County",
                     locality="Test Locality"
-                ) for _ in range(count)
-            ]
+            )
+            suggestions.append(suggestion)
+
+        await self.adb_client.add_agency_auto_suggestions(
+            suggestions=suggestions
         )
 
     async def agency_confirmed_suggestion(

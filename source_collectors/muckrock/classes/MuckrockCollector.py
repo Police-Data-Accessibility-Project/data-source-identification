@@ -1,6 +1,6 @@
 import itertools
 
-from collector_manager.CollectorBase import CollectorBase
+from collector_manager.AsyncCollectorBase import AsyncCollectorBase
 from collector_manager.enums import CollectorType
 from core.preprocessors.MuckrockPreprocessor import MuckrockPreprocessor
 from source_collectors.muckrock.DTOs import MuckrockAllFOIARequestsCollectorInputDTO, \
@@ -15,7 +15,7 @@ from source_collectors.muckrock.classes.muckrock_fetchers.JurisdictionGeneratorF
 from source_collectors.muckrock.classes.muckrock_fetchers.MuckrockFetcher import MuckrockNoMoreDataError
 
 
-class MuckrockSimpleSearchCollector(CollectorBase):
+class MuckrockSimpleSearchCollector(AsyncCollectorBase):
     """
     Performs searches on MuckRock's database
     by matching a search string to title of request
@@ -29,7 +29,7 @@ class MuckrockSimpleSearchCollector(CollectorBase):
         if count >= max_count:
             raise SearchCompleteException
 
-    def run_implementation(self) -> None:
+    async def run_implementation(self) -> None:
         fetcher = FOIAFetcher()
         dto: MuckrockSimpleSearchCollectorInputDTO = self.dto
         searcher = FOIASearcher(
@@ -41,15 +41,15 @@ class MuckrockSimpleSearchCollector(CollectorBase):
         results_count = 0
         for search_count in itertools.count():
             try:
-                results = searcher.get_next_page_results()
+                results = await searcher.get_next_page_results()
                 all_results.extend(results)
                 results_count += len(results)
                 self.check_for_count_break(results_count, max_count)
             except SearchCompleteException:
                 break
-            self.log(f"Search {search_count}: Found {len(results)} results")
+            await self.log(f"Search {search_count}: Found {len(results)} results")
 
-        self.log(f"Search Complete. Total results: {results_count}")
+        await self.log(f"Search Complete. Total results: {results_count}")
         self.data = {"urls": self.format_results(all_results)}
 
     def format_results(self, results: list[dict]) -> list[dict]:
@@ -64,19 +64,19 @@ class MuckrockSimpleSearchCollector(CollectorBase):
         return formatted_results
 
 
-class MuckrockCountyLevelSearchCollector(CollectorBase):
+class MuckrockCountyLevelSearchCollector(AsyncCollectorBase):
     """
     Searches for any and all requests in a certain county
     """
     collector_type = CollectorType.MUCKROCK_COUNTY_SEARCH
     preprocessor = MuckrockPreprocessor
 
-    def run_implementation(self) -> None:
-        jurisdiction_ids = self.get_jurisdiction_ids()
+    async def run_implementation(self) -> None:
+        jurisdiction_ids = await self.get_jurisdiction_ids()
         if jurisdiction_ids is None:
-            self.log("No jurisdictions found")
+            await self.log("No jurisdictions found")
             return
-        all_data = self.get_foia_records(jurisdiction_ids)
+        all_data = await self.get_foia_records(jurisdiction_ids)
         formatted_data = self.format_data(all_data)
         self.data = {"urls": formatted_data}
 
@@ -89,19 +89,17 @@ class MuckrockCountyLevelSearchCollector(CollectorBase):
             })
         return formatted_data
 
-    def get_foia_records(self, jurisdiction_ids):
-        # TODO: Mock results here and test separately
+    async def get_foia_records(self, jurisdiction_ids):
         all_data = []
         for name, id_ in jurisdiction_ids.items():
-            self.log(f"Fetching records for {name}...")
+            await self.log(f"Fetching records for {name}...")
             request = FOIALoopFetchRequest(jurisdiction=id_)
             fetcher = FOIALoopFetcher(request)
-            fetcher.loop_fetch()
+            await fetcher.loop_fetch()
             all_data.extend(fetcher.ffm.results)
         return all_data
 
-    def get_jurisdiction_ids(self):
-        # TODO: Mock results here and test separately
+    async def get_jurisdiction_ids(self):
         dto: MuckrockCountySearchCollectorInputDTO = self.dto
         parent_jurisdiction_id = dto.parent_jurisdiction_id
         request = JurisdictionLoopFetchRequest(
@@ -110,40 +108,39 @@ class MuckrockCountyLevelSearchCollector(CollectorBase):
             town_names=dto.town_names
         )
         fetcher = JurisdictionGeneratorFetcher(initial_request=request)
-        for message in fetcher.generator_fetch():
-            self.log(message)
+        async for message in fetcher.generator_fetch():
+            await self.log(message)
         jurisdiction_ids = fetcher.jfm.jurisdictions
         return jurisdiction_ids
 
 
-class MuckrockAllFOIARequestsCollector(CollectorBase):
+class MuckrockAllFOIARequestsCollector(AsyncCollectorBase):
     """
     Retrieves urls associated with all Muckrock FOIA requests
     """
     collector_type = CollectorType.MUCKROCK_ALL_SEARCH
     preprocessor = MuckrockPreprocessor
 
-    def run_implementation(self) -> None:
+    async def run_implementation(self) -> None:
         dto: MuckrockAllFOIARequestsCollectorInputDTO = self.dto
         start_page = dto.start_page
         fetcher = FOIAFetcher(
             start_page=start_page,
         )
         total_pages = dto.total_pages
-        all_page_data = self.get_page_data(fetcher, start_page, total_pages)
+        all_page_data = await self.get_page_data(fetcher, start_page, total_pages)
         all_transformed_data = self.transform_data(all_page_data)
         self.data = {"urls": all_transformed_data}
 
 
-    def get_page_data(self, fetcher, start_page, total_pages):
-        # TODO: Mock results here and test separately
+    async def get_page_data(self, fetcher, start_page, total_pages):
         all_page_data = []
         for page in range(start_page, start_page + total_pages):
-            self.log(f"Fetching page {fetcher.current_page}")
+            await self.log(f"Fetching page {fetcher.current_page}")
             try:
-                page_data = fetcher.fetch_next_page()
+                page_data = await fetcher.fetch_next_page()
             except MuckrockNoMoreDataError:
-                self.log(f"No more data to fetch at page {fetcher.current_page}")
+                await self.log(f"No more data to fetch at page {fetcher.current_page}")
                 break
             if page_data is None:
                 continue

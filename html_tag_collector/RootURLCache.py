@@ -16,7 +16,9 @@ class RootURLCacheResponseInfo:
     exception: Optional[Exception] = None
 
 class RootURLCache:
-    def __init__(self, adb_client: AsyncDatabaseClient = AsyncDatabaseClient()):
+    def __init__(self, adb_client: Optional[AsyncDatabaseClient] = None):
+        if adb_client is None:
+            adb_client = AsyncDatabaseClient()
         self.adb_client = adb_client
         self.cache = None
 

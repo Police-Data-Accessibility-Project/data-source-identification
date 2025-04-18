@@ -5,6 +5,7 @@ from pydantic import BaseModel
 from starlette.testclient import TestClient
 
 from collector_db.DTOs.BatchInfo import BatchInfo
+from collector_db.DTOs.GetTaskStatusResponseInfo import GetTaskStatusResponseInfo
 from collector_db.DTOs.TaskInfo import TaskInfo
 from collector_db.enums import TaskType
 from collector_manager.DTOs.ExampleInputDTO import ExampleInputDTO
@@ -119,13 +120,19 @@ class RequestValidator:
             expected_response=expected_response,
             **kwargs)
 
-    def get_batch_statuses(self, collector_type: Optional[CollectorType] = None, status: Optional[BatchStatus] = None) -> GetBatchStatusResponse:
+    def get_batch_statuses(
+            self,
+            collector_type: Optional[CollectorType] = None,
+            status: Optional[BatchStatus] = None,
+            has_pending_urls: Optional[bool] = None
+    ) -> GetBatchStatusResponse:
         params = {}
         update_if_not_none(
             target=params,
             source={
                 "collector_type": collector_type.value if collector_type else None,
-                "status": status.value if status else None
+                "status": status.value if status else None,
+                "has_pending_urls": has_pending_urls
             }
         )
         data = self.get(
@@ -282,3 +289,9 @@ class RequestValidator:
             json=review_info.model_dump(mode='json')
         )
         return GetNextURLForFinalReviewOuterResponse(**data)
+
+    async def get_current_task_status(self) -> GetTaskStatusResponseInfo:
+        data = self.get(
+            url=f"/task/status"
+        )
+        return GetTaskStatusResponseInfo(**data)

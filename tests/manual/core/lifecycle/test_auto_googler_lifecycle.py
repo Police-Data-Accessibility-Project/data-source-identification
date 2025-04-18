@@ -10,6 +10,7 @@ from test_automated.integration.core.helpers.common_test_procedures import run_c
 
 
 def test_auto_googler_collector_lifecycle(test_core):
+    # TODO: Rework for Async
     ci = test_core
     db_client = api.dependencies.db_client
 
@@ -31,7 +32,7 @@ def test_auto_googler_collector_lifecycle(test_core):
 
     batch_info: BatchInfo = api.dependencies.db_client.get_batch_by_id(1)
     assert batch_info.strategy == "auto_googler"
-    assert batch_info.status == BatchStatus.COMPLETE
+    assert batch_info.status == BatchStatus.READY_TO_LABEL
     assert batch_info.total_url_count == 20
 
     url_infos = db_client.get_urls_by_batch(1)

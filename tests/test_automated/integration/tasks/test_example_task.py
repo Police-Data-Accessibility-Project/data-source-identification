@@ -4,8 +4,7 @@ import pytest
 
 from collector_db.enums import TaskType
 from core.DTOs.TaskOperatorRunInfo import TaskOperatorOutcome
-from core.classes.TaskOperatorBase import TaskOperatorBase
-from core.enums import BatchStatus
+from core.classes.task_operators.TaskOperatorBase import TaskOperatorBase
 from tests.helpers.DBDataCreator import DBDataCreator
 
 class ExampleTaskOperator(TaskOperatorBase):
