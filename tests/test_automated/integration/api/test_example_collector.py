@@ -1,6 +1,5 @@
 import asyncio
-import time
-from unittest.mock import MagicMock, AsyncMock
+from unittest.mock import AsyncMock
 
 import pytest
 
@@ -14,24 +13,29 @@ from core.DTOs.BatchStatusInfo import BatchStatusInfo
 from core.DTOs.GetBatchLogsResponse import GetBatchLogsResponse
 from core.DTOs.GetBatchStatusResponse import GetBatchStatusResponse
 from core.enums import BatchStatus
+from tests.helpers.patch_functions import block_sleep
 from tests.test_automated.integration.api.conftest import disable_task_trigger
 
 
 @pytest.mark.asyncio
-async def test_example_collector(api_test_helper):
+async def test_example_collector(api_test_helper, monkeypatch):
     ath = api_test_helper
+
+    barrier = await block_sleep(monkeypatch)
 
     # Temporarily disable task trigger
     disable_task_trigger(ath)
+
 
     logger = AsyncCoreLogger(adb_client=AsyncDatabaseClient(), flush_interval=1)
     await logger.__aenter__()
     ath.async_core.collector_manager.logger = logger
 
     dto = ExampleInputDTO(
-            sleep_time=1
-        )
+        sleep_time=1
+    )
 
+    # Request Example Collector
     data = ath.request_validator.example_collector(
         dto=dto
     )
@@ -39,10 +43,14 @@ async def test_example_collector(api_test_helper):
     assert batch_id is not None
     assert data["message"] == "Started example collector."
 
+    # Yield control so coroutine runs up to the barrier
+    await asyncio.sleep(0)
+
+
+    # Check that batch currently shows as In Process
     bsr: GetBatchStatusResponse = ath.request_validator.get_batch_statuses(
         status=BatchStatus.IN_PROCESS
     )
-
     assert len(bsr.results) == 1
     bsi: BatchStatusInfo = bsr.results[0]
 
@@ -50,7 +58,8 @@ async def test_example_collector(api_test_helper):
     assert bsi.strategy == CollectorType.EXAMPLE.value
     assert bsi.status == BatchStatus.IN_PROCESS
 
-    await asyncio.sleep(2)
+    # Release the barrier to resume execution
+    barrier.release()
 
     csr: GetBatchStatusResponse = ath.request_validator.get_batch_statuses(
         collector_type=CollectorType.EXAMPLE,
@@ -113,7 +122,7 @@ async def test_example_collector_error(api_test_helper, monkeypatch):
     assert batch_id is not None
     assert data["message"] == "Started example collector."
 
-    await asyncio.sleep(1)
+    await asyncio.sleep(0)
 
     bi: BatchInfo = ath.request_validator.get_batch_info(batch_id=batch_id)
 

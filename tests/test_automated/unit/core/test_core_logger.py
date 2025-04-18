@@ -10,14 +10,14 @@ from core.AsyncCoreLogger import AsyncCoreLogger
 @pytest.mark.asyncio
 async def test_logger_flush():
     mock_adb_client = AsyncMock()
-    async with AsyncCoreLogger(flush_interval=1, adb_client=mock_adb_client) as logger:
+    async with AsyncCoreLogger(flush_interval=0.01, adb_client=mock_adb_client) as logger:
 
         # Add logs
         await logger.log(LogInfo(log="Log 1", batch_id=1))
         await logger.log(LogInfo(log="Log 2", batch_id=1))
 
         # Wait for the flush interval
-        await asyncio.sleep(1.5)
+        await asyncio.sleep(0.02)
 
         # Verify logs were flushed
         mock_adb_client.insert_logs.assert_called_once()
