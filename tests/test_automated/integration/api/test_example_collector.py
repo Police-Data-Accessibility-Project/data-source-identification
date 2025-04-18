@@ -60,7 +60,7 @@ async def test_example_collector(api_test_helper, monkeypatch):
 
     # Release the barrier to resume execution
     barrier.release()
-    await asyncio.sleep(0.1)
+    await asyncio.sleep(0.3)
 
     csr: GetBatchStatusResponse = ath.request_validator.get_batch_statuses(
         collector_type=CollectorType.EXAMPLE,
