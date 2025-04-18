@@ -21,7 +21,7 @@ async def test_url_relevancy_huggingface_task(db_data_creator):
         else:
             return False
 
-    def mock_get_url_relevancy(
+    async def mock_get_url_relevancy(
         urls_with_html: list[URLWithHTML],
         threshold: float = 0.8
     ) -> list[bool]:
@@ -33,7 +33,7 @@ async def test_url_relevancy_huggingface_task(db_data_creator):
         return results
 
     mock_hf_interface = MagicMock(spec=HuggingFaceInterface)
-    mock_hf_interface.get_url_relevancy = mock_get_url_relevancy
+    mock_hf_interface.get_url_relevancy_async = mock_get_url_relevancy
 
     task_operator = URLRelevanceHuggingfaceTaskOperator(
         adb_client=AsyncDatabaseClient(),
@@ -50,7 +50,7 @@ async def test_url_relevancy_huggingface_task(db_data_creator):
     await db_data_creator.html_data(url_ids)
 
     run_info: TaskOperatorRunInfo = await task_operator.run_task(1)
-    assert run_info.outcome == TaskOperatorOutcome.SUCCESS
+    assert run_info.outcome == TaskOperatorOutcome.SUCCESS, run_info.message
 
 
     results = await db_data_creator.adb_client.get_all(AutoRelevantSuggestion)
