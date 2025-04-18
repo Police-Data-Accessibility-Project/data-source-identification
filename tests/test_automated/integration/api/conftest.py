@@ -8,8 +8,9 @@ from starlette.testclient import TestClient
 
 from api.main import app
 from core.AsyncCore import AsyncCore
+from api.routes.review import requires_final_review_permission
 from core.SourceCollectorCore import SourceCollectorCore
-from security_manager.SecurityManager import get_access_info, AccessInfo, Permissions
+from security_manager.SecurityManager import get_access_info, AccessInfo, Permissions, require_permission
 from tests.helpers.DBDataCreator import DBDataCreator
 from tests.test_automated.integration.api.helpers.RequestValidator import RequestValidator
 
@@ -39,13 +40,20 @@ async def fail_task_trigger() -> None:
     )
 
 def override_access_info() -> AccessInfo:
-    return AccessInfo(user_id=MOCK_USER_ID, permissions=[Permissions.SOURCE_COLLECTOR])
+    return AccessInfo(
+        user_id=MOCK_USER_ID,
+        permissions=[
+            Permissions.SOURCE_COLLECTOR,
+            Permissions.SOURCE_COLLECTOR_FINAL_REVIEW
+        ]
+    )
 
 @pytest.fixture(scope="session")
 def client() -> Generator[TestClient, None, None]:
     # Mock environment
     with TestClient(app) as c:
         app.dependency_overrides[get_access_info] = override_access_info
+        app.dependency_overrides[requires_final_review_permission] = override_access_info
         async_core: AsyncCore = c.app.state.async_core
 
         # Interfaces to the web should be mocked

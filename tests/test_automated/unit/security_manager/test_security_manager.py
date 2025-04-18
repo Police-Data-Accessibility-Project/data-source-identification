@@ -49,7 +49,7 @@ def test_validate_token_failure(mock_get_secret_key, mock_jwt_decode):
 
 def test_check_access_success(mock_get_secret_key, mock_jwt_decode):
     sm = SecurityManager()
-    sm.check_access(VALID_TOKEN)  # Should not raise any exceptions.
+    sm.check_access(VALID_TOKEN, Permissions.SOURCE_COLLECTOR)  # Should not raise any exceptions.
 
 
 def test_check_access_failure(mock_get_secret_key, mock_jwt_decode):
@@ -57,7 +57,7 @@ def test_check_access_failure(mock_get_secret_key, mock_jwt_decode):
     with patch(get_patch_path("SecurityManager.validate_token"), return_value=AccessInfo(user_id=1, permissions=[])):
         sm = SecurityManager()
         with pytest.raises(HTTPException) as exc_info:
-            sm.check_access(VALID_TOKEN)
+            sm.check_access(VALID_TOKEN, Permissions.SOURCE_COLLECTOR)
         assert exc_info.value.status_code == 403
 
 

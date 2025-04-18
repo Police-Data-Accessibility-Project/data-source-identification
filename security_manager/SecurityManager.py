@@ -20,6 +20,7 @@ def get_secret_key():
 
 class Permissions(Enum):
     SOURCE_COLLECTOR = "source_collector"
+    SOURCE_COLLECTOR_FINAL_REVIEW = "source_collector_final_review"
 
 class AccessInfo(BaseModel):
     user_id: int
@@ -64,9 +65,13 @@ class SecurityManager:
                 continue
         return relevant_permissions
 
-    def check_access(self, token: str) -> AccessInfo:
+    def check_access(
+            self,
+            token: str,
+            permission: Permissions
+    ) -> AccessInfo:
         access_info = self.validate_token(token)
-        if not access_info.has_permission(Permissions.SOURCE_COLLECTOR):
+        if not access_info.has_permission(permission):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Access forbidden",
@@ -79,4 +84,9 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 def get_access_info(
         token: Annotated[str, Depends(oauth2_scheme)]
 ) -> AccessInfo:
-    return SecurityManager().check_access(token)
+    return SecurityManager().check_access(token, Permissions.SOURCE_COLLECTOR)
+
+def require_permission(permission: Permissions):
+    def dependency(token: Annotated[str, Depends(oauth2_scheme)]) -> AccessInfo:
+        return SecurityManager().check_access(token, permission=permission)
+    return dependency

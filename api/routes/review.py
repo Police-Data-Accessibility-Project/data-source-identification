@@ -7,7 +7,7 @@ from core.AsyncCore import AsyncCore
 from core.DTOs.FinalReviewApprovalInfo import FinalReviewApprovalInfo, FinalReviewBaseInfo
 from core.DTOs.GetNextURLForFinalReviewResponse import GetNextURLForFinalReviewResponse, \
     GetNextURLForFinalReviewOuterResponse
-from security_manager.SecurityManager import AccessInfo, get_access_info
+from security_manager.SecurityManager import AccessInfo, get_access_info, require_permission, Permissions
 
 review_router = APIRouter(
     prefix="/review",
@@ -15,10 +15,12 @@ review_router = APIRouter(
     responses={404: {"description": "Not found"}},
 )
 
+requires_final_review_permission = require_permission(Permissions.SOURCE_COLLECTOR_FINAL_REVIEW)
+
 @review_router.get("/next-source")
 async def get_next_source(
     core: AsyncCore = Depends(get_async_core),
-    access_info: AccessInfo = Depends(get_access_info),
+    access_info: AccessInfo = Depends(requires_final_review_permission),
     batch_id: Optional[int] = Query(
         description="The batch id of the next URL to get. "
                     "If not specified, defaults to first qualifying URL",
@@ -30,7 +32,7 @@ async def get_next_source(
 @review_router.post("/approve-source")
 async def approve_source(
     core: AsyncCore = Depends(get_async_core),
-    access_info: AccessInfo = Depends(get_access_info),
+    access_info: AccessInfo = Depends(requires_final_review_permission),
     approval_info: FinalReviewApprovalInfo = FinalReviewApprovalInfo,
     batch_id: Optional[int] = Query(
         description="The batch id of the next URL to get. "
@@ -47,7 +49,7 @@ async def approve_source(
 @review_router.post("/reject-source")
 async def reject_source(
     core: AsyncCore = Depends(get_async_core),
-    access_info: AccessInfo = Depends(get_access_info),
+    access_info: AccessInfo = Depends(requires_final_review_permission),
     review_info: FinalReviewBaseInfo = FinalReviewBaseInfo,
     batch_id: Optional[int] = Query(
         description="The batch id of the next URL to get. "
