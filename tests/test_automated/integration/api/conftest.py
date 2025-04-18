@@ -1,6 +1,7 @@
+import asyncio
 from dataclasses import dataclass
 from typing import Generator
-from unittest.mock import MagicMock, AsyncMock, patch
+from unittest.mock import MagicMock, AsyncMock
 
 import pytest
 import pytest_asyncio
@@ -9,7 +10,9 @@ from starlette.testclient import TestClient
 from api.main import app
 from core.AsyncCore import AsyncCore
 from api.routes.review import requires_final_review_permission
+from core.DTOs.GetBatchStatusResponse import GetBatchStatusResponse
 from core.SourceCollectorCore import SourceCollectorCore
+from core.enums import BatchStatus
 from security_manager.SecurityManager import get_access_info, AccessInfo, Permissions, require_permission
 from tests.helpers.DBDataCreator import DBDataCreator
 from tests.test_automated.integration.api.helpers.RequestValidator import RequestValidator
@@ -25,6 +28,17 @@ class APITestHelper:
 
     def adb_client(self):
         return self.db_data_creator.adb_client
+
+    async def wait_for_all_batches_to_complete(self):
+        for i in range(20):
+            data: GetBatchStatusResponse = self.request_validator.get_batch_statuses(
+                status=BatchStatus.IN_PROCESS
+            )
+            if len(data.results) == 0:
+                return
+            print("Waiting...")
+            await asyncio.sleep(0.1)
+        raise ValueError("Batches did not complete in expected time")
 
 MOCK_USER_ID = 1
 

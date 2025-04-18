@@ -60,7 +60,8 @@ async def test_example_collector(api_test_helper, monkeypatch):
 
     # Release the barrier to resume execution
     barrier.release()
-    await asyncio.sleep(0.3)
+
+    await ath.wait_for_all_batches_to_complete()
 
     csr: GetBatchStatusResponse = ath.request_validator.get_batch_statuses(
         collector_type=CollectorType.EXAMPLE,
@@ -83,7 +84,6 @@ async def test_example_collector(api_test_helper, monkeypatch):
 
     # Flush early to ensure logs are written
     await logger.flush_all()
-
 
     lr: GetBatchLogsResponse = ath.request_validator.get_batch_logs(batch_id=batch_id)
 
@@ -123,7 +123,7 @@ async def test_example_collector_error(api_test_helper, monkeypatch):
     assert batch_id is not None
     assert data["message"] == "Started example collector."
 
-    await asyncio.sleep(0)
+    await ath.wait_for_all_batches_to_complete()
 
     bi: BatchInfo = ath.request_validator.get_batch_info(batch_id=batch_id)
 

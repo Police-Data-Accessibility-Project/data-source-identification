@@ -31,7 +31,7 @@ async def test_duplicates(api_test_helper):
 
     assert batch_id_2 is not None
 
-    await asyncio.sleep(0.1)
+    await ath.wait_for_all_batches_to_complete()
 
 
     bi_1: BatchInfo = ath.request_validator.get_batch_info(batch_id_1)
