@@ -46,7 +46,7 @@ class URLRelevanceHuggingfaceTaskOperator(TaskOperatorBase):
 
     async def add_huggingface_relevancy(self, tdos: list[URLRelevanceHuggingfaceTDO]):
         urls_with_html = [tdo.url_with_html for tdo in tdos]
-        results = self.huggingface_interface.get_url_relevancy(urls_with_html)
+        results = await self.huggingface_interface.get_url_relevancy_async(urls_with_html)
         for tdo, result in zip(tdos, results):
             tdo.relevant = result
 
