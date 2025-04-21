@@ -10,6 +10,7 @@ from collector_db.DTOs.TaskInfo import TaskInfo
 from collector_db.enums import TaskType
 from collector_manager.DTOs.ExampleInputDTO import ExampleInputDTO
 from collector_manager.enums import CollectorType
+from core.DTOs.AllAnnotationPostInfo import AllAnnotationPostInfo
 from core.DTOs.FinalReviewApprovalInfo import FinalReviewApprovalInfo, FinalReviewBaseInfo
 from core.DTOs.GetBatchLogsResponse import GetBatchLogsResponse
 from core.DTOs.GetBatchStatusResponse import GetBatchStatusResponse
@@ -18,6 +19,7 @@ from core.DTOs.GetNextRecordTypeAnnotationResponseInfo import GetNextRecordTypeA
 from core.DTOs.GetNextRelevanceAnnotationResponseInfo import GetNextRelevanceAnnotationResponseOuterInfo
 from core.DTOs.GetNextURLForAgencyAnnotationResponse import GetNextURLForAgencyAnnotationResponse, \
     URLAgencyAnnotationPostInfo
+from core.DTOs.GetNextURLForAllAnnotationResponse import GetNextURLForAllAnnotationResponse
 from core.DTOs.GetNextURLForFinalReviewResponse import GetNextURLForFinalReviewOuterResponse
 from core.DTOs.GetTasksResponse import GetTasksResponse
 from core.DTOs.GetURLsByBatchResponse import GetURLsByBatchResponse
@@ -295,3 +297,36 @@ class RequestValidator:
             url=f"/task/status"
         )
         return GetTaskStatusResponseInfo(**data)
+
+    async def get_next_url_for_all_annotations(
+            self,
+            batch_id: Optional[int] = None
+    ) -> GetNextURLForAllAnnotationResponse:
+        params = {}
+        update_if_not_none(
+            target=params,
+            source={"batch_id": batch_id}
+        )
+        data = self.get(
+            url=f"/annotate/all",
+            params=params
+        )
+        return GetNextURLForAllAnnotationResponse(**data)
+
+    async def post_all_annotations_and_get_next(
+            self,
+            url_id: int,
+            all_annotations_post_info: AllAnnotationPostInfo,
+            batch_id: Optional[int] = None,
+    ) -> GetNextURLForAllAnnotationResponse:
+        params = {}
+        update_if_not_none(
+            target=params,
+            source={"batch_id": batch_id}
+        )
+        data = self.post(
+            url=f"/annotate/all/{url_id}",
+            params=params,
+            json=all_annotations_post_info.model_dump(mode='json')
+        )
+        return GetNextURLForAllAnnotationResponse(**data)

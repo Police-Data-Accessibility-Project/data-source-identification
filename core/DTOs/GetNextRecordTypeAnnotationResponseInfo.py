@@ -12,7 +12,7 @@ class GetNextRecordTypeAnnotationResponseInfo(BaseModel):
         title="Information about the URL"
     )
     suggested_record_type: Optional[RecordType] = Field(
-        title="Whether the auto-labeler identified the URL as relevant or not"
+        title="What record type, if any, the auto-labeler identified the URL as"
     )
     html_info: ResponseHTMLInfo = Field(
         title="HTML information about the URL"

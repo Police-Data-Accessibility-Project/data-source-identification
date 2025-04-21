@@ -1,11 +1,11 @@
 from typing import Any
 
-from sqlalchemy import Select, select, exists, Table, func, Subquery, and_
+from sqlalchemy import Select, select, exists, Table, func, Subquery, and_, not_, ColumnElement
 from sqlalchemy.orm import aliased
 
 from collector_db.enums import URLMetadataAttributeType, ValidationStatus, TaskType
 from collector_db.models import URL, URLHTMLContent, AutomatedUrlAgencySuggestion, URLOptionalDataSourceMetadata, Batch, \
-    ConfirmedURLAgency, LinkTaskURL, Task
+    ConfirmedURLAgency, LinkTaskURL, Task, UserUrlAgencySuggestion, UserRecordTypeSuggestion, UserRelevantSuggestion
 from collector_manager.enums import URLStatus, CollectorType
 from core.enums import BatchStatus
 
@@ -95,3 +95,23 @@ class StatementComposer:
             )
 
         return query
+
+
+    @staticmethod
+    def user_suggestion_not_exists(
+            model_to_exclude: UserUrlAgencySuggestion or
+                              UserRecordTypeSuggestion or
+                              UserRelevantSuggestion
+    ) -> ColumnElement[bool]:
+        #
+
+        subquery = not_(
+                    exists(
+                        select(model_to_exclude)
+                        .where(
+                            model_to_exclude.url_id == URL.id,
+                        )
+                    )
+                )
+
+        return subquery

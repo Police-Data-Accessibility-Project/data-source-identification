@@ -3,11 +3,10 @@ from functools import wraps
 from typing import Optional, Type, Any, List
 
 from fastapi import HTTPException
-from sqlalchemy import select, exists, func, case, desc, Select, not_, and_, or_, update, Delete, Insert, asc, delete
+from sqlalchemy import select, exists, func, case, desc, Select, not_, and_, update, asc, delete
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.orm import selectinload, joinedload, QueryableAttribute, aliased
-from sqlalchemy.sql.functions import coalesce
 from starlette import status
 
 from collector_db.ConfigManager import ConfigManager
@@ -23,18 +22,20 @@ from collector_db.DTOs.URLInfo import URLInfo
 from collector_db.DTOs.URLMapping import URLMapping
 from collector_db.StatementComposer import StatementComposer
 from collector_db.constants import PLACEHOLDER_AGENCY_NAME
-from collector_db.enums import URLMetadataAttributeType, TaskType
-from collector_db.helper_functions import get_postgres_connection_string
+from collector_db.enums import TaskType
 from collector_db.models import URL, URLErrorInfo, URLHTMLContent, Base, \
     RootURL, Task, TaskError, LinkTaskURL, Batch, Agency, AutomatedUrlAgencySuggestion, \
     UserUrlAgencySuggestion, AutoRelevantSuggestion, AutoRecordTypeSuggestion, UserRelevantSuggestion, \
     UserRecordTypeSuggestion, ReviewingUserURL, URLOptionalDataSourceMetadata, ConfirmedURLAgency, Duplicate, Log
 from collector_manager.enums import URLStatus, CollectorType
+from core.DTOs.AllAnnotationPostInfo import AllAnnotationPostInfo
 from core.DTOs.FinalReviewApprovalInfo import FinalReviewApprovalInfo
 from core.DTOs.GetNextRecordTypeAnnotationResponseInfo import GetNextRecordTypeAnnotationResponseInfo
 from core.DTOs.GetNextRelevanceAnnotationResponseInfo import GetNextRelevanceAnnotationResponseInfo
 from core.DTOs.GetNextURLForAgencyAnnotationResponse import GetNextURLForAgencyAnnotationResponse, \
     GetNextURLForAgencyAgencyInfo, GetNextURLForAgencyAnnotationInnerResponse
+from core.DTOs.GetNextURLForAllAnnotationResponse import GetNextURLForAllAnnotationResponse, \
+    GetNextURLForAllAnnotationInnerResponse
 from core.DTOs.GetNextURLForFinalReviewResponse import GetNextURLForFinalReviewResponse, FinalReviewAnnotationInfo, \
     FinalReviewOptionalMetadata
 from core.DTOs.GetTasksResponse import GetTasksResponse, GetTasksResponseTaskInfo
@@ -129,7 +130,6 @@ class AsyncDatabaseClient:
             session: AsyncSession,
             user_suggestion_model_to_exclude: UserSuggestionModel,
             auto_suggestion_relationship: QueryableAttribute,
-            user_id: int,
             batch_id: Optional[int],
             check_if_annotated_not_relevant: bool = False
     ) -> URL:
@@ -140,14 +140,7 @@ class AsyncDatabaseClient:
             .where(URL.outcome == URLStatus.PENDING.value)
             # URL must not have user suggestion
             .where(
-                not_(
-                    exists(
-                        select(user_suggestion_model_to_exclude)
-                        .where(
-                            user_suggestion_model_to_exclude.url_id == URL.id,
-                        )
-                    )
-                )
+                StatementComposer.user_suggestion_not_exists(user_suggestion_model_to_exclude)
             )
         )
 
@@ -213,7 +206,6 @@ class AsyncDatabaseClient:
             session,
             user_suggestion_model_to_exclude=UserRelevantSuggestion,
             auto_suggestion_relationship=URL.auto_relevant_suggestion,
-            user_id=user_id,
             batch_id=batch_id
         )
         if url is None:
@@ -254,7 +246,6 @@ class AsyncDatabaseClient:
             session,
             user_suggestion_model_to_exclude=UserRecordTypeSuggestion,
             auto_suggestion_relationship=URL.auto_record_type_suggestion,
-            user_id=user_id,
             batch_id=batch_id,
             check_if_annotated_not_relevant=True
         )
@@ -823,9 +814,7 @@ class AsyncDatabaseClient:
             select(URL.id, URL.url)
             # Must not have confirmed agencies
             .where(
-                and_(
-                    URL.outcome == URLStatus.PENDING.value
-                )
+                URL.outcome == URLStatus.PENDING.value
             )
         )
 
@@ -838,9 +827,7 @@ class AsyncDatabaseClient:
             .where(
                 ~exists(
                     select(UserUrlAgencySuggestion).
-                    where(
-                        UserUrlAgencySuggestion.url_id == URL.id
-                    ).
+                    where(UserUrlAgencySuggestion.url_id == URL.id).
                     correlate(URL)
                 )
             )
@@ -885,37 +872,8 @@ class AsyncDatabaseClient:
         result = results[0]
         url_id = result[0]
         url = result[1]
-        # Get relevant autosuggestions and agency info, if an associated agency exists
-        statement = (
-            select(
-                AutomatedUrlAgencySuggestion.agency_id,
-                AutomatedUrlAgencySuggestion.is_unknown,
-                Agency.name,
-                Agency.state,
-                Agency.county,
-                Agency.locality
-            )
-            .join(Agency, isouter=True)
-            .where(AutomatedUrlAgencySuggestion.url_id == url_id)
-        )
-        raw_autosuggestions = await session.execute(statement)
-        autosuggestions = raw_autosuggestions.all()
-        agency_suggestions = []
-        for autosuggestion in autosuggestions:
-            agency_id = autosuggestion[0]
-            is_unknown = autosuggestion[1]
-            name = autosuggestion[2]
-            state = autosuggestion[3]
-            county = autosuggestion[4]
-            locality = autosuggestion[5]
-            agency_suggestions.append(GetNextURLForAgencyAgencyInfo(
-                suggestion_type=SuggestionType.AUTO_SUGGESTION if not is_unknown else SuggestionType.UNKNOWN,
-                pdap_agency_id=agency_id,
-                agency_name=name,
-                state=state,
-                county=county,
-                locality=locality
-            ))
+
+        agency_suggestions = await self.get_agency_suggestions(session, url_id=url_id)
 
         # Get HTML content info
         html_content_infos = await self.get_html_content_info(url_id)
@@ -1625,6 +1583,142 @@ class AsyncDatabaseClient:
             Log.created_at < datetime.now() - timedelta(days=1)
         )
         await session.execute(statement)
+
+    async def get_agency_suggestions(self, session, url_id: int) -> List[GetNextURLForAgencyAgencyInfo]:
+        # Get relevant autosuggestions and agency info, if an associated agency exists
+
+        statement = (
+            select(
+                AutomatedUrlAgencySuggestion.agency_id,
+                AutomatedUrlAgencySuggestion.is_unknown,
+                Agency.name,
+                Agency.state,
+                Agency.county,
+                Agency.locality
+            )
+            .join(Agency, isouter=True)
+            .where(AutomatedUrlAgencySuggestion.url_id == url_id)
+        )
+        raw_autosuggestions = await session.execute(statement)
+        autosuggestions = raw_autosuggestions.all()
+        agency_suggestions = []
+        for autosuggestion in autosuggestions:
+            agency_id = autosuggestion[0]
+            is_unknown = autosuggestion[1]
+            name = autosuggestion[2]
+            state = autosuggestion[3]
+            county = autosuggestion[4]
+            locality = autosuggestion[5]
+            agency_suggestions.append(GetNextURLForAgencyAgencyInfo(
+                suggestion_type=SuggestionType.AUTO_SUGGESTION if not is_unknown else SuggestionType.UNKNOWN,
+                pdap_agency_id=agency_id,
+                agency_name=name,
+                state=state,
+                county=county,
+                locality=locality
+            ))
+        return agency_suggestions
+
+    @session_manager
+    async def get_next_url_for_all_annotations(self, session, batch_id: Optional[int] = None) -> GetNextURLForAllAnnotationResponse:
+        query = (
+            Select(URL)
+            .where(
+                and_(
+                    URL.outcome == URLStatus.PENDING.value,
+                    StatementComposer.user_suggestion_not_exists(UserUrlAgencySuggestion),
+                    StatementComposer.user_suggestion_not_exists(UserRecordTypeSuggestion),
+                    StatementComposer.user_suggestion_not_exists(UserRelevantSuggestion),
+                )
+            )
+        )
+        if batch_id is not None:
+            query = query.where(URL.batch_id == batch_id)
+
+        load_options = [
+            URL.html_content,
+            URL.automated_agency_suggestions,
+            URL.auto_relevant_suggestion,
+            URL.auto_record_type_suggestion
+        ]
+        select_in_loads = [selectinload(load_option) for load_option in load_options]
+
+        # Add load options
+        query = query.options(
+            *select_in_loads
+        )
+
+        query = query.order_by(URL.id.asc()).limit(1)
+        raw_results = await session.execute(query)
+        url = raw_results.scalars().one_or_none()
+        if url is None:
+            return GetNextURLForAllAnnotationResponse(
+                next_annotation=None
+            )
+
+        html_response_info = DTOConverter.html_content_list_to_html_response_info(
+            url.html_content
+        )
+
+        if url.auto_relevant_suggestion is not None:
+            auto_relevant = url.auto_relevant_suggestion.relevant
+        else:
+            auto_relevant = None
+
+        if url.auto_record_type_suggestion is not None:
+            auto_record_type = url.auto_record_type_suggestion.record_type
+        else:
+            auto_record_type = None
+
+        agency_suggestions = await self.get_agency_suggestions(session, url_id=url.id)
+
+        return GetNextURLForAllAnnotationResponse(
+            next_annotation=GetNextURLForAllAnnotationInnerResponse(
+                url_id=url.id,
+                url=url.url,
+                html_info=html_response_info,
+                suggested_relevant=auto_relevant,
+                suggested_record_type=auto_record_type,
+                agency_suggestions=agency_suggestions
+            )
+        )
+
+    @session_manager
+    async def add_all_annotations_to_url(
+            self,
+            session,
+            user_id: int,
+            url_id: int,
+            post_info: AllAnnotationPostInfo
+    ):
+
+        # Add relevant annotation
+        relevant_suggestion = UserRelevantSuggestion(
+            url_id=url_id,
+            user_id=user_id,
+            relevant=post_info.is_relevant
+        )
+        session.add(relevant_suggestion)
+
+        # If not relevant, do nothing else
+        if not post_info.is_relevant:
+            return
+
+        record_type_suggestion = UserRecordTypeSuggestion(
+            url_id=url_id,
+            user_id=user_id,
+            record_type=post_info.record_type.value
+        )
+        session.add(record_type_suggestion)
+
+        agency_suggestion = UserUrlAgencySuggestion(
+            url_id=url_id,
+            user_id=user_id,
+            agency_id=post_info.agency.suggested_agency,
+            is_new=post_info.agency.is_new
+        )
+        session.add(agency_suggestion)
+
 
 
 
