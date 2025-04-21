@@ -8,6 +8,7 @@ from collector_db.DTOs.GetTaskStatusResponseInfo import GetTaskStatusResponseInf
 from collector_db.enums import TaskType
 from collector_manager.AsyncCollectorManager import AsyncCollectorManager
 from collector_manager.enums import CollectorType
+from core.DTOs.AllAnnotationPostInfo import AllAnnotationPostInfo
 from core.DTOs.CollectorStartInfo import CollectorStartInfo
 from core.DTOs.FinalReviewApprovalInfo import FinalReviewApprovalInfo
 from core.DTOs.GetBatchLogsResponse import GetBatchLogsResponse
@@ -17,6 +18,7 @@ from core.DTOs.GetNextRecordTypeAnnotationResponseInfo import GetNextRecordTypeA
 from core.DTOs.GetNextRelevanceAnnotationResponseInfo import GetNextRelevanceAnnotationResponseOuterInfo
 from core.DTOs.GetNextURLForAgencyAnnotationResponse import GetNextURLForAgencyAnnotationResponse, \
     URLAgencyAnnotationPostInfo
+from core.DTOs.GetNextURLForAllAnnotationResponse import GetNextURLForAllAnnotationResponse
 from core.DTOs.GetTasksResponse import GetTasksResponse
 from core.DTOs.GetURLsByBatchResponse import GetURLsByBatchResponse
 from core.DTOs.GetURLsResponseInfo import GetURLsResponseInfo
@@ -225,6 +227,26 @@ class AsyncCore:
     ):
         return await self.adb_client.get_next_url_for_final_review(
             batch_id=batch_id
+        )
+
+    async def get_next_url_for_all_annotations(
+            self,
+            batch_id: Optional[int]
+    ) -> GetNextURLForAllAnnotationResponse:
+        return await self.adb_client.get_next_url_for_all_annotations(
+            batch_id=batch_id
+        )
+
+    async def submit_url_for_all_annotations(
+            self,
+            user_id: int,
+            url_id: int,
+            post_info: AllAnnotationPostInfo
+    ):
+        await self.adb_client.add_all_annotations_to_url(
+            user_id=user_id,
+            url_id=url_id,
+            post_info=post_info
         )
 
     async def approve_url(

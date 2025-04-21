@@ -1,16 +1,20 @@
+from http import HTTPStatus
 
 import pytest
 
 from collector_db.DTOs.InsertURLsInfo import InsertURLsInfo
 from collector_db.DTOs.URLMapping import URLMapping
 from collector_db.models import UserUrlAgencySuggestion, UserRelevantSuggestion, UserRecordTypeSuggestion
+from core.DTOs.AllAnnotationPostInfo import AllAnnotationPostInfo
 from core.DTOs.GetNextRecordTypeAnnotationResponseInfo import GetNextRecordTypeAnnotationResponseOuterInfo
 from core.DTOs.GetNextRelevanceAnnotationResponseInfo import GetNextRelevanceAnnotationResponseOuterInfo
 from core.DTOs.GetNextURLForAgencyAnnotationResponse import URLAgencyAnnotationPostInfo
 from core.DTOs.RecordTypeAnnotationPostInfo import RecordTypeAnnotationPostInfo
 from core.DTOs.RelevanceAnnotationPostInfo import RelevanceAnnotationPostInfo
 from core.enums import RecordType, SuggestionType
-from tests.helpers.complex_test_data_functions import AnnotateAgencySetupInfo, setup_for_annotate_agency
+from core.exceptions import FailedValidationException
+from tests.helpers.complex_test_data_functions import AnnotateAgencySetupInfo, setup_for_annotate_agency, \
+    setup_for_get_next_url_for_final_review
 from html_tag_collector.DataClassTags import ResponseHTMLInfo
 from tests.helpers.DBDataCreator import BatchURLCreationInfo
 from tests.test_automated.integration.api.conftest import MOCK_USER_ID
@@ -514,3 +518,135 @@ async def test_annotate_agency_submit_new(api_test_helper):
     assert len(all_manual_suggestions) == 1
     assert all_manual_suggestions[0].is_new
 
+@pytest.mark.asyncio
+async def test_annotate_all(api_test_helper):
+    """
+    Test the happy path workflow for the all-annotations endpoint
+    The user should be able to get a valid URL (filtering on batch id if needed),
+    submit a full annotation, and receive another URL
+    """
+    ath = api_test_helper
+    adb_client = ath.adb_client()
+    setup_info_1 =  await setup_for_get_next_url_for_final_review(
+        db_data_creator=ath.db_data_creator, include_user_annotations=False
+    )
+    url_mapping_1 = setup_info_1.url_mapping
+    setup_info_2 = await setup_for_get_next_url_for_final_review(
+        db_data_creator=ath.db_data_creator, include_user_annotations=False
+    )
+    url_mapping_2 = setup_info_2.url_mapping
+
+    # First, get a valid URL to annotate
+    get_response_1 = await ath.request_validator.get_next_url_for_all_annotations()
+
+    # Apply the second batch id as a filter and see that a different URL is returned
+    get_response_2 = await ath.request_validator.get_next_url_for_all_annotations(
+        batch_id=setup_info_2.batch_id
+    )
+
+    assert get_response_1.next_annotation.url_id != get_response_2.next_annotation.url_id
+
+    # Annotate the first and submit
+    agency_id = await ath.db_data_creator.agency()
+    post_response_1 = await ath.request_validator.post_all_annotations_and_get_next(
+        url_id=url_mapping_1.url_id,
+        all_annotations_post_info=AllAnnotationPostInfo(
+            is_relevant=True,
+            record_type=RecordType.ACCIDENT_REPORTS,
+            agency=URLAgencyAnnotationPostInfo(
+                is_new=False,
+                suggested_agency=agency_id
+            )
+        )
+    )
+    assert post_response_1.next_annotation is not None
+
+    # Confirm the second is received
+    assert post_response_1.next_annotation.url_id == url_mapping_2.url_id
+
+    # Upon submitting the second, confirm that no more URLs are returned through either POST or GET
+    post_response_2 = await ath.request_validator.post_all_annotations_and_get_next(
+        url_id=url_mapping_2.url_id,
+        all_annotations_post_info=AllAnnotationPostInfo(
+            is_relevant=False,
+        )
+    )
+    assert post_response_2.next_annotation is None
+
+    get_response_3 = await ath.request_validator.get_next_url_for_all_annotations()
+    assert get_response_3.next_annotation is None
+
+
+    # Check that all annotations are present in the database
+
+    # Should be two relevance annotations, one True and one False
+    all_relevance_suggestions = await adb_client.get_all(UserRelevantSuggestion)
+    assert len(all_relevance_suggestions) == 2
+    assert all_relevance_suggestions[0].relevant == True
+    assert all_relevance_suggestions[1].relevant == False
+
+    # Should be one agency
+    all_agency_suggestions = await adb_client.get_all(UserUrlAgencySuggestion)
+    assert len(all_agency_suggestions) == 1
+    assert all_agency_suggestions[0].is_new == False
+    assert all_agency_suggestions[0].agency_id == agency_id
+
+    # Should be one record type
+    all_record_type_suggestions = await adb_client.get_all(UserRecordTypeSuggestion)
+    assert len(all_record_type_suggestions) == 1
+    assert all_record_type_suggestions[0].record_type == RecordType.ACCIDENT_REPORTS.value
+
+@pytest.mark.asyncio
+async def test_annotate_all_post_batch_filtering(api_test_helper):
+    """
+    Batch filtering should also work when posting annotations
+    """
+    ath = api_test_helper
+    adb_client = ath.adb_client()
+    setup_info_1 =  await setup_for_get_next_url_for_final_review(
+        db_data_creator=ath.db_data_creator, include_user_annotations=False
+    )
+    url_mapping_1 = setup_info_1.url_mapping
+    setup_info_2 = await setup_for_get_next_url_for_final_review(
+        db_data_creator=ath.db_data_creator, include_user_annotations=False
+    )
+    setup_info_3 = await setup_for_get_next_url_for_final_review(
+        db_data_creator=ath.db_data_creator, include_user_annotations=False
+    )
+    url_mapping_3 = setup_info_3.url_mapping
+
+    # Submit the first annotation, using the third batch id, and receive the third URL
+    post_response_1 = await ath.request_validator.post_all_annotations_and_get_next(
+        url_id=url_mapping_1.url_id,
+        batch_id=setup_info_3.batch_id,
+        all_annotations_post_info=AllAnnotationPostInfo(
+            is_relevant=True,
+            record_type=RecordType.ACCIDENT_REPORTS,
+            agency=URLAgencyAnnotationPostInfo(
+                is_new=True
+            )
+        )
+    )
+
+    assert post_response_1.next_annotation.url_id == url_mapping_3.url_id
+
+
+@pytest.mark.asyncio
+async def test_annotate_all_validation_error(api_test_helper):
+    """
+    Validation errors in the PostInfo DTO should result in a 400 BAD REQUEST response
+    """
+    ath = api_test_helper
+    setup_info_1 =  await setup_for_get_next_url_for_final_review(
+        db_data_creator=ath.db_data_creator, include_user_annotations=False
+    )
+    url_mapping_1 = setup_info_1.url_mapping
+
+    with pytest.raises(FailedValidationException) as e:
+        response = await ath.request_validator.post_all_annotations_and_get_next(
+            url_id=url_mapping_1.url_id,
+            all_annotations_post_info=AllAnnotationPostInfo(
+                is_relevant=False,
+                record_type=RecordType.ACCIDENT_REPORTS
+            )
+        )

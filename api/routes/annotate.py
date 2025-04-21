@@ -4,10 +4,12 @@ from fastapi import APIRouter, Depends, Path, Query
 
 from api.dependencies import get_async_core
 from core.AsyncCore import AsyncCore
+from core.DTOs.AllAnnotationPostInfo import AllAnnotationPostInfo
 from core.DTOs.GetNextRecordTypeAnnotationResponseInfo import GetNextRecordTypeAnnotationResponseOuterInfo
 from core.DTOs.GetNextRelevanceAnnotationResponseInfo import GetNextRelevanceAnnotationResponseOuterInfo
 from core.DTOs.GetNextURLForAgencyAnnotationResponse import GetNextURLForAgencyAnnotationResponse, \
     URLAgencyAnnotationPostInfo
+from core.DTOs.GetNextURLForAllAnnotationResponse import GetNextURLForAllAnnotationResponse
 from core.DTOs.RecordTypeAnnotationPostInfo import RecordTypeAnnotationPostInfo
 from core.DTOs.RelevanceAnnotationPostInfo import RelevanceAnnotationPostInfo
 from security_manager.SecurityManager import get_access_info, AccessInfo
@@ -18,6 +20,11 @@ annotate_router = APIRouter(
     responses={404: {"description": "Not found"}},
 )
 
+batch_query = Query(
+    description="The batch id of the next URL to get. "
+                "If not specified, defaults to first qualifying URL",
+    default=None
+)
 
 @annotate_router.get("/relevance")
 async def get_next_url_for_relevance_annotation(
@@ -40,10 +47,7 @@ async def annotate_url_for_relevance_and_get_next_url(
         url_id: int = Path(description="The URL id to annotate"),
         async_core: AsyncCore = Depends(get_async_core),
         access_info: AccessInfo = Depends(get_access_info),
-        batch_id: Optional[int] = Query(
-            description="The batch id of the next URL to get. "
-                        "If not specified, defaults to first qualifying URL",
-            default=None),
+        batch_id: Optional[int] = batch_query
 ) -> GetNextRelevanceAnnotationResponseOuterInfo:
     """
     Post URL annotation and get next URL to annotate
@@ -62,10 +66,7 @@ async def annotate_url_for_relevance_and_get_next_url(
 async def get_next_url_for_record_type_annotation(
         access_info: AccessInfo = Depends(get_access_info),
         async_core: AsyncCore = Depends(get_async_core),
-        batch_id: Optional[int] = Query(
-            description="The batch id of the next URL to get. "
-                        "If not specified, defaults to first qualifying URL",
-            default=None),
+        batch_id: Optional[int] = batch_query
 ) -> GetNextRecordTypeAnnotationResponseOuterInfo:
     return await async_core.get_next_url_for_record_type_annotation(
         user_id=access_info.user_id,
@@ -78,10 +79,7 @@ async def annotate_url_for_record_type_and_get_next_url(
         url_id: int = Path(description="The URL id to annotate"),
         async_core: AsyncCore = Depends(get_async_core),
         access_info: AccessInfo = Depends(get_access_info),
-        batch_id: Optional[int] = Query(
-            description="The batch id of the next URL to get. "
-                        "If not specified, defaults to first qualifying URL",
-            default=None),
+        batch_id: Optional[int] = batch_query
 ) -> GetNextRecordTypeAnnotationResponseOuterInfo:
     """
     Post URL annotation and get next URL to annotate
@@ -100,10 +98,7 @@ async def annotate_url_for_record_type_and_get_next_url(
 async def get_next_url_for_agency_annotation(
         access_info: AccessInfo = Depends(get_access_info),
         async_core: AsyncCore = Depends(get_async_core),
-        batch_id: Optional[int] = Query(
-            description="The batch id of the next URL to get. "
-                        "If not specified, defaults to first qualifying URL",
-            default=None),
+        batch_id: Optional[int] = batch_query
 ) -> GetNextURLForAgencyAnnotationResponse:
     return await async_core.get_next_url_agency_for_annotation(
         user_id=access_info.user_id,
@@ -116,10 +111,7 @@ async def annotate_url_for_agency_and_get_next_url(
         agency_annotation_post_info: URLAgencyAnnotationPostInfo,
         async_core: AsyncCore = Depends(get_async_core),
         access_info: AccessInfo = Depends(get_access_info),
-        batch_id: Optional[int] = Query(
-            description="The batch id of the next URL to get. "
-                        "If not specified, defaults to first qualifying URL",
-            default=None),
+        batch_id: Optional[int] = batch_query
 ) -> GetNextURLForAgencyAnnotationResponse:
     """
     Post URL annotation and get next URL to annotate
@@ -131,5 +123,35 @@ async def annotate_url_for_agency_and_get_next_url(
     )
     return await async_core.get_next_url_agency_for_annotation(
         user_id=access_info.user_id,
+        batch_id=batch_id
+    )
+
+@annotate_router.get("/all")
+async def get_next_url_for_all_annotations(
+        access_info: AccessInfo = Depends(get_access_info),
+        async_core: AsyncCore = Depends(get_async_core),
+        batch_id: Optional[int] = batch_query
+) -> GetNextURLForAllAnnotationResponse:
+    return await async_core.get_next_url_for_all_annotations(
+        batch_id=batch_id
+    )
+
+@annotate_router.post("/all/{url_id}")
+async def annotate_url_for_all_annotations_and_get_next_url(
+        url_id: int,
+        all_annotation_post_info: AllAnnotationPostInfo,
+        async_core: AsyncCore = Depends(get_async_core),
+        access_info: AccessInfo = Depends(get_access_info),
+        batch_id: Optional[int] = batch_query
+) -> GetNextURLForAllAnnotationResponse:
+    """
+    Post URL annotation and get next URL to annotate
+    """
+    await async_core.submit_url_for_all_annotations(
+        user_id=access_info.user_id,
+        url_id=url_id,
+        post_info=all_annotation_post_info
+    )
+    return await async_core.get_next_url_for_all_annotations(
         batch_id=batch_id
     )

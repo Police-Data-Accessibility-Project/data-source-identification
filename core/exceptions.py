@@ -1,3 +1,8 @@
+from http import HTTPStatus
+
+from fastapi import HTTPException
+
+
 class InvalidPreprocessorError(Exception):
     pass
 
@@ -8,3 +13,8 @@ class MuckrockAPIError(Exception):
 
 class MatchAgencyError(Exception):
     pass
+
+
+class FailedValidationException(HTTPException):
+    def __init__(self, detail: str):
+        super().__init__(status_code=HTTPStatus.BAD_REQUEST, detail=detail)
