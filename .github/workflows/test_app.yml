@@ -30,6 +30,11 @@ jobs:
       DATA_SOURCES_USER: postgres
       DATA_SOURCES_PASSWORD: postgres
       DATA_SOURCES_DB: test_data_sources_db
+      FDW_DATA_SOURCES_HOST: postgres
+      FDW_DATA_SOURCES_PORT: 5432
+      FDW_DATA_SOURCES_USER: postgres
+      FDW_DATA_SOURCES_PASSWORD: postgres
+      FDW_DATA_SOURCES_DB: test_data_sources_db
       GOOGLE_API_KEY: TEST
       GOOGLE_CSE_ID: TEST
 
