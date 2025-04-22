@@ -36,7 +36,7 @@ def upgrade() -> None:
     """)
 
     op.execute(f"""
-        CREATE USER MAPPING FOR {user}
+        CREATE USER MAPPING FOR PUBLIC
         SERVER data_sources_server
         OPTIONS (user '{user}', password '{password}');
     """)
@@ -236,7 +236,7 @@ def downgrade() -> None:
     # Drop user mapping
     user = os.getenv("DATA_SOURCES_USER")
     op.execute(f"""
-    DROP USER MAPPING FOR {user} SERVER data_sources_server;
+    DROP USER MAPPING FOR PUBLIC SERVER data_sources_server;
     """)
 
     # Drop server
