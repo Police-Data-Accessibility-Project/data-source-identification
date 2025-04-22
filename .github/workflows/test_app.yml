@@ -19,7 +19,7 @@ jobs:
           --health-timeout 5s
           --health-retries 5
 
-    env:  # <-- Consolidated env block here
+    env:
       POSTGRES_PASSWORD: postgres
       POSTGRES_USER: postgres
       POSTGRES_DB: source_collector_test_db
