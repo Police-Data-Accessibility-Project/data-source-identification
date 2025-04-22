@@ -1,5 +1,4 @@
 from local_database.DTOs import DockerInfo, DockerfileInfo, HealthCheckInfo, VolumeInfo
-from local_database.constants import LOCAL_DATA_SOURCES_DB_NAME
 from util.helper_functions import get_from_env, project_path
 
 
@@ -25,43 +24,6 @@ def get_database_docker_info() -> DockerInfo:
             start_period=2
         )
     )
-
-
-def get_data_sources_data_dumper_info() -> DockerInfo:
-    return DockerInfo(
-        dockerfile_info=DockerfileInfo(
-            image_tag="datadumper",
-            dockerfile_directory=str(project_path(
-                "local_database",
-                "DataDumper"
-            ))
-        ),
-        volume_info=VolumeInfo(
-            host_path=str(project_path(
-                "local_database",
-                "DataDumper",
-                "dump"
-            )),
-            container_path="/dump"
-        ),
-        name="datadumper",
-        environment={
-            "DUMP_HOST": get_from_env("PROD_DATA_SOURCES_HOST"),
-            "DUMP_USER": get_from_env("PROD_DATA_SOURCES_USER"),
-            "DUMP_PASSWORD": get_from_env("PROD_DATA_SOURCES_PASSWORD"),
-            "DUMP_NAME": get_from_env("PROD_DATA_SOURCES_DB"),
-            "DUMP_PORT": get_from_env("PROD_DATA_SOURCES_PORT"),
-            "RESTORE_HOST": get_from_env("POSTGRES_HOST"),
-            "RESTORE_USER": get_from_env("POSTGRES_USER"),
-            "RESTORE_PORT": get_from_env("POSTGRES_PORT"),
-            "RESTORE_DB_NAME": LOCAL_DATA_SOURCES_DB_NAME,
-            "RESTORE_PASSWORD": get_from_env("POSTGRES_PASSWORD"),
-            "DUMP_FILE": "/dump/data_sources_db_dump.sql",
-            "DUMP_SCHEMA_ONLY": "true"
-        },
-        command="bash"
-    )
-
 
 def get_source_collector_data_dumper_info() -> DockerInfo:
     return DockerInfo(

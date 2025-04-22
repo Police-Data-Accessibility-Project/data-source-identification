@@ -19,22 +19,12 @@ jobs:
           --health-timeout 5s
           --health-retries 5
 
-    env:  # <-- Consolidated env block here
+    env:
       POSTGRES_PASSWORD: postgres
       POSTGRES_USER: postgres
-      POSTGRES_DB: source_collector_test_db
+      POSTGRES_DB: postgres
       POSTGRES_HOST: postgres
       POSTGRES_PORT: 5432
-      DATA_SOURCES_HOST: postgres
-      DATA_SOURCES_PORT: 5432
-      DATA_SOURCES_USER: postgres
-      DATA_SOURCES_PASSWORD: postgres
-      DATA_SOURCES_DB: test_data_sources_db
-      FDW_DATA_SOURCES_HOST: postgres
-      FDW_DATA_SOURCES_PORT: 5432
-      FDW_DATA_SOURCES_USER: postgres
-      FDW_DATA_SOURCES_PASSWORD: postgres
-      FDW_DATA_SOURCES_DB: test_data_sources_db
       GOOGLE_API_KEY: TEST
       GOOGLE_CSE_ID: TEST
 
@@ -42,16 +32,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install PostgreSQL client tools
-        run: |
-          apt-get update
-          apt-get install -y postgresql-client      
-
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          python -m local_database.create_database --use-shell
 
       - name: Run tests
         run: |
