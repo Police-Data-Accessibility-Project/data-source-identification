@@ -77,7 +77,7 @@ if __name__ == "__main__":
             env={
                 "RESTORE_HOST": POSTGRES_HOST,
                 "RESTORE_USER": POSTGRES_USER,
-                "RESTORE_PORT": POSTGRES_PORT,
+                "RESTORE_PORT": str(POSTGRES_PORT),
                 "RESTORE_DB_NAME": LOCAL_DATA_SOURCES_DB_NAME,
                 "RESTORE_PASSWORD": POSTGRES_PASSWORD
             }
