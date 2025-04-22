@@ -22,7 +22,7 @@ jobs:
     env:
       POSTGRES_PASSWORD: postgres
       POSTGRES_USER: postgres
-      POSTGRES_DB: source_collector_test_db
+      POSTGRES_DB: postgres
       POSTGRES_HOST: postgres
       POSTGRES_PORT: 5432
       GOOGLE_API_KEY: TEST
