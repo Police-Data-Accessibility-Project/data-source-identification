@@ -29,8 +29,9 @@ def wait_for_postgres(container_id):
             run_command(f"docker exec {container_id} pg_isready -U postgres", check=True)
             print("Postgres is ready!")
             return
-        except subprocess.CalledProcessError:
-            print(f"Still waiting... ({i+1}/{MAX_RETRIES})")
+        except subprocess.CalledProcessError as e:
+            print(f"Still waiting... ({i + 1}/{MAX_RETRIES}) Exit code: {e.returncode}")
+            print(f"Output: {e.output if hasattr(e, 'output') else 'N/A'}")
             time.sleep(SLEEP_SECONDS)
     print("Postgres did not become ready in time.")
     sys.exit(1)

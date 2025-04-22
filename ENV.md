@@ -26,9 +26,9 @@ Please ensure these are properly defined in a `.env` file in the root directory.
 ## Data Dumper
 
 ```
-PROD_DATA_SOURCES_HOST=pdap-production-v2-do-user-8463429-0.k.db.ondigitalocean.com  # The host of the production Data Sources Database
-PROD_DATA_SOURCES_PORT=25060                  # The port of the production Data Sources Database
+PROD_DATA_SOURCES_HOST=127.0.0.1  # The host of the production Data Sources Database
+PROD_DATA_SOURCES_PORT=1234                  # The port of the production Data Sources Database
 PROD_DATA_SOURCES_USER=dump_user           # The username for the production Data Sources Database
-PROD_DATA_SOURCES_PASSWORD=GeriatricGeronimoGentrification          # The password for the production Data Sources Database
-PROD_DATA_SOURCES_DB=pdap_prod_v2_db                  # The database name for the production Data Sources Database
+PROD_DATA_SOURCES_PASSWORD=password          # The password for the production Data Sources Database
+PROD_DATA_SOURCES_DB=db_name                  # The database name for the production Data Sources Database
 ```

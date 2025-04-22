@@ -13,7 +13,7 @@ class DockerClient:
         exec_id = self.client.api.exec_create(
             container_id,
             cmd=command,
-            tty=True,
+            tty=False,
             stdin=False
         )
         output_stream = self.client.api.exec_start(exec_id=exec_id, stream=True)
