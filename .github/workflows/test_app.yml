@@ -48,6 +48,17 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           python -m local_database.create_database --use-shell
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+          POSTGRES_DB: source_collector_test_db
+          POSTGRES_HOST: postgres
+          POSTGRES_PORT: 5432
+          DATA_SOURCES_HOST: postgres
+          DATA_SOURCES_PORT: 5432
+          DATA_SOURCES_USER: postgres
+          DATA_SOURCES_PASSWORD: postgres
+          DATA_SOURCES_DB: test_data_sources_db
       - name: Run tests
         run: |
           pytest tests/test_automated
