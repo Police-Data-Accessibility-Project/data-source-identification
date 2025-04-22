@@ -35,6 +35,13 @@ jobs:
           --health-retries 5
 
     steps:
+      - name: Set up FDW
+        run: |
+          ./local_database/setup_fdw.sh
+        env:
+          POSTGRES_HOST: postgres
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
       - name: Checkout repository
         uses: actions/checkout@v4
       - name: Install dependencies
