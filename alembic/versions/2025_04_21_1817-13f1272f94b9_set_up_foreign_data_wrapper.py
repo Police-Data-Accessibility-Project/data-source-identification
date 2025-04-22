@@ -36,7 +36,7 @@ def upgrade() -> None:
     """)
 
     op.execute(f"""
-        CREATE USER MAPPING FOR {user}
+        CREATE USER MAPPING FOR PUBLIC
         SERVER data_sources_server
         OPTIONS (user '{user}', password '{password}');
     """)
