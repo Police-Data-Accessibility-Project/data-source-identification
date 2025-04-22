@@ -22,3 +22,13 @@ Please ensure these are properly defined in a `.env` file in the root directory.
 |`DISCORD_WEBHOOK_URL`| The URL for the Discord webhook used for notifications| `abc123`               |
 
 [^1:] The user account in question will require elevated permissions to access certain endpoints. At a minimum, the user will require the `source_collector` and `db_write` permissions.
+
+## Data Dumper
+
+```
+PROD_DATA_SOURCES_HOST=pdap-production-v2-do-user-8463429-0.k.db.ondigitalocean.com  # The host of the production Data Sources Database
+PROD_DATA_SOURCES_PORT=25060                  # The port of the production Data Sources Database
+PROD_DATA_SOURCES_USER=dump_user           # The username for the production Data Sources Database
+PROD_DATA_SOURCES_PASSWORD=GeriatricGeronimoGentrification          # The password for the production Data Sources Database
+PROD_DATA_SOURCES_DB=pdap_prod_v2_db                  # The database name for the production Data Sources Database
+```

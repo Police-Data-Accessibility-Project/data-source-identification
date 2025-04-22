@@ -65,8 +65,13 @@ class DockerManager:
     def run_container(
             self,
             docker_info: DockerInfo,
+            force_rebuild: bool = False
     ) -> DockerContainer:
-        raw_container = self.client.run_container(docker_info, self.network_name)
+        raw_container = self.client.run_container(
+            docker_info,
+            network_name=self.network_name,
+            force_rebuild=force_rebuild
+        )
         return DockerContainer(self.client, raw_container)
 
     def get_containers(self):

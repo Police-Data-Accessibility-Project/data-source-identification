@@ -1,6 +1,6 @@
 from local_database.DTOs import DockerInfo, DockerfileInfo, HealthCheckInfo, VolumeInfo
 from local_database.constants import LOCAL_DATA_SOURCES_DB_NAME
-from util.helper_functions import get_from_env
+from util.helper_functions import get_from_env, project_path
 
 
 def get_database_docker_info() -> DockerInfo:
@@ -31,10 +31,17 @@ def get_data_sources_data_dumper_info() -> DockerInfo:
     return DockerInfo(
         dockerfile_info=DockerfileInfo(
             image_tag="datadumper",
-            dockerfile_directory="DataDumper"
+            dockerfile_directory=str(project_path(
+                "local_database",
+                "DataDumper"
+            ))
         ),
         volume_info=VolumeInfo(
-            host_path="./DataDumper/dump",
+            host_path=str(project_path(
+                "local_database",
+                "DataDumper",
+                "dump"
+            )),
             container_path="/dump"
         ),
         name="datadumper",
@@ -60,10 +67,17 @@ def get_source_collector_data_dumper_info() -> DockerInfo:
     return DockerInfo(
         dockerfile_info=DockerfileInfo(
             image_tag="datadumper",
-            dockerfile_directory="DataDumper"
+            dockerfile_directory=str(project_path(
+                "local_database",
+                "DataDumper"
+            ))
         ),
         volume_info=VolumeInfo(
-            host_path="./DataDumper/dump",
+            host_path=str(project_path(
+                "local_database",
+                "DataDumper",
+                "dump"
+            )),
             container_path="/dump"
         ),
         name="datadumper",

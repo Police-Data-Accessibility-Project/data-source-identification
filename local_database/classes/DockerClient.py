@@ -2,7 +2,6 @@ import docker
 from docker.errors import NotFound, APIError
 
 from local_database.DTOs import DockerfileInfo, DockerInfo
-from local_database.local_db_util import get_absolute_path
 
 
 class DockerClient:
@@ -26,42 +25,50 @@ class DockerClient:
             self.client.networks.create(network_name, driver="bridge")
         except APIError as e:
             # Assume already exists
-            print(e)
+            if e.response.status_code != 409:
+                raise e
+            print("Network already exists")
         return self.client.networks.get(network_name)
 
     def stop_network(self, network_name):
         self.client.networks.get(network_name).remove()
 
-    def get_image(self, dockerfile_info: DockerfileInfo):
+    def get_image(
+            self,
+            dockerfile_info: DockerfileInfo,
+            force_rebuild: bool = False
+    ):
         if dockerfile_info.dockerfile_directory:
             # Build image from Dockerfile
             self.client.images.build(
-                path=get_absolute_path(dockerfile_info.dockerfile_directory),
-                tag=dockerfile_info.image_tag
+                path=dockerfile_info.dockerfile_directory,
+                tag=dockerfile_info.image_tag,
+                nocache=force_rebuild,
+                rm=True  # Remove intermediate images
             )
-        else:
-            # Pull or use existing image
+            return
+
+        if force_rebuild:
+            # Even if not from Dockerfile, re-pull to ensure freshness
+            self.client.images.pull(dockerfile_info.image_tag)
+            return
+
+        try:
+            self.client.images.get(dockerfile_info.image_tag)
+        except NotFound:
             self.client.images.pull(dockerfile_info.image_tag)
 
-    def run_container(
-            self,
-            docker_info: DockerInfo,
-            network_name: str
-    ):
-        print(f"Running container {docker_info.name}")
+    def get_existing_container(self, docker_info_name: str):
         try:
-            container = self.client.containers.get(docker_info.name)
-            if container.status == 'running':
-                print(f"Container '{docker_info.name}' is already running")
-                return container
-            print("Restarting container...")
-            container.start()
-            return container
+            return self.client.containers.get(docker_info_name)
         except NotFound:
-            # Container does not exist; proceed to build/pull image and run
-            pass
+            return None
 
-        self.get_image(docker_info.dockerfile_info)
+    def create_container(self, docker_info: DockerInfo, network_name: str, force_rebuild: bool = False):
+        self.get_image(
+            docker_info.dockerfile_info,
+            force_rebuild=force_rebuild
+        )
 
         container = self.client.containers.run(
             image=docker_info.dockerfile_info.image_tag,
@@ -79,3 +86,33 @@ class DockerClient:
             healthcheck=docker_info.health_check_info.build_healthcheck() if docker_info.health_check_info is not None else None
         )
         return container
+
+
+    def run_container(
+            self,
+            docker_info: DockerInfo,
+            network_name: str,
+            force_rebuild: bool = False
+    ):
+        print(f"Running container {docker_info.name}")
+        container = self.get_existing_container(docker_info.name)
+        if container is None:
+            return self.create_container(
+                docker_info=docker_info,
+                network_name=network_name,
+                force_rebuild=force_rebuild
+            )
+        if force_rebuild:
+            print("Rebuilding container...")
+            container.remove(force=True)
+            return self.create_container(
+                docker_info=docker_info,
+                network_name=network_name,
+                force_rebuild=force_rebuild
+            )
+        if container.status == 'running':
+            print(f"Container '{docker_info.name}' is already running")
+            return container
+        container.start()
+        return container
+

@@ -11,7 +11,7 @@ class VolumeInfo(BaseModel):
 
     def build_volumes(self):
         return {
-            get_absolute_path(self.host_path): {
+            self.host_path: {
                 "bind": self.container_path,
                 "mode": "rw"
             }
