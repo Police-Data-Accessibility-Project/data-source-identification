@@ -21,11 +21,11 @@ depends_on: Union[str, Sequence[str], None] = None
 def upgrade() -> None:
 
     load_dotenv()
-    remote_host = os.getenv("DATA_SOURCES_HOST")
-    user = os.getenv("DATA_SOURCES_USER")
-    password = os.getenv("DATA_SOURCES_PASSWORD")
-    db_name = os.getenv("DATA_SOURCES_DB")
-    port = os.getenv("DATA_SOURCES_PORT")
+    remote_host = os.getenv("FDW_DATA_SOURCES_HOST")
+    user = os.getenv("FDW_DATA_SOURCES_USER")
+    password = os.getenv("FDW_DATA_SOURCES_PASSWORD")
+    db_name = os.getenv("FDW_DATA_SOURCES_DB")
+    port = os.getenv("FDW_DATA_SOURCES_PORT")
 
     op.execute(f"CREATE EXTENSION IF NOT EXISTS postgres_fdw;")
 
