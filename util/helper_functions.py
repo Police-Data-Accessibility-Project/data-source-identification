@@ -1,10 +1,20 @@
 import os
 from enum import Enum
+from pathlib import Path
 from typing import Type
 
 from dotenv import load_dotenv
 from pydantic import BaseModel
 
+def get_project_root(marker_files=(".project-root",)) -> Path:
+    current = Path(__file__).resolve()
+    for parent in [current] + list(current.parents):
+        if any((parent / marker).exists() for marker in marker_files):
+            return parent
+    raise FileNotFoundError("No project root found (missing marker files)")
+
+def project_path(*parts: str) -> Path:
+    return get_project_root().joinpath(*parts)
 
 def get_enum_values(enum: Type[Enum]):
     return [item.value for item in enum]

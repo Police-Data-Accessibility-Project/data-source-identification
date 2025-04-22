@@ -22,3 +22,23 @@ Please ensure these are properly defined in a `.env` file in the root directory.
 |`DISCORD_WEBHOOK_URL`| The URL for the Discord webhook used for notifications| `abc123`               |
 
 [^1:] The user account in question will require elevated permissions to access certain endpoints. At a minimum, the user will require the `source_collector` and `db_write` permissions.
+
+## Foreign Data Wrapper (FDW)
+```
+FDW_DATA_SOURCES_HOST=127.0.0.1  # The host of the Data Sources Database, used for FDW setup
+FDW_DATA_SOURCES_PORT=1234                  # The port of the Data Sources Database, used for FDW setup
+FDW_DATA_SOURCES_USER=fdw_user           # The username for the Data Sources Database, used for FDW setup
+FDW_DATA_SOURCES_PASSWORD=password          # The password for the Data Sources Database, used for FDW setup
+FDW_DATA_SOURCES_DB=db_name                  # The database name for the Data Sources Database, used for FDW setup
+
+```
+
+## Data Dumper
+
+```
+PROD_DATA_SOURCES_HOST=127.0.0.1  # The host of the production Data Sources Database, used for Data Dumper
+PROD_DATA_SOURCES_PORT=1234                  # The port of the production Data Sources Database, used for Data Dumper
+PROD_DATA_SOURCES_USER=dump_user           # The username for the production Data Sources Database, used for Data Dumper
+PROD_DATA_SOURCES_PASSWORD=password          # The password for the production Data Sources Database, used for Data Dumper
+PROD_DATA_SOURCES_DB=db_name                  # The database name for the production Data Sources Database, used for Data Dumper
+```
