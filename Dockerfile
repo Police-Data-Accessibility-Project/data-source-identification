@@ -1,6 +1,7 @@
 # Dockerfile for Source Collector FastAPI app
 
 FROM python:3.11.9-slim
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
 # Set working directory
 WORKDIR /app
@@ -8,7 +9,7 @@ WORKDIR /app
 COPY requirements.txt ./requirements.txt
 
 # Install dependencies
-RUN pip install --no-cache-dir --prefer-binary -r requirements.txt
+RUN uv pip install --system -r requirements.txt
 RUN playwright install chromium
 RUN playwright install-deps chromium
 
