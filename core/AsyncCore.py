@@ -22,6 +22,8 @@ from core.DTOs.GetNextURLForAllAnnotationResponse import GetNextURLForAllAnnotat
 from core.DTOs.GetTasksResponse import GetTasksResponse
 from core.DTOs.GetURLsByBatchResponse import GetURLsByBatchResponse
 from core.DTOs.GetURLsResponseInfo import GetURLsResponseInfo
+from core.DTOs.ManualBatchInputDTO import ManualBatchInputDTO
+from core.DTOs.ManualBatchResponseDTO import ManualBatchResponseDTO
 from core.DTOs.MessageResponse import MessageResponse
 from core.TaskManager import TaskManager
 from core.enums import BatchStatus, RecordType
@@ -270,5 +272,13 @@ class AsyncCore:
             user_id=access_info.user_id
         )
 
-
+    async def upload_manual_batch(
+            self,
+            dto: ManualBatchInputDTO,
+            user_id: int
+    ) -> ManualBatchResponseDTO:
+        return await self.adb_client.upload_manual_batch(
+            user_id=user_id,
+            dto=dto
+        )
 
