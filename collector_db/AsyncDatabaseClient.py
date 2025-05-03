@@ -1741,6 +1741,7 @@ class AsyncDatabaseClient:
 
         batch_id = batch.id
         url_ids = []
+        duplicate_urls = []
 
         for entry in dto.entries:
             url = URL(
@@ -1753,15 +1754,13 @@ class AsyncDatabaseClient:
                 record_type=entry.record_type.value if entry.record_type is not None else None,
             )
 
-            session.add(url)
-            try:
-                await session.flush()
-            except IntegrityError:
-                await session.rollback()
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=f"URL already exists: {entry.url}"
-                )
+            async with session.begin_nested():
+                try:
+                    session.add(url)
+                    await session.flush()
+                except IntegrityError:
+                    duplicate_urls.append(entry.url)
+                    continue
             await session.flush()
             optional_metadata = URLOptionalDataSourceMetadata(
                 url_id=url.id,
@@ -1773,5 +1772,9 @@ class AsyncDatabaseClient:
             url_ids.append(url.id)
 
 
-        return ManualBatchResponseDTO(batch_id=batch_id, urls=url_ids)
+        return ManualBatchResponseDTO(
+            batch_id=batch_id,
+            urls=url_ids,
+            duplicate_urls=duplicate_urls
+        )
 

@@ -1,6 +1,5 @@
 
 import pytest
-from fastapi import HTTPException
 
 from collector_db.models import Batch, URL, URLOptionalDataSourceMetadata
 from collector_manager.enums import CollectorType
@@ -139,10 +138,12 @@ async def test_manual_batch(api_test_helper):
         )
         more_dtos.append(dto)
 
-    dto = ManualBatchInnerInputDTO(
-        url=f"https://example.com/1",
-    )
-    more_dtos.append(dto)
+    for i in range(2):
+        dto = ManualBatchInnerInputDTO(
+            url=f"https://example.com/{i+1}",
+        )
+        more_dtos.append(dto)
+
 
     duplicate_input_dto = ManualBatchInputDTO(
         name=manual_batch_name,
@@ -150,11 +151,12 @@ async def test_manual_batch(api_test_helper):
     )
 
     # Submit batch
-    try:
-        response = await ath.request_validator.submit_manual_batch(duplicate_input_dto)
-    except HTTPException as e:
-        # Confirm got a BAD REQUEST error identifying the correct duplicate URL
-        assert e.status_code == 400
-        assert e.detail == {
-            "detail": 'URL already exists: https://example.com/1'
-        }
+    response = await ath.request_validator.submit_manual_batch(duplicate_input_dto)
+    # Check duplicate URLs
+    assert len(response.duplicate_urls) == 2
+    assert response.duplicate_urls == ['https://example.com/1', 'https://example.com/2']
+    assert len(response.urls) == 49
+
+    # Check 149 URLs in database
+    urls: list[URL] = await adb_client.get_all(URL)
+    assert len(urls) == 149
