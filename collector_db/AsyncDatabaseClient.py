@@ -41,6 +41,8 @@ from core.DTOs.GetNextURLForFinalReviewResponse import GetNextURLForFinalReviewR
 from core.DTOs.GetTasksResponse import GetTasksResponse, GetTasksResponseTaskInfo
 from core.DTOs.GetURLsResponseInfo import GetURLsResponseInfo, GetURLsResponseErrorInfo, \
     GetURLsResponseInnerInfo
+from core.DTOs.ManualBatchInputDTO import ManualBatchInputDTO
+from core.DTOs.ManualBatchOutputDTO import ManualBatchOutputDTO
 from core.DTOs.URLAgencySuggestionInfo import URLAgencySuggestionInfo
 from core.DTOs.task_data_objects.AgencyIdentificationTDO import AgencyIdentificationTDO
 from core.DTOs.task_data_objects.SubmitApprovedURLTDO import SubmitApprovedURLTDO, SubmittedURLInfo
@@ -1719,6 +1721,57 @@ class AsyncDatabaseClient:
         )
         session.add(agency_suggestion)
 
+    @session_manager
+    async def upload_manual_batch(
+            self,
+            session: AsyncSession,
+            user_id: int,
+            dto: ManualBatchInputDTO
+    ) -> ManualBatchOutputDTO:
+        batch = Batch(
+            strategy=CollectorType.MANUAL.value,
+            status=BatchStatus.READY_TO_LABEL.value,
+            parameters={
+                "name": dto.name
+            },
+            user_id=user_id
+        )
+        session.add(batch)
+        await session.flush()
+
+        batch_id = batch.id
+        url_ids = []
+
+        for entry in dto.entries:
+            url = URL(
+                url=entry.url,
+                name=entry.name,
+                description=entry.description,
+                batch_id=batch_id,
+                collector_metadata=entry.collector_metadata,
+                outcome=URLStatus.PENDING.value,
+                record_type=entry.record_type.value if entry.record_type is not None else None,
+            )
+
+            session.add(url)
+            try:
+                await session.flush()
+            except IntegrityError:
+                await session.rollback()
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"URL already exists: {entry.url}"
+                )
+            await session.flush()
+            optional_metadata = URLOptionalDataSourceMetadata(
+                url_id=url.id,
+                record_formats=entry.record_formats,
+                data_portal_type=entry.data_portal_type,
+                supplying_entity=entry.supplying_entity,
+            )
+            session.add(optional_metadata)
+            url_ids.append(url.id)
 
 
+        return ManualBatchOutputDTO(batch_id=batch_id, urls=url_ids)
 

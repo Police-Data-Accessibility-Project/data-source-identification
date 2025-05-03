@@ -1,21 +1,22 @@
-from datetime import datetime, timedelta
 from functools import wraps
 from typing import Optional, List
 
-from sqlalchemy import create_engine, Row
+from sqlalchemy import create_engine
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import sessionmaker, scoped_session, aliased
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import sessionmaker, scoped_session
 
 from collector_db.ConfigManager import ConfigManager
 from collector_db.DTOs.BatchInfo import BatchInfo
-from collector_db.DTOs.DuplicateInfo import DuplicateInfo, DuplicateInsertInfo
+from collector_db.DTOs.DuplicateInfo import DuplicateInsertInfo
 from collector_db.DTOs.InsertURLsInfo import InsertURLsInfo
-from collector_db.DTOs.LogInfo import LogInfo, LogOutputInfo
+from collector_db.DTOs.LogInfo import LogInfo
 from collector_db.DTOs.URLInfo import URLInfo
 from collector_db.DTOs.URLMapping import URLMapping
-from collector_db.helper_functions import get_postgres_connection_string
 from collector_db.models import Base, Batch, URL, Log, Duplicate
 from collector_manager.enums import CollectorType
+from core.DTOs.ManualBatchInputDTO import ManualBatchInputDTO
+from core.DTOs.ManualBatchOutputDTO import ManualBatchOutputDTO
 from core.EnvVarManager import EnvVarManager
 from core.enums import BatchStatus
 

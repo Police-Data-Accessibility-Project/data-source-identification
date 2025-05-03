@@ -6,6 +6,7 @@ from collector_manager.DTOs.ExampleInputDTO import ExampleInputDTO
 from collector_manager.enums import CollectorType
 from core.AsyncCore import AsyncCore
 from core.DTOs.CollectorStartInfo import CollectorStartInfo
+from core.DTOs.ManualBatchInputDTO import ManualBatchInputDTO
 from security_manager.SecurityManager import AccessInfo, get_access_info
 from source_collectors.auto_googler.DTOs import AutoGooglerInputDTO
 from source_collectors.ckan.DTOs import CKANInputDTO
@@ -120,6 +121,20 @@ async def start_muckrock_all_foia_collector(
     """
     return await core.initiate_collector(
         collector_type=CollectorType.MUCKROCK_ALL_SEARCH,
+        dto=dto,
+        user_id=access_info.user_id
+    )
+
+@collector_router.post("/manual")
+async def upload_manual_collector(
+        dto: ManualBatchInputDTO,
+        core: AsyncCore = Depends(get_async_core),
+        access_info: AccessInfo = Depends(get_access_info),
+) -> CollectorStartInfo:
+    """
+    Uploads a manual "collector" with existing data
+    """
+    return await core.upload_manual_batch(
         dto=dto,
         user_id=access_info.user_id
     )
