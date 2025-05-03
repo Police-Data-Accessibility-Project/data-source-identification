@@ -16,7 +16,7 @@ from collector_db.DTOs.URLMapping import URLMapping
 from collector_db.models import Base, Batch, URL, Log, Duplicate
 from collector_manager.enums import CollectorType
 from core.DTOs.ManualBatchInputDTO import ManualBatchInputDTO
-from core.DTOs.ManualBatchOutputDTO import ManualBatchOutputDTO
+from core.DTOs.ManualBatchResponseDTO import ManualBatchResponseDTO
 from core.EnvVarManager import EnvVarManager
 from core.enums import BatchStatus
 

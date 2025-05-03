@@ -42,7 +42,7 @@ from core.DTOs.GetTasksResponse import GetTasksResponse, GetTasksResponseTaskInf
 from core.DTOs.GetURLsResponseInfo import GetURLsResponseInfo, GetURLsResponseErrorInfo, \
     GetURLsResponseInnerInfo
 from core.DTOs.ManualBatchInputDTO import ManualBatchInputDTO
-from core.DTOs.ManualBatchOutputDTO import ManualBatchOutputDTO
+from core.DTOs.ManualBatchResponseDTO import ManualBatchResponseDTO
 from core.DTOs.URLAgencySuggestionInfo import URLAgencySuggestionInfo
 from core.DTOs.task_data_objects.AgencyIdentificationTDO import AgencyIdentificationTDO
 from core.DTOs.task_data_objects.SubmitApprovedURLTDO import SubmitApprovedURLTDO, SubmittedURLInfo
@@ -1727,7 +1727,7 @@ class AsyncDatabaseClient:
             session: AsyncSession,
             user_id: int,
             dto: ManualBatchInputDTO
-    ) -> ManualBatchOutputDTO:
+    ) -> ManualBatchResponseDTO:
         batch = Batch(
             strategy=CollectorType.MANUAL.value,
             status=BatchStatus.READY_TO_LABEL.value,
@@ -1773,5 +1773,5 @@ class AsyncDatabaseClient:
             url_ids.append(url.id)
 
 
-        return ManualBatchOutputDTO(batch_id=batch_id, urls=url_ids)
+        return ManualBatchResponseDTO(batch_id=batch_id, urls=url_ids)
 

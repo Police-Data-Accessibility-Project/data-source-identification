@@ -1,6 +1,7 @@
 from http import HTTPStatus
 from typing import Optional, Annotated
 
+from fastapi import HTTPException
 from pydantic import BaseModel
 from starlette.testclient import TestClient
 
@@ -24,6 +25,8 @@ from core.DTOs.GetNextURLForFinalReviewResponse import GetNextURLForFinalReviewO
 from core.DTOs.GetTasksResponse import GetTasksResponse
 from core.DTOs.GetURLsByBatchResponse import GetURLsByBatchResponse
 from core.DTOs.GetURLsResponseInfo import GetURLsResponseInfo
+from core.DTOs.ManualBatchInputDTO import ManualBatchInputDTO
+from core.DTOs.ManualBatchResponseDTO import ManualBatchResponseDTO
 from core.DTOs.MessageResponse import MessageResponse
 from core.DTOs.RecordTypeAnnotationPostInfo import RecordTypeAnnotationPostInfo
 from core.DTOs.RelevanceAnnotationPostInfo import RelevanceAnnotationPostInfo
@@ -32,7 +35,11 @@ from util.helper_functions import update_if_not_none
 
 
 class ExpectedResponseInfo(BaseModel):
-    status_code: Annotated[HTTPStatus, "The expected status code"] = HTTPStatus.OK
+    status_code: Annotated[
+        HTTPStatus,
+        "The expected status code"
+    ] = HTTPStatus.OK
+    message: Optional[str] = None
 
 class RequestValidator:
     """
@@ -64,6 +71,31 @@ class RequestValidator:
         assert response.status_code == expected_response.status_code, response.text
         return response.json()
 
+    def open_v2(
+            self,
+            method: str,
+            url: str,
+            params: Optional[dict] = None,
+            **kwargs
+    ) -> dict:
+        """
+        Variation on open that raises an exception rather than check the status code
+        """
+        if params:
+            kwargs["params"] = params
+        response = self.client.request(
+            method=method,
+            url=url,
+            headers={"Authorization": "Bearer token"},  # Fake authentication that is overridden during testing
+            **kwargs
+        )
+        if response.status_code != HTTPStatus.OK:
+            raise HTTPException(
+                status_code=response.status_code,
+                detail=response.json()
+            )
+        return response.json()
+
     def get(
             self,
             url: str,
@@ -93,6 +125,20 @@ class RequestValidator:
             expected_response=expected_response,
             **kwargs
         )
+
+    def post_v2(
+            self,
+            url: str,
+            params: Optional[dict] = None,
+            **kwargs
+    ) -> dict:
+        return self.open_v2(
+            method="POST",
+            url=url,
+            params=params,
+            **kwargs
+        )
+
 
     def put(
             self,
@@ -330,3 +376,13 @@ class RequestValidator:
             json=all_annotations_post_info.model_dump(mode='json')
         )
         return GetNextURLForAllAnnotationResponse(**data)
+
+    async def submit_manual_batch(
+            self,
+            dto: ManualBatchInputDTO,
+    ) -> ManualBatchResponseDTO:
+        data = self.post_v2(
+            url="/collector/manual",
+            json=dto.model_dump(mode='json'),
+        )
+        return ManualBatchResponseDTO(**data)

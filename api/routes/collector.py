@@ -7,6 +7,7 @@ from collector_manager.enums import CollectorType
 from core.AsyncCore import AsyncCore
 from core.DTOs.CollectorStartInfo import CollectorStartInfo
 from core.DTOs.ManualBatchInputDTO import ManualBatchInputDTO
+from core.DTOs.ManualBatchResponseDTO import ManualBatchResponseDTO
 from security_manager.SecurityManager import AccessInfo, get_access_info
 from source_collectors.auto_googler.DTOs import AutoGooglerInputDTO
 from source_collectors.ckan.DTOs import CKANInputDTO
@@ -130,7 +131,7 @@ async def upload_manual_collector(
         dto: ManualBatchInputDTO,
         core: AsyncCore = Depends(get_async_core),
         access_info: AccessInfo = Depends(get_access_info),
-) -> CollectorStartInfo:
+) -> ManualBatchResponseDTO:
     """
     Uploads a manual "collector" with existing data
     """
