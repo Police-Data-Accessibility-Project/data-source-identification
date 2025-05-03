@@ -563,7 +563,7 @@ class AsyncDatabaseClient:
     async def get_urls(self, session: AsyncSession, page: int, errors: bool) -> GetURLsResponseInfo:
         statement = select(URL).options(
             selectinload(URL.error_info)
-        )
+        ).order_by(URL.id)
         if errors:
             # Only return URLs with errors
             statement = statement.where(
