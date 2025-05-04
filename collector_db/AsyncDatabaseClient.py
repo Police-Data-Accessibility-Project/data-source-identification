@@ -43,6 +43,7 @@ from core.DTOs.GetURLsResponseInfo import GetURLsResponseInfo, GetURLsResponseEr
     GetURLsResponseInnerInfo
 from core.DTOs.ManualBatchInputDTO import ManualBatchInputDTO
 from core.DTOs.ManualBatchResponseDTO import ManualBatchResponseDTO
+from core.DTOs.SearchURLResponse import SearchURLResponse
 from core.DTOs.URLAgencySuggestionInfo import URLAgencySuggestionInfo
 from core.DTOs.task_data_objects.AgencyIdentificationTDO import AgencyIdentificationTDO
 from core.DTOs.task_data_objects.SubmitApprovedURLTDO import SubmitApprovedURLTDO, SubmittedURLInfo
@@ -1776,5 +1777,20 @@ class AsyncDatabaseClient:
             batch_id=batch_id,
             urls=url_ids,
             duplicate_urls=duplicate_urls
+        )
+
+    @session_manager
+    async def search_for_url(self, session: AsyncSession, url: str) -> SearchURLResponse:
+        query = select(URL).where(URL.url == url)
+        raw_results = await session.execute(query)
+        url = raw_results.scalars().one_or_none()
+        if url is None:
+            return SearchURLResponse(
+                found=False,
+                url_id=None
+            )
+        return SearchURLResponse(
+            found=True,
+            url_id=url.id
         )
 

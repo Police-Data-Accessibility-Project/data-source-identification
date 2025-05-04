@@ -11,6 +11,7 @@ from api.routes.batch import batch_router
 from api.routes.collector import collector_router
 from api.routes.review import review_router
 from api.routes.root import root_router
+from api.routes.search import search_router
 from api.routes.task import task_router
 from api.routes.url import url_router
 from collector_db.AsyncDatabaseClient import AsyncDatabaseClient
@@ -128,7 +129,8 @@ routers = [
     annotate_router,
     url_router,
     task_router,
-    review_router
+    review_router,
+    search_router
 ]
 
 for router in routers:

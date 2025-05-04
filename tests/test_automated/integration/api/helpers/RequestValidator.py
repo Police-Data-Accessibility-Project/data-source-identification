@@ -30,6 +30,7 @@ from core.DTOs.ManualBatchResponseDTO import ManualBatchResponseDTO
 from core.DTOs.MessageResponse import MessageResponse
 from core.DTOs.RecordTypeAnnotationPostInfo import RecordTypeAnnotationPostInfo
 from core.DTOs.RelevanceAnnotationPostInfo import RelevanceAnnotationPostInfo
+from core.DTOs.SearchURLResponse import SearchURLResponse
 from core.enums import BatchStatus
 from util.helper_functions import update_if_not_none
 
@@ -386,3 +387,10 @@ class RequestValidator:
             json=dto.model_dump(mode='json'),
         )
         return ManualBatchResponseDTO(**data)
+
+    async def search_url(self, url: str) -> SearchURLResponse:
+        data = self.get(
+            url=f"/search/url",
+            params={"url": url}
+        )
+        return SearchURLResponse(**data)

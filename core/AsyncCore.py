@@ -25,6 +25,7 @@ from core.DTOs.GetURLsResponseInfo import GetURLsResponseInfo
 from core.DTOs.ManualBatchInputDTO import ManualBatchInputDTO
 from core.DTOs.ManualBatchResponseDTO import ManualBatchResponseDTO
 from core.DTOs.MessageResponse import MessageResponse
+from core.DTOs.SearchURLResponse import SearchURLResponse
 from core.TaskManager import TaskManager
 from core.enums import BatchStatus, RecordType
 
@@ -282,3 +283,5 @@ class AsyncCore:
             dto=dto
         )
 
+    async def search_for_url(self, url: str) -> SearchURLResponse:
+        return await self.adb_client.search_for_url(url)
