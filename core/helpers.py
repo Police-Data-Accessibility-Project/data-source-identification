@@ -1,3 +1,7 @@
+from http import HTTPStatus
+
+from fastapi import HTTPException
+
 from core.DTOs.URLAgencySuggestionInfo import URLAgencySuggestionInfo
 from core.enums import SuggestionType
 from core.exceptions import MatchAgencyError

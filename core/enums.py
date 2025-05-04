@@ -1,5 +1,10 @@
 from enum import Enum
 
+class AnnotationType(Enum):
+    RELEVANCE = "RELEVANCE"
+    RECORD_TYPE = "RECORD_TYPE"
+    AGENCY = "AGENCY"
+
 
 class BatchStatus(Enum):
     READY_TO_LABEL = "ready to label"

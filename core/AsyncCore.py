@@ -1,6 +1,7 @@
 from typing import Optional
 
 from pydantic import BaseModel
+from sqlalchemy.exc import IntegrityError
 
 from collector_db.AsyncDatabaseClient import AsyncDatabaseClient
 from collector_db.DTOs.BatchInfo import BatchInfo
@@ -27,7 +28,8 @@ from core.DTOs.ManualBatchResponseDTO import ManualBatchResponseDTO
 from core.DTOs.MessageResponse import MessageResponse
 from core.DTOs.SearchURLResponse import SearchURLResponse
 from core.TaskManager import TaskManager
-from core.enums import BatchStatus, RecordType
+from core.classes.ErrorManager import ErrorManager
+from core.enums import BatchStatus, RecordType, AnnotationType
 
 from security_manager.SecurityManager import AccessInfo
 
@@ -149,11 +151,17 @@ class AsyncCore:
             url_id: int,
             relevant: bool
     ):
-        return await self.adb_client.add_user_relevant_suggestion(
-            user_id=user_id,
-            url_id=url_id,
-            relevant=relevant
-        )
+        try:
+            return await self.adb_client.add_user_relevant_suggestion(
+                user_id=user_id,
+                url_id=url_id,
+                relevant=relevant
+            )
+        except IntegrityError as e:
+            return await ErrorManager.raise_annotation_exists_error(
+                annotation_type=AnnotationType.RELEVANCE,
+                url_id=url_id
+            )
 
     async def get_next_url_for_relevance_annotation(
             self,
@@ -187,11 +195,17 @@ class AsyncCore:
             url_id: int,
             record_type: RecordType,
     ):
-        await self.adb_client.add_user_record_type_suggestion(
-            user_id=user_id,
-            url_id=url_id,
-            record_type=record_type
-        )
+        try:
+            return await self.adb_client.add_user_record_type_suggestion(
+                user_id=user_id,
+                url_id=url_id,
+                record_type=record_type
+            )
+        except IntegrityError as e:
+            return await ErrorManager.raise_annotation_exists_error(
+                annotation_type=AnnotationType.RECORD_TYPE,
+                url_id=url_id
+            )
 
 
     async def get_next_url_agency_for_annotation(

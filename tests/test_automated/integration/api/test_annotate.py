@@ -1,6 +1,7 @@
 from http import HTTPStatus
 
 import pytest
+from fastapi import HTTPException
 
 from collector_db.DTOs.InsertURLsInfo import InsertURLsInfo
 from collector_db.DTOs.URLMapping import URLMapping
@@ -11,6 +12,7 @@ from core.DTOs.GetNextRelevanceAnnotationResponseInfo import GetNextRelevanceAnn
 from core.DTOs.GetNextURLForAgencyAnnotationResponse import URLAgencyAnnotationPostInfo
 from core.DTOs.RecordTypeAnnotationPostInfo import RecordTypeAnnotationPostInfo
 from core.DTOs.RelevanceAnnotationPostInfo import RelevanceAnnotationPostInfo
+from core.classes.ErrorManager import ErrorTypes
 from core.enums import RecordType, SuggestionType
 from core.exceptions import FailedValidationException
 from tests.helpers.complex_test_data_functions import AnnotateAgencySetupInfo, setup_for_annotate_agency, \
@@ -128,6 +130,36 @@ async def test_annotate_relevancy(api_test_helper):
     for result in results:
         if result.url_id == inner_info_1.url_info.url_id:
             assert results[0].relevant is True
+
+
+@pytest.mark.asyncio
+async def test_annotate_relevancy_already_annotated_by_different_user(
+        api_test_helper
+):
+    ath = api_test_helper
+
+    creation_info: BatchURLCreationInfo = await ath.db_data_creator.batch_and_urls(
+        url_count=1
+    )
+
+    await ath.db_data_creator.user_relevant_suggestion(
+        url_id=creation_info.url_ids[0],
+        user_id=2,
+        relevant=True
+    )
+
+    # Annotate with different user (default is 1) and get conflict error
+    try:
+        response = await ath.request_validator.post_relevance_annotation_and_get_next(
+            url_id=creation_info.url_ids[0],
+            relevance_annotation_post_info=RelevanceAnnotationPostInfo(
+                is_relevant=False
+            )
+        )
+    except HTTPException as e:
+        assert e.status_code == HTTPStatus.CONFLICT
+        assert e.detail["detail"]["code"] == ErrorTypes.ANNOTATION_EXISTS.value
+        assert e.detail["detail"]["message"] == f"Annotation of type RELEVANCE already exists for url {creation_info.url_ids[0]}"
 
 
 @pytest.mark.asyncio
@@ -249,6 +281,36 @@ async def test_annotate_record_type(api_test_helper):
     for result in results:
         if result.url_id == inner_info_1.url_info.url_id:
             assert result.record_type == RecordType.BOOKING_REPORTS.value
+
+@pytest.mark.asyncio
+async def test_annotate_record_type_already_annotated_by_different_user(
+        api_test_helper
+):
+    ath = api_test_helper
+
+    creation_info: BatchURLCreationInfo = await ath.db_data_creator.batch_and_urls(
+        url_count=1
+    )
+
+    await ath.db_data_creator.user_record_type_suggestion(
+        url_id=creation_info.url_ids[0],
+        user_id=2,
+        record_type=RecordType.ACCIDENT_REPORTS
+    )
+
+    # Annotate with different user (default is 1) and get conflict error
+    try:
+        response = await ath.request_validator.post_record_type_annotation_and_get_next(
+            url_id=creation_info.url_ids[0],
+            record_type_annotation_post_info=RecordTypeAnnotationPostInfo(
+                record_type=RecordType.ANNUAL_AND_MONTHLY_REPORTS
+            )
+        )
+    except HTTPException as e:
+        assert e.status_code == HTTPStatus.CONFLICT
+        assert e.detail["detail"]["code"] == ErrorTypes.ANNOTATION_EXISTS.value
+        assert e.detail["detail"]["message"] == f"Annotation of type RECORD_TYPE already exists for url {creation_info.url_ids[0]}"
+
 
 @pytest.mark.asyncio
 async def test_annotate_record_type_no_html_info(api_test_helper):

@@ -246,7 +246,7 @@ class RequestValidator:
             url_id: int,
             record_type_annotation_post_info: RecordTypeAnnotationPostInfo
     ) -> GetNextRecordTypeAnnotationResponseOuterInfo:
-        data = self.post(
+        data = self.post_v2(
             url=f"/annotate/record-type/{url_id}",
             json=record_type_annotation_post_info.model_dump(mode='json')
         )
@@ -257,7 +257,7 @@ class RequestValidator:
             url_id: int,
             relevance_annotation_post_info: RelevanceAnnotationPostInfo
     ) -> GetNextRelevanceAnnotationResponseOuterInfo:
-        data = self.post(
+        data = self.post_v2(
             url=f"/annotate/relevance/{url_id}",
             json=relevance_annotation_post_info.model_dump(mode='json')
         )
