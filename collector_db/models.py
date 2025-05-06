@@ -453,3 +453,10 @@ class UserRecordTypeSuggestion(Base):
     # Relationships
 
     url = relationship("URL", back_populates="user_record_type_suggestion")
+
+class BacklogSnapshot(Base):
+    __tablename__ = "backlog_snapshot"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    count_pending_total = Column(Integer, nullable=False)
+    created_at = get_created_at_column()

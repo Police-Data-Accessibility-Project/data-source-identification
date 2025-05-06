@@ -3,7 +3,7 @@ from functools import wraps
 from typing import Optional, Type, Any, List
 
 from fastapi import HTTPException
-from sqlalchemy import select, exists, func, case, desc, Select, not_, and_, update, asc, delete
+from sqlalchemy import select, exists, func, case, desc, Select, not_, and_, update, asc, delete, insert
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.orm import selectinload, joinedload, QueryableAttribute, aliased
@@ -26,10 +26,19 @@ from collector_db.enums import TaskType
 from collector_db.models import URL, URLErrorInfo, URLHTMLContent, Base, \
     RootURL, Task, TaskError, LinkTaskURL, Batch, Agency, AutomatedUrlAgencySuggestion, \
     UserUrlAgencySuggestion, AutoRelevantSuggestion, AutoRecordTypeSuggestion, UserRelevantSuggestion, \
-    UserRecordTypeSuggestion, ReviewingUserURL, URLOptionalDataSourceMetadata, ConfirmedURLAgency, Duplicate, Log
+    UserRecordTypeSuggestion, ReviewingUserURL, URLOptionalDataSourceMetadata, ConfirmedURLAgency, Duplicate, Log, \
+    BacklogSnapshot
 from collector_manager.enums import URLStatus, CollectorType
 from core.DTOs.AllAnnotationPostInfo import AllAnnotationPostInfo
 from core.DTOs.FinalReviewApprovalInfo import FinalReviewApprovalInfo
+from core.DTOs.GetMetricsBacklogResponse import GetMetricsBacklogResponseDTO, GetMetricsBacklogResponseInnerDTO
+from core.DTOs.GetMetricsBatchesAggregatedResponseDTO import GetMetricsBatchesAggregatedResponseDTO, \
+    GetMetricsBatchesAggregatedInnerResponseDTO
+from core.DTOs.GetMetricsBatchesBreakdownResponseDTO import GetMetricsBatchesBreakdownResponseDTO, \
+    GetMetricsBatchesBreakdownInnerResponseDTO
+from core.DTOs.GetMetricsURLsAggregatedResponseDTO import GetMetricsURLsAggregatedResponseDTO
+from core.DTOs.GetMetricsURLsBreakdownPendingResponseDTO import GetMetricsURLsBreakdownPendingResponseDTO
+from core.DTOs.GetMetricsURLsBreakdownSubmittedResponseDTO import GetMetricsURLsBreakdownSubmittedResponseDTO
 from core.DTOs.GetNextRecordTypeAnnotationResponseInfo import GetNextRecordTypeAnnotationResponseInfo
 from core.DTOs.GetNextRelevanceAnnotationResponseInfo import GetNextRelevanceAnnotationResponseInfo
 from core.DTOs.GetNextURLForAgencyAnnotationResponse import GetNextURLForAgencyAnnotationResponse, \
@@ -1792,5 +1801,305 @@ class AsyncDatabaseClient:
         return SearchURLResponse(
             found=True,
             url_id=url.id
+        )
+
+    @session_manager
+    async def get_batches_aggregated_metrics(self, session: AsyncSession) -> GetMetricsBatchesAggregatedResponseDTO:
+        sc = StatementComposer
+
+        # First, get all batches broken down by collector type and status
+        def batch_column(status: BatchStatus, label):
+            return sc.count_distinct(
+                case(
+                    (Batch.status == status.value,
+                    Batch.id)
+                ),
+                label=label
+            )
+
+        batch_count_subquery = select(
+            batch_column(BatchStatus.READY_TO_LABEL, label="done_count"),
+            batch_column(BatchStatus.ERROR, label="error_count"),
+            Batch.strategy,
+        ).group_by(Batch.strategy).subquery("batch_count")
+
+        def url_column(status: URLStatus, label):
+            return sc.count_distinct(
+                case(
+                    (URL.outcome == status.value,
+                    URL.id)
+                ),
+                label=label
+            )
+
+        # Next, count urls
+        url_count_subquery = select(
+            Batch.strategy,
+            url_column(URLStatus.PENDING, label="pending_count"),
+            url_column(URLStatus.ERROR, label="error_count"),
+            url_column(URLStatus.SUBMITTED, label="submitted_count"),
+            url_column(URLStatus.REJECTED, label="rejected_count"),
+        ).join(
+            Batch, Batch.id == URL.batch_id
+        ).group_by(
+            Batch.strategy
+        ).subquery("url_count")
+
+    # Combine
+        query = select(
+            Batch.strategy,
+            batch_count_subquery.c.done_count,
+            batch_count_subquery.c.error_count,
+            url_count_subquery.c.pending_count,
+            url_count_subquery.c.error_count,
+            url_count_subquery.c.submitted_count,
+            url_count_subquery.c.rejected_count,
+        ).join(
+            batch_count_subquery,
+            Batch.strategy == batch_count_subquery.c.strategy
+        ).join(
+            url_count_subquery,
+            Batch.strategy == url_count_subquery.c.strategy
+        )
+        raw_results = await session.execute(query)
+        results = raw_results.all()
+        d: dict[CollectorType, GetMetricsBatchesAggregatedInnerResponseDTO] = {}
+        for result in results:
+            d[CollectorType(result.strategy)] = GetMetricsBatchesAggregatedInnerResponseDTO(
+                count_successful_batches=result.done_count,
+                count_failed_batches=result.error_count,
+                count_urls=result.pending_count + result.submitted_count + result.rejected_count + result.error_count,
+                count_urls_pending=result.pending_count,
+                count_urls_submitted=result.submitted_count,
+                count_urls_rejected=result.rejected_count,
+                count_urls_errors=result.error_count
+            )
+
+        total_batch_query = await session.execute(
+            select(
+                sc.count_distinct(Batch.id, label="count")
+            )
+        )
+        total_batch_count = total_batch_query.scalars().one_or_none()
+        if total_batch_count is None:
+            total_batch_count = 0
+
+        return GetMetricsBatchesAggregatedResponseDTO(
+            total_batches=total_batch_count,
+            by_strategy=d
+        )
+
+    @session_manager
+    async def get_batches_breakdown_metrics(
+            self,
+            session: AsyncSession,
+            page: int
+    ) -> GetMetricsBatchesBreakdownResponseDTO:
+        sc = StatementComposer
+
+        main_query = select(
+            Batch.strategy,
+            Batch.id,
+            Batch.date_generated.label("created_at"),
+        )
+
+        def url_column(status: URLStatus, label):
+            return sc.count_distinct(
+                case(
+                    (URL.outcome == status.value,
+                    URL.id)
+                ),
+                label=label
+            )
+
+        count_query = select(
+            URL.batch_id,
+            sc.count_distinct(URL.id, label="count_total"),
+            url_column(URLStatus.PENDING, label="count_pending"),
+            url_column(URLStatus.SUBMITTED, label="count_submitted"),
+            url_column(URLStatus.REJECTED, label="count_rejected"),
+            url_column(URLStatus.ERROR, label="count_error"),
+        ).group_by(
+            URL.batch_id
+        ).subquery("url_count")
+
+        query = (select(
+            main_query.c.strategy,
+            main_query.c.id,
+            main_query.c.created_at,
+            count_query.c.count_total,
+            count_query.c.count_pending,
+            count_query.c.count_submitted,
+            count_query.c.count_rejected,
+            count_query.c.count_error,
+        ).join(
+            count_query,
+            main_query.c.id == count_query.c.batch_id
+        ).offset(
+            (page - 1) * 100
+        ).order_by(
+            main_query.c.created_at.asc()
+        ))
+
+        raw_results = await session.execute(query)
+        results = raw_results.all()
+        batches: list[GetMetricsBatchesBreakdownInnerResponseDTO] = []
+        for result in results:
+            dto = GetMetricsBatchesBreakdownInnerResponseDTO(
+                batch_id=str(result.id),
+                strategy=CollectorType(result.strategy),
+                created_at=result.created_at,
+                count_url_total=result.count_total,
+                count_url_pending=result.count_pending,
+                count_url_submitted=result.count_submitted,
+                count_url_rejected=result.count_rejected,
+                count_url_error=result.count_error,
+            )
+            batches.append(dto)
+        return GetMetricsBatchesBreakdownResponseDTO(
+            batches=batches,
+        )
+
+    @session_manager
+    async def get_urls_breakdown_submitted_metrics(
+        self,
+        session: AsyncSession
+    ) -> GetMetricsURLsBreakdownSubmittedResponseDTO:
+        pass
+
+    @session_manager
+    async def get_urls_aggregated_metrics(
+        self,
+        session: AsyncSession
+    ) -> GetMetricsURLsAggregatedResponseDTO:
+        sc = StatementComposer
+
+        oldest_pending_url_query = select(
+            URL.id,
+            URL.created_at
+        ).where(
+            URL.outcome == URLStatus.PENDING.value
+        ).order_by(
+            URL.created_at.asc()
+        ).limit(1)
+
+        oldest_pending_url = await session.execute(oldest_pending_url_query)
+        oldest_pending_url = oldest_pending_url.scalars().one_or_none()
+        if oldest_pending_url is None:
+            oldest_pending_url_id = None
+            oldest_pending_created_at = None
+        else:
+            oldest_pending_url_id = oldest_pending_url.id
+            oldest_pending_created_at = oldest_pending_url.created_at
+
+        def case_column(status: URLStatus, label):
+            return sc.count_distinct(
+                case(
+                    (URL.outcome == status.value,
+                    URL.id)
+                ),
+                label=label
+            )
+
+        count_query = select(
+            sc.count_distinct(URL.id, label="count"),
+            case_column(URLStatus.PENDING, label="count_pending"),
+            case_column(URLStatus.SUBMITTED, label="count_submitted"),
+            case_column(URLStatus.VALIDATED, label="count_validated"),
+            case_column(URLStatus.REJECTED, label="count_rejected"),
+            case_column(URLStatus.ERROR, label="count_error"),
+        )
+        raw_results = await session.execute(count_query)
+        results = raw_results.all()
+
+        return GetMetricsURLsAggregatedResponseDTO(
+            count_urls_total=results[0].count,
+            count_urls_pending=results[0].count_pending,
+            count_urls_submitted=results[0].count_submitted,
+            count_urls_validated=results[0].count_validated,
+            count_urls_rejected=results[0].count_rejected,
+            count_urls_errors=results[0].count_error,
+            oldest_pending_url_id=oldest_pending_url_id,
+            oldest_pending_url_created_at=oldest_pending_created_at,
+        )
+
+    @session_manager
+    async def get_urls_breakdown_pending_metrics(
+        self,
+        session: AsyncSession
+    ) -> GetMetricsURLsBreakdownPendingResponseDTO:
+        # I will need to get ways to identify the status of each url
+
+        # Probably would benefit from a view of some sort
+
+
+
+        pass
+
+    @session_manager
+    async def get_backlog_metrics(
+        self,
+        session: AsyncSession
+    ) -> GetMetricsBacklogResponseDTO:
+        # 1. Create a subquery that assigns row_number() partitioned by week
+        weekly_snapshots_subq = (
+            select(
+                BacklogSnapshot.id,
+                BacklogSnapshot.created_at,
+                BacklogSnapshot.count_pending_total,
+                func.date_trunc('week', BacklogSnapshot.created_at).label("week_start"),
+                func.row_number()
+                .over(
+                    partition_by=func.date_trunc('week', BacklogSnapshot.created_at),
+                    order_by=BacklogSnapshot.created_at.desc()
+                )
+                .label("row_number")
+            )
+            .subquery()
+        )
+
+        # 2. Filter for the top (most recent) row in each week
+        stmt = (
+            select(
+                weekly_snapshots_subq.c.week_start,
+                weekly_snapshots_subq.c.created_at,
+                weekly_snapshots_subq.c.count_pending_total
+            )
+            .where(weekly_snapshots_subq.c.row_number == 1)
+            .order_by(weekly_snapshots_subq.c.week_start)
+        )
+
+        raw_result = await session.execute(stmt)
+        results = raw_result.all()
+        final_results = []
+        for result in results:
+            final_results.append(
+                GetMetricsBacklogResponseInnerDTO(
+                    week_of=result.week_start,
+                    count_pending_total=result.count_pending_total,
+                )
+            )
+
+        return GetMetricsBacklogResponseDTO(entries=final_results)
+
+
+    @session_manager
+    async def populate_backlog_snapshot(
+        self,
+        session: AsyncSession
+    ):
+        sc = StatementComposer
+        # Get count of pending URLs
+        query = select(
+            sc.count_distinct(URL.id, label="count")
+        ).where(
+            URL.outcome == URLStatus.PENDING.value
+        ).subquery("pending_count")
+
+        # insert count into snapshot
+        await session.execute(
+            insert(BacklogSnapshot).values(
+                count=query.c.count
+            )
         )
 

@@ -15,6 +15,12 @@ from core.DTOs.FinalReviewApprovalInfo import FinalReviewApprovalInfo
 from core.DTOs.GetBatchLogsResponse import GetBatchLogsResponse
 from core.DTOs.GetBatchStatusResponse import GetBatchStatusResponse
 from core.DTOs.GetDuplicatesByBatchResponse import GetDuplicatesByBatchResponse
+from core.DTOs.GetMetricsBacklogResponse import GetMetricsBacklogResponseDTO
+from core.DTOs.GetMetricsBatchesAggregatedResponseDTO import GetMetricsBatchesAggregatedResponseDTO
+from core.DTOs.GetMetricsBatchesBreakdownResponseDTO import GetMetricsBatchesBreakdownResponseDTO
+from core.DTOs.GetMetricsURLsAggregatedResponseDTO import GetMetricsURLsAggregatedResponseDTO
+from core.DTOs.GetMetricsURLsBreakdownPendingResponseDTO import GetMetricsURLsBreakdownPendingResponseDTO
+from core.DTOs.GetMetricsURLsBreakdownSubmittedResponseDTO import GetMetricsURLsBreakdownSubmittedResponseDTO
 from core.DTOs.GetNextRecordTypeAnnotationResponseInfo import GetNextRecordTypeAnnotationResponseOuterInfo
 from core.DTOs.GetNextRelevanceAnnotationResponseInfo import GetNextRelevanceAnnotationResponseOuterInfo
 from core.DTOs.GetNextURLForAgencyAnnotationResponse import GetNextURLForAgencyAnnotationResponse, \
@@ -299,3 +305,21 @@ class AsyncCore:
 
     async def search_for_url(self, url: str) -> SearchURLResponse:
         return await self.adb_client.search_for_url(url)
+
+    async def get_batches_aggregated_metrics(self) -> GetMetricsBatchesAggregatedResponseDTO:
+        return await self.adb_client.get_batches_aggregated_metrics()
+
+    async def get_batches_breakdown_metrics(self, page: int) -> GetMetricsBatchesBreakdownResponseDTO:
+        return await self.adb_client.get_batches_breakdown_metrics(page=page)
+
+    async def get_urls_breakdown_submitted_metrics(self) -> GetMetricsURLsBreakdownSubmittedResponseDTO:
+        return await self.adb_client.get_urls_breakdown_submitted_metrics()
+
+    async def get_urls_aggregated_metrics(self) -> GetMetricsURLsAggregatedResponseDTO:
+        return await self.adb_client.get_urls_aggregated_metrics()
+
+    async def get_urls_breakdown_pending_metrics(self) -> GetMetricsURLsBreakdownPendingResponseDTO:
+        return await self.adb_client.get_urls_breakdown_pending_metrics()
+
+    async def get_backlog_metrics(self) -> GetMetricsBacklogResponseDTO:
+        return await self.adb_client.get_backlog_metrics()

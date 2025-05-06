@@ -115,3 +115,11 @@ class StatementComposer:
                 )
 
         return subquery
+
+    @staticmethod
+    def count_distinct(field, label):
+        return func.count(func.distinct(field)).label(label)
+
+    @staticmethod
+    def sum_distinct(field, label):
+        return func.sum(func.distinct(field)).label(label)
