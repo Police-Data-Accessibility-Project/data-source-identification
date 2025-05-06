@@ -27,7 +27,7 @@ from collector_db.models import URL, URLErrorInfo, URLHTMLContent, Base, \
     RootURL, Task, TaskError, LinkTaskURL, Batch, Agency, AutomatedUrlAgencySuggestion, \
     UserUrlAgencySuggestion, AutoRelevantSuggestion, AutoRecordTypeSuggestion, UserRelevantSuggestion, \
     UserRecordTypeSuggestion, ReviewingUserURL, URLOptionalDataSourceMetadata, ConfirmedURLAgency, Duplicate, Log, \
-    BacklogSnapshot
+    BacklogSnapshot, URLAnnotationFlag, URLDataSource
 from collector_manager.enums import URLStatus, CollectorType
 from core.DTOs.AllAnnotationPostInfo import AllAnnotationPostInfo
 from core.DTOs.FinalReviewApprovalInfo import FinalReviewApprovalInfo
@@ -37,8 +37,10 @@ from core.DTOs.GetMetricsBatchesAggregatedResponseDTO import GetMetricsBatchesAg
 from core.DTOs.GetMetricsBatchesBreakdownResponseDTO import GetMetricsBatchesBreakdownResponseDTO, \
     GetMetricsBatchesBreakdownInnerResponseDTO
 from core.DTOs.GetMetricsURLsAggregatedResponseDTO import GetMetricsURLsAggregatedResponseDTO
-from core.DTOs.GetMetricsURLsBreakdownPendingResponseDTO import GetMetricsURLsBreakdownPendingResponseDTO
-from core.DTOs.GetMetricsURLsBreakdownSubmittedResponseDTO import GetMetricsURLsBreakdownSubmittedResponseDTO
+from core.DTOs.GetMetricsURLsBreakdownPendingResponseDTO import GetMetricsURLsBreakdownPendingResponseDTO, \
+    GetMetricsURLsBreakdownPendingResponseInnerDTO
+from core.DTOs.GetMetricsURLsBreakdownSubmittedResponseDTO import GetMetricsURLsBreakdownSubmittedResponseDTO, \
+    GetMetricsURLsBreakdownSubmittedInnerDTO
 from core.DTOs.GetNextRecordTypeAnnotationResponseInfo import GetNextRecordTypeAnnotationResponseInfo
 from core.DTOs.GetNextRelevanceAnnotationResponseInfo import GetNextRelevanceAnnotationResponseInfo
 from core.DTOs.GetNextURLForAgencyAnnotationResponse import GetNextURLForAgencyAnnotationResponse, \
@@ -1965,7 +1967,33 @@ class AsyncDatabaseClient:
         self,
         session: AsyncSession
     ) -> GetMetricsURLsBreakdownSubmittedResponseDTO:
-        pass
+        # TODO: Wrong submitted at time: The created at does not indicate when it was submitted
+
+
+        # Build the query
+        week = func.date_trunc('week', URLDataSource.created_at)
+        query = (
+            select(
+                week.label('week'),
+                func.count(URLDataSource.id).label('count_submitted'),
+            )
+            .group_by(week)
+            .order_by(week.asc())
+        )
+
+        # Execute the query
+        raw_results = await session.execute(query)
+        results = raw_results.all()
+        final_results: list[GetMetricsURLsBreakdownSubmittedInnerDTO] = []
+        for result in results:
+            dto = GetMetricsURLsBreakdownSubmittedInnerDTO(
+                week_of=result.week,
+                count_submitted=result.count_submitted
+            )
+            final_results.append(dto)
+        return GetMetricsURLsBreakdownSubmittedResponseDTO(
+            entries=final_results
+        )
 
     @session_manager
     async def get_urls_aggregated_metrics(
@@ -2028,13 +2056,44 @@ class AsyncDatabaseClient:
         self,
         session: AsyncSession
     ) -> GetMetricsURLsBreakdownPendingResponseDTO:
-        # I will need to get ways to identify the status of each url
 
-        # Probably would benefit from a view of some sort
+        flags = URLAnnotationFlag
+        url = URL
 
+        week = func.date_trunc('week', url.created_at)
 
+        # Build the query
+        query = (
+            select(
+                week.label('week'),
+                func.count(url.id).label('count_total'),
+                func.count(case((flags.has_user_record_type_annotation == True, 1))).label('user_record_type_count'),
+                func.count(case((flags.has_user_relevant_annotation == True, 1))).label('user_relevant_count'),
+                func.count(case((flags.has_user_agency_annotation == True, 1))).label('user_agency_count'),
+            )
+            .where(url.outcome == URLStatus.PENDING.value)
+            .join(flags.url)
+            .group_by(week)
+            .order_by(week.asc())
+        )
 
-        pass
+        # Execute the query and return the results
+        results = await session.execute(query)
+        all_results = results.scalars().all()
+        final_results: list[GetMetricsURLsBreakdownPendingResponseInnerDTO] = []
+
+        for result in all_results:
+            dto = GetMetricsURLsBreakdownPendingResponseInnerDTO(
+                week_created_at=result.week,
+                count_pending_total=result.count_total,
+                count_pending_relevant_user=result.auto_record_type_count,
+                count_pending_record_type_user=result.auto_relevant_count,
+                count_pending_agency_user=result.auto_agency_count,
+            )
+            final_results.append(dto)
+        return GetMetricsURLsBreakdownPendingResponseDTO(
+            entries=final_results,
+        )
 
     @session_manager
     async def get_backlog_metrics(

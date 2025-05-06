@@ -8,7 +8,6 @@ Create Date: 2025-05-06 09:19:54.000410
 from typing import Sequence, Union
 
 from alembic import op
-import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
@@ -22,8 +21,7 @@ def upgrade() -> None:
     op.execute("""
     CREATE VIEW url_annotation_flags AS
         SELECT
-        u.id,
-        u.outcome,
+        u.id as url_id,
         CASE WHEN arts.url_id IS NOT NULL THEN TRUE ELSE FALSE END AS has_auto_record_type_suggestion,
         CASE WHEN ars.url_id IS NOT NULL THEN TRUE ELSE FALSE END AS has_auto_relevant_suggestion,
         CASE WHEN auas.url_id IS NOT NULL THEN TRUE ELSE FALSE END AS has_auto_agency_suggestion,
@@ -39,7 +37,6 @@ def upgrade() -> None:
              LEFT JOIN public.user_relevant_suggestions urs ON u.id = urs.url_id
              LEFT JOIN public.user_url_agency_suggestions uuas ON u.id = uuas.url_id
              LEFT JOIN public.reviewing_user_url ruu ON u.id = ruu.url_id;
-
     """)
 
 
