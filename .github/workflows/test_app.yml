@@ -37,11 +37,10 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Install dependencies
-        run: |
-          uv pip install --system -r requirements.txt
+      - name: Install the project
+        run: uv sync --locked --all-extras --dev
 
       - name: Run tests
         run: |
-          pytest tests/test_automated
-          pytest tests/test_alembic
+          uv run pytest tests/test_automated
+          uv run pytest tests/test_alembic

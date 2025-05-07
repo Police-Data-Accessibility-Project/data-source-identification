@@ -1,10 +1,6 @@
 """
 Starts a local instance of the application utilizing a database
 mirrored from production.
-
-Because this is used for testing only, the docker module is not included in
-requirements.txt, and must be installed separately via
-`pip install docker`
 """
 import uvicorn
 
