@@ -1324,6 +1324,8 @@ class AsyncDatabaseClient:
             collector_metadata=url_info.collector_metadata,
             outcome=url_info.outcome.value
         )
+        if url_info.created_at is not None:
+            url_entry.created_at = url_info.created_at
         session.add(url_entry)
         await session.flush()
         return url_entry.id
@@ -1370,6 +1372,8 @@ class AsyncDatabaseClient:
             record_type_match_rate=batch_info.record_type_match_rate,
             record_category_match_rate=batch_info.record_category_match_rate,
         )
+        if batch_info.date_generated is not None:
+            batch.date_generated = batch_info.date_generated
         session.add(batch)
         await session.flush()
         return batch.id

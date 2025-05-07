@@ -3,7 +3,9 @@ import pytest
 
 @pytest.mark.asyncio
 async def test_get_batches_aggregated_metrics(api_test_helper):
+    # Create successful batches with URLs of different statuses
 
+    # Create failed batches
 
     raise NotImplementedError
 
