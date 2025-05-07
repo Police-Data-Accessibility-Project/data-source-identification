@@ -9,7 +9,7 @@ WORKDIR /app
 COPY pyproject.toml uv.lock ./
 
 # Install dependencies
-RUN uv sync
+RUN uv sync --no-dev
 # Must call from the root directory because uv does not add playwright to path
 RUN /app/.venv/bin/playwright install-deps chromium
 RUN /app/.venv/bin/playwright install chromium
