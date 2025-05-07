@@ -42,5 +42,5 @@ jobs:
 
       - name: Run tests
         run: |
-          pytest tests/test_automated
-          pytest tests/test_alembic
+          uv run pytest tests/test_automated
+          uv run pytest tests/test_alembic
