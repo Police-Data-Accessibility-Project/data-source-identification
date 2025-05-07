@@ -6,12 +6,14 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 # Set working directory
 WORKDIR /app
 
-COPY requirements.txt ./requirements.txt
+COPY pyproject.toml uv.lock ./
 
 # Install dependencies
-RUN uv pip install --system -r requirements.txt
-RUN playwright install chromium
-RUN playwright install-deps chromium
+RUN uv sync
+# Must call from the root directory because uv does not add playwright to path
+RUN /app/.venv/bin/playwright install-deps chromium
+RUN /app/.venv/bin/playwright install chromium
+
 
 # Copy project files
 COPY api ./api
