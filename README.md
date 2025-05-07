@@ -18,6 +18,12 @@ core | A module which integrates other components, such as collector_manager and
 api | API for interacting with collector_manager, core, and collector_db
 local_database | Resources for setting up a test database for local development
 
+## Installation
+
+```
+uv sync
+```
+
 ## How to use
 
 1. Create an .env file in this directory with these contents, or set the environment variable another way: `VUE_APP_PDAP_API_KEY=KeyGoesHere`
