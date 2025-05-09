@@ -4,7 +4,7 @@ from unittest.mock import MagicMock, AsyncMock
 import pytest
 
 from collector_db.enums import TaskType
-from collector_db.models import URL, URLErrorInfo
+from collector_db.models import URL, URLErrorInfo, URLDataSource
 from collector_manager.enums import URLStatus
 from core.DTOs.FinalReviewApprovalInfo import FinalReviewApprovalInfo
 from core.DTOs.TaskOperatorRunInfo import TaskOperatorOutcome
@@ -152,10 +152,18 @@ async def test_submit_approved_url_task(
     assert url_2.outcome == URLStatus.SUBMITTED.value
     assert url_3.outcome == URLStatus.ERROR.value
 
-    # Check URLs now have data source ids
-    assert url_1.data_source_id == 21
-    assert url_2.data_source_id == 34
-    assert url_3.data_source_id is None
+    # Get URL Data Source Links
+    url_data_sources = await db_data_creator.adb_client.get_all(URLDataSource)
+    assert len(url_data_sources) == 2
+
+    url_data_source_1 = url_data_sources[0]
+    url_data_source_2 = url_data_sources[1]
+
+    assert url_data_source_1.url_id == url_1.id
+    assert url_data_source_1.data_source_id == 21
+
+    assert url_data_source_2.url_id == url_2.id
+    assert url_data_source_2.data_source_id == 34
 
     # Check that errored URL has entry in url_error_info
     url_errors = await db_data_creator.adb_client.get_all(URLErrorInfo)

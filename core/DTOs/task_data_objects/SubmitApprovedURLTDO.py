@@ -3,7 +3,7 @@ from typing import Optional
 from pydantic import BaseModel
 
 from core.enums import RecordType
-
+from datetime import datetime
 
 class SubmitApprovedURLTDO(BaseModel):
     url_id: int
@@ -23,3 +23,4 @@ class SubmittedURLInfo(BaseModel):
     url_id: int
     data_source_id: Optional[int]
     request_error: Optional[str]
+    submitted_at: Optional[datetime] = None

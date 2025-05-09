@@ -18,6 +18,7 @@ class AsyncScheduledTaskManager:
         # Jobs
         self.run_cycles_job = None
         self.delete_logs_job = None
+        self.populate_backlog_snapshot_job = None
 
     def add_scheduled_tasks(self):
         self.run_cycles_job = self.scheduler.add_job(
@@ -33,6 +34,13 @@ class AsyncScheduledTaskManager:
             trigger=IntervalTrigger(
                 days=1,
                 start_date=datetime.now() + timedelta(minutes=10)
+            )
+        )
+        self.populate_backlog_snapshot_job = self.scheduler.add_job(
+            self.async_core.adb_client.populate_backlog_snapshot,
+            trigger=IntervalTrigger(
+                days=1,
+                start_date=datetime.now() + timedelta(minutes=20)
             )
         )
 

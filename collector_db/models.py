@@ -106,7 +106,6 @@ class URL(Base):
     record_type = Column(postgresql.ENUM(*record_type_values, name='record_type'), nullable=True)
     created_at = get_created_at_column()
     updated_at = get_updated_at_column()
-    data_source_id = Column(Integer, nullable=True)
 
     # Relationships
     batch = relationship("Batch", back_populates="urls")
@@ -136,6 +135,11 @@ class URL(Base):
         "URLOptionalDataSourceMetadata", uselist=False, back_populates="url")
     confirmed_agencies = relationship(
         "ConfirmedURLAgency",
+    )
+    data_source = relationship(
+        "URLDataSource",
+        back_populates="url",
+        uselist=False
     )
 
 
@@ -453,3 +457,25 @@ class UserRecordTypeSuggestion(Base):
     # Relationships
 
     url = relationship("URL", back_populates="user_record_type_suggestion")
+
+class BacklogSnapshot(Base):
+    __tablename__ = "backlog_snapshot"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    count_pending_total = Column(Integer, nullable=False)
+    created_at = get_created_at_column()
+
+class URLDataSource(Base):
+    __tablename__ = "url_data_sources"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    url_id = Column(Integer, ForeignKey("urls.id"), nullable=False)
+    data_source_id = Column(Integer, nullable=False)
+    created_at = get_created_at_column()
+
+    # Relationships
+    url = relationship(
+        "URL",
+        back_populates="data_source",
+        uselist=False
+    )

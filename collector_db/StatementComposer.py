@@ -1,11 +1,12 @@
-from typing import Any
+from typing import Any, Optional
 
-from sqlalchemy import Select, select, exists, Table, func, Subquery, and_, not_, ColumnElement
+from sqlalchemy import Select, select, exists, Table, func, Subquery, and_, not_, ColumnElement, case, literal, CTE
 from sqlalchemy.orm import aliased
 
 from collector_db.enums import URLMetadataAttributeType, ValidationStatus, TaskType
 from collector_db.models import URL, URLHTMLContent, AutomatedUrlAgencySuggestion, URLOptionalDataSourceMetadata, Batch, \
-    ConfirmedURLAgency, LinkTaskURL, Task, UserUrlAgencySuggestion, UserRecordTypeSuggestion, UserRelevantSuggestion
+    ConfirmedURLAgency, LinkTaskURL, Task, UserUrlAgencySuggestion, UserRecordTypeSuggestion, UserRelevantSuggestion, \
+    AutoRecordTypeSuggestion, AutoRelevantSuggestion, ReviewingUserURL
 from collector_manager.enums import URLStatus, CollectorType
 from core.enums import BatchStatus
 
@@ -115,3 +116,53 @@ class StatementComposer:
                 )
 
         return subquery
+
+    @staticmethod
+    def count_distinct(field, label):
+        return func.count(func.distinct(field)).label(label)
+
+    @staticmethod
+    def sum_distinct(field, label):
+        return func.sum(func.distinct(field)).label(label)
+
+    @staticmethod
+    def url_annotation_flags_query(
+            status: Optional[URLStatus] = None
+    ) -> CTE:
+        stmt = (
+            select(
+                URL.id.label("url_id"),
+                case((AutoRecordTypeSuggestion.url_id != None, literal(True)), else_=literal(False)).label(
+                    "has_auto_record_type_annotation"
+                    ),
+                case((AutoRelevantSuggestion.url_id != None, literal(True)), else_=literal(False)).label(
+                    "has_auto_relevant_annotation"
+                    ),
+                case((AutomatedUrlAgencySuggestion.url_id != None, literal(True)), else_=literal(False)).label(
+                    "has_auto_agency_annotation"
+                    ),
+                case((UserRecordTypeSuggestion.url_id != None, literal(True)), else_=literal(False)).label(
+                    "has_user_record_type_annotation"
+                    ),
+                case((UserRelevantSuggestion.url_id != None, literal(True)), else_=literal(False)).label(
+                    "has_user_relevant_annotation"
+                    ),
+                case((UserUrlAgencySuggestion.url_id != None, literal(True)), else_=literal(False)).label(
+                    "has_user_agency_annotation"
+                    ),
+                case((ReviewingUserURL.url_id != None, literal(True)), else_=literal(False)).label("was_reviewed"),
+            )
+            .outerjoin(AutoRecordTypeSuggestion, URL.id == AutoRecordTypeSuggestion.url_id)
+            .outerjoin(AutoRelevantSuggestion, URL.id == AutoRelevantSuggestion.url_id)
+            .outerjoin(AutomatedUrlAgencySuggestion, URL.id == AutomatedUrlAgencySuggestion.url_id)
+            .outerjoin(UserRecordTypeSuggestion, URL.id == UserRecordTypeSuggestion.url_id)
+            .outerjoin(UserRelevantSuggestion, URL.id == UserRelevantSuggestion.url_id)
+            .outerjoin(UserUrlAgencySuggestion, URL.id == UserUrlAgencySuggestion.url_id)
+            .outerjoin(ReviewingUserURL, URL.id == ReviewingUserURL.url_id)
+        )
+        if status is not None:
+            stmt = stmt.where(
+                URL.outcome == status.value
+            )
+
+        return stmt.cte("url_annotation_flags")

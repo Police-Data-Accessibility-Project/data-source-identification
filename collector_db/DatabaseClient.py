@@ -1,10 +1,10 @@
 from functools import wraps
 from typing import Optional, List
 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import sessionmaker, scoped_session
+from sqlalchemy.orm import sessionmaker, scoped_session, Session
 
 from collector_db.ConfigManager import ConfigManager
 from collector_db.DTOs.BatchInfo import BatchInfo
@@ -13,10 +13,11 @@ from collector_db.DTOs.InsertURLsInfo import InsertURLsInfo
 from collector_db.DTOs.LogInfo import LogInfo
 from collector_db.DTOs.URLInfo import URLInfo
 from collector_db.DTOs.URLMapping import URLMapping
-from collector_db.models import Base, Batch, URL, Log, Duplicate
-from collector_manager.enums import CollectorType
+from collector_db.models import Base, Batch, URL, Log, Duplicate, URLDataSource
+from collector_manager.enums import CollectorType, URLStatus
 from core.DTOs.ManualBatchInputDTO import ManualBatchInputDTO
 from core.DTOs.ManualBatchResponseDTO import ManualBatchResponseDTO
+from core.DTOs.task_data_objects.SubmitApprovedURLTDO import SubmittedURLInfo
 from core.EnvVarManager import EnvVarManager
 from core.enums import BatchStatus
 
@@ -72,6 +73,8 @@ class DatabaseClient:
             record_type_match_rate=batch_info.record_type_match_rate,
             record_category_match_rate=batch_info.record_category_match_rate,
         )
+        if batch_info.date_generated is not None:
+            batch.date_generated = batch_info.date_generated
         session.add(batch)
         session.commit()
         session.refresh(batch)
@@ -109,6 +112,8 @@ class DatabaseClient:
             outcome=url_info.outcome.value,
             name=url_info.name
         )
+        if url_info.created_at is not None:
+            url_entry.created_at = url_info.created_at
         session.add(url_entry)
         session.commit()
         session.refresh(url_entry)
@@ -163,6 +168,34 @@ class DatabaseClient:
     def update_url(self, session, url_info: URLInfo):
         url = session.query(URL).filter_by(id=url_info.id).first()
         url.collector_metadata = url_info.collector_metadata
+
+    @session_manager
+    def mark_urls_as_submitted(
+            self,
+            session: Session,
+            infos: list[SubmittedURLInfo]
+    ):
+        for info in infos:
+            url_id = info.url_id
+            data_source_id = info.data_source_id
+
+            query = (
+                update(URL)
+                .where(URL.id == url_id)
+                .values(
+                    outcome=URLStatus.SUBMITTED.value
+                )
+            )
+
+            url_data_source_object = URLDataSource(
+                url_id=url_id,
+                data_source_id=data_source_id
+            )
+            if info.submitted_at is not None:
+                url_data_source_object.created_at = info.submitted_at
+            session.add(url_data_source_object)
+
+            session.execute(query)
 
 if __name__ == "__main__":
     client = DatabaseClient()

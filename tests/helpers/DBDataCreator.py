@@ -1,4 +1,5 @@
 import asyncio
+from datetime import datetime
 from random import randint
 from typing import List, Optional
 
@@ -11,14 +12,27 @@ from collector_db.DTOs.InsertURLsInfo import InsertURLsInfo
 from collector_db.DTOs.URLErrorInfos import URLErrorPydanticInfo
 from collector_db.DTOs.URLHTMLContentInfo import URLHTMLContentInfo, HTMLContentType
 from collector_db.DTOs.URLInfo import URLInfo
+from collector_db.DTOs.URLMapping import URLMapping
 from collector_db.DatabaseClient import DatabaseClient
 from collector_db.enums import TaskType
 from collector_manager.enums import CollectorType, URLStatus
+from core.DTOs.FinalReviewApprovalInfo import FinalReviewApprovalInfo
 from core.DTOs.URLAgencySuggestionInfo import URLAgencySuggestionInfo
+from core.DTOs.task_data_objects.SubmitApprovedURLTDO import SubmittedURLInfo
 from core.DTOs.task_data_objects.URLMiscellaneousMetadataTDO import URLMiscellaneousMetadataTDO
 from core.enums import BatchStatus, SuggestionType, RecordType
+from tests.helpers.test_batch_creation_parameters import TestBatchCreationParameters, AnnotationInfo
 from tests.helpers.simple_test_data_functions import generate_test_urls
 
+
+class URLCreationInfo(BaseModel):
+    url_mappings: list[URLMapping]
+    outcome: URLStatus
+    annotation_info: AnnotationInfo
+
+class BatchURLCreationInfoV2(BaseModel):
+    batch_id: int
+    url_creation_infos: dict[URLStatus, URLCreationInfo]
 
 class BatchURLCreationInfo(BaseModel):
     batch_id: int
@@ -37,9 +51,10 @@ class DBDataCreator:
         self.adb_client: AsyncDatabaseClient = AsyncDatabaseClient()
 
     def batch(
-            self,
-            strategy: CollectorType = CollectorType.EXAMPLE,
-            batch_status: BatchStatus = BatchStatus.IN_PROCESS
+        self,
+        strategy: CollectorType = CollectorType.EXAMPLE,
+        batch_status: BatchStatus = BatchStatus.IN_PROCESS,
+        created_at: Optional[datetime] = None
     ) -> int:
         return self.db_client.insert_batch(
             BatchInfo(
@@ -47,7 +62,8 @@ class DBDataCreator:
                 status=batch_status,
                 total_url_count=1,
                 parameters={"test_key": "test_value"},
-                user_id=1
+                user_id=1,
+                date_generated=created_at
             )
         )
 
@@ -56,6 +72,49 @@ class DBDataCreator:
         if url_ids is not None:
             await self.adb_client.link_urls_to_task(task_id=task_id, url_ids=url_ids)
         return task_id
+
+    async def batch_v2(
+        self,
+        parameters: TestBatchCreationParameters
+    ) -> BatchURLCreationInfoV2:
+        batch_id = self.batch(
+            strategy=parameters.strategy,
+            batch_status=parameters.outcome,
+            created_at=parameters.created_at
+        )
+        if parameters.outcome in (BatchStatus.ERROR, BatchStatus.ABORTED):
+            return BatchURLCreationInfoV2(
+                batch_id=batch_id,
+                url_creation_infos={}
+            )
+
+        d: dict[URLStatus, URLCreationInfo] = {}
+        for url_parameters in parameters.urls:
+            iui: InsertURLsInfo = self.urls(
+                batch_id=batch_id,
+                url_count=url_parameters.count,
+                outcome=url_parameters.status,
+                created_at=parameters.created_at
+            )
+            url_ids = [iui.url_id for iui in iui.url_mappings]
+            if url_parameters.with_html_content:
+                await self.html_data(url_ids)
+            if url_parameters.annotation_info.has_annotations():
+                for url_id in url_ids:
+                    await self.annotate(
+                        url_id=url_id,
+                        annotation_info=url_parameters.annotation_info
+                    )
+
+            d[url_parameters.status] = URLCreationInfo(
+                url_mappings=iui.url_mappings,
+                outcome=url_parameters.status,
+                annotation_info=url_parameters.annotation_info
+            )
+        return BatchURLCreationInfoV2(
+            batch_id=batch_id,
+            url_creation_infos=d
+        )
 
     async def batch_and_urls(
             self,
@@ -112,6 +171,41 @@ class DBDataCreator:
             url_id=url_id,
             relevant=relevant
         )
+
+    async def annotate(self, url_id: int, annotation_info: AnnotationInfo):
+        info = annotation_info
+        if info.user_relevant is not None:
+            await self.user_relevant_suggestion(url_id=url_id, relevant=info.user_relevant)
+        if info.auto_relevant is not None:
+            await self.auto_relevant_suggestions(url_id=url_id, relevant=info.auto_relevant)
+        if info.user_record_type is not None:
+            await self.user_record_type_suggestion(url_id=url_id, record_type=info.user_record_type)
+        if info.auto_record_type is not None:
+            await self.auto_record_type_suggestions(url_id=url_id, record_type=info.auto_record_type)
+        if info.user_agency is not None:
+            await self.agency_user_suggestions(url_id=url_id, agency_id=info.user_agency)
+        if info.auto_agency is not None:
+            await self.agency_auto_suggestions(url_id=url_id, count=1, suggestion_type=SuggestionType.AUTO_SUGGESTION)
+        if info.confirmed_agency is not None:
+            await self.agency_auto_suggestions(url_id=url_id, count=1, suggestion_type=SuggestionType.CONFIRMED)
+        if info.final_review_approved is not None:
+            if info.final_review_approved:
+                final_review_approval_info = FinalReviewApprovalInfo(
+                    url_id=url_id,
+                    record_type=annotation_info.user_record_type,
+                    agency_ids=[annotation_info.user_agency] if annotation_info.user_agency is not None else None,
+                    description="Test Description",
+                )
+                await self.adb_client.approve_url(
+                    approval_info=final_review_approval_info,
+                    user_id=1
+                )
+            else:
+                await self.adb_client.reject_url(
+                    url_id=url_id,
+                    user_id=1
+                )
+
 
     async def user_relevant_suggestion(
             self,
@@ -204,7 +298,8 @@ class DBDataCreator:
             batch_id: int,
             url_count: int,
             collector_metadata: Optional[dict] = None,
-            outcome: URLStatus = URLStatus.PENDING
+            outcome: URLStatus = URLStatus.PENDING,
+            created_at: Optional[datetime] = None
     ) -> InsertURLsInfo:
         raw_urls = generate_test_urls(url_count)
         url_infos: List[URLInfo] = []
@@ -214,14 +309,31 @@ class DBDataCreator:
                     url=url,
                     outcome=outcome,
                     name="Test Name" if outcome == URLStatus.VALIDATED else None,
-                    collector_metadata=collector_metadata
+                    collector_metadata=collector_metadata,
+                    created_at=created_at
                 )
             )
 
-        return self.db_client.insert_urls(
+        url_insert_info = self.db_client.insert_urls(
             url_infos=url_infos,
             batch_id=batch_id,
         )
+
+        # If outcome is submitted, also add entry to DataSourceURL
+        if outcome == URLStatus.SUBMITTED:
+            submitted_url_infos = []
+            for url_id in url_insert_info.url_ids:
+                submitted_url_info = SubmittedURLInfo(
+                    url_id=url_id,
+                    data_source_id=url_id, # Use same ID for convenience,
+                    request_error=None,
+                    submitted_at=created_at
+                )
+                submitted_url_infos.append(submitted_url_info)
+            self.db_client.mark_urls_as_submitted(submitted_url_infos)
+
+
+        return url_insert_info
 
     async def url_miscellaneous_metadata(
             self,

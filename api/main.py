@@ -9,6 +9,7 @@ from starlette.responses import RedirectResponse
 from api.routes.annotate import annotate_router
 from api.routes.batch import batch_router
 from api.routes.collector import collector_router
+from api.routes.metrics import metrics_router
 from api.routes.review import review_router
 from api.routes.root import root_router
 from api.routes.search import search_router
@@ -130,7 +131,8 @@ routers = [
     url_router,
     task_router,
     review_router,
-    search_router
+    search_router,
+    metrics_router
 ]
 
 for router in routers:
