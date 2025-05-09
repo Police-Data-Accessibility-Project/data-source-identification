@@ -1,19 +1,22 @@
-import datetime
+from datetime import datetime
 
 from pydantic import BaseModel
 
 from collector_manager.enums import CollectorType
+from core.enums import BatchStatus
 
 
 class GetMetricsBatchesBreakdownInnerResponseDTO(BaseModel):
-    batch_id: str
+    batch_id: int
     strategy: CollectorType
-    created_at: datetime.datetime
+    status: BatchStatus
+    created_at: datetime
     count_url_total: int
     count_url_pending: int
     count_url_submitted: int
     count_url_rejected: int
     count_url_error: int
+    count_url_validated: int
 
 class GetMetricsBatchesBreakdownResponseDTO(BaseModel):
     batches: list[GetMetricsBatchesBreakdownInnerResponseDTO]

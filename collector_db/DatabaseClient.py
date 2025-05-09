@@ -72,6 +72,8 @@ class DatabaseClient:
             record_type_match_rate=batch_info.record_type_match_rate,
             record_category_match_rate=batch_info.record_category_match_rate,
         )
+        if batch_info.date_generated is not None:
+            batch.date_generated = batch_info.date_generated
         session.add(batch)
         session.commit()
         session.refresh(batch)

@@ -16,6 +16,9 @@ from core.DTOs.FinalReviewApprovalInfo import FinalReviewApprovalInfo, FinalRevi
 from core.DTOs.GetBatchLogsResponse import GetBatchLogsResponse
 from core.DTOs.GetBatchStatusResponse import GetBatchStatusResponse
 from core.DTOs.GetDuplicatesByBatchResponse import GetDuplicatesByBatchResponse
+from core.DTOs.GetMetricsBacklogResponse import GetMetricsBacklogResponseDTO
+from core.DTOs.GetMetricsBatchesAggregatedResponseDTO import GetMetricsBatchesAggregatedResponseDTO
+from core.DTOs.GetMetricsBatchesBreakdownResponseDTO import GetMetricsBatchesBreakdownResponseDTO
 from core.DTOs.GetNextRecordTypeAnnotationResponseInfo import GetNextRecordTypeAnnotationResponseOuterInfo
 from core.DTOs.GetNextRelevanceAnnotationResponseInfo import GetNextRelevanceAnnotationResponseOuterInfo
 from core.DTOs.GetNextURLForAgencyAnnotationResponse import GetNextURLForAgencyAnnotationResponse, \
@@ -135,6 +138,19 @@ class RequestValidator:
     ) -> dict:
         return self.open_v2(
             method="POST",
+            url=url,
+            params=params,
+            **kwargs
+        )
+
+    def get_v2(
+            self,
+            url: str,
+            params: Optional[dict] = None,
+            **kwargs
+    ) -> dict:
+        return self.open_v2(
+            method="GET",
             url=url,
             params=params,
             **kwargs
@@ -394,3 +410,16 @@ class RequestValidator:
             params={"url": url}
         )
         return SearchURLResponse(**data)
+
+    async def get_batches_aggregated_metrics(self) -> GetMetricsBatchesAggregatedResponseDTO:
+        data = self.get_v2(
+            url="/metrics/batches/aggregated"
+        )
+        return GetMetricsBatchesAggregatedResponseDTO(**data)
+
+    async def get_batches_breakdown_metrics(self, page: int) -> GetMetricsBatchesBreakdownResponseDTO:
+        data = self.get_v2(
+            url="/metrics/batches/breakdown",
+            params={"page": page}
+        )
+        return GetMetricsBatchesBreakdownResponseDTO(**data)

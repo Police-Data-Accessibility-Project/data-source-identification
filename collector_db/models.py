@@ -136,10 +136,6 @@ class URL(Base):
     confirmed_agencies = relationship(
         "ConfirmedURLAgency",
     )
-    annotation_flags = relationship(
-        "URLAnnotationFlag",
-        back_populates="url"
-    )
     data_source = relationship(
         "URLDataSource",
         back_populates="url",
@@ -468,29 +464,6 @@ class BacklogSnapshot(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     count_pending_total = Column(Integer, nullable=False)
     created_at = get_created_at_column()
-
-class URLAnnotationFlag(Base):
-    __tablename__ = "url_annotation_flags"
-
-    url_id = Column(
-        Integer,
-        ForeignKey("urls.id"),
-        primary_key=True,
-        nullable=False
-    )
-    has_auto_record_type_annotation = Column(Boolean, nullable=False)
-    has_auto_relevant_annotation = Column(Boolean, nullable=False)
-    has_auto_agency_annotation = Column(Boolean, nullable=False)
-    has_user_record_type_annotation = Column(Boolean, nullable=False)
-    has_user_relevant_annotation = Column(Boolean, nullable=False)
-    has_user_agency_annotation = Column(Boolean, nullable=False)
-    was_reviewed = Column(Boolean, nullable=False)
-
-    # Relationships
-    url = relationship(
-        "URL",
-        back_populates="annotation_flags"
-    )
 
 class URLDataSource(Base):
     __tablename__ = "url_data_sources"

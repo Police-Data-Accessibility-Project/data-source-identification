@@ -7,6 +7,7 @@ from sqlalchemy import select, exists, func, case, desc, Select, not_, and_, upd
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.orm import selectinload, joinedload, QueryableAttribute, aliased
+from sqlalchemy.sql.functions import coalesce
 from starlette import status
 
 from collector_db.ConfigManager import ConfigManager
@@ -27,7 +28,7 @@ from collector_db.models import URL, URLErrorInfo, URLHTMLContent, Base, \
     RootURL, Task, TaskError, LinkTaskURL, Batch, Agency, AutomatedUrlAgencySuggestion, \
     UserUrlAgencySuggestion, AutoRelevantSuggestion, AutoRecordTypeSuggestion, UserRelevantSuggestion, \
     UserRecordTypeSuggestion, ReviewingUserURL, URLOptionalDataSourceMetadata, ConfirmedURLAgency, Duplicate, Log, \
-    BacklogSnapshot, URLAnnotationFlag, URLDataSource
+    BacklogSnapshot, URLDataSource
 from collector_manager.enums import URLStatus, CollectorType
 from core.DTOs.AllAnnotationPostInfo import AllAnnotationPostInfo
 from core.DTOs.FinalReviewApprovalInfo import FinalReviewApprovalInfo
@@ -1489,14 +1490,24 @@ class AsyncDatabaseClient:
         for info in infos:
             url_id = info.url_id
             data_source_id = info.data_source_id
+
             query = (
                 update(URL)
                 .where(URL.id == url_id)
                 .values(
-                    data_source_id=data_source_id,
                     outcome=URLStatus.SUBMITTED.value
                 )
             )
+
+            url_data_source_object = URLDataSource(
+                url_id=url_id,
+                data_source_id=data_source_id
+            )
+            if info.submitted_at is not None:
+                url_data_source_object.created_at = info.submitted_at
+            session.add(url_data_source_object)
+
+
             await session.execute(query)
 
     @session_manager
@@ -1843,9 +1854,11 @@ class AsyncDatabaseClient:
             Batch.strategy,
             url_column(URLStatus.PENDING, label="pending_count"),
             url_column(URLStatus.ERROR, label="error_count"),
+            url_column(URLStatus.VALIDATED, label="validated_count"),
             url_column(URLStatus.SUBMITTED, label="submitted_count"),
             url_column(URLStatus.REJECTED, label="rejected_count"),
-        ).join(
+
+        ).outerjoin(
             Batch, Batch.id == URL.batch_id
         ).group_by(
             Batch.strategy
@@ -1854,16 +1867,17 @@ class AsyncDatabaseClient:
     # Combine
         query = select(
             Batch.strategy,
-            batch_count_subquery.c.done_count,
-            batch_count_subquery.c.error_count,
-            url_count_subquery.c.pending_count,
-            url_count_subquery.c.error_count,
-            url_count_subquery.c.submitted_count,
-            url_count_subquery.c.rejected_count,
+            batch_count_subquery.c.done_count.label("batch_done_count"),
+            batch_count_subquery.c.error_count.label("batch_error_count"),
+            coalesce(url_count_subquery.c.pending_count, 0).label("pending_count"),
+            coalesce(url_count_subquery.c.error_count, 0).label("error_count"),
+            coalesce(url_count_subquery.c.submitted_count, 0).label("submitted_count"),
+            coalesce(url_count_subquery.c.rejected_count, 0).label("rejected_count"),
+            coalesce(url_count_subquery.c.validated_count, 0).label("validated_count")
         ).join(
             batch_count_subquery,
             Batch.strategy == batch_count_subquery.c.strategy
-        ).join(
+        ).outerjoin(
             url_count_subquery,
             Batch.strategy == url_count_subquery.c.strategy
         )
@@ -1872,10 +1886,13 @@ class AsyncDatabaseClient:
         d: dict[CollectorType, GetMetricsBatchesAggregatedInnerResponseDTO] = {}
         for result in results:
             d[CollectorType(result.strategy)] = GetMetricsBatchesAggregatedInnerResponseDTO(
-                count_successful_batches=result.done_count,
-                count_failed_batches=result.error_count,
-                count_urls=result.pending_count + result.submitted_count + result.rejected_count + result.error_count,
+                count_successful_batches=result.batch_done_count,
+                count_failed_batches=result.batch_error_count,
+                count_urls=result.pending_count + result.submitted_count +
+                           result.rejected_count + result.error_count +
+                           result.validated_count,
                 count_urls_pending=result.pending_count,
+                count_urls_validated=result.validated_count,
                 count_urls_submitted=result.submitted_count,
                 count_urls_rejected=result.rejected_count,
                 count_urls_errors=result.error_count
@@ -1906,6 +1923,7 @@ class AsyncDatabaseClient:
         main_query = select(
             Batch.strategy,
             Batch.id,
+            Batch.status,
             Batch.date_generated.label("created_at"),
         )
 
@@ -1925,6 +1943,7 @@ class AsyncDatabaseClient:
             url_column(URLStatus.SUBMITTED, label="count_submitted"),
             url_column(URLStatus.REJECTED, label="count_rejected"),
             url_column(URLStatus.ERROR, label="count_error"),
+            url_column(URLStatus.VALIDATED, label="count_validated"),
         ).group_by(
             URL.batch_id
         ).subquery("url_count")
@@ -1933,12 +1952,14 @@ class AsyncDatabaseClient:
             main_query.c.strategy,
             main_query.c.id,
             main_query.c.created_at,
-            count_query.c.count_total,
-            count_query.c.count_pending,
-            count_query.c.count_submitted,
-            count_query.c.count_rejected,
-            count_query.c.count_error,
-        ).join(
+            main_query.c.status,
+            coalesce(count_query.c.count_total, 0).label("count_total"),
+            coalesce(count_query.c.count_pending, 0).label("count_pending"),
+            coalesce(count_query.c.count_submitted, 0).label("count_submitted"),
+            coalesce(count_query.c.count_rejected, 0).label("count_rejected"),
+            coalesce(count_query.c.count_error, 0).label("count_error"),
+            coalesce(count_query.c.count_validated, 0).label("count_validated"),
+        ).outerjoin(
             count_query,
             main_query.c.id == count_query.c.batch_id
         ).offset(
@@ -1952,14 +1973,16 @@ class AsyncDatabaseClient:
         batches: list[GetMetricsBatchesBreakdownInnerResponseDTO] = []
         for result in results:
             dto = GetMetricsBatchesBreakdownInnerResponseDTO(
-                batch_id=str(result.id),
+                batch_id=result.id,
                 strategy=CollectorType(result.strategy),
+                status=BatchStatus(result.status),
                 created_at=result.created_at,
                 count_url_total=result.count_total,
                 count_url_pending=result.count_pending,
                 count_url_submitted=result.count_submitted,
                 count_url_rejected=result.count_rejected,
                 count_url_error=result.count_error,
+                count_url_validated=result.count_validated
             )
             batches.append(dto)
         return GetMetricsBatchesBreakdownResponseDTO(
@@ -1971,7 +1994,8 @@ class AsyncDatabaseClient:
         self,
         session: AsyncSession
     ) -> GetMetricsURLsBreakdownSubmittedResponseDTO:
-        # TODO: Wrong submitted at time: The created at does not indicate when it was submitted
+        # TODO: Wrong submitted at time: The created at does not indicate
+        #  when it was submitted
 
 
         # Build the query
@@ -2061,6 +2085,8 @@ class AsyncDatabaseClient:
         session: AsyncSession
     ) -> GetMetricsURLsBreakdownPendingResponseDTO:
 
+
+        # TODO: Replace with CTE
         flags = URLAnnotationFlag
         url = URL
 
