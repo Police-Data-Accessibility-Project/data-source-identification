@@ -7,4 +7,4 @@ class GetMetricsURLsBreakdownSubmittedInnerDTO(BaseModel):
     count_submitted: int
 
 class GetMetricsURLsBreakdownSubmittedResponseDTO(BaseModel):
-    entries: list
+    entries: list[GetMetricsURLsBreakdownSubmittedInnerDTO]

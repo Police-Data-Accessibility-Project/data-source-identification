@@ -2,8 +2,9 @@ import pendulum
 import pytest
 
 from collector_manager.enums import URLStatus, CollectorType
-from core.enums import BatchStatus
-from helpers.test_batch_creation_parameters import TestBatchCreationParameters, TestURLCreationParameters
+from core.enums import BatchStatus, RecordType
+from tests.helpers.test_batch_creation_parameters import TestBatchCreationParameters, TestURLCreationParameters, \
+    AnnotationInfo
 
 
 @pytest.mark.asyncio
@@ -190,7 +191,7 @@ async def test_get_urls_breakdown_submitted_metrics(api_test_helper):
         urls=[
             TestURLCreationParameters(
                 count=3,
-                status=URLStatus.REJECTED
+                status=URLStatus.SUBMITTED
             )
         ],
         created_at=today.subtract(weeks=1),
@@ -202,7 +203,7 @@ async def test_get_urls_breakdown_submitted_metrics(api_test_helper):
         urls=[
             TestURLCreationParameters(
                 count=3,
-                status=URLStatus.REJECTED
+                status=URLStatus.SUBMITTED
             ),
             TestURLCreationParameters(
                 count=4,
@@ -216,24 +217,262 @@ async def test_get_urls_breakdown_submitted_metrics(api_test_helper):
     )
     batch_3 = await ath.db_data_creator.batch_v2(batch_3_params)
 
+    dto = await ath.request_validator.get_urls_breakdown_submitted_metrics()
+    assert len(dto.entries) == 2
+
+    entry_1 = dto.entries[0]
+    assert entry_1.count_submitted == 6
+
+    entry_2 = dto.entries[1]
+    assert entry_2.count_submitted == 2
+
+
 @pytest.mark.asyncio
 async def test_get_urls_breakdown_pending_metrics(api_test_helper):
     # Build URLs, broken down into three separate weeks,
     # with each week having a different number of pending URLs
     # with a different number of kinds of annotations per URLs
 
+
+    today = pendulum.today()
+    ath = api_test_helper
+
+    agency_id = await ath.db_data_creator.agency()
     # Additionally, add some URLs that are submitted,
     # validated, errored, and ensure they are not counted
+    batch_1_params = TestBatchCreationParameters(
+        strategy=CollectorType.MANUAL,
+        urls=[
+            TestURLCreationParameters(
+                count=1,
+                status=URLStatus.PENDING,
+                annotation_info=AnnotationInfo(
+                    user_relevant=False
+                )
+            ),
+            TestURLCreationParameters(
+                count=2,
+                status=URLStatus.SUBMITTED
+            ),
+        ]
+    )
+    batch_1 = await ath.db_data_creator.batch_v2(batch_1_params)
+    batch_2_params = TestBatchCreationParameters(
+        strategy=CollectorType.EXAMPLE,
+        urls=[
+            TestURLCreationParameters(
+                count=3,
+                status=URLStatus.PENDING,
+                annotation_info=AnnotationInfo(
+                    user_relevant=True,
+                    user_record_type=RecordType.CALLS_FOR_SERVICE
+                )
+            )
+        ],
+        created_at=today.subtract(weeks=1),
+    )
+    batch_2 = await ath.db_data_creator.batch_v2(batch_2_params)
+    batch_3_params = TestBatchCreationParameters(
+        strategy=CollectorType.AUTO_GOOGLER,
+        created_at=today.subtract(weeks=1),
+        urls=[
+            TestURLCreationParameters(
+                count=3,
+                status=URLStatus.SUBMITTED
+            ),
+            TestURLCreationParameters(
+                count=4,
+                status=URLStatus.ERROR
+            ),
+            TestURLCreationParameters(
+                count=5,
+                status=URLStatus.PENDING,
+                annotation_info=AnnotationInfo(
+                    user_relevant=True,
+                    user_record_type=RecordType.INCARCERATION_RECORDS,
+                    user_agency=agency_id
+                )
+            ),
+        ]
+    )
+    batch_3 = await ath.db_data_creator.batch_v2(batch_3_params)
+
+    dto = await ath.request_validator.get_urls_breakdown_pending_metrics()
+    assert len(dto.entries) == 2
+
+    entry_1 = dto.entries[0]
+    assert entry_1.count_pending_total == 8
+    assert entry_1.count_pending_relevant_user == 8
+    assert entry_1.count_pending_record_type_user == 8
+    assert entry_1.count_pending_agency_user == 5
+
+    entry_2 = dto.entries[1]
+    assert entry_2.count_pending_total == 1
+    assert entry_2.count_pending_relevant_user == 1
+    assert entry_2.count_pending_record_type_user == 0
+    assert entry_2.count_pending_agency_user == 0
+
+@pytest.mark.asyncio
+async def test_get_urls_aggregate_metrics(api_test_helper):
+    ath = api_test_helper
+    today = pendulum.today()
+
+    batch_0_params = TestBatchCreationParameters(
+        strategy=CollectorType.MANUAL,
+        created_at=today.subtract(days=1),
+        urls=[
+            TestURLCreationParameters(
+                count=1,
+                status=URLStatus.PENDING,
+            ),
+        ]
+    )
+    batch_0 = await ath.db_data_creator.batch_v2(batch_0_params)
+    oldest_url_id = batch_0.url_creation_infos[URLStatus.PENDING].url_mappings[0].url_id
 
 
-    raise NotImplementedError
+    batch_1_params = TestBatchCreationParameters(
+        strategy=CollectorType.MANUAL,
+        urls=[
+            TestURLCreationParameters(
+                count=1,
+                status=URLStatus.PENDING,
+            ),
+            TestURLCreationParameters(
+                count=2,
+                status=URLStatus.SUBMITTED
+            ),
+        ]
+    )
+    batch_1 = await ath.db_data_creator.batch_v2(batch_1_params)
+
+    batch_2_params = TestBatchCreationParameters(
+        strategy=CollectorType.AUTO_GOOGLER,
+        urls=[
+            TestURLCreationParameters(
+                count=4,
+                status=URLStatus.PENDING,
+            ),
+            TestURLCreationParameters(
+                count=2,
+                status=URLStatus.ERROR
+            ),
+            TestURLCreationParameters(
+                count=1,
+                status=URLStatus.VALIDATED
+            ),
+            TestURLCreationParameters(
+                count=5,
+                status=URLStatus.REJECTED
+            ),
+        ]
+    )
+    batch_2 = await ath.db_data_creator.batch_v2(batch_2_params)
+
+    dto = await ath.request_validator.get_urls_aggregated_metrics()
+
+    assert dto.oldest_pending_url_id == oldest_url_id
+    assert dto.oldest_pending_url_created_at == today.subtract(days=1).in_timezone('UTC').naive()
+    assert dto.count_urls_pending == 6
+    assert dto.count_urls_rejected == 5
+    assert dto.count_urls_errors == 2
+    assert dto.count_urls_validated == 1
+    assert dto.count_urls_submitted == 2
+    assert dto.count_urls_total == 16
+
+
 
 @pytest.mark.asyncio
 async def test_get_backlog_metrics(api_test_helper):
-    # Populate the backlog table and test that backlog metrics returned on a weekly basis
+    today = pendulum.today()
 
+    ath = api_test_helper
+    adb_client = ath.adb_client()
+
+
+    # Populate the backlog table and test that backlog metrics returned on a weekly basis
     # Ensure that multiple days in each week are added to the backlog table, with different values
 
-    # Test that the count closest to the beginning of the week is returned for each week
 
-    raise NotImplementedError
+    batch_1_params = TestBatchCreationParameters(
+        strategy=CollectorType.MANUAL,
+        urls=[
+            TestURLCreationParameters(
+                count=1,
+                status=URLStatus.PENDING,
+                annotation_info=AnnotationInfo(
+                    user_relevant=False
+                )
+            ),
+            TestURLCreationParameters(
+                count=2,
+                status=URLStatus.SUBMITTED
+            ),
+        ]
+    )
+    batch_1 = await ath.db_data_creator.batch_v2(batch_1_params)
+
+    await adb_client.populate_backlog_snapshot(
+        dt=today.subtract(weeks=3).naive()
+    )
+
+    await adb_client.populate_backlog_snapshot(
+        dt=today.subtract(weeks=2, days=3).naive()
+    )
+
+    batch_2_params = TestBatchCreationParameters(
+        strategy=CollectorType.AUTO_GOOGLER,
+        urls=[
+            TestURLCreationParameters(
+                count=4,
+                status=URLStatus.PENDING,
+                annotation_info=AnnotationInfo(
+                    user_relevant=False
+                )
+            ),
+            TestURLCreationParameters(
+                count=2,
+                status=URLStatus.ERROR
+            ),
+        ]
+    )
+    batch_2 = await ath.db_data_creator.batch_v2(batch_2_params)
+
+    await adb_client.populate_backlog_snapshot(
+        dt=today.subtract(weeks=2).naive()
+    )
+
+    await adb_client.populate_backlog_snapshot(
+        dt=today.subtract(weeks=1, days=4).naive()
+    )
+
+    batch_3_params = TestBatchCreationParameters(
+        strategy=CollectorType.AUTO_GOOGLER,
+        urls=[
+            TestURLCreationParameters(
+                count=7,
+                status=URLStatus.PENDING,
+                annotation_info=AnnotationInfo(
+                    user_relevant=False
+                )
+            ),
+            TestURLCreationParameters(
+                count=5,
+                status=URLStatus.VALIDATED
+            ),
+        ]
+    )
+    batch_3 = await ath.db_data_creator.batch_v2(batch_3_params)
+
+    await adb_client.populate_backlog_snapshot(
+        dt=today.subtract(weeks=1).naive()
+    )
+
+    dto = await ath.request_validator.get_backlog_metrics()
+
+    assert len(dto.entries) == 3
+
+    # Test that the count closest to the beginning of the week is returned for each week
+    assert dto.entries[0].count_pending_total == 1
+    assert dto.entries[1].count_pending_total == 5
+    assert dto.entries[2].count_pending_total == 12

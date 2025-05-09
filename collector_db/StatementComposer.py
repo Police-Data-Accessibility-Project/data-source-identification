@@ -1,6 +1,6 @@
-from typing import Any
+from typing import Any, Optional
 
-from sqlalchemy import Select, select, exists, Table, func, Subquery, and_, not_, ColumnElement, case, literal
+from sqlalchemy import Select, select, exists, Table, func, Subquery, and_, not_, ColumnElement, case, literal, CTE
 from sqlalchemy.orm import aliased
 
 from collector_db.enums import URLMetadataAttributeType, ValidationStatus, TaskType
@@ -126,27 +126,29 @@ class StatementComposer:
         return func.sum(func.distinct(field)).label(label)
 
     @staticmethod
-    def url_annotation_flags_query() -> Select:
+    def url_annotation_flags_query(
+            status: Optional[URLStatus] = None
+    ) -> CTE:
         stmt = (
             select(
                 URL.id.label("url_id"),
                 case((AutoRecordTypeSuggestion.url_id != None, literal(True)), else_=literal(False)).label(
-                    "has_auto_record_type_suggestion"
+                    "has_auto_record_type_annotation"
                     ),
                 case((AutoRelevantSuggestion.url_id != None, literal(True)), else_=literal(False)).label(
-                    "has_auto_relevant_suggestion"
+                    "has_auto_relevant_annotation"
                     ),
                 case((AutomatedUrlAgencySuggestion.url_id != None, literal(True)), else_=literal(False)).label(
-                    "has_auto_agency_suggestion"
+                    "has_auto_agency_annotation"
                     ),
                 case((UserRecordTypeSuggestion.url_id != None, literal(True)), else_=literal(False)).label(
-                    "has_user_record_type_suggestion"
+                    "has_user_record_type_annotation"
                     ),
                 case((UserRelevantSuggestion.url_id != None, literal(True)), else_=literal(False)).label(
-                    "has_user_relevant_suggestion"
+                    "has_user_relevant_annotation"
                     ),
                 case((UserUrlAgencySuggestion.url_id != None, literal(True)), else_=literal(False)).label(
-                    "has_user_agency_suggestion"
+                    "has_user_agency_annotation"
                     ),
                 case((ReviewingUserURL.url_id != None, literal(True)), else_=literal(False)).label("was_reviewed"),
             )
@@ -158,4 +160,9 @@ class StatementComposer:
             .outerjoin(UserUrlAgencySuggestion, URL.id == UserUrlAgencySuggestion.url_id)
             .outerjoin(ReviewingUserURL, URL.id == ReviewingUserURL.url_id)
         )
-        return stmt
+        if status is not None:
+            stmt = stmt.where(
+                URL.outcome == status.value
+            )
+
+        return stmt.cte("url_annotation_flags")

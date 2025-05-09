@@ -21,7 +21,7 @@ from core.DTOs.URLAgencySuggestionInfo import URLAgencySuggestionInfo
 from core.DTOs.task_data_objects.SubmitApprovedURLTDO import SubmittedURLInfo
 from core.DTOs.task_data_objects.URLMiscellaneousMetadataTDO import URLMiscellaneousMetadataTDO
 from core.enums import BatchStatus, SuggestionType, RecordType
-from helpers.test_batch_creation_parameters import TestBatchCreationParameters, AnnotationInfo
+from tests.helpers.test_batch_creation_parameters import TestBatchCreationParameters, AnnotationInfo
 from tests.helpers.simple_test_data_functions import generate_test_urls
 
 
@@ -314,23 +314,26 @@ class DBDataCreator:
                 )
             )
 
-        # If outcome is submitted, also add entry to DataSourceURL
-        if outcome == URLStatus.SUBMITTED:
-            submitted_url_infos = []
-            for url_info in url_infos:
-                submitted_url_info = SubmittedURLInfo(
-                    url_id=url_info.url_id,
-                    data_source_id=url_info.url_id, # Use same ID for convenience,
-                    request_error=None,
-                    submitted_at=created_at
-                )
-            asyncio.run(self.adb_client.mark_urls_as_submitted(submitted_url_infos))
-
-
-        return self.db_client.insert_urls(
+        url_insert_info = self.db_client.insert_urls(
             url_infos=url_infos,
             batch_id=batch_id,
         )
+
+        # If outcome is submitted, also add entry to DataSourceURL
+        if outcome == URLStatus.SUBMITTED:
+            submitted_url_infos = []
+            for url_id in url_insert_info.url_ids:
+                submitted_url_info = SubmittedURLInfo(
+                    url_id=url_id,
+                    data_source_id=url_id, # Use same ID for convenience,
+                    request_error=None,
+                    submitted_at=created_at
+                )
+                submitted_url_infos.append(submitted_url_info)
+            self.db_client.mark_urls_as_submitted(submitted_url_infos)
+
+
+        return url_insert_info
 
     async def url_miscellaneous_metadata(
             self,

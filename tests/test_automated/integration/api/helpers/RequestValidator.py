@@ -19,6 +19,9 @@ from core.DTOs.GetDuplicatesByBatchResponse import GetDuplicatesByBatchResponse
 from core.DTOs.GetMetricsBacklogResponse import GetMetricsBacklogResponseDTO
 from core.DTOs.GetMetricsBatchesAggregatedResponseDTO import GetMetricsBatchesAggregatedResponseDTO
 from core.DTOs.GetMetricsBatchesBreakdownResponseDTO import GetMetricsBatchesBreakdownResponseDTO
+from core.DTOs.GetMetricsURLsAggregatedResponseDTO import GetMetricsURLsAggregatedResponseDTO
+from core.DTOs.GetMetricsURLsBreakdownPendingResponseDTO import GetMetricsURLsBreakdownPendingResponseDTO
+from core.DTOs.GetMetricsURLsBreakdownSubmittedResponseDTO import GetMetricsURLsBreakdownSubmittedResponseDTO
 from core.DTOs.GetNextRecordTypeAnnotationResponseInfo import GetNextRecordTypeAnnotationResponseOuterInfo
 from core.DTOs.GetNextRelevanceAnnotationResponseInfo import GetNextRelevanceAnnotationResponseOuterInfo
 from core.DTOs.GetNextURLForAgencyAnnotationResponse import GetNextURLForAgencyAnnotationResponse, \
@@ -423,3 +426,27 @@ class RequestValidator:
             params={"page": page}
         )
         return GetMetricsBatchesBreakdownResponseDTO(**data)
+
+    async def get_urls_breakdown_submitted_metrics(self) -> GetMetricsURLsBreakdownSubmittedResponseDTO:
+        data = self.get_v2(
+            url="/metrics/urls/breakdown/submitted"
+        )
+        return GetMetricsURLsBreakdownSubmittedResponseDTO(**data)
+
+    async def get_urls_breakdown_pending_metrics(self) -> GetMetricsURLsBreakdownPendingResponseDTO:
+        data = self.get_v2(
+            url="/metrics/urls/breakdown/pending"
+        )
+        return GetMetricsURLsBreakdownPendingResponseDTO(**data)
+
+    async def get_backlog_metrics(self) -> GetMetricsBacklogResponseDTO:
+        data = self.get_v2(
+            url="/metrics/backlog"
+        )
+        return GetMetricsBacklogResponseDTO(**data)
+
+    async def get_urls_aggregated_metrics(self) -> GetMetricsURLsAggregatedResponseDTO:
+        data = self.get_v2(
+            url="/metrics/urls/aggregate",
+        )
+        return GetMetricsURLsAggregatedResponseDTO(**data)

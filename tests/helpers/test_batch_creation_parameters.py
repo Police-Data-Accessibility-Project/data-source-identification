@@ -18,7 +18,7 @@ class AnnotationInfo(BaseModel):
     final_review_approved: Optional[bool] = None
 
     def has_annotations(self):
-        return any([
+        return any(value is not None for value in [
             self.user_relevant,
             self.auto_relevant,
             self.user_record_type,

@@ -3,7 +3,8 @@ from functools import wraps
 from typing import Optional, Type, Any, List
 
 from fastapi import HTTPException
-from sqlalchemy import select, exists, func, case, desc, Select, not_, and_, update, asc, delete, insert
+from sqlalchemy import select, exists, func, case, desc, Select, not_, and_, update, asc, delete, insert, CTE
+from sqlalchemy.dialects import postgresql
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.orm import selectinload, joinedload, QueryableAttribute, aliased
@@ -1994,9 +1995,6 @@ class AsyncDatabaseClient:
         self,
         session: AsyncSession
     ) -> GetMetricsURLsBreakdownSubmittedResponseDTO:
-        # TODO: Wrong submitted at time: The created at does not indicate
-        #  when it was submitted
-
 
         # Build the query
         week = func.date_trunc('week', URLDataSource.created_at)
@@ -2040,7 +2038,7 @@ class AsyncDatabaseClient:
         ).limit(1)
 
         oldest_pending_url = await session.execute(oldest_pending_url_query)
-        oldest_pending_url = oldest_pending_url.scalars().one_or_none()
+        oldest_pending_url = oldest_pending_url.one_or_none()
         if oldest_pending_url is None:
             oldest_pending_url_id = None
             oldest_pending_created_at = None
@@ -2079,46 +2077,56 @@ class AsyncDatabaseClient:
             oldest_pending_url_created_at=oldest_pending_created_at,
         )
 
+    def compile(self, statement):
+        compiled_sql = statement.compile(dialect=postgresql.dialect(), compile_kwargs={"literal_binds": True})
+        return compiled_sql
+
     @session_manager
     async def get_urls_breakdown_pending_metrics(
         self,
         session: AsyncSession
     ) -> GetMetricsURLsBreakdownPendingResponseDTO:
+        sc = StatementComposer
+
+        flags: CTE = sc.url_annotation_flags_query(
+            status=URLStatus.PENDING
+        )
 
 
-        # TODO: Replace with CTE
-        flags = URLAnnotationFlag
-        url = URL
-
-        week = func.date_trunc('week', url.created_at)
+        week = func.date_trunc('week', URL.created_at)
 
         # Build the query
         query = (
             select(
                 week.label('week'),
-                func.count(url.id).label('count_total'),
-                func.count(case((flags.has_user_record_type_annotation == True, 1))).label('user_record_type_count'),
-                func.count(case((flags.has_user_relevant_annotation == True, 1))).label('user_relevant_count'),
-                func.count(case((flags.has_user_agency_annotation == True, 1))).label('user_agency_count'),
+                func.count(URL.id).label('count_total'),
+                func.count(case(
+                    (flags.c.has_user_record_type_annotation == True, 1))
+                ).label('user_record_type_count'),
+                func.count(case(
+                    (flags.c.has_user_relevant_annotation == True, 1))
+                ).label('user_relevant_count'),
+                func.count(case(
+                    (flags.c.has_user_agency_annotation == True, 1))
+                ).label('user_agency_count'),
             )
-            .where(url.outcome == URLStatus.PENDING.value)
-            .join(flags.url)
+            .join(flags, flags.c.url_id == URL.id)
             .group_by(week)
             .order_by(week.asc())
         )
 
         # Execute the query and return the results
         results = await session.execute(query)
-        all_results = results.scalars().all()
+        all_results = results.all()
         final_results: list[GetMetricsURLsBreakdownPendingResponseInnerDTO] = []
 
         for result in all_results:
             dto = GetMetricsURLsBreakdownPendingResponseInnerDTO(
                 week_created_at=result.week,
                 count_pending_total=result.count_total,
-                count_pending_relevant_user=result.auto_record_type_count,
-                count_pending_record_type_user=result.auto_relevant_count,
-                count_pending_agency_user=result.auto_agency_count,
+                count_pending_relevant_user=result.user_relevant_count,
+                count_pending_record_type_user=result.user_record_type_count,
+                count_pending_agency_user=result.user_agency_count,
             )
             final_results.append(dto)
         return GetMetricsURLsBreakdownPendingResponseDTO(
@@ -2175,7 +2183,8 @@ class AsyncDatabaseClient:
     @session_manager
     async def populate_backlog_snapshot(
         self,
-        session: AsyncSession
+        session: AsyncSession,
+        dt: Optional[datetime] = None
     ):
         sc = StatementComposer
         # Get count of pending URLs
@@ -2183,12 +2192,18 @@ class AsyncDatabaseClient:
             sc.count_distinct(URL.id, label="count")
         ).where(
             URL.outcome == URLStatus.PENDING.value
-        ).subquery("pending_count")
+        )
+
+        raw_result = await session.execute(query)
+        count = raw_result.one()[0]
 
         # insert count into snapshot
-        await session.execute(
-            insert(BacklogSnapshot).values(
-                count=query.c.count
-            )
+        snapshot = BacklogSnapshot(
+            count_pending_total=count
         )
+        if dt is not None:
+            snapshot.created_at = dt
+
+        session.add(snapshot)
+
 

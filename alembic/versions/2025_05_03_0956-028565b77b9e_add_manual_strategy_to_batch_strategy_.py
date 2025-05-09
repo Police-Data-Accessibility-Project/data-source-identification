@@ -38,6 +38,12 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
+    # Delete all batches with manual strategy
+    op.execute("""
+    DELETE FROM BATCHES
+        WHERE STRATEGY = 'manual'
+    """)
+
     switch_enum_type(
         table_name="batches",
         column_name="strategy",
