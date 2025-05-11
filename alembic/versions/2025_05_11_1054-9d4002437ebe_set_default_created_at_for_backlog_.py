@@ -20,7 +20,7 @@ depends_on: Union[str, Sequence[str], None] = None
 
 def upgrade() -> None:
     op.alter_column(
-        table_name='backlog_snapshots',
+        table_name='backlog_snapshot',
         column_name='created_at',
         existing_type=sa.DateTime(),
         nullable=False,
