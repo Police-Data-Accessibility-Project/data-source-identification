@@ -776,6 +776,8 @@ class AsyncDatabaseClient:
         statement = (
             select(
                 URL.id
+            ).where(
+                URL.outcome == URLStatus.PENDING.value
             )
         )
 
@@ -797,6 +799,7 @@ class AsyncDatabaseClient:
 
         statement = (
             select(URL.id, URL.collector_metadata, Batch.strategy)
+            .where(URL.outcome == URLStatus.PENDING.value)
             .join(Batch)
         )
         statement = self.statement_composer.exclude_urls_with_agency_suggestions(statement)

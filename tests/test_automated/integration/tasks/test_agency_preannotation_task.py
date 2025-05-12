@@ -5,9 +5,10 @@ from unittest.mock import MagicMock, AsyncMock, patch
 import pytest
 from aiohttp import ClientSession
 
+from tests.helpers.test_batch_creation_parameters import TestBatchCreationParameters, TestURLCreationParameters
 from source_collectors.muckrock.MuckrockAPIInterface import MuckrockAPIInterface, AgencyLookupResponseType, AgencyLookupResponse
 from collector_db.models import Agency, AutomatedUrlAgencySuggestion
-from collector_manager.enums import CollectorType
+from collector_manager.enums import CollectorType, URLStatus
 from core.DTOs.TaskOperatorRunInfo import TaskOperatorOutcome
 from core.DTOs.URLAgencySuggestionInfo import URLAgencySuggestionInfo
 from core.classes.task_operators.AgencyIdentificationTaskOperator import AgencyIdentificationTaskOperator
@@ -20,7 +21,7 @@ from pdap_api_client.AccessManager import AccessManager
 from pdap_api_client.DTOs import MatchAgencyResponse, MatchAgencyInfo
 from pdap_api_client.PDAPClient import PDAPClient
 from pdap_api_client.enums import MatchAgencyResponseStatus
-from tests.helpers.DBDataCreator import DBDataCreator, BatchURLCreationInfo
+from tests.helpers.DBDataCreator import DBDataCreator, BatchURLCreationInfo, BatchURLCreationInfoV2
 
 sample_agency_suggestions = [
     URLAgencySuggestionInfo(
@@ -103,8 +104,25 @@ async def test_agency_preannotation_task(db_data_creator: DBDataCreator):
                 CollectorType.MUCKROCK_ALL_SEARCH,
                 CollectorType.CKAN
             ]:
-                creation_info: BatchURLCreationInfo = await db_data_creator.batch_and_urls(strategy=strategy, url_count=1, with_html_content=True)
-                d[strategy] = creation_info.url_ids[0]
+                # Create two URLs for each, one pending and one errored
+                creation_info: BatchURLCreationInfoV2 = await db_data_creator.batch_v2(
+                    parameters=TestBatchCreationParameters(
+                        strategy=strategy,
+                        urls=[
+                            TestURLCreationParameters(
+                                count=1,
+                                status=URLStatus.PENDING,
+                                with_html_content=True
+                            ),
+                            TestURLCreationParameters(
+                                count=1,
+                                status=URLStatus.ERROR,
+                                with_html_content=True
+                            )
+                        ]
+                    )
+                )
+                d[strategy] = creation_info.url_creation_infos[URLStatus.PENDING].url_mappings[0].url_id
 
 
             # Confirm meets prerequisites
