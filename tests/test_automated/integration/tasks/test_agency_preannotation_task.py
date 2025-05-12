@@ -5,7 +5,7 @@ from unittest.mock import MagicMock, AsyncMock, patch
 import pytest
 from aiohttp import ClientSession
 
-from helpers.test_batch_creation_parameters import TestBatchCreationParameters, TestURLCreationParameters
+from tests.helpers.test_batch_creation_parameters import TestBatchCreationParameters, TestURLCreationParameters
 from source_collectors.muckrock.MuckrockAPIInterface import MuckrockAPIInterface, AgencyLookupResponseType, AgencyLookupResponse
 from collector_db.models import Agency, AutomatedUrlAgencySuggestion
 from collector_manager.enums import CollectorType, URLStatus
