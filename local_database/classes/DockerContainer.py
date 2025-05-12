@@ -17,6 +17,12 @@ class DockerContainer:
     def stop(self):
         self.container.stop()
 
+    def log_to_file(self):
+        logs = self.container.logs(stdout=True, stderr=True)
+        container_name = self.container.name
+        with open(f"{container_name}.log", "wb") as f:
+            f.write(logs)
+
     def wait_for_pg_to_be_ready(self):
         for i in range(30):
             exit_code, output = self.container.exec_run("pg_isready")

@@ -101,7 +101,7 @@ class TaskManager:
             await self.get_url_html_task_operator(),
             # await self.get_url_relevance_huggingface_task_operator(),
             await self.get_url_record_type_task_operator(),
-            # await self.get_agency_identification_task_operator(),
+            await self.get_agency_identification_task_operator(),
             await self.get_url_miscellaneous_metadata_task_operator(),
             await self.get_submit_approved_url_task_operator()
         ]
@@ -122,10 +122,9 @@ class TaskManager:
             while meets_prereq:
                 print(f"Running {operator.task_type.value} Task")
                 if count > TASK_REPEAT_THRESHOLD:
-                    self.discord_poster.post_to_discord(
-                        message=f"Task {operator.task_type.value} has been run"
-                                f" more than {TASK_REPEAT_THRESHOLD} times in a row. "
-                                f"Task loop terminated.")
+                    message = f"Task {operator.task_type.value} has been run more than {TASK_REPEAT_THRESHOLD} times in a row. Task loop terminated."
+                    print(message)
+                    self.discord_poster.post_to_discord(message=message)
                     break
                 task_id = await self.initiate_task_in_db(task_type=operator.task_type)
                 run_info: TaskOperatorRunInfo = await operator.run_task(task_id)

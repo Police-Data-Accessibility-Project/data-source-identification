@@ -28,7 +28,7 @@ from tests.helpers.simple_test_data_functions import generate_test_urls
 class URLCreationInfo(BaseModel):
     url_mappings: list[URLMapping]
     outcome: URLStatus
-    annotation_info: AnnotationInfo
+    annotation_info: Optional[AnnotationInfo] = None
 
 class BatchURLCreationInfoV2(BaseModel):
     batch_id: int
@@ -109,7 +109,7 @@ class DBDataCreator:
             d[url_parameters.status] = URLCreationInfo(
                 url_mappings=iui.url_mappings,
                 outcome=url_parameters.status,
-                annotation_info=url_parameters.annotation_info
+                annotation_info=url_parameters.annotation_info if url_parameters.annotation_info.has_annotations() else None
             )
         return BatchURLCreationInfoV2(
             batch_id=batch_id,
