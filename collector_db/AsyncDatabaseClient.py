@@ -3,7 +3,7 @@ from functools import wraps
 from typing import Optional, Type, Any, List
 
 from fastapi import HTTPException
-from sqlalchemy import select, exists, func, case, desc, Select, not_, and_, update, asc, delete, insert, CTE
+from sqlalchemy import select, exists, func, case, desc, Select, not_, and_, update, asc, delete, insert, CTE, literal
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
@@ -2088,9 +2088,23 @@ class AsyncDatabaseClient:
     ) -> GetMetricsURLsBreakdownPendingResponseDTO:
         sc = StatementComposer
 
-        flags: CTE = sc.url_annotation_flags_query(
-            status=URLStatus.PENDING
-        )
+        flags = (
+            select(
+                URL.id.label("url_id"),
+                case((UserRecordTypeSuggestion.url_id != None, literal(True)), else_=literal(False)).label(
+                    "has_user_record_type_annotation"
+                    ),
+                case((UserRelevantSuggestion.url_id != None, literal(True)), else_=literal(False)).label(
+                    "has_user_relevant_annotation"
+                    ),
+                case((UserUrlAgencySuggestion.url_id != None, literal(True)), else_=literal(False)).label(
+                    "has_user_agency_annotation"
+                    ),
+            )
+            .outerjoin(UserRecordTypeSuggestion, URL.id == UserRecordTypeSuggestion.url_id)
+            .outerjoin(UserRelevantSuggestion, URL.id == UserRelevantSuggestion.url_id)
+            .outerjoin(UserUrlAgencySuggestion, URL.id == UserUrlAgencySuggestion.url_id)
+        ).cte("flags")
 
 
         week = func.date_trunc('week', URL.created_at)
@@ -2110,7 +2124,8 @@ class AsyncDatabaseClient:
                     (flags.c.has_user_agency_annotation == True, 1))
                 ).label('user_agency_count'),
             )
-            .join(flags, flags.c.url_id == URL.id)
+            .outerjoin(flags, flags.c.url_id == URL.id)
+            .where(URL.outcome == URLStatus.PENDING.value)
             .group_by(week)
             .order_by(week.asc())
         )
