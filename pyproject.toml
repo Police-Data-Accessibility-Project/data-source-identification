@@ -24,10 +24,11 @@ dependencies = [
     "numpy~=1.26.4",
     "openai~=1.60.1",
     "pandas~=2.2.3",
+    "pdap-access-manager==0.3.5",
     "playwright~=1.49.1",
     "psycopg2-binary~=2.9.6",
     "psycopg[binary]~=3.1.20",
-    "pydantic~=2.10.6",
+    "pydantic~=2.11.3",
     "pyjwt~=2.10.1",
     "python-dotenv~=1.0.1",
     "requests~=2.32.3",
@@ -43,6 +44,7 @@ dependencies = [
 
 [dependency-groups]
 dev = [
+    "deepdiff>=8.5.0",
     "docker>=7.1.0",
     "pendulum>=3.1.0",
     "pytest>=7.2.2",

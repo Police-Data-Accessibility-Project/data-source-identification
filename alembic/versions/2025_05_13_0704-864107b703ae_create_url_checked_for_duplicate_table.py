@@ -63,6 +63,9 @@ def upgrade() -> None:
 def downgrade() -> None:
     op.drop_table('url_checked_for_duplicate')
 
+    # Delete tasks of type "Duplicate Detection"
+    op.execute("DELETE FROM TASKS WHERE TASK_TYPE = 'Duplicate Detection';")
+
     switch_enum_type(
         table_name='tasks',
         column_name='task_type',
