@@ -46,18 +46,7 @@ def mock_make_request(pdap_client: PDAPClient, urls: list[str]):
         )
     )
 
-@pytest.fixture
-def mock_pdap_client() -> PDAPClient:
-    mock_access_manager = MagicMock(
-        spec=AccessManager
-    )
-    mock_access_manager.jwt_header = AsyncMock(
-        return_value={"Authorization": "Bearer token"}
-    )
-    pdap_client = PDAPClient(
-        access_manager=mock_access_manager
-    )
-    return pdap_client
+
 
 async def setup_validated_urls(db_data_creator: DBDataCreator) -> list[str]:
     creation_info: BatchURLCreationInfo = await db_data_creator.batch_and_urls(

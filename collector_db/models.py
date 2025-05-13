@@ -141,7 +141,21 @@ class URL(Base):
         back_populates="url",
         uselist=False
     )
+    checked_for_duplicate = relationship(
+        "URLCheckedForDuplicate",
+        uselist=False,
+        back_populates="url"
+    )
 
+class URLCheckedForDuplicate(Base):
+    __tablename__ = 'url_checked_for_duplicate'
+
+    id = Column(Integer, primary_key=True)
+    url_id = Column(Integer, ForeignKey('urls.id'), nullable=False)
+    created_at = get_created_at_column()
+
+    # Relationships
+    url = relationship("URL", uselist=False, back_populates="checked_for_duplicate")
 
 class URLOptionalDataSourceMetadata(Base):
     __tablename__ = 'url_optional_data_source_metadata'
