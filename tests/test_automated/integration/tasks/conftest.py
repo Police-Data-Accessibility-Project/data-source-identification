@@ -2,7 +2,7 @@ from unittest.mock import MagicMock, AsyncMock
 
 import pytest
 
-from pdap_api_client.AccessManager import AccessManager
+from pdap_access_manager import AccessManager
 from pdap_api_client.PDAPClient import PDAPClient
 
 
@@ -10,6 +10,9 @@ from pdap_api_client.PDAPClient import PDAPClient
 def mock_pdap_client() -> PDAPClient:
     mock_access_manager = MagicMock(
         spec=AccessManager
+    )
+    mock_access_manager.build_url = MagicMock(
+        return_value="http://example.com"
     )
     mock_access_manager.jwt_header = AsyncMock(
         return_value={"Authorization": "Bearer token"}

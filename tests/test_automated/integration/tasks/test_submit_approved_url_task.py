@@ -2,6 +2,7 @@ from http import HTTPStatus
 from unittest.mock import MagicMock, AsyncMock
 
 import pytest
+from deepdiff import DeepDiff
 
 from collector_db.enums import TaskType
 from collector_db.models import URL, URLErrorInfo, URLDataSource
@@ -11,8 +12,7 @@ from core.DTOs.TaskOperatorRunInfo import TaskOperatorOutcome
 from core.classes.task_operators.SubmitApprovedURLTaskOperator import SubmitApprovedURLTaskOperator
 from core.enums import RecordType, SubmitResponseStatus
 from tests.helpers.DBDataCreator import BatchURLCreationInfo, DBDataCreator
-from pdap_api_client.AccessManager import AccessManager
-from pdap_api_client.DTOs import RequestInfo, RequestType, ResponseInfo
+from pdap_access_manager import RequestInfo, RequestType, ResponseInfo, DataSourcesNamespaces
 from pdap_api_client.PDAPClient import PDAPClient
 
 
@@ -164,13 +164,17 @@ async def test_submit_approved_url_task(
     # Check mock method was called expected parameters
     access_manager = mock_pdap_client.access_manager
     access_manager.make_request.assert_called_once()
+    access_manager.build_url.assert_called_with(
+        namespace=DataSourcesNamespaces.SOURCE_COLLECTOR,
+        subdomains=['data-sources']
+    )
 
     call_1 = access_manager.make_request.call_args_list[0][0][0]
     expected_call_1 = RequestInfo(
         type_=RequestType.POST,
-        url="TEST/source-collector/data-sources",
+        url="http://example.com",
         headers=access_manager.jwt_header.return_value,
-        json={
+        json_={
             "data_sources": [
                 {
                     "name": "URL 1 Name",
@@ -209,6 +213,6 @@ async def test_submit_approved_url_task(
         }
     )
     assert call_1.type_ == expected_call_1.type_
-    assert call_1.url == expected_call_1.url
     assert call_1.headers == expected_call_1.headers
-    assert call_1.json == expected_call_1.json
+    diff = DeepDiff(call_1.json_, expected_call_1.json_, ignore_order=True)
+    assert diff == {}, f"Differences found: {diff}"

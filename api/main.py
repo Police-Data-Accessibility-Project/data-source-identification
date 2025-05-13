@@ -1,4 +1,3 @@
-import asyncio
 from contextlib import asynccontextmanager
 
 import aiohttp
@@ -28,7 +27,7 @@ from html_tag_collector.ResponseParser import HTMLResponseParser
 from html_tag_collector.RootURLCache import RootURLCache
 from html_tag_collector.URLRequestInterface import URLRequestInterface
 from hugging_face.HuggingFaceInterface import HuggingFaceInterface
-from pdap_api_client.AccessManager import AccessManager
+from pdap_access_manager import AccessManager
 from pdap_api_client.PDAPClient import PDAPClient
 from util.DiscordNotifier import DiscordPoster
 
