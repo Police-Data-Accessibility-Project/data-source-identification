@@ -1,10 +1,21 @@
-from datetime import date
+from datetime import datetime
 
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
+
 
 class GetMetricsURLsBreakdownSubmittedInnerDTO(BaseModel):
-    week_of: date
+    month: str
     count_submitted: int
+
+    @field_validator("month")
+    @classmethod
+    def validate_month_format(cls, v: str) -> str:
+        try:
+            # This will raise ValueError if format doesn't match
+            datetime.strptime(v, "%B %Y")
+        except ValueError:
+            raise ValueError("month must be in the format 'MonthName YYYY' (e.g., 'May 2025')")
+        return v
 
 class GetMetricsURLsBreakdownSubmittedResponseDTO(BaseModel):
     entries: list[GetMetricsURLsBreakdownSubmittedInnerDTO]
