@@ -5,12 +5,12 @@ import pytest
 
 from collector_db.DTOs.URLMapping import URLMapping
 from collector_db.models import URL, URLCheckedForDuplicate
-from collector_manager.enums import CollectorType, URLStatus
+from collector_manager.enums import URLStatus
 from core.DTOs.TaskOperatorRunInfo import TaskOperatorOutcome
 from core.classes.task_operators.URLDuplicateTaskOperator import URLDuplicateTaskOperator
 from tests.helpers.DBDataCreator import DBDataCreator
 from tests.helpers.test_batch_creation_parameters import TestBatchCreationParameters, TestURLCreationParameters
-from pdap_api_client.DTOs import ResponseInfo
+from pdap_access_manager import ResponseInfo
 from pdap_api_client.PDAPClient import PDAPClient
 
 

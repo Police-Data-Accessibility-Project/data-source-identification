@@ -2001,14 +2001,14 @@ class AsyncDatabaseClient:
     ) -> GetMetricsURLsBreakdownSubmittedResponseDTO:
 
         # Build the query
-        week = func.date_trunc('week', URLDataSource.created_at)
+        month = func.date_trunc('month', URLDataSource.created_at)
         query = (
             select(
-                week.label('week'),
+                month.label('month'),
                 func.count(URLDataSource.id).label('count_submitted'),
             )
-            .group_by(week)
-            .order_by(week.asc())
+            .group_by(month)
+            .order_by(month.asc())
         )
 
         # Execute the query
@@ -2017,7 +2017,7 @@ class AsyncDatabaseClient:
         final_results: list[GetMetricsURLsBreakdownSubmittedInnerDTO] = []
         for result in results:
             dto = GetMetricsURLsBreakdownSubmittedInnerDTO(
-                week_of=result.week,
+                month=result.month.strftime("%B %Y"),
                 count_submitted=result.count_submitted
             )
             final_results.append(dto)
@@ -2111,12 +2111,12 @@ class AsyncDatabaseClient:
         ).cte("flags")
 
 
-        week = func.date_trunc('week', URL.created_at)
+        month = func.date_trunc('month', URL.created_at)
 
         # Build the query
         query = (
             select(
-                week.label('week'),
+                month.label('month'),
                 func.count(URL.id).label('count_total'),
                 func.count(case(
                     (flags.c.has_user_record_type_annotation == True, 1))
@@ -2130,8 +2130,8 @@ class AsyncDatabaseClient:
             )
             .outerjoin(flags, flags.c.url_id == URL.id)
             .where(URL.outcome == URLStatus.PENDING.value)
-            .group_by(week)
-            .order_by(week.asc())
+            .group_by(month)
+            .order_by(month.asc())
         )
 
         # Execute the query and return the results
@@ -2141,7 +2141,7 @@ class AsyncDatabaseClient:
 
         for result in all_results:
             dto = GetMetricsURLsBreakdownPendingResponseInnerDTO(
-                week_created_at=result.week,
+                month=result.month.strftime("%B %Y"),
                 count_pending_total=result.count_total,
                 count_pending_relevant_user=result.user_relevant_count,
                 count_pending_record_type_user=result.user_record_type_count,
@@ -2157,16 +2157,18 @@ class AsyncDatabaseClient:
         self,
         session: AsyncSession
     ) -> GetMetricsBacklogResponseDTO:
-        # 1. Create a subquery that assigns row_number() partitioned by week
-        weekly_snapshots_subq = (
+        month = func.date_trunc('month', BacklogSnapshot.created_at)
+
+        # 1. Create a subquery that assigns row_number() partitioned by month
+        monthly_snapshot_subq = (
             select(
                 BacklogSnapshot.id,
                 BacklogSnapshot.created_at,
                 BacklogSnapshot.count_pending_total,
-                func.date_trunc('week', BacklogSnapshot.created_at).label("week_start"),
+                month.label("month_start"),
                 func.row_number()
                 .over(
-                    partition_by=func.date_trunc('week', BacklogSnapshot.created_at),
+                    partition_by=month,
                     order_by=BacklogSnapshot.created_at.desc()
                 )
                 .label("row_number")
@@ -2174,15 +2176,15 @@ class AsyncDatabaseClient:
             .subquery()
         )
 
-        # 2. Filter for the top (most recent) row in each week
+        # 2. Filter for the top (most recent) row in each month
         stmt = (
             select(
-                weekly_snapshots_subq.c.week_start,
-                weekly_snapshots_subq.c.created_at,
-                weekly_snapshots_subq.c.count_pending_total
+                monthly_snapshot_subq.c.month_start,
+                monthly_snapshot_subq.c.created_at,
+                monthly_snapshot_subq.c.count_pending_total
             )
-            .where(weekly_snapshots_subq.c.row_number == 1)
-            .order_by(weekly_snapshots_subq.c.week_start)
+            .where(monthly_snapshot_subq.c.row_number == 1)
+            .order_by(monthly_snapshot_subq.c.month_start)
         )
 
         raw_result = await session.execute(stmt)
@@ -2191,7 +2193,7 @@ class AsyncDatabaseClient:
         for result in results:
             final_results.append(
                 GetMetricsBacklogResponseInnerDTO(
-                    week_of=result.week_start,
+                    month=result.month_start.strftime("%B %Y"),
                     count_pending_total=result.count_pending_total,
                 )
             )

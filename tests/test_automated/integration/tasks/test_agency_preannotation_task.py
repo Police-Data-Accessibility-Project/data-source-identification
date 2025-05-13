@@ -17,7 +17,7 @@ from core.classes.subtasks.CKANAgencyIdentificationSubtask import CKANAgencyIden
 from core.classes.subtasks.CommonCrawlerAgencyIdentificationSubtask import CommonCrawlerAgencyIdentificationSubtask
 from core.classes.subtasks.MuckrockAgencyIdentificationSubtask import MuckrockAgencyIdentificationSubtask
 from core.enums import SuggestionType
-from pdap_api_client.AccessManager import AccessManager
+from pdap_access_manager import AccessManager
 from pdap_api_client.DTOs import MatchAgencyResponse, MatchAgencyInfo
 from pdap_api_client.PDAPClient import PDAPClient
 from pdap_api_client.enums import MatchAgencyResponseStatus
