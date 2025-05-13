@@ -25,7 +25,7 @@ class ApprovalStatus(Enum):
 class UniqueURLDuplicateInfo(BaseModel):
     original_url: str
     approval_status: ApprovalStatus
-    rejection_note: str
+    rejection_note: Optional[str] = None
 
 class UniqueURLResponseInfo(BaseModel):
     is_unique: bool

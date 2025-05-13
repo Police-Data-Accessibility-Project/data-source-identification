@@ -38,6 +38,7 @@ class TaskType(PyEnum):
     AGENCY_IDENTIFICATION = "Agency Identification"
     MISC_METADATA = "Misc Metadata"
     SUBMIT_APPROVED = "Submit Approved URLs"
+    DUPLICATE_DETECTION = "Duplicate Detection"
     IDLE = "Idle"
 
 class PGEnum(TypeDecorator):

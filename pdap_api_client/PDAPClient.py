@@ -59,10 +59,10 @@ class PDAPClient:
         )
 
 
-    async def is_url_unique(
+    async def is_url_duplicate(
         self,
         url_to_check: str
-    ) -> UniqueURLResponseInfo:
+    ) -> bool:
         """
         Check if a URL is unique. Returns duplicate info otherwise
         """
@@ -79,11 +79,8 @@ class PDAPClient:
         )
         response_info = await self.access_manager.make_request(request_info)
         duplicates = [UniqueURLDuplicateInfo(**entry) for entry in response_info.data["duplicates"]]
-        is_unique = (len(duplicates) == 0)
-        return UniqueURLResponseInfo(
-            is_unique=is_unique,
-            duplicates=duplicates
-        )
+        is_duplicate = (len(duplicates) != 0)
+        return is_duplicate
 
     async def submit_urls(
             self,

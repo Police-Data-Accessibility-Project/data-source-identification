@@ -29,7 +29,7 @@ from collector_db.models import URL, URLErrorInfo, URLHTMLContent, Base, \
     RootURL, Task, TaskError, LinkTaskURL, Batch, Agency, AutomatedUrlAgencySuggestion, \
     UserUrlAgencySuggestion, AutoRelevantSuggestion, AutoRecordTypeSuggestion, UserRelevantSuggestion, \
     UserRecordTypeSuggestion, ReviewingUserURL, URLOptionalDataSourceMetadata, ConfirmedURLAgency, Duplicate, Log, \
-    BacklogSnapshot, URLDataSource
+    BacklogSnapshot, URLDataSource, URLCheckedForDuplicate
 from collector_manager.enums import URLStatus, CollectorType
 from core.DTOs.AllAnnotationPostInfo import AllAnnotationPostInfo
 from core.DTOs.FinalReviewApprovalInfo import FinalReviewApprovalInfo
@@ -60,6 +60,7 @@ from core.DTOs.SearchURLResponse import SearchURLResponse
 from core.DTOs.URLAgencySuggestionInfo import URLAgencySuggestionInfo
 from core.DTOs.task_data_objects.AgencyIdentificationTDO import AgencyIdentificationTDO
 from core.DTOs.task_data_objects.SubmitApprovedURLTDO import SubmitApprovedURLTDO, SubmittedURLInfo
+from core.DTOs.task_data_objects.URLDuplicateTDO import URLDuplicateTDO
 from core.DTOs.task_data_objects.URLMiscellaneousMetadataTDO import URLMiscellaneousMetadataTDO, URLHTMLMetadataInfo
 from core.EnvVarManager import EnvVarManager
 from core.enums import BatchStatus, SuggestionType, RecordType
@@ -2224,4 +2225,48 @@ class AsyncDatabaseClient:
 
         session.add(snapshot)
 
+    @session_manager
+    async def has_pending_urls_not_checked_for_duplicates(self, session: AsyncSession) -> bool:
+        query = (select(
+            URL.id
+        ).outerjoin(
+            URLCheckedForDuplicate,
+            URL.id == URLCheckedForDuplicate.url_id
+        ).where(
+            URL.outcome == URLStatus.PENDING.value,
+            URLCheckedForDuplicate.id == None
+        ).limit(1)
+        )
 
+        raw_result = await session.execute(query)
+        result = raw_result.one_or_none()
+        return result is not None
+
+    @session_manager
+    async def get_pending_urls_not_checked_for_duplicates(self, session: AsyncSession) -> List[URLDuplicateTDO]:
+        query = (select(
+            URL
+        ).outerjoin(
+            URLCheckedForDuplicate,
+            URL.id == URLCheckedForDuplicate.url_id
+        ).where(
+            URL.outcome == URLStatus.PENDING.value,
+            URLCheckedForDuplicate.id == None
+        ).limit(100)
+        )
+
+        raw_result = await session.execute(query)
+        urls = raw_result.scalars().all()
+        return [URLDuplicateTDO(url=url.url, url_id=url.id) for url in urls]
+
+
+    @session_manager
+    async def mark_all_as_duplicates(self, session: AsyncSession, url_ids: List[int]):
+        query = update(URL).where(URL.id.in_(url_ids)).values(outcome=URLStatus.DUPLICATE.value)
+        await session.execute(query)
+
+    @session_manager
+    async def mark_as_checked_for_duplicates(self, session: AsyncSession, url_ids: list[int]):
+        for url_id in url_ids:
+            url_checked_for_duplicate = URLCheckedForDuplicate(url_id=url_id)
+            session.add(url_checked_for_duplicate)

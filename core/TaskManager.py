@@ -1,5 +1,6 @@
 import logging
 
+from core.classes.task_operators.URLDuplicateTaskOperator import URLDuplicateTaskOperator
 from source_collectors.muckrock.MuckrockAPIInterface import MuckrockAPIInterface
 from collector_db.AsyncDatabaseClient import AsyncDatabaseClient
 from collector_db.DTOs.TaskInfo import TaskInfo
@@ -96,9 +97,17 @@ class TaskManager:
         )
         return operator
 
+    async def get_url_duplicate_task_operator(self):
+        operator = URLDuplicateTaskOperator(
+            adb_client=self.adb_client,
+            pdap_client=self.pdap_client
+        )
+        return operator
+
     async def get_task_operators(self) -> list[TaskOperatorBase]:
         return [
             await self.get_url_html_task_operator(),
+            await self.get_url_duplicate_task_operator(),
             # await self.get_url_relevance_huggingface_task_operator(),
             await self.get_url_record_type_task_operator(),
             await self.get_agency_identification_task_operator(),
