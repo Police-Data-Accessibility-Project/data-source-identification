@@ -1,3 +1,7 @@
+from http import HTTPStatus
+
+from aiohttp import ClientResponseError
+
 from collector_db.AsyncDatabaseClient import AsyncDatabaseClient
 from collector_db.enums import TaskType
 from core.DTOs.task_data_objects.URLDuplicateTDO import URLDuplicateTDO
@@ -26,8 +30,18 @@ class URLDuplicateTaskOperator(TaskOperatorBase):
         tdos: list[URLDuplicateTDO] = await self.adb_client.get_pending_urls_not_checked_for_duplicates()
         url_ids = [tdo.url_id for tdo in tdos]
         await self.link_urls_to_task(url_ids=url_ids)
+        checked_tdos = []
         for tdo in tdos:
-            tdo.is_duplicate = await self.pdap_client.is_url_duplicate(tdo.url)
-        duplicate_url_ids = [tdo.url_id for tdo in tdos if tdo.is_duplicate]
+            try:
+                tdo.is_duplicate = await self.pdap_client.is_url_duplicate(tdo.url)
+                checked_tdos.append(tdo)
+            except ClientResponseError as e:
+                print("ClientResponseError:", e.status)
+                if e.status == HTTPStatus.TOO_MANY_REQUESTS:
+                    break
+                raise e
+
+        duplicate_url_ids = [tdo.url_id for tdo in checked_tdos if tdo.is_duplicate]
+        checked_url_ids = [tdo.url_id for tdo in checked_tdos]
         await self.adb_client.mark_all_as_duplicates(duplicate_url_ids)
-        await self.adb_client.mark_as_checked_for_duplicates(url_ids)
+        await self.adb_client.mark_as_checked_for_duplicates(checked_url_ids)
