@@ -99,6 +99,7 @@ class URL(Base):
             'rejected',
             'duplicate',
             'error',
+            '404 not found',
             name='url_status'
         ),
         nullable=False
@@ -146,6 +147,11 @@ class URL(Base):
         uselist=False,
         back_populates="url"
     )
+    probed_for_404 = relationship(
+        "URLProbedFor404",
+        uselist=False,
+        back_populates="url"
+    )
 
 class URLCheckedForDuplicate(Base):
     __tablename__ = 'url_checked_for_duplicate'
@@ -156,6 +162,16 @@ class URLCheckedForDuplicate(Base):
 
     # Relationships
     url = relationship("URL", uselist=False, back_populates="checked_for_duplicate")
+
+class URLProbedFor404(Base):
+    __tablename__ = 'url_probed_for_404'
+
+    id = Column(Integer, primary_key=True)
+    url_id = Column(Integer, ForeignKey('urls.id'), nullable=False)
+    last_probed_at = get_created_at_column()
+
+    # Relationships
+    url = relationship("URL", uselist=False, back_populates="probed_for_404")
 
 class URLOptionalDataSourceMetadata(Base):
     __tablename__ = 'url_optional_data_source_metadata'

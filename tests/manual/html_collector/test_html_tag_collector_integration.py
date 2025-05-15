@@ -3,7 +3,7 @@ import pytest
 from collector_db.AsyncDatabaseClient import AsyncDatabaseClient
 from collector_db.DTOs.URLInfo import URLInfo
 from core.classes.task_operators.URLHTMLTaskOperator import URLHTMLTaskOperator
-from helpers.DBDataCreator import DBDataCreator
+from tests.helpers.DBDataCreator import DBDataCreator
 from html_tag_collector.ResponseParser import HTMLResponseParser
 from html_tag_collector.RootURLCache import RootURLCache
 from html_tag_collector.URLRequestInterface import URLRequestInterface
@@ -13,7 +13,8 @@ URLS = [
     "https://pdapio.io",
     "https://pdap.dev",
     "https://pdap.io/404test",
-    "https://books.toscrape.com/catalogue/category/books/womens-fiction_9/index.html"
+    "https://books.toscrape.com/catalogue/category/books/womens-fiction_9/index.html",
+
 ]
 
 sample_json_data = [
@@ -27,13 +28,24 @@ sample_json_data = [
 @pytest.mark.asyncio
 async def test_get_response():
     uri = URLRequestInterface()
-    results = await uri.make_requests(URLS)
+    results = await uri.make_requests_with_html(URLS)
     print(results)
 
 @pytest.mark.asyncio
 async def test_get_response_with_javascript():
     uri = URLRequestInterface()
-    results = await uri.make_requests(URLS)
+    results = await uri.make_requests_with_html(URLS)
+    print(results)
+
+
+@pytest.mark.asyncio
+async def test_get_response_with_javascript_404():
+    uri = URLRequestInterface()
+    results = await uri.make_requests_with_html(
+        [
+            'https://data.tempe.gov/apps/tempegov::1-05-feeling-of-safety-in-your-neighborhood-dashboard'
+        ]
+    )
     print(results)
 
 @pytest.mark.asyncio

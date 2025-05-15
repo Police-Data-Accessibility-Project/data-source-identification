@@ -1,3 +1,5 @@
+from http import HTTPStatus
+
 from collector_db.AsyncDatabaseClient import AsyncDatabaseClient
 from collector_db.DTOs.URLErrorInfos import URLErrorPydanticInfo
 from collector_db.DTOs.URLInfo import URLInfo
@@ -34,7 +36,9 @@ class URLHTMLTaskOperator(TaskOperatorBase):
         await self.link_urls_to_task(url_ids=url_ids)
         await self.get_raw_html_data_for_urls(tdos)
         success_subset, error_subset = await self.separate_success_and_error_subsets(tdos)
-        await self.update_errors_in_database(error_subset)
+        non_404_error_subset, is_404_error_subset = await self.separate_error_and_404_subsets(error_subset)
+        await self.update_errors_in_database(non_404_error_subset)
+        await self.update_404s_in_database(is_404_error_subset)
         await self.process_html_data(success_subset)
         await self.update_html_data_in_database(success_subset)
 
@@ -53,7 +57,7 @@ class URLHTMLTaskOperator(TaskOperatorBase):
 
     async def get_raw_html_data_for_urls(self, tdos: list[UrlHtmlTDO]):
         just_urls = await self.get_just_urls(tdos)
-        url_response_infos = await self.url_request_interface.make_requests(just_urls)
+        url_response_infos = await self.url_request_interface.make_requests_with_html(just_urls)
         for tdto, url_response_info in zip(tdos, url_response_infos):
             tdto.url_response_info = url_response_info
 
@@ -72,6 +76,29 @@ class URLHTMLTaskOperator(TaskOperatorBase):
             else:
                 successful_tdos.append(tdto)
         return successful_tdos, errored_tdos
+
+    async def separate_error_and_404_subsets(
+        self,
+        tdos: list[UrlHtmlTDO]
+    ) -> tuple[
+        list[UrlHtmlTDO], # Error
+        list[UrlHtmlTDO]  # 404
+    ]:
+        tdos_error = []
+        tdos_404 = []
+        for tdo in tdos:
+            if tdo.url_response_info.status is None:
+                tdos_error.append(tdo)
+                continue
+            if tdo.url_response_info.status == HTTPStatus.NOT_FOUND:
+                tdos_404.append(tdo)
+            else:
+                tdos_error.append(tdo)
+        return tdos_error, tdos_404
+
+    async def update_404s_in_database(self, tdos_404: list[UrlHtmlTDO]):
+        url_ids = [tdo.url_info.id for tdo in tdos_404]
+        await self.adb_client.mark_all_as_404(url_ids)
 
     async def update_errors_in_database(self, error_tdos: list[UrlHtmlTDO]):
         error_infos = []

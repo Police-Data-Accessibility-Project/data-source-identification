@@ -1,10 +1,13 @@
 import types
+from http import HTTPStatus
 from typing import Optional
 
 import pytest
+from aiohttp import ClientError, ClientResponseError, RequestInfo
 
 from collector_db.AsyncDatabaseClient import AsyncDatabaseClient
 from collector_db.enums import TaskType
+from collector_manager.enums import URLStatus
 from core.DTOs.TaskOperatorRunInfo import TaskOperatorOutcome
 from core.classes.task_operators.URLHTMLTaskOperator import URLHTMLTaskOperator
 from tests.helpers.DBDataCreator import DBDataCreator
@@ -23,11 +26,31 @@ async def test_url_html_task(db_data_creator: DBDataCreator):
     async def mock_make_requests(self, urls: list[str]) -> list[URLResponseInfo]:
         results = []
         for idx, url in enumerate(urls):
+            if idx == 1:
+                results.append(
+                    URLResponseInfo(
+                        success=False,
+                        content_type=mock_content_type,
+                        exception=str(ClientResponseError(
+                            request_info=RequestInfo(
+                                url=url,
+                                method="GET",
+                                real_url=url,
+                                headers={},
+                            ),
+                            code=HTTPStatus.NOT_FOUND.value,
+                            history=(None,),
+                        )),
+                        status=HTTPStatus.NOT_FOUND
+                    )
+                )
+                continue
+
             if idx == 2:
                 results.append(
                     URLResponseInfo(
                         success=False,
-                        exception=ValueError("test error"),
+                        exception=str(ValueError("test error")),
                         content_type=mock_content_type
                     ))
             else:
@@ -49,7 +72,7 @@ async def test_url_html_task(db_data_creator: DBDataCreator):
 
     # Add mock methods or mock classes
     url_request_interface = URLRequestInterface()
-    url_request_interface.make_requests = types.MethodType(mock_make_requests, url_request_interface)
+    url_request_interface.make_requests_with_html = types.MethodType(mock_make_requests, url_request_interface)
 
     mock_root_url_cache = RootURLCache()
     mock_root_url_cache.get_from_cache = types.MethodType(mock_get_from_cache, mock_root_url_cache)
@@ -94,11 +117,12 @@ async def test_url_html_task(db_data_creator: DBDataCreator):
     assert task_info.url_errors[0].error == "test error"
 
     adb = db_data_creator.adb_client
-    # Check that both success urls have two rows of HTML data
+    # Check that success url has two rows of HTML data
     await adb.link_urls_to_task(task_id=run_info.task_id, url_ids=run_info.linked_url_ids)
     hci = await adb.get_html_content_info(url_id=url_ids[0])
     assert len(hci) == 2
-    hci = await adb.get_html_content_info(url_id=url_ids[1])
-    assert len(hci) == 2
 
+    # Check that 404 url has status of 404
+    url_info_404 = await adb.get_url_info_by_id(url_id=url_ids[1])
+    assert url_info_404.outcome == URLStatus.NOT_FOUND
     # Check that errored url has error info
