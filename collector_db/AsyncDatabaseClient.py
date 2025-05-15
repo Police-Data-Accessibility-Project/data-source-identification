@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 from functools import wraps
+from operator import or_
 from typing import Optional, Type, Any, List
 
 from fastapi import HTTPException
@@ -29,7 +30,7 @@ from collector_db.models import URL, URLErrorInfo, URLHTMLContent, Base, \
     RootURL, Task, TaskError, LinkTaskURL, Batch, Agency, AutomatedUrlAgencySuggestion, \
     UserUrlAgencySuggestion, AutoRelevantSuggestion, AutoRecordTypeSuggestion, UserRelevantSuggestion, \
     UserRecordTypeSuggestion, ReviewingUserURL, URLOptionalDataSourceMetadata, ConfirmedURLAgency, Duplicate, Log, \
-    BacklogSnapshot, URLDataSource, URLCheckedForDuplicate
+    BacklogSnapshot, URLDataSource, URLCheckedForDuplicate, URLProbedFor404
 from collector_manager.enums import URLStatus, CollectorType
 from core.DTOs.AllAnnotationPostInfo import AllAnnotationPostInfo
 from core.DTOs.FinalReviewApprovalInfo import FinalReviewApprovalInfo
@@ -60,6 +61,7 @@ from core.DTOs.SearchURLResponse import SearchURLResponse
 from core.DTOs.URLAgencySuggestionInfo import URLAgencySuggestionInfo
 from core.DTOs.task_data_objects.AgencyIdentificationTDO import AgencyIdentificationTDO
 from core.DTOs.task_data_objects.SubmitApprovedURLTDO import SubmitApprovedURLTDO, SubmittedURLInfo
+from core.DTOs.task_data_objects.URL404ProbeTDO import URL404ProbeTDO
 from core.DTOs.task_data_objects.URLDuplicateTDO import URLDuplicateTDO
 from core.DTOs.task_data_objects.URLMiscellaneousMetadataTDO import URLMiscellaneousMetadataTDO, URLHTMLMetadataInfo
 from core.EnvVarManager import EnvVarManager
@@ -468,12 +470,14 @@ class AsyncDatabaseClient:
 
 
     @session_manager
-    async def get_pending_urls_without_html_data(self, session: AsyncSession):
+    async def get_pending_urls_without_html_data(self, session: AsyncSession) -> list[URLInfo]:
         # TODO: Add test that includes some urls WITH html data. Check they're not returned
         statement = self.statement_composer.pending_urls_without_html_data()
         statement = statement.limit(100).order_by(URL.id)
         scalar_result = await session.scalars(statement)
-        return scalar_result.all()
+        results: list[URL] = scalar_result.all()
+        return DTOConverter.url_list_to_url_info_list(results)
+
 
     async def get_urls_with_html_data_and_without_models(
             self,
@@ -1339,6 +1343,13 @@ class AsyncDatabaseClient:
     @session_manager
     async def get_url_info_by_url(self, session: AsyncSession, url: str) -> Optional[URLInfo]:
         query = Select(URL).where(URL.url == url)
+        raw_result = await session.execute(query)
+        url = raw_result.scalars().first()
+        return URLInfo(**url.__dict__)
+
+    @session_manager
+    async def get_url_info_by_id(self, session: AsyncSession, url_id: int) -> Optional[URLInfo]:
+        query = Select(URL).where(URL.id == url_id)
         raw_result = await session.execute(query)
         url = raw_result.scalars().first()
         return URLInfo(**url.__dict__)
@@ -2268,7 +2279,77 @@ class AsyncDatabaseClient:
         await session.execute(query)
 
     @session_manager
+    async def mark_all_as_404(self, session: AsyncSession, url_ids: List[int]):
+        query = update(URL).where(URL.id.in_(url_ids)).values(outcome=URLStatus.NOT_FOUND.value)
+        await session.execute(query)
+
+    @session_manager
+    async def mark_all_as_recently_probed_for_404(
+        self,
+        session: AsyncSession,
+        url_ids: List[int],
+        dt: datetime = func.now()
+    ):
+        from sqlalchemy.dialects.postgresql import insert as pg_insert
+        values = [
+            {"url_id": url_id, "last_probed_at": dt} for url_id in url_ids
+        ]
+        stmt = pg_insert(URLProbedFor404).values(values)
+        update_stmt = stmt.on_conflict_do_update(
+            index_elements=['url_id'],
+            set_={"last_probed_at": dt}
+        )
+        await session.execute(update_stmt)
+
+
+    @session_manager
     async def mark_as_checked_for_duplicates(self, session: AsyncSession, url_ids: list[int]):
         for url_id in url_ids:
             url_checked_for_duplicate = URLCheckedForDuplicate(url_id=url_id)
             session.add(url_checked_for_duplicate)
+
+    @session_manager
+    async def has_pending_urls_not_recently_probed_for_404(self, session: AsyncSession) -> bool:
+        month_ago = func.now() - timedelta(days=30)
+        query = (
+            select(
+                URL.id
+            ).outerjoin(
+                URLProbedFor404
+            ).where(
+                and_(
+                    URL.outcome == URLStatus.PENDING.value,
+                    or_(
+                        URLProbedFor404.id == None,
+                        URLProbedFor404.last_probed_at < month_ago
+                    )
+                )
+            ).limit(1)
+        )
+
+        raw_result = await session.execute(query)
+        result = raw_result.one_or_none()
+        return result is not None
+
+    @session_manager
+    async def get_pending_urls_not_recently_probed_for_404(self, session: AsyncSession) -> List[URL404ProbeTDO]:
+        month_ago = func.now() - timedelta(days=30)
+        query = (
+            select(
+                URL
+            ).outerjoin(
+                URLProbedFor404
+            ).where(
+                and_(
+                    URL.outcome == URLStatus.PENDING.value,
+                    or_(
+                        URLProbedFor404.id == None,
+                        URLProbedFor404.last_probed_at < month_ago
+                    )
+                )
+            ).limit(100)
+        )
+
+        raw_result = await session.execute(query)
+        urls = raw_result.scalars().all()
+        return [URL404ProbeTDO(url=url.url, url_id=url.id) for url in urls]

@@ -17,3 +17,4 @@ class URLStatus(Enum):
     ERROR = "error"
     DUPLICATE = "duplicate"
     REJECTED = "rejected"
+    NOT_FOUND = "404 not found"

@@ -7,7 +7,7 @@ def switch_enum_type(
         enum_name,
         new_enum_values,
         drop_old_enum=True,
-        cast_dict: dict = None
+        check_constraints_to_drop: list[str] = None,
 ):
     """
     Switches an ENUM type in a PostgreSQL column by:
@@ -22,6 +22,12 @@ def switch_enum_type(
     :param new_enum_values: List of new ENUM values.
     :param drop_old_enum: Whether to drop the old ENUM type.
     """
+
+    # 1. Drop check constraints that reference the enum
+    if check_constraints_to_drop is not None:
+        for constraint in check_constraints_to_drop:
+            op.execute(f'ALTER TABLE "{table_name}" DROP CONSTRAINT IF EXISTS "{constraint}"')
+
 
     # Rename old enum type
     old_enum_temp_name = f"{enum_name}_old"

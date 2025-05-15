@@ -40,6 +40,7 @@ class TaskType(PyEnum):
     SUBMIT_APPROVED = "Submit Approved URLs"
     DUPLICATE_DETECTION = "Duplicate Detection"
     IDLE = "Idle"
+    PROBE_404 = "404 Probe"
 
 class PGEnum(TypeDecorator):
     impl = postgresql.ENUM
