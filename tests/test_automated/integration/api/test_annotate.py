@@ -13,7 +13,7 @@ from core.DTOs.GetNextURLForAgencyAnnotationResponse import URLAgencyAnnotationP
 from core.DTOs.RecordTypeAnnotationPostInfo import RecordTypeAnnotationPostInfo
 from core.DTOs.RelevanceAnnotationPostInfo import RelevanceAnnotationPostInfo
 from core.classes.ErrorManager import ErrorTypes
-from core.enums import RecordType, SuggestionType
+from core.enums import RecordType, SuggestionType, SuggestedStatus
 from core.exceptions import FailedValidationException
 from tests.helpers.complex_test_data_functions import AnnotateAgencySetupInfo, setup_for_annotate_agency, \
     setup_for_get_next_url_for_final_review
@@ -81,7 +81,7 @@ async def test_annotate_relevancy(api_test_helper):
     request_info_2: GetNextRelevanceAnnotationResponseOuterInfo = api_test_helper.request_validator.post_relevance_annotation_and_get_next(
         url_id=inner_info_1.url_info.url_id,
         relevance_annotation_post_info=RelevanceAnnotationPostInfo(
-            is_relevant=False
+            suggested_status=SuggestedStatus.NOT_RELEVANT
         )
     )
 
@@ -96,7 +96,7 @@ async def test_annotate_relevancy(api_test_helper):
     request_info_3: GetNextRelevanceAnnotationResponseOuterInfo = api_test_helper.request_validator.post_relevance_annotation_and_get_next(
         url_id=inner_info_2.url_info.url_id,
         relevance_annotation_post_info=RelevanceAnnotationPostInfo(
-            is_relevant=True
+            suggested_status=SuggestedStatus.RELEVANT
         )
     )
 
@@ -109,16 +109,16 @@ async def test_annotate_relevancy(api_test_helper):
     result_2 = results[1]
 
     assert result_1.url_id == inner_info_1.url_info.url_id
-    assert result_1.relevant is False
+    assert result_1.suggested_status == SuggestedStatus.NOT_RELEVANT.value
 
     assert result_2.url_id == inner_info_2.url_info.url_id
-    assert result_2.relevant is True
+    assert result_2.suggested_status == SuggestedStatus.RELEVANT.value
 
     # If user submits annotation for same URL, the URL should be overwritten
     request_info_4: GetNextRelevanceAnnotationResponseOuterInfo = api_test_helper.request_validator.post_relevance_annotation_and_get_next(
         url_id=inner_info_1.url_info.url_id,
         relevance_annotation_post_info=RelevanceAnnotationPostInfo(
-            is_relevant=True
+            suggested_status=SuggestedStatus.RELEVANT
         )
     )
 
@@ -129,8 +129,47 @@ async def test_annotate_relevancy(api_test_helper):
 
     for result in results:
         if result.url_id == inner_info_1.url_info.url_id:
-            assert results[0].relevant is True
+            assert results[0].suggested_status == SuggestedStatus.RELEVANT.value
 
+async def post_and_validate_relevancy_annotation(ath, url_id, annotation: SuggestedStatus):
+    response = ath.request_validator.post_relevance_annotation_and_get_next(
+        url_id=url_id,
+        relevance_annotation_post_info=RelevanceAnnotationPostInfo(
+            suggested_status=annotation
+        )
+    )
+
+    assert response.next_annotation is None
+
+    results: list[UserRelevantSuggestion] = await ath.adb_client().get_all(UserRelevantSuggestion)
+    assert len(results) == 1
+    assert results[0].suggested_status == annotation.value
+
+@pytest.mark.asyncio
+async def test_annotate_relevancy_broken_page(api_test_helper):
+    ath = api_test_helper
+
+    creation_info = await ath.db_data_creator.batch_and_urls(url_count=1, with_html_content=False)
+
+    await post_and_validate_relevancy_annotation(
+        ath,
+        url_id=creation_info.url_ids[0],
+        annotation=SuggestedStatus.BROKEN_PAGE_404
+    )
+
+@pytest.mark.asyncio
+async def test_annotate_relevancy_individual_record(api_test_helper):
+    ath = api_test_helper
+
+    creation_info: BatchURLCreationInfo = await ath.db_data_creator.batch_and_urls(
+        url_count=1
+    )
+
+    await post_and_validate_relevancy_annotation(
+        ath,
+        url_id=creation_info.url_ids[0],
+        annotation=SuggestedStatus.INDIVIDUAL_RECORD
+    )
 
 @pytest.mark.asyncio
 async def test_annotate_relevancy_already_annotated_by_different_user(
@@ -153,7 +192,7 @@ async def test_annotate_relevancy_already_annotated_by_different_user(
         response = await ath.request_validator.post_relevance_annotation_and_get_next(
             url_id=creation_info.url_ids[0],
             relevance_annotation_post_info=RelevanceAnnotationPostInfo(
-                is_relevant=False
+                suggested_status=SuggestedStatus.NOT_RELEVANT
             )
         )
     except HTTPException as e:
@@ -613,7 +652,7 @@ async def test_annotate_all(api_test_helper):
     post_response_1 = await ath.request_validator.post_all_annotations_and_get_next(
         url_id=url_mapping_1.url_id,
         all_annotations_post_info=AllAnnotationPostInfo(
-            is_relevant=True,
+            suggested_status=SuggestedStatus.RELEVANT,
             record_type=RecordType.ACCIDENT_REPORTS,
             agency=URLAgencyAnnotationPostInfo(
                 is_new=False,
@@ -630,7 +669,7 @@ async def test_annotate_all(api_test_helper):
     post_response_2 = await ath.request_validator.post_all_annotations_and_get_next(
         url_id=url_mapping_2.url_id,
         all_annotations_post_info=AllAnnotationPostInfo(
-            is_relevant=False,
+            suggested_status=SuggestedStatus.NOT_RELEVANT,
         )
     )
     assert post_response_2.next_annotation is None
@@ -642,10 +681,10 @@ async def test_annotate_all(api_test_helper):
     # Check that all annotations are present in the database
 
     # Should be two relevance annotations, one True and one False
-    all_relevance_suggestions = await adb_client.get_all(UserRelevantSuggestion)
+    all_relevance_suggestions: list[UserRelevantSuggestion] = await adb_client.get_all(UserRelevantSuggestion)
     assert len(all_relevance_suggestions) == 2
-    assert all_relevance_suggestions[0].relevant == True
-    assert all_relevance_suggestions[1].relevant == False
+    assert all_relevance_suggestions[0].suggested_status == SuggestedStatus.RELEVANT.value
+    assert all_relevance_suggestions[1].suggested_status == SuggestedStatus.NOT_RELEVANT.value
 
     # Should be one agency
     all_agency_suggestions = await adb_client.get_all(UserUrlAgencySuggestion)
@@ -682,7 +721,7 @@ async def test_annotate_all_post_batch_filtering(api_test_helper):
         url_id=url_mapping_1.url_id,
         batch_id=setup_info_3.batch_id,
         all_annotations_post_info=AllAnnotationPostInfo(
-            is_relevant=True,
+            suggested_status=SuggestedStatus.RELEVANT,
             record_type=RecordType.ACCIDENT_REPORTS,
             agency=URLAgencyAnnotationPostInfo(
                 is_new=True
@@ -708,7 +747,7 @@ async def test_annotate_all_validation_error(api_test_helper):
         response = await ath.request_validator.post_all_annotations_and_get_next(
             url_id=url_mapping_1.url_id,
             all_annotations_post_info=AllAnnotationPostInfo(
-                is_relevant=False,
+                suggested_status=SuggestedStatus.NOT_RELEVANT,
                 record_type=RecordType.ACCIDENT_REPORTS
             )
         )

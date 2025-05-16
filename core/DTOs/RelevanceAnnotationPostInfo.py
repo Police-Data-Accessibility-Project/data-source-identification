@@ -1,5 +1,7 @@
 from pydantic import BaseModel
 
+from core.enums import SuggestedStatus
+
 
 class RelevanceAnnotationPostInfo(BaseModel):
-    is_relevant: bool
+    suggested_status: SuggestedStatus

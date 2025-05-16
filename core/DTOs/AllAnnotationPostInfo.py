@@ -5,31 +5,31 @@ from fastapi import HTTPException
 from pydantic import BaseModel, model_validator
 
 from core.DTOs.GetNextURLForAgencyAnnotationResponse import URLAgencyAnnotationPostInfo
-from core.enums import RecordType
+from core.enums import RecordType, SuggestedStatus
 from core.exceptions import FailedValidationException
 
 
 class AllAnnotationPostInfo(BaseModel):
-    is_relevant: bool
+    suggested_status: SuggestedStatus
     record_type: Optional[RecordType] = None
     agency: Optional[URLAgencyAnnotationPostInfo] = None
 
-    @model_validator(mode="before")
-    def allow_record_type_and_agency_only_if_relevant(cls, values):
-        is_relevant = values.get("is_relevant")
-        record_type = values.get("record_type")
-        agency = values.get("agency")
+    @model_validator(mode="after")
+    def allow_record_type_and_agency_only_if_relevant(self):
+        suggested_status = self.suggested_status
+        record_type = self.record_type
+        agency = self.agency
 
-        if not is_relevant:
+        if suggested_status != SuggestedStatus.RELEVANT:
             if record_type is not None:
-                raise FailedValidationException("record_type must be None if is_relevant is False")
+                raise FailedValidationException("record_type must be None if suggested_status is not relevant")
 
             if agency is not None:
-                raise FailedValidationException("agency must be None if is_relevant is False")
-            return values
+                raise FailedValidationException("agency must be None if suggested_status is not relevant")
+            return self
         # Similarly, if relevant, record_type and agency must be provided
         if record_type is None:
-            raise FailedValidationException("record_type must be provided if is_relevant is True")
+            raise FailedValidationException("record_type must be provided if suggested_status is relevant")
         if agency is None:
-            raise FailedValidationException("agency must be provided if is_relevant is True")
-        return values
+            raise FailedValidationException("agency must be provided if suggested_status is relevant")
+        return self

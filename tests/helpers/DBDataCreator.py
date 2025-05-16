@@ -20,7 +20,7 @@ from core.DTOs.FinalReviewApprovalInfo import FinalReviewApprovalInfo
 from core.DTOs.URLAgencySuggestionInfo import URLAgencySuggestionInfo
 from core.DTOs.task_data_objects.SubmitApprovedURLTDO import SubmittedURLInfo
 from core.DTOs.task_data_objects.URLMiscellaneousMetadataTDO import URLMiscellaneousMetadataTDO
-from core.enums import BatchStatus, SuggestionType, RecordType
+from core.enums import BatchStatus, SuggestionType, RecordType, SuggestedStatus
 from tests.helpers.test_batch_creation_parameters import TestBatchCreationParameters, AnnotationInfo
 from tests.helpers.simple_test_data_functions import generate_test_urls
 
@@ -175,7 +175,7 @@ class DBDataCreator:
     async def annotate(self, url_id: int, annotation_info: AnnotationInfo):
         info = annotation_info
         if info.user_relevant is not None:
-            await self.user_relevant_suggestion(url_id=url_id, relevant=info.user_relevant)
+            await self.user_relevant_suggestion_v2(url_id=url_id, suggested_status=info.user_relevant)
         if info.auto_relevant is not None:
             await self.auto_relevant_suggestions(url_id=url_id, relevant=info.auto_relevant)
         if info.user_record_type is not None:
@@ -213,20 +213,25 @@ class DBDataCreator:
             user_id: Optional[int] = None,
             relevant: bool = True
     ):
-        if user_id is None:
-            user_id = randint(1, 99999999)
-        await self.adb_client.add_user_relevant_suggestion(
+        await self.user_relevant_suggestion_v2(
             url_id=url_id,
             user_id=user_id,
-            relevant=relevant
+            suggested_status=SuggestedStatus.RELEVANT if relevant else SuggestedStatus.NOT_RELEVANT
         )
 
     async def user_relevant_suggestion_v2(
             self,
             url_id: int,
             user_id: Optional[int] = None,
-
-    )
+            suggested_status: SuggestedStatus = SuggestedStatus.RELEVANT
+    ):
+        if user_id is None:
+            user_id = randint(1, 99999999)
+        await self.adb_client.add_user_relevant_suggestion(
+            url_id=url_id,
+            user_id=user_id,
+            suggested_status=suggested_status
+        )
 
     async def user_record_type_suggestion(
             self,

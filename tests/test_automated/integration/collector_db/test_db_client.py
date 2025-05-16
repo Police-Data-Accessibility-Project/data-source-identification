@@ -13,7 +13,7 @@ from collector_db.constants import PLACEHOLDER_AGENCY_NAME
 from collector_db.models import URL, ReviewingUserURL, URLOptionalDataSourceMetadata, ConfirmedURLAgency, Agency
 from collector_manager.enums import URLStatus
 from core.DTOs.FinalReviewApprovalInfo import FinalReviewApprovalInfo
-from core.enums import BatchStatus, RecordType, SuggestionType
+from core.enums import BatchStatus, RecordType, SuggestionType, SuggestedStatus
 from tests.helpers.complex_test_data_functions import setup_for_get_next_url_for_annotation, setup_for_annotate_agency
 from tests.helpers.DBDataCreator import DBDataCreator
 from tests.helpers.complex_test_data_functions import setup_for_get_next_url_for_final_review
@@ -186,7 +186,7 @@ async def test_get_next_url_for_final_review_basic(db_data_creator: DBDataCreato
     annotation_info = result.annotations
     relevant_info = annotation_info.relevant
     assert relevant_info.auto == True
-    assert relevant_info.user == False
+    assert relevant_info.user == SuggestedStatus.NOT_RELEVANT
 
     record_type_info = annotation_info.record_type
     assert record_type_info.auto == RecordType.ARREST_RECORDS
@@ -465,7 +465,7 @@ async def test_get_next_url_for_user_relevance_annotation_pending(
     await adb_client.add_user_relevant_suggestion(
         url_id=url_1.url_info.url_id,
         user_id=1,
-        relevant=True
+        suggested_status=SuggestedStatus.RELEVANT
     )
 
     url_3 = await adb_client.get_next_url_for_relevance_annotation(
@@ -617,12 +617,12 @@ async def test_annotate_url_marked_not_relevant(db_data_creator: DBDataCreator):
     await adb_client.add_user_relevant_suggestion(
         user_id=1,
         url_id=url_to_mark_not_relevant.url_id,
-        relevant=False
+        suggested_status=SuggestedStatus.NOT_RELEVANT
     )
     await adb_client.add_user_relevant_suggestion(
         user_id=1,
         url_id=url_to_mark_relevant.url_id,
-        relevant=True
+        suggested_status=SuggestedStatus.RELEVANT
     )
 
     # User should not receive the URL for record type annotation

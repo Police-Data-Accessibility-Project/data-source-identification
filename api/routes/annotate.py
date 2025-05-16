@@ -55,7 +55,7 @@ async def annotate_url_for_relevance_and_get_next_url(
     await async_core.submit_url_relevance_annotation(
         user_id=access_info.user_id,
         url_id=url_id,
-        relevant=relevance_annotation_post_info.is_relevant
+        suggested_status=relevance_annotation_post_info.suggested_status
     )
     return await async_core.get_next_url_for_relevance_annotation(
         user_id=access_info.user_id,

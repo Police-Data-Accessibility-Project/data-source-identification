@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, Query
 
 from api.dependencies import get_async_core
 from core.AsyncCore import AsyncCore
-from core.DTOs.FinalReviewApprovalInfo import FinalReviewApprovalInfo, FinalReviewBaseInfo
+from core.DTOs.FinalReviewApprovalInfo import FinalReviewApprovalInfo, FinalReviewBaseInfo, FinalReviewRejectionInfo
 from core.DTOs.GetNextURLForFinalReviewResponse import GetNextURLForFinalReviewResponse, \
     GetNextURLForFinalReviewOuterResponse
 from security_manager.SecurityManager import AccessInfo, get_access_info, require_permission, Permissions
@@ -50,7 +50,7 @@ async def approve_source(
 async def reject_source(
     core: AsyncCore = Depends(get_async_core),
     access_info: AccessInfo = Depends(requires_final_review_permission),
-    review_info: FinalReviewBaseInfo = FinalReviewBaseInfo,
+    review_info: FinalReviewRejectionInfo = FinalReviewRejectionInfo,
     batch_id: Optional[int] = Query(
         description="The batch id of the next URL to get. "
                     "If not specified, defaults to first qualifying URL",
@@ -59,6 +59,7 @@ async def reject_source(
     await core.reject_url(
         url_id=review_info.url_id,
         access_info=access_info,
+        rejection_reason=review_info.rejection_reason
     )
     next_source = await core.get_next_source_for_review(batch_id=batch_id)
     return GetNextURLForFinalReviewOuterResponse(next_source=next_source)

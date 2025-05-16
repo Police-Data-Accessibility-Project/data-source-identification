@@ -11,7 +11,7 @@ from collector_manager.AsyncCollectorManager import AsyncCollectorManager
 from collector_manager.enums import CollectorType
 from core.DTOs.AllAnnotationPostInfo import AllAnnotationPostInfo
 from core.DTOs.CollectorStartInfo import CollectorStartInfo
-from core.DTOs.FinalReviewApprovalInfo import FinalReviewApprovalInfo
+from core.DTOs.FinalReviewApprovalInfo import FinalReviewApprovalInfo, RejectionReason
 from core.DTOs.GetBatchLogsResponse import GetBatchLogsResponse
 from core.DTOs.GetBatchStatusResponse import GetBatchStatusResponse
 from core.DTOs.GetDuplicatesByBatchResponse import GetDuplicatesByBatchResponse
@@ -35,7 +35,7 @@ from core.DTOs.MessageResponse import MessageResponse
 from core.DTOs.SearchURLResponse import SearchURLResponse
 from core.TaskManager import TaskManager
 from core.classes.ErrorManager import ErrorManager
-from core.enums import BatchStatus, RecordType, AnnotationType
+from core.enums import BatchStatus, RecordType, AnnotationType, SuggestedStatus
 
 from security_manager.SecurityManager import AccessInfo
 
@@ -155,13 +155,13 @@ class AsyncCore:
             self,
             user_id: int,
             url_id: int,
-            relevant: bool
+            suggested_status: SuggestedStatus
     ):
         try:
             return await self.adb_client.add_user_relevant_suggestion(
                 user_id=user_id,
                 url_id=url_id,
-                relevant=relevant
+                suggested_status=suggested_status
             )
         except IntegrityError as e:
             return await ErrorManager.raise_annotation_exists_error(
@@ -287,10 +287,12 @@ class AsyncCore:
             self,
             url_id: int,
             access_info: AccessInfo,
+            rejection_reason: RejectionReason
     ):
         await self.adb_client.reject_url(
             url_id=url_id,
-            user_id=access_info.user_id
+            user_id=access_info.user_id,
+            rejection_reason=rejection_reason
         )
 
     async def upload_manual_batch(

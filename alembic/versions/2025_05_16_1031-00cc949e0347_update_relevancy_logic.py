@@ -30,10 +30,11 @@ suggested_status_enum = sa.Enum(
     'not relevant',
     'individual record',
     'broken page/404 not found',
-    name='user_suggested_status'
+    name='suggested_status'
 )
 
 def upgrade() -> None:
+    suggested_status_enum.create(op.get_bind())
     # Replace `relevant` column with `suggested_status` column
     op.add_column(
         'user_relevant_suggestions',
@@ -104,7 +105,7 @@ def downgrade() -> None:
     """)
     op.execute("""
     UPDATE urls
-    SET outcome = 'not relevant'
+    SET outcome = 'rejected'
     WHERE outcome = 'individual record'
     """)
     switch_enum_type(
@@ -116,7 +117,7 @@ def downgrade() -> None:
             'submitted',
             'validated',
             'duplicate',
-            'not relevant',
+            'rejected',
             'error',
             '404 not found',
         ],
@@ -158,3 +159,4 @@ def downgrade() -> None:
         'user_relevant_suggestions',
         'suggested_status'
     )
+    suggested_status_enum.drop(op.get_bind(), checkfirst=True)
