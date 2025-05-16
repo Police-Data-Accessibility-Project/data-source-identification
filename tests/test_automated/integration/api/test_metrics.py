@@ -2,7 +2,7 @@ import pendulum
 import pytest
 
 from collector_manager.enums import URLStatus, CollectorType
-from core.enums import BatchStatus, RecordType
+from core.enums import BatchStatus, RecordType, SuggestedStatus
 from tests.helpers.test_batch_creation_parameters import TestBatchCreationParameters, TestURLCreationParameters, \
     AnnotationInfo
 
@@ -26,7 +26,7 @@ async def test_get_batches_aggregated_metrics(api_test_helper):
                 ),
                 TestURLCreationParameters(
                     count=3,
-                    status=URLStatus.REJECTED
+                    status=URLStatus.NOT_RELEVANT
                 ),
                 TestURLCreationParameters(
                     count=4,
@@ -106,7 +106,7 @@ async def test_get_batches_breakdown_metrics(api_test_helper):
         urls=[
             TestURLCreationParameters(
                 count=3,
-                status=URLStatus.REJECTED
+                status=URLStatus.NOT_RELEVANT
             ),
             TestURLCreationParameters(
                 count=4,
@@ -247,7 +247,7 @@ async def test_get_urls_breakdown_pending_metrics(api_test_helper):
                 count=1,
                 status=URLStatus.PENDING,
                 annotation_info=AnnotationInfo(
-                    user_relevant=False
+                    user_relevant=SuggestedStatus.NOT_RELEVANT
                 )
             ),
             TestURLCreationParameters(
@@ -264,7 +264,7 @@ async def test_get_urls_breakdown_pending_metrics(api_test_helper):
                 count=3,
                 status=URLStatus.PENDING,
                 annotation_info=AnnotationInfo(
-                    user_relevant=True,
+                    user_relevant=SuggestedStatus.RELEVANT,
                     user_record_type=RecordType.CALLS_FOR_SERVICE
                 )
             )
@@ -288,7 +288,7 @@ async def test_get_urls_breakdown_pending_metrics(api_test_helper):
                 count=5,
                 status=URLStatus.PENDING,
                 annotation_info=AnnotationInfo(
-                    user_relevant=True,
+                    user_relevant=SuggestedStatus.RELEVANT,
                     user_record_type=RecordType.INCARCERATION_RECORDS,
                     user_agency=agency_id
                 )
@@ -363,7 +363,7 @@ async def test_get_urls_aggregate_metrics(api_test_helper):
             ),
             TestURLCreationParameters(
                 count=5,
-                status=URLStatus.REJECTED
+                status=URLStatus.NOT_RELEVANT
             ),
         ]
     )
@@ -401,7 +401,7 @@ async def test_get_backlog_metrics(api_test_helper):
                 count=1,
                 status=URLStatus.PENDING,
                 annotation_info=AnnotationInfo(
-                    user_relevant=False
+                    user_relevant=SuggestedStatus.NOT_RELEVANT
                 )
             ),
             TestURLCreationParameters(
@@ -427,7 +427,7 @@ async def test_get_backlog_metrics(api_test_helper):
                 count=4,
                 status=URLStatus.PENDING,
                 annotation_info=AnnotationInfo(
-                    user_relevant=False
+                    user_relevant=SuggestedStatus.NOT_RELEVANT
                 )
             ),
             TestURLCreationParameters(
@@ -453,7 +453,7 @@ async def test_get_backlog_metrics(api_test_helper):
                 count=7,
                 status=URLStatus.PENDING,
                 annotation_info=AnnotationInfo(
-                    user_relevant=False
+                    user_relevant=SuggestedStatus.NOT_RELEVANT
                 )
             ),
             TestURLCreationParameters(

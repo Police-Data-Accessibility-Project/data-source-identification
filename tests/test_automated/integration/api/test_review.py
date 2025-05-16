@@ -3,9 +3,10 @@ import pytest
 from collector_db.constants import PLACEHOLDER_AGENCY_NAME
 from collector_db.models import URL, URLOptionalDataSourceMetadata, ConfirmedURLAgency, Agency
 from collector_manager.enums import URLStatus
-from core.DTOs.FinalReviewApprovalInfo import FinalReviewApprovalInfo, FinalReviewBaseInfo
+from core.DTOs.FinalReviewApprovalInfo import FinalReviewApprovalInfo, FinalReviewBaseInfo, RejectionReason, \
+    FinalReviewRejectionInfo
 from core.DTOs.GetNextURLForFinalReviewResponse import GetNextURLForFinalReviewOuterResponse
-from core.enums import RecordType
+from core.enums import RecordType, SuggestedStatus
 from tests.helpers.complex_test_data_functions import setup_for_get_next_url_for_final_review
 
 
@@ -46,7 +47,7 @@ async def test_review_next_source(api_test_helper):
     annotation_info = result.annotations
     relevant_info = annotation_info.relevant
     assert relevant_info.auto == True
-    assert relevant_info.user == False
+    assert relevant_info.user == SuggestedStatus.NOT_RELEVANT
 
     record_type_info = annotation_info.record_type
     assert record_type_info.auto == RecordType.ARREST_RECORDS
@@ -132,8 +133,12 @@ async def test_approve_and_get_next_source_for_review(api_test_helper):
         if agency.agency_id == additional_agency:
             assert agency.name == PLACEHOLDER_AGENCY_NAME
 
-@pytest.mark.asyncio
-async def test_reject_and_get_next_source_for_review(api_test_helper):
+
+async def run_rejection_test(
+    api_test_helper,
+    rejection_reason: RejectionReason,
+    url_status: URLStatus
+):
     ath = api_test_helper
     db_data_creator = ath.db_data_creator
 
@@ -145,8 +150,9 @@ async def test_reject_and_get_next_source_for_review(api_test_helper):
     url_mapping = setup_info.url_mapping
 
     result: GetNextURLForFinalReviewOuterResponse = await ath.request_validator.reject_and_get_next_source_for_review(
-        review_info=FinalReviewBaseInfo(
+        review_info=FinalReviewRejectionInfo(
             url_id=url_mapping.url_id,
+            rejection_reason=rejection_reason
         )
     )
 
@@ -154,8 +160,33 @@ async def test_reject_and_get_next_source_for_review(api_test_helper):
 
     adb_client = db_data_creator.adb_client
     # Confirm same agency id is listed as rejected
-    urls = await adb_client.get_all(URL)
+    urls: list[URL] = await adb_client.get_all(URL)
     assert len(urls) == 1
     url = urls[0]
     assert url.id == url_mapping.url_id
-    assert url.outcome == URLStatus.REJECTED.value
+    assert url.outcome == url_status.value
+
+@pytest.mark.asyncio
+async def test_rejection_not_relevant(api_test_helper):
+    await run_rejection_test(
+        api_test_helper,
+        rejection_reason=RejectionReason.NOT_RELEVANT,
+        url_status=URLStatus.NOT_RELEVANT
+    )
+
+@pytest.mark.asyncio
+async def test_rejection_broken_page(api_test_helper):
+    await run_rejection_test(
+        api_test_helper,
+        rejection_reason=RejectionReason.BROKEN_PAGE_404,
+        url_status=URLStatus.NOT_FOUND
+    )
+
+@pytest.mark.asyncio
+async def test_rejection_individual_record(api_test_helper):
+    await run_rejection_test(
+        api_test_helper,
+        rejection_reason=RejectionReason.INDIVIDUAL_RECORD,
+        url_status=URLStatus.INDIVIDUAL_RECORD
+    )
+

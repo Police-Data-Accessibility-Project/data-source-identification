@@ -33,7 +33,7 @@ from collector_db.models import URL, URLErrorInfo, URLHTMLContent, Base, \
     BacklogSnapshot, URLDataSource, URLCheckedForDuplicate, URLProbedFor404
 from collector_manager.enums import URLStatus, CollectorType
 from core.DTOs.AllAnnotationPostInfo import AllAnnotationPostInfo
-from core.DTOs.FinalReviewApprovalInfo import FinalReviewApprovalInfo
+from core.DTOs.FinalReviewApprovalInfo import FinalReviewApprovalInfo, RejectionReason
 from core.DTOs.GetMetricsBacklogResponse import GetMetricsBacklogResponseDTO, GetMetricsBacklogResponseInnerDTO
 from core.DTOs.GetMetricsBatchesAggregatedResponseDTO import GetMetricsBatchesAggregatedResponseDTO, \
     GetMetricsBatchesAggregatedInnerResponseDTO
@@ -65,7 +65,7 @@ from core.DTOs.task_data_objects.URL404ProbeTDO import URL404ProbeTDO
 from core.DTOs.task_data_objects.URLDuplicateTDO import URLDuplicateTDO
 from core.DTOs.task_data_objects.URLMiscellaneousMetadataTDO import URLMiscellaneousMetadataTDO, URLHTMLMetadataInfo
 from core.EnvVarManager import EnvVarManager
-from core.enums import BatchStatus, SuggestionType, RecordType
+from core.enums import BatchStatus, SuggestionType, RecordType, SuggestedStatus
 from html_tag_collector.DataClassTags import convert_to_response_html_info
 
 # Type Hints
@@ -170,7 +170,7 @@ class AsyncDatabaseClient:
                         select(UserRelevantSuggestion)
                         .where(
                             UserRelevantSuggestion.url_id == URL.id,
-                            UserRelevantSuggestion.relevant == False
+                            UserRelevantSuggestion.suggested_status != SuggestedStatus.RELEVANT.value
                         )
                     )
                 )
@@ -194,7 +194,7 @@ class AsyncDatabaseClient:
             session: AsyncSession,
             url_id: int,
             user_id: int,
-            relevant: bool
+            suggested_status: SuggestedStatus
     ):
         prior_suggestion = await self.get_user_suggestion(
             session,
@@ -203,13 +203,13 @@ class AsyncDatabaseClient:
             url_id=url_id
         )
         if prior_suggestion is not None:
-            prior_suggestion.relevant = relevant
+            prior_suggestion.suggested_status = suggested_status.value
             return
 
         suggestion = UserRelevantSuggestion(
             url_id=url_id,
             user_id=user_id,
-            relevant=relevant
+            suggested_status=suggested_status.value
         )
         session.add(suggestion)
 
@@ -881,7 +881,7 @@ class AsyncDatabaseClient:
                     where(
                         (UserRelevantSuggestion.user_id == user_id) &
                         (UserRelevantSuggestion.url_id == URL.id) &
-                        (UserRelevantSuggestion.relevant == False)
+                        (UserRelevantSuggestion.suggested_status != SuggestedStatus.RELEVANT.value)
                     ).correlate(URL)
                 )
             )
@@ -1288,7 +1288,8 @@ class AsyncDatabaseClient:
             self,
             session: AsyncSession,
             url_id: int,
-            user_id: int
+            user_id: int,
+            rejection_reason: RejectionReason
     ) -> None:
 
         query = (
@@ -1299,7 +1300,18 @@ class AsyncDatabaseClient:
         url = await session.execute(query)
         url = url.scalars().first()
 
-        url.outcome = URLStatus.REJECTED.value
+        match rejection_reason:
+            case RejectionReason.INDIVIDUAL_RECORD:
+                url.outcome = URLStatus.INDIVIDUAL_RECORD.value
+            case RejectionReason.BROKEN_PAGE_404:
+                url.outcome = URLStatus.NOT_FOUND.value
+            case RejectionReason.NOT_RELEVANT:
+                url.outcome = URLStatus.NOT_RELEVANT.value
+            case _:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Invalid rejection reason"
+                )
 
         # Add rejecting user
         rejecting_user_url = ReviewingUserURL(
@@ -1741,12 +1753,12 @@ class AsyncDatabaseClient:
         relevant_suggestion = UserRelevantSuggestion(
             url_id=url_id,
             user_id=user_id,
-            relevant=post_info.is_relevant
+            suggested_status=post_info.suggested_status.value
         )
         session.add(relevant_suggestion)
 
         # If not relevant, do nothing else
-        if not post_info.is_relevant:
+        if not post_info.suggested_status == SuggestedStatus.RELEVANT:
             return
 
         record_type_suggestion = UserRecordTypeSuggestion(
@@ -1872,7 +1884,7 @@ class AsyncDatabaseClient:
             url_column(URLStatus.ERROR, label="error_count"),
             url_column(URLStatus.VALIDATED, label="validated_count"),
             url_column(URLStatus.SUBMITTED, label="submitted_count"),
-            url_column(URLStatus.REJECTED, label="rejected_count"),
+            url_column(URLStatus.NOT_RELEVANT, label="rejected_count"),
 
         ).outerjoin(
             Batch, Batch.id == URL.batch_id
@@ -1957,7 +1969,7 @@ class AsyncDatabaseClient:
             sc.count_distinct(URL.id, label="count_total"),
             url_column(URLStatus.PENDING, label="count_pending"),
             url_column(URLStatus.SUBMITTED, label="count_submitted"),
-            url_column(URLStatus.REJECTED, label="count_rejected"),
+            url_column(URLStatus.NOT_RELEVANT, label="count_rejected"),
             url_column(URLStatus.ERROR, label="count_error"),
             url_column(URLStatus.VALIDATED, label="count_validated"),
         ).group_by(
@@ -2075,7 +2087,7 @@ class AsyncDatabaseClient:
             case_column(URLStatus.PENDING, label="count_pending"),
             case_column(URLStatus.SUBMITTED, label="count_submitted"),
             case_column(URLStatus.VALIDATED, label="count_validated"),
-            case_column(URLStatus.REJECTED, label="count_rejected"),
+            case_column(URLStatus.NOT_RELEVANT, label="count_rejected"),
             case_column(URLStatus.ERROR, label="count_error"),
         )
         raw_results = await session.execute(count_query)

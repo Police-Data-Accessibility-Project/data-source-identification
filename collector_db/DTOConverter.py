@@ -26,7 +26,7 @@ class DTOConverter:
     ) -> FinalReviewAnnotationRelevantInfo:
 
         auto_value = auto_suggestion.relevant if auto_suggestion else None
-        user_value = user_suggestion.relevant if user_suggestion else None
+        user_value = user_suggestion.suggested_status if user_suggestion else None
         return FinalReviewAnnotationRelevantInfo(
             auto=auto_value,
             user=user_value

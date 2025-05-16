@@ -3,13 +3,13 @@ from typing import Optional
 from pydantic import BaseModel, Field
 
 from core.DTOs.GetNextURLForAgencyAnnotationResponse import GetNextURLForAgencyAgencyInfo
-from core.enums import RecordType
+from core.enums import RecordType, SuggestedStatus
 from html_tag_collector.DataClassTags import ResponseHTMLInfo
 
 class FinalReviewAnnotationRelevantInfo(BaseModel):
     auto: Optional[bool] = Field(title="Whether the auto-labeler has marked the URL as relevant")
-    user: Optional[bool] = Field(
-        title="Whether a user has marked the URL as relevant",
+    user: Optional[SuggestedStatus] = Field(
+        title="The status marked by a user, if any",
     )
 
 class FinalReviewAnnotationRecordTypeInfo(BaseModel):

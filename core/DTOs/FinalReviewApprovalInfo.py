@@ -1,3 +1,4 @@
+from enum import Enum
 from typing import Optional
 
 from pydantic import BaseModel, Field
@@ -8,6 +9,14 @@ class FinalReviewBaseInfo(BaseModel):
     url_id: int = Field(
         title="The id of the URL."
     )
+
+class RejectionReason(Enum):
+    NOT_RELEVANT = "NOT_RELEVANT"
+    BROKEN_PAGE_404 = "BROKEN_PAGE"
+    INDIVIDUAL_RECORD = "INDIVIDUAL_RECORD"
+
+class FinalReviewRejectionInfo(FinalReviewBaseInfo):
+    rejection_reason: RejectionReason = RejectionReason.NOT_RELEVANT
 
 class FinalReviewApprovalInfo(FinalReviewBaseInfo):
     record_type: Optional[RecordType] = Field(

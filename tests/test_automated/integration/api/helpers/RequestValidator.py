@@ -12,7 +12,7 @@ from collector_db.enums import TaskType
 from collector_manager.DTOs.ExampleInputDTO import ExampleInputDTO
 from collector_manager.enums import CollectorType
 from core.DTOs.AllAnnotationPostInfo import AllAnnotationPostInfo
-from core.DTOs.FinalReviewApprovalInfo import FinalReviewApprovalInfo, FinalReviewBaseInfo
+from core.DTOs.FinalReviewApprovalInfo import FinalReviewApprovalInfo, FinalReviewBaseInfo, FinalReviewRejectionInfo
 from core.DTOs.GetBatchLogsResponse import GetBatchLogsResponse
 from core.DTOs.GetBatchStatusResponse import GetBatchStatusResponse
 from core.DTOs.GetDuplicatesByBatchResponse import GetDuplicatesByBatchResponse
@@ -350,7 +350,7 @@ class RequestValidator:
 
     async def reject_and_get_next_source_for_review(
             self,
-            review_info: FinalReviewBaseInfo
+            review_info: FinalReviewRejectionInfo
     ) -> GetNextURLForFinalReviewOuterResponse:
         data = self.post(
             url=f"/review/reject-source",

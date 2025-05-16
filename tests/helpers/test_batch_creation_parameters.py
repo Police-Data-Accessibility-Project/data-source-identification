@@ -4,11 +4,11 @@ from typing import Optional
 from pydantic import BaseModel, model_validator
 
 from collector_manager.enums import URLStatus, CollectorType
-from core.enums import BatchStatus, AnnotationType, RecordType
+from core.enums import BatchStatus, AnnotationType, RecordType, SuggestedStatus
 
 
 class AnnotationInfo(BaseModel):
-    user_relevant: Optional[bool] = None
+    user_relevant: Optional[SuggestedStatus] = None
     auto_relevant: Optional[bool] = None
     user_record_type: Optional[RecordType] = None
     auto_record_type: Optional[RecordType] = None
@@ -37,7 +37,7 @@ class TestURLCreationParameters(BaseModel):
 
     @model_validator(mode='after')
     def validate_annotation_info(self):
-        if self.status == URLStatus.REJECTED:
+        if self.status == URLStatus.NOT_RELEVANT:
             self.annotation_info.final_review_approved = False
             return self
         if self.status != URLStatus.VALIDATED:
