@@ -16,7 +16,7 @@ from collector_db.DTOs.URLMapping import URLMapping
 from collector_db.DatabaseClient import DatabaseClient
 from collector_db.enums import TaskType
 from collector_manager.enums import CollectorType, URLStatus
-from core.DTOs.FinalReviewApprovalInfo import FinalReviewApprovalInfo
+from core.DTOs.FinalReviewApprovalInfo import FinalReviewApprovalInfo, RejectionReason
 from core.DTOs.URLAgencySuggestionInfo import URLAgencySuggestionInfo
 from core.DTOs.task_data_objects.SubmitApprovedURLTDO import SubmittedURLInfo
 from core.DTOs.task_data_objects.URLMiscellaneousMetadataTDO import URLMiscellaneousMetadataTDO
@@ -203,7 +203,8 @@ class DBDataCreator:
             else:
                 await self.adb_client.reject_url(
                     url_id=url_id,
-                    user_id=1
+                    user_id=1,
+                    rejection_reason=RejectionReason.NOT_RELEVANT
                 )
 
 
