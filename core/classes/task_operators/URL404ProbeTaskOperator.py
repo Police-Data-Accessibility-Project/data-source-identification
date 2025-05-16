@@ -27,7 +27,7 @@ class URL404ProbeTaskOperator(TaskOperatorBase):
 
     @property
     def task_type(self):
-        return TaskType.DUPLICATE_DETECTION
+        return TaskType.PROBE_404
 
     async def meets_task_prerequisites(self):
         return await self.adb_client.has_pending_urls_not_recently_probed_for_404()
