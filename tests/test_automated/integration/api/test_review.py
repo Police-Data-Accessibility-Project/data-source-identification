@@ -134,7 +134,7 @@ async def test_approve_and_get_next_source_for_review(api_test_helper):
             assert agency.name == PLACEHOLDER_AGENCY_NAME
 
 
-async def test_rejection(
+async def run_rejection_test(
     api_test_helper,
     rejection_reason: RejectionReason,
     url_status: URLStatus
@@ -168,7 +168,7 @@ async def test_rejection(
 
 @pytest.mark.asyncio
 async def test_rejection_not_relevant(api_test_helper):
-    await test_rejection(
+    await run_rejection_test(
         api_test_helper,
         rejection_reason=RejectionReason.NOT_RELEVANT,
         url_status=URLStatus.NOT_RELEVANT
@@ -176,7 +176,7 @@ async def test_rejection_not_relevant(api_test_helper):
 
 @pytest.mark.asyncio
 async def test_rejection_broken_page(api_test_helper):
-    await test_rejection(
+    await run_rejection_test(
         api_test_helper,
         rejection_reason=RejectionReason.BROKEN_PAGE_404,
         url_status=URLStatus.NOT_FOUND
@@ -184,7 +184,7 @@ async def test_rejection_broken_page(api_test_helper):
 
 @pytest.mark.asyncio
 async def test_rejection_individual_record(api_test_helper):
-    await test_rejection(
+    await run_rejection_test(
         api_test_helper,
         rejection_reason=RejectionReason.INDIVIDUAL_RECORD,
         url_status=URLStatus.INDIVIDUAL_RECORD
