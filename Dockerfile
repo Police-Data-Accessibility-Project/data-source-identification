@@ -22,9 +22,6 @@ COPY collector_db ./collector_db
 COPY collector_manager ./collector_manager
 COPY core ./core
 COPY html_tag_collector ./html_tag_collector
-COPY hugging_face/url_relevance ./hugging_face/url_relevance
-COPY hugging_face/url_record_type_labeling ./hugging_face/url_record_type_labeling
-COPY hugging_face/HuggingFaceInterface.py ./hugging_face/HuggingFaceInterface.py
 COPY source_collectors ./source_collectors
 COPY util ./util
 COPY alembic.ini ./alembic.ini

@@ -24,7 +24,6 @@ class APITestHelper:
     core: SourceCollectorCore
     async_core: AsyncCore
     db_data_creator: DBDataCreator
-    mock_huggingface_interface: MagicMock
 
     def adb_client(self):
         return self.db_data_creator.adb_client
@@ -72,7 +71,6 @@ def client() -> Generator[TestClient, None, None]:
 
         # Interfaces to the web should be mocked
         task_manager = async_core.task_manager
-        task_manager.huggingface_interface = AsyncMock()
         task_manager.url_request_interface = AsyncMock()
         task_manager.discord_poster = AsyncMock()
         # Disable Logger
@@ -91,6 +89,5 @@ async def api_test_helper(client: TestClient, db_data_creator, monkeypatch) -> A
         core=client.app.state.core,
         async_core=client.app.state.async_core,
         db_data_creator=db_data_creator,
-        mock_huggingface_interface=MagicMock(),
     )
     await client.app.state.async_core.collector_manager.logger.clear_log_queue()
