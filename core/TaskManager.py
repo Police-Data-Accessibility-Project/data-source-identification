@@ -15,11 +15,9 @@ from core.classes.task_operators.TaskOperatorBase import TaskOperatorBase
 from core.classes.task_operators.URLHTMLTaskOperator import URLHTMLTaskOperator
 from core.classes.task_operators.URLMiscellaneousMetadataTaskOperator import URLMiscellaneousMetadataTaskOperator
 from core.classes.task_operators.URLRecordTypeTaskOperator import URLRecordTypeTaskOperator
-from core.classes.task_operators.URLRelevanceHuggingfaceTaskOperator import URLRelevanceHuggingfaceTaskOperator
 from core.enums import BatchStatus
 from html_tag_collector.ResponseParser import HTMLResponseParser
 from html_tag_collector.URLRequestInterface import URLRequestInterface
-from hugging_face.HuggingFaceInterface import HuggingFaceInterface
 from llm_api_logic.OpenAIRecordClassifier import OpenAIRecordClassifier
 from pdap_api_client.PDAPClient import PDAPClient
 from util.DiscordNotifier import DiscordPoster
@@ -31,16 +29,14 @@ class TaskManager:
     def __init__(
             self,
             adb_client: AsyncDatabaseClient,
-            huggingface_interface: HuggingFaceInterface,
             url_request_interface: URLRequestInterface,
             html_parser: HTMLResponseParser,
             discord_poster: DiscordPoster,
-            pdap_client: PDAPClient
+            pdap_client: PDAPClient,
     ):
         # Dependencies
         self.adb_client = adb_client
         self.pdap_client = pdap_client
-        self.huggingface_interface = huggingface_interface
         self.url_request_interface = url_request_interface
         self.html_parser = html_parser
         self.discord_poster = discord_poster
@@ -59,13 +55,6 @@ class TaskManager:
             adb_client=self.adb_client,
             url_request_interface=self.url_request_interface,
             html_parser=self.html_parser
-        )
-        return operator
-
-    async def get_url_relevance_huggingface_task_operator(self):
-        operator = URLRelevanceHuggingfaceTaskOperator(
-            adb_client=self.adb_client,
-            huggingface_interface=self.huggingface_interface
         )
         return operator
 
@@ -117,7 +106,6 @@ class TaskManager:
             await self.get_url_html_task_operator(),
             await self.get_url_duplicate_task_operator(),
             await self.get_url_404_probe_task_operator(),
-            # await self.get_url_relevance_huggingface_task_operator(),
             await self.get_url_record_type_task_operator(),
             await self.get_agency_identification_task_operator(),
             await self.get_url_miscellaneous_metadata_task_operator(),

@@ -17,7 +17,6 @@ def setup_async_core(adb_client: AsyncDatabaseClient):
         adb_client=adb_client,
         task_manager=TaskManager(
             adb_client=adb_client,
-            huggingface_interface=AsyncMock(),
             url_request_interface=AsyncMock(),
             html_parser=AsyncMock(),
             discord_poster=AsyncMock(),

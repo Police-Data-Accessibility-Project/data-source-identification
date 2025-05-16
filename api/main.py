@@ -26,7 +26,6 @@ from core.TaskManager import TaskManager
 from html_tag_collector.ResponseParser import HTMLResponseParser
 from html_tag_collector.RootURLCache import RootURLCache
 from html_tag_collector.URLRequestInterface import URLRequestInterface
-from hugging_face.HuggingFaceInterface import HuggingFaceInterface
 from pdap_access_manager import AccessManager
 from pdap_api_client.PDAPClient import PDAPClient
 from util.DiscordNotifier import DiscordPoster
@@ -54,7 +53,6 @@ async def lifespan(app: FastAPI):
     )
     task_manager = TaskManager(
         adb_client=adb_client,
-        huggingface_interface=HuggingFaceInterface(),
         url_request_interface=URLRequestInterface(),
         html_parser=HTMLResponseParser(
             root_url_cache=RootURLCache()
