@@ -1299,7 +1299,7 @@ class AsyncDatabaseClient:
         url = await session.execute(query)
         url = url.scalars().first()
 
-        url.outcome = URLStatus.REJECTED.value
+        url.outcome = URLStatus.NOT_RELEVANT.value
 
         # Add rejecting user
         rejecting_user_url = ReviewingUserURL(
@@ -1872,7 +1872,7 @@ class AsyncDatabaseClient:
             url_column(URLStatus.ERROR, label="error_count"),
             url_column(URLStatus.VALIDATED, label="validated_count"),
             url_column(URLStatus.SUBMITTED, label="submitted_count"),
-            url_column(URLStatus.REJECTED, label="rejected_count"),
+            url_column(URLStatus.NOT_RELEVANT, label="rejected_count"),
 
         ).outerjoin(
             Batch, Batch.id == URL.batch_id
@@ -1957,7 +1957,7 @@ class AsyncDatabaseClient:
             sc.count_distinct(URL.id, label="count_total"),
             url_column(URLStatus.PENDING, label="count_pending"),
             url_column(URLStatus.SUBMITTED, label="count_submitted"),
-            url_column(URLStatus.REJECTED, label="count_rejected"),
+            url_column(URLStatus.NOT_RELEVANT, label="count_rejected"),
             url_column(URLStatus.ERROR, label="count_error"),
             url_column(URLStatus.VALIDATED, label="count_validated"),
         ).group_by(
@@ -2075,7 +2075,7 @@ class AsyncDatabaseClient:
             case_column(URLStatus.PENDING, label="count_pending"),
             case_column(URLStatus.SUBMITTED, label="count_submitted"),
             case_column(URLStatus.VALIDATED, label="count_validated"),
-            case_column(URLStatus.REJECTED, label="count_rejected"),
+            case_column(URLStatus.NOT_RELEVANT, label="count_rejected"),
             case_column(URLStatus.ERROR, label="count_error"),
         )
         raw_results = await session.execute(count_query)

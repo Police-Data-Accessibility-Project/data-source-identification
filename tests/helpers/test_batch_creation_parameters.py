@@ -37,7 +37,7 @@ class TestURLCreationParameters(BaseModel):
 
     @model_validator(mode='after')
     def validate_annotation_info(self):
-        if self.status == URLStatus.REJECTED:
+        if self.status == URLStatus.NOT_RELEVANT:
             self.annotation_info.final_review_approved = False
             return self
         if self.status != URLStatus.VALIDATED:

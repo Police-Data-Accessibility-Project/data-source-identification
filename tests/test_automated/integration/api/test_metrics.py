@@ -26,7 +26,7 @@ async def test_get_batches_aggregated_metrics(api_test_helper):
                 ),
                 TestURLCreationParameters(
                     count=3,
-                    status=URLStatus.REJECTED
+                    status=URLStatus.NOT_RELEVANT
                 ),
                 TestURLCreationParameters(
                     count=4,
@@ -106,7 +106,7 @@ async def test_get_batches_breakdown_metrics(api_test_helper):
         urls=[
             TestURLCreationParameters(
                 count=3,
-                status=URLStatus.REJECTED
+                status=URLStatus.NOT_RELEVANT
             ),
             TestURLCreationParameters(
                 count=4,
@@ -363,7 +363,7 @@ async def test_get_urls_aggregate_metrics(api_test_helper):
             ),
             TestURLCreationParameters(
                 count=5,
-                status=URLStatus.REJECTED
+                status=URLStatus.NOT_RELEVANT
             ),
         ]
     )

@@ -96,10 +96,11 @@ class URL(Base):
             'pending',
             'submitted',
             'validated',
-            'rejected',
+            'not relevant',
             'duplicate',
             'error',
             '404 not found',
+            'individual record',
             name='url_status'
         ),
         nullable=False
@@ -457,7 +458,16 @@ class UserRelevantSuggestion(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     url_id = Column(Integer, ForeignKey("urls.id"), nullable=False)
     user_id = Column(Integer, nullable=False)
-    relevant = Column(Boolean, nullable=False)
+    suggested_status = Column(
+        postgresql.ENUM(
+            'relevant',
+            'not relevant',
+            'individual record',
+            'broken page/404 not found',
+            name='suggested_status'
+        ),
+        nullable=True
+    )
     created_at = get_created_at_column()
     updated_at = get_updated_at_column()
 

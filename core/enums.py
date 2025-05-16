@@ -71,3 +71,12 @@ class SubmitResponseStatus(Enum):
     SUCCESS = "success"
     FAILURE = "FAILURE"
     ALREADY_EXISTS = "already_exists"
+
+class SuggestedStatus(Enum):
+    """
+    Possible values for user_relevant_suggestions:suggested_status
+    """
+    RELEVANT = "relevant"
+    NOT_RELEVANT = "not relevant"
+    INDIVIDUAL_RECORD = "individual record"
+    BROKEN_PAGE_404 = "broken page/404 not found"

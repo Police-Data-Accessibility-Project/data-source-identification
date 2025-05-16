@@ -16,5 +16,6 @@ class URLStatus(Enum):
     VALIDATED = "validated"
     ERROR = "error"
     DUPLICATE = "duplicate"
-    REJECTED = "rejected"
+    NOT_RELEVANT = "not relevant"
     NOT_FOUND = "404 not found"
+    INDIVIDUAL_RECORD = "individual record"

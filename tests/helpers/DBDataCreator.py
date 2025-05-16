@@ -221,6 +221,13 @@ class DBDataCreator:
             relevant=relevant
         )
 
+    async def user_relevant_suggestion_v2(
+            self,
+            url_id: int,
+            user_id: Optional[int] = None,
+
+    )
+
     async def user_record_type_suggestion(
             self,
             url_id: int,

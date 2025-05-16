@@ -158,4 +158,4 @@ async def test_reject_and_get_next_source_for_review(api_test_helper):
     assert len(urls) == 1
     url = urls[0]
     assert url.id == url_mapping.url_id
-    assert url.outcome == URLStatus.REJECTED.value
+    assert url.outcome == URLStatus.NOT_RELEVANT.value
