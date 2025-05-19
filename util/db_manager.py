@@ -1,13 +1,13 @@
 import os
 
-import psycopg2
+import psycopg
 from dotenv import load_dotenv
 
 
 class DBManager:
 
     def __init__(self, db_name, user, password, host, port):
-        self.conn = psycopg2.connect(
+        self.conn = psycopg.connect(
             dbname=db_name,
             user=user,
             password=password,
@@ -41,6 +41,6 @@ if __name__ == "__main__":
     # Note: This is test code to evaluate whether the connection url works. Will be removed in final version.
     load_dotenv()
     conn_url = os.getenv("DIGITAL_OCEAN_DB_CONNECTION_URL")
-    conn = psycopg2.connect(conn_url)
+    conn = psycopg.connect(conn_url)
 
     pass
