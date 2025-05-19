@@ -11,6 +11,7 @@ dependencies = [
     "bs4~=0.0.2",
     "ckanapi~=4.8",
     "datasets~=2.19.1",
+    "discord-poster>=0.1.0",
     "docker~=7.1.0",
     "environs>=14.1.1",
     "fastapi[standard]~=0.115.6",

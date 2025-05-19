@@ -28,7 +28,7 @@ from html_tag_collector.RootURLCache import RootURLCache
 from html_tag_collector.URLRequestInterface import URLRequestInterface
 from pdap_access_manager import AccessManager
 from pdap_api_client.PDAPClient import PDAPClient
-from util.DiscordNotifier import DiscordPoster
+from discord_poster import DiscordPoster
 
 
 
