@@ -20,7 +20,7 @@ from html_tag_collector.ResponseParser import HTMLResponseParser
 from html_tag_collector.URLRequestInterface import URLRequestInterface
 from llm_api_logic.OpenAIRecordClassifier import OpenAIRecordClassifier
 from pdap_api_client.PDAPClient import PDAPClient
-from util.DiscordNotifier import DiscordPoster
+from discord_poster import DiscordPoster
 
 TASK_REPEAT_THRESHOLD = 20
 
