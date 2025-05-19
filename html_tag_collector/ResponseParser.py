@@ -1,12 +1,8 @@
 import json
-from collections import namedtuple
-from dataclasses import asdict
 from enum import Enum
 from typing import Optional
 
-import bs4
 from bs4 import BeautifulSoup
-from requests import Response
 
 from html_tag_collector.DataClassTags import ResponseHTMLInfo
 from html_tag_collector.RootURLCache import RootURLCache
