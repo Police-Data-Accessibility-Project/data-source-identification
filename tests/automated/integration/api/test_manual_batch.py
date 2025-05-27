@@ -1,10 +1,10 @@
 
 import pytest
 
-from db.models import Batch, URL, URLOptionalDataSourceMetadata
+from src.db.models import Batch, URL, URLOptionalDataSourceMetadata
 from collector_manager.enums import CollectorType
-from core.DTOs.ManualBatchInputDTO import ManualBatchInnerInputDTO, ManualBatchInputDTO
-from core.enums import RecordType
+from src.core.DTOs.ManualBatchInputDTO import ManualBatchInnerInputDTO, ManualBatchInputDTO
+from src.core.enums import RecordType
 
 
 @pytest.mark.asyncio

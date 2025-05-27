@@ -3,16 +3,16 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from db.AsyncDatabaseClient import AsyncDatabaseClient
-from db.DTOs.BatchInfo import BatchInfo
+from src.db import AsyncDatabaseClient
+from src.db.DTOs.BatchInfo import BatchInfo
 from collector_manager.DTOs.ExampleInputDTO import ExampleInputDTO
 from collector_manager.ExampleCollector import ExampleCollector
 from collector_manager.enums import CollectorType
-from core.AsyncCoreLogger import AsyncCoreLogger
-from core.DTOs.BatchStatusInfo import BatchStatusInfo
-from core.DTOs.GetBatchLogsResponse import GetBatchLogsResponse
-from core.DTOs.GetBatchStatusResponse import GetBatchStatusResponse
-from core.enums import BatchStatus
+from src.core.AsyncCoreLogger import AsyncCoreLogger
+from src.core.DTOs.BatchStatusInfo import BatchStatusInfo
+from src.core.DTOs.GetBatchLogsResponse import GetBatchLogsResponse
+from src.core.DTOs.GetBatchStatusResponse import GetBatchStatusResponse
+from src.core.enums import BatchStatus
 from tests.helpers.patch_functions import block_sleep
 from tests.automated.integration.api.conftest import disable_task_trigger
 

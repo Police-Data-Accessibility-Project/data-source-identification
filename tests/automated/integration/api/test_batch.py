@@ -1,13 +1,10 @@
-import asyncio
-import time
-
 import pytest
 
-from db.DTOs.BatchInfo import BatchInfo
-from db.DTOs.InsertURLsInfo import InsertURLsInfo
+from src.db.DTOs.BatchInfo import BatchInfo
+from src.db.DTOs.InsertURLsInfo import InsertURLsInfo
 from collector_manager.DTOs.ExampleInputDTO import ExampleInputDTO
 from collector_manager.enums import CollectorType, URLStatus
-from core.enums import BatchStatus
+from src.core.enums import BatchStatus
 
 @pytest.mark.asyncio
 async def test_get_batch_status_pending_url_filter(api_test_helper):

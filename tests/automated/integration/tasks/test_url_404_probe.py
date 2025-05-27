@@ -5,11 +5,11 @@ import pendulum
 import pytest
 from aiohttp import ClientResponseError, RequestInfo
 
-from db.models import URLProbedFor404, URL
+from src.db.models import URLProbedFor404, URL
 from collector_manager.enums import URLStatus
-from core.DTOs.TaskOperatorRunInfo import TaskOperatorOutcome
-from core.classes.task_operators.URL404ProbeTaskOperator import URL404ProbeTaskOperator
-from html_tag_collector.URLRequestInterface import URLResponseInfo, URLRequestInterface
+from src.core.DTOs.TaskOperatorRunInfo import TaskOperatorOutcome
+from src.core.classes.task_operators.URL404ProbeTaskOperator import URL404ProbeTaskOperator
+from src.html_tag_collector.URLRequestInterface import URLResponseInfo, URLRequestInterface
 from tests.helpers.DBDataCreator import DBDataCreator
 from tests.helpers.test_batch_creation_parameters import TestBatchCreationParameters, TestURLCreationParameters
 

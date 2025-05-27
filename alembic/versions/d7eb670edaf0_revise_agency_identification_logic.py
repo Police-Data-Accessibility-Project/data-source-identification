@@ -10,7 +10,7 @@ from typing import Sequence, Union
 from alembic import op
 import sqlalchemy as sa
 
-from db.enums import PGEnum
+from src.db.enums import PGEnum
 
 # revision identifiers, used by Alembic.
 revision: str = 'd7eb670edaf0'

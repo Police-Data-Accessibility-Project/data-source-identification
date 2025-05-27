@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Query, Depends
 
 from api.dependencies import get_async_core
-from core.AsyncCore import AsyncCore
-from core.DTOs.GetURLsResponseInfo import GetURLsResponseInfo
-from security_manager.SecurityManager import AccessInfo, get_access_info
+from src.core.AsyncCore import AsyncCore
+from src.core.DTOs.GetURLsResponseInfo import GetURLsResponseInfo
+from src.security_manager.SecurityManager import AccessInfo, get_access_info
 
 url_router = APIRouter(
     prefix="/url",

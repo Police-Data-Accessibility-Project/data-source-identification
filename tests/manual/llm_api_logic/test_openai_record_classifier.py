@@ -1,12 +1,12 @@
 import pytest
 
-from db.DTOs.URLHTMLContentInfo import URLHTMLContentInfo
-from llm_api_logic.OpenAIRecordClassifier import OpenAIRecordClassifier
+from src.db.DTOs.URLHTMLContentInfo import URLHTMLContentInfo
+from src.llm_api_logic.OpenAIRecordClassifier import OpenAIRecordClassifier
 
 
 @pytest.mark.asyncio
 async def test_openai_record_classifier():
-    from db.DTOs.URLHTMLContentInfo import HTMLContentType as hct
+    from src.db.DTOs.URLHTMLContentInfo import HTMLContentType as hct
 
     d = {
         hct.TITLE: "Oath of Office for Newly Promoted Corporal Lumpkin with Acworth Police – City of Acworth, GA",

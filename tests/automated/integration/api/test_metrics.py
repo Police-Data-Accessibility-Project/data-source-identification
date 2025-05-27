@@ -2,7 +2,7 @@ import pendulum
 import pytest
 
 from collector_manager.enums import URLStatus, CollectorType
-from core.enums import BatchStatus, RecordType, SuggestedStatus
+from src.core.enums import BatchStatus, RecordType, SuggestedStatus
 from tests.helpers.test_batch_creation_parameters import TestBatchCreationParameters, TestURLCreationParameters, \
     AnnotationInfo
 

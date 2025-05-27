@@ -2,8 +2,8 @@ import time
 
 import api.dependencies
 from collector_manager.enums import CollectorType
-from core.SourceCollectorCore import SourceCollectorCore
-from core.enums import BatchStatus
+from src.core.SourceCollectorCore import SourceCollectorCore
+from src.core.enums import BatchStatus
 
 
 def test_common_crawler_lifecycle(test_core: SourceCollectorCore):

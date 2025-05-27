@@ -3,12 +3,12 @@ from typing import Optional
 from fastapi import APIRouter, Depends, Query, Path
 
 from api.dependencies import get_async_core
-from db.DTOs.GetTaskStatusResponseInfo import GetTaskStatusResponseInfo
-from db.DTOs.TaskInfo import TaskInfo
-from db.enums import TaskType
-from core.AsyncCore import AsyncCore
-from core.enums import BatchStatus
-from security_manager.SecurityManager import AccessInfo, get_access_info
+from src.db.DTOs.GetTaskStatusResponseInfo import GetTaskStatusResponseInfo
+from src.db.DTOs.TaskInfo import TaskInfo
+from src.db.enums import TaskType
+from src.core.AsyncCore import AsyncCore
+from src.core.enums import BatchStatus
+from src.security_manager.SecurityManager import AccessInfo, get_access_info
 
 task_router = APIRouter(
     prefix="/task",

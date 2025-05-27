@@ -1,9 +1,9 @@
 from collector_manager.ExampleCollector import ExampleCollector
 from collector_manager.enums import CollectorType
-from source_collectors.auto_googler.AutoGooglerCollector import AutoGooglerCollector
-from source_collectors.ckan.CKANCollector import CKANCollector
-from source_collectors.common_crawler.CommonCrawlerCollector import CommonCrawlerCollector
-from source_collectors.muckrock.classes.MuckrockCollector import MuckrockSimpleSearchCollector, \
+from src.source_collectors.auto_googler.AutoGooglerCollector import AutoGooglerCollector
+from src.source_collectors.ckan import CKANCollector
+from src.source_collectors.common_crawler import CommonCrawlerCollector
+from src.source_collectors.muckrock.classes import MuckrockSimpleSearchCollector, \
     MuckrockCountyLevelSearchCollector, MuckrockAllFOIARequestsCollector
 
 COLLECTOR_MAPPING = {

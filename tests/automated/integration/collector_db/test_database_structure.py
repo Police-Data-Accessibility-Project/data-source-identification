@@ -14,16 +14,16 @@ import pytest
 import sqlalchemy as sa
 from sqlalchemy import create_engine
 from sqlalchemy.dialects import postgresql
-from sqlalchemy.exc import DataError, DBAPIError
+from sqlalchemy.exc import DataError
 
-from db.DTOs.InsertURLsInfo import InsertURLsInfo
-from db.enums import URLHTMLContentType
-from db.helper_functions import get_postgres_connection_string
-from db.models import Base, Agency
+from src.db.DTOs.InsertURLsInfo import InsertURLsInfo
+from src.db.enums import URLHTMLContentType
+from src.db.helper_functions import get_postgres_connection_string
+from src.db.models import Base, Agency
 from collector_manager.enums import CollectorType, URLStatus
-from core.DTOs.URLAgencySuggestionInfo import URLAgencySuggestionInfo
-from core.enums import BatchStatus, SuggestionType
-from tests.helpers.DBDataCreator import DBDataCreator, BatchURLCreationInfo
+from src.core.DTOs.URLAgencySuggestionInfo import URLAgencySuggestionInfo
+from src.core.enums import BatchStatus, SuggestionType
+from tests.helpers.DBDataCreator import DBDataCreator
 from util.helper_functions import get_enum_values
 
 SATypes: TypeAlias = sa.Integer or sa.String or postgresql.ENUM or sa.TIMESTAMP or sa.Text

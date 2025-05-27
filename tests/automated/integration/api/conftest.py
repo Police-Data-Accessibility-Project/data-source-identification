@@ -1,19 +1,19 @@
 import asyncio
 from dataclasses import dataclass
 from typing import Generator
-from unittest.mock import MagicMock, AsyncMock
+from unittest.mock import AsyncMock
 
 import pytest
 import pytest_asyncio
 from starlette.testclient import TestClient
 
 from api.main import app
-from core.AsyncCore import AsyncCore
+from src.core.AsyncCore import AsyncCore
 from api.routes.review import requires_final_review_permission
-from core.DTOs.GetBatchStatusResponse import GetBatchStatusResponse
-from core.SourceCollectorCore import SourceCollectorCore
-from core.enums import BatchStatus
-from security_manager.SecurityManager import get_access_info, AccessInfo, Permissions, require_permission
+from src.core.DTOs.GetBatchStatusResponse import GetBatchStatusResponse
+from src.core.SourceCollectorCore import SourceCollectorCore
+from src.core.enums import BatchStatus
+from src.security_manager.SecurityManager import get_access_info, AccessInfo, Permissions
 from tests.helpers.DBDataCreator import DBDataCreator
 from tests.automated.integration.api.helpers.RequestValidator import RequestValidator
 

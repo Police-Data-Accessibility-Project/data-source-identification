@@ -14,20 +14,20 @@ from api.routes.root import root_router
 from api.routes.search import search_router
 from api.routes.task import task_router
 from api.routes.url import url_router
-from db.AsyncDatabaseClient import AsyncDatabaseClient
-from db.DatabaseClient import DatabaseClient
+from src.db.AsyncDatabaseClient import AsyncDatabaseClient
+from src.db.DatabaseClient import DatabaseClient
 from collector_manager.AsyncCollectorManager import AsyncCollectorManager
-from core.AsyncCore import AsyncCore
-from core.AsyncCoreLogger import AsyncCoreLogger
-from core.EnvVarManager import EnvVarManager
-from core.ScheduledTaskManager import AsyncScheduledTaskManager
-from core.SourceCollectorCore import SourceCollectorCore
-from core.TaskManager import TaskManager
-from html_tag_collector.ResponseParser import HTMLResponseParser
-from html_tag_collector.RootURLCache import RootURLCache
-from html_tag_collector.URLRequestInterface import URLRequestInterface
+from src.core.AsyncCore import AsyncCore
+from src.core.AsyncCoreLogger import AsyncCoreLogger
+from src.core.EnvVarManager import EnvVarManager
+from src.core.ScheduledTaskManager import AsyncScheduledTaskManager
+from src.core.SourceCollectorCore import SourceCollectorCore
+from src.core.TaskManager import TaskManager
+from src.html_tag_collector.ResponseParser import HTMLResponseParser
+from src.html_tag_collector.RootURLCache import RootURLCache
+from src.html_tag_collector.URLRequestInterface import URLRequestInterface
 from pdap_access_manager import AccessManager
-from pdap_api_client.PDAPClient import PDAPClient
+from src.pdap_api_client.PDAPClient import PDAPClient
 from discord_poster import DiscordPoster
 
 

@@ -1,13 +1,13 @@
 import json
 import pickle
-from unittest.mock import MagicMock, AsyncMock
+from unittest.mock import AsyncMock
 
 import pytest
 
-from db.AsyncDatabaseClient import AsyncDatabaseClient
-from core.AsyncCoreLogger import AsyncCoreLogger
-from source_collectors.ckan.CKANCollector import CKANCollector
-from source_collectors.ckan.DTOs import CKANInputDTO
+from src.db import AsyncDatabaseClient
+from src.core.AsyncCoreLogger import AsyncCoreLogger
+from src.source_collectors.ckan import CKANCollector
+from src.source_collectors.ckan.DTOs import CKANInputDTO
 
 
 @pytest.fixture

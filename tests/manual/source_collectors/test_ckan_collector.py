@@ -1,13 +1,13 @@
-from unittest.mock import MagicMock, AsyncMock
+from unittest.mock import AsyncMock
 
 import pytest
 from marshmallow import Schema, fields
 
-from db.AsyncDatabaseClient import AsyncDatabaseClient
-from core.AsyncCoreLogger import AsyncCoreLogger
-from source_collectors.ckan.CKANCollector import CKANCollector
-from source_collectors.ckan.DTOs import CKANInputDTO
-from source_collectors.ckan.search_terms import package_search, group_search, organization_search
+from src.db import AsyncDatabaseClient
+from src.core.AsyncCoreLogger import AsyncCoreLogger
+from src.source_collectors.ckan import CKANCollector
+from src.source_collectors.ckan.DTOs import CKANInputDTO
+from src.source_collectors.ckan.search_terms import package_search, group_search, organization_search
 
 
 class CKANSchema(Schema):

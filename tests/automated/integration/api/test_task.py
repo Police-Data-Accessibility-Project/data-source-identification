@@ -1,6 +1,6 @@
 import pytest
 
-from db.enums import TaskType
+from src.db.enums import TaskType
 from tests.automated.integration.api.conftest import APITestHelper
 
 

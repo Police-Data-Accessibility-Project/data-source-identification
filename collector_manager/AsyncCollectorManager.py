@@ -5,13 +5,13 @@ from typing import Dict
 from fastapi import HTTPException
 from pydantic import BaseModel
 
-from db.AsyncDatabaseClient import AsyncDatabaseClient
+from src.db.AsyncDatabaseClient import AsyncDatabaseClient
 from collector_manager.AsyncCollectorBase import AsyncCollectorBase
 from collector_manager.CollectorManager import InvalidCollectorError
 from collector_manager.collector_mapping import COLLECTOR_MAPPING
 from collector_manager.enums import CollectorType
-from core.AsyncCoreLogger import AsyncCoreLogger
-from core.FunctionTrigger import FunctionTrigger
+from src.core.AsyncCoreLogger import AsyncCoreLogger
+from src.core.FunctionTrigger import FunctionTrigger
 
 
 class AsyncCollectorManager:

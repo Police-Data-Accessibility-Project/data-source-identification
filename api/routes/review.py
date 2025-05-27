@@ -3,11 +3,10 @@ from typing import Optional
 from fastapi import APIRouter, Depends, Query
 
 from api.dependencies import get_async_core
-from core.AsyncCore import AsyncCore
-from core.DTOs.FinalReviewApprovalInfo import FinalReviewApprovalInfo, FinalReviewBaseInfo, FinalReviewRejectionInfo
-from core.DTOs.GetNextURLForFinalReviewResponse import GetNextURLForFinalReviewResponse, \
-    GetNextURLForFinalReviewOuterResponse
-from security_manager.SecurityManager import AccessInfo, get_access_info, require_permission, Permissions
+from src.core.AsyncCore import AsyncCore
+from src.core.DTOs.FinalReviewApprovalInfo import FinalReviewApprovalInfo, FinalReviewRejectionInfo
+from src.core.DTOs.GetNextURLForFinalReviewResponse import GetNextURLForFinalReviewOuterResponse
+from src.security_manager.SecurityManager import AccessInfo, require_permission, Permissions
 
 review_router = APIRouter(
     prefix="/review",

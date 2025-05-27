@@ -1,5 +1,5 @@
-from core.AsyncCore import AsyncCore
-from core.SourceCollectorCore import SourceCollectorCore
+from src.core.AsyncCore import AsyncCore
+from src.core.SourceCollectorCore import SourceCollectorCore
 
 
 def get_core() -> SourceCollectorCore:

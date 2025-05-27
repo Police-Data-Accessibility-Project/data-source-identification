@@ -3,11 +3,11 @@ from alembic.config import Config
 from sqlalchemy import create_engine, inspect, MetaData
 from sqlalchemy.orm import scoped_session, sessionmaker
 
-from db.AsyncDatabaseClient import AsyncDatabaseClient
-from db.DatabaseClient import DatabaseClient
-from db.helper_functions import get_postgres_connection_string
-from db.models import Base
-from core.EnvVarManager import EnvVarManager
+from src.db import AsyncDatabaseClient
+from src.db.DatabaseClient import DatabaseClient
+from src.db.helper_functions import get_postgres_connection_string
+from src.db.models import Base
+from src.core.EnvVarManager import EnvVarManager
 from tests.helpers.AlembicRunner import AlembicRunner
 from tests.helpers.DBDataCreator import DBDataCreator
 from util.helper_functions import load_from_environment

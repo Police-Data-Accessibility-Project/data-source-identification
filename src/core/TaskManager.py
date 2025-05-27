@@ -1,0 +1,198 @@
+import logging
+
+from src.core.classes.task_operators.URL404ProbeTaskOperator import URL404ProbeTaskOperator
+from src.core.classes.task_operators.URLDuplicateTaskOperator import URLDuplicateTaskOperator
+from src.source_collectors.muckrock.MuckrockAPIInterface import MuckrockAPIInterface
+from src.db.AsyncDatabaseClient import AsyncDatabaseClient
+from src.db.DTOs.TaskInfo import TaskInfo
+from src.db.enums import TaskType
+from src.core.DTOs.GetTasksResponse import GetTasksResponse
+from src.core.DTOs.TaskOperatorRunInfo import TaskOperatorRunInfo, TaskOperatorOutcome
+from src.core.FunctionTrigger import FunctionTrigger
+from src.core.classes.task_operators.AgencyIdentificationTaskOperator import AgencyIdentificationTaskOperator
+from src.core.classes.task_operators.SubmitApprovedURLTaskOperator import SubmitApprovedURLTaskOperator
+from src.core.classes.task_operators.TaskOperatorBase import TaskOperatorBase
+from src.core.classes.task_operators.URLHTMLTaskOperator import URLHTMLTaskOperator
+from src.core.classes.task_operators.URLMiscellaneousMetadataTaskOperator import URLMiscellaneousMetadataTaskOperator
+from src.core.classes.task_operators.URLRecordTypeTaskOperator import URLRecordTypeTaskOperator
+from src.core.enums import BatchStatus
+from src.html_tag_collector.ResponseParser import HTMLResponseParser
+from src.html_tag_collector.URLRequestInterface import URLRequestInterface
+from src.llm_api_logic.OpenAIRecordClassifier import OpenAIRecordClassifier
+from src.pdap_api_client.PDAPClient import PDAPClient
+from discord_poster import DiscordPoster
+
+TASK_REPEAT_THRESHOLD = 20
+
+class TaskManager:
+
+    def __init__(
+            self,
+            adb_client: AsyncDatabaseClient,
+            url_request_interface: URLRequestInterface,
+            html_parser: HTMLResponseParser,
+            discord_poster: DiscordPoster,
+            pdap_client: PDAPClient,
+    ):
+        # Dependencies
+        self.adb_client = adb_client
+        self.pdap_client = pdap_client
+        self.url_request_interface = url_request_interface
+        self.html_parser = html_parser
+        self.discord_poster = discord_poster
+
+        self.logger = logging.getLogger(__name__)
+        self.logger.addHandler(logging.StreamHandler())
+        self.logger.setLevel(logging.INFO)
+        self.task_trigger = FunctionTrigger(self.run_tasks)
+        self.task_status: TaskType = TaskType.IDLE
+
+    #region Task Operators
+    async def get_url_html_task_operator(self):
+        operator = URLHTMLTaskOperator(
+            adb_client=self.adb_client,
+            url_request_interface=self.url_request_interface,
+            html_parser=self.html_parser
+        )
+        return operator
+
+    async def get_url_record_type_task_operator(self):
+        operator = URLRecordTypeTaskOperator(
+            adb_client=self.adb_client,
+            classifier=OpenAIRecordClassifier()
+        )
+        return operator
+
+    async def get_agency_identification_task_operator(self):
+        muckrock_api_interface = MuckrockAPIInterface()
+        operator = AgencyIdentificationTaskOperator(
+            adb_client=self.adb_client,
+            pdap_client=self.pdap_client,
+            muckrock_api_interface=muckrock_api_interface
+        )
+        return operator
+
+    async def get_submit_approved_url_task_operator(self):
+        operator = SubmitApprovedURLTaskOperator(
+            adb_client=self.adb_client,
+            pdap_client=self.pdap_client
+        )
+        return operator
+
+    async def get_url_miscellaneous_metadata_task_operator(self):
+        operator = URLMiscellaneousMetadataTaskOperator(
+            adb_client=self.adb_client
+        )
+        return operator
+
+    async def get_url_duplicate_task_operator(self):
+        operator = URLDuplicateTaskOperator(
+            adb_client=self.adb_client,
+            pdap_client=self.pdap_client
+        )
+        return operator
+
+    async def get_url_404_probe_task_operator(self):
+        operator = URL404ProbeTaskOperator(
+            adb_client=self.adb_client,
+            url_request_interface=self.url_request_interface
+        )
+        return operator
+
+    async def get_task_operators(self) -> list[TaskOperatorBase]:
+        return [
+            await self.get_url_html_task_operator(),
+            await self.get_url_duplicate_task_operator(),
+            await self.get_url_404_probe_task_operator(),
+            await self.get_url_record_type_task_operator(),
+            await self.get_agency_identification_task_operator(),
+            await self.get_url_miscellaneous_metadata_task_operator(),
+            await self.get_submit_approved_url_task_operator()
+        ]
+
+    #endregion
+
+    #region Tasks
+    async def set_task_status(self, task_type: TaskType):
+        self.task_status = task_type
+
+    async def run_tasks(self):
+        operators = await self.get_task_operators()
+        for operator in operators:
+            count = 0
+            await self.set_task_status(task_type=operator.task_type)
+
+            meets_prereq = await operator.meets_task_prerequisites()
+            while meets_prereq:
+                print(f"Running {operator.task_type.value} Task")
+                if count > TASK_REPEAT_THRESHOLD:
+                    message = f"Task {operator.task_type.value} has been run more than {TASK_REPEAT_THRESHOLD} times in a row. Task loop terminated."
+                    print(message)
+                    self.discord_poster.post_to_discord(message=message)
+                    break
+                task_id = await self.initiate_task_in_db(task_type=operator.task_type)
+                run_info: TaskOperatorRunInfo = await operator.run_task(task_id)
+                await self.conclude_task(run_info)
+                if run_info.outcome == TaskOperatorOutcome.ERROR:
+                    break
+                count += 1
+                meets_prereq = await operator.meets_task_prerequisites()
+        await self.set_task_status(task_type=TaskType.IDLE)
+
+    async def trigger_task_run(self):
+        await self.task_trigger.trigger_or_rerun()
+
+
+    async def conclude_task(self, run_info):
+        await self.adb_client.link_urls_to_task(
+            task_id=run_info.task_id,
+            url_ids=run_info.linked_url_ids
+        )
+        await self.handle_outcome(run_info)
+
+    async def initiate_task_in_db(self, task_type: TaskType) -> int:
+        self.logger.info(f"Initiating {task_type.value} Task")
+        task_id = await self.adb_client.initiate_task(task_type=task_type)
+        return task_id
+
+    async def handle_outcome(self, run_info: TaskOperatorRunInfo):
+        match run_info.outcome:
+            case TaskOperatorOutcome.ERROR:
+                await self.handle_task_error(run_info)
+            case TaskOperatorOutcome.SUCCESS:
+                await self.adb_client.update_task_status(
+                    task_id=run_info.task_id,
+                    status=BatchStatus.READY_TO_LABEL
+                )
+
+    async def handle_task_error(self, run_info: TaskOperatorRunInfo):
+        await self.adb_client.update_task_status(
+            task_id=run_info.task_id,
+            status=BatchStatus.ERROR)
+        await self.adb_client.add_task_error(
+            task_id=run_info.task_id,
+            error=run_info.message
+        )
+        await self.discord_poster.post_to_discord(
+            message=f"Task {run_info.task_id} ({self.task_status.value}) failed with error.")
+
+    async def get_task_info(self, task_id: int) -> TaskInfo:
+        return await self.adb_client.get_task_info(task_id=task_id)
+
+    async def get_tasks(
+            self,
+            page: int,
+            task_type: TaskType,
+            task_status: BatchStatus
+    ) -> GetTasksResponse:
+        return await self.adb_client.get_tasks(
+            page=page,
+            task_type=task_type,
+            task_status=task_status
+        )
+
+
+    #endregion
+
+
+

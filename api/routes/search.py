@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Query, Depends
 
 from api.dependencies import get_async_core
-from core.AsyncCore import AsyncCore
-from core.DTOs.SearchURLResponse import SearchURLResponse
-from security_manager.SecurityManager import get_access_info, AccessInfo
+from src.core.AsyncCore import AsyncCore
+from src.core.DTOs.SearchURLResponse import SearchURLResponse
+from src.security_manager.SecurityManager import get_access_info, AccessInfo
 
 search_router = APIRouter(prefix="/search", tags=["search"])
 

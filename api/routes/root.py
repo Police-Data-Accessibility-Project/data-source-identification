@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Query, Depends
 
-from security_manager.SecurityManager import AccessInfo, get_access_info
+from src.security_manager.SecurityManager import AccessInfo, get_access_info
 
 root_router = APIRouter(prefix="", tags=["root"])
 

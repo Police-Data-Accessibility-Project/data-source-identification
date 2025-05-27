@@ -4,7 +4,7 @@ from typing import Optional
 from pydantic import BaseModel, model_validator
 
 from collector_manager.enums import URLStatus, CollectorType
-from core.enums import BatchStatus, AnnotationType, RecordType, SuggestedStatus
+from src.core.enums import BatchStatus, RecordType, SuggestedStatus
 
 
 class AnnotationInfo(BaseModel):

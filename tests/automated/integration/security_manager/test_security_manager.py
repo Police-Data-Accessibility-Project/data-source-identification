@@ -3,7 +3,7 @@ import pytest
 from starlette.testclient import TestClient
 
 from api.main import app
-from security_manager.SecurityManager import Permissions, ALGORITHM
+from src.security_manager.SecurityManager import Permissions, ALGORITHM
 
 PATCH_ROOT = "security_manager.SecurityManager"
 

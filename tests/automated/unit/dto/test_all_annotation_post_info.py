@@ -1,8 +1,8 @@
 import pytest
 
-from core.DTOs.AllAnnotationPostInfo import AllAnnotationPostInfo
-from core.enums import RecordType, SuggestedStatus
-from core.exceptions import FailedValidationException
+from src.core.DTOs.AllAnnotationPostInfo import AllAnnotationPostInfo
+from src.core.enums import RecordType, SuggestedStatus
+from src.core.exceptions import FailedValidationException
 
 # Mock values to pass
 mock_record_type = RecordType.ARREST_RECORDS.value  # replace with valid RecordType if Enum

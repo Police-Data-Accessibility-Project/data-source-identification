@@ -2,11 +2,11 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from db.AsyncDatabaseClient import AsyncDatabaseClient
-from db.DTOs.URLInfo import URLInfo
-from core.AsyncCoreLogger import AsyncCoreLogger
-from source_collectors.auto_googler.AutoGooglerCollector import AutoGooglerCollector
-from source_collectors.auto_googler.DTOs import GoogleSearchQueryResultsInnerDTO, AutoGooglerInputDTO
+from src.db import AsyncDatabaseClient
+from src.db.DTOs import URLInfo
+from src.core.AsyncCoreLogger import AsyncCoreLogger
+from src.source_collectors.auto_googler.AutoGooglerCollector import AutoGooglerCollector
+from src.source_collectors.auto_googler.DTOs import GoogleSearchQueryResultsInnerDTO, AutoGooglerInputDTO
 
 
 @pytest.fixture

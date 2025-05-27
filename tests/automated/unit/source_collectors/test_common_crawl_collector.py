@@ -2,11 +2,11 @@ from unittest import mock
 
 import pytest
 
-from db.AsyncDatabaseClient import AsyncDatabaseClient
-from db.DTOs.URLInfo import URLInfo
-from core.AsyncCoreLogger import AsyncCoreLogger
-from source_collectors.common_crawler.CommonCrawlerCollector import CommonCrawlerCollector
-from source_collectors.common_crawler.DTOs import CommonCrawlerInputDTO
+from src.db import AsyncDatabaseClient
+from src.db.DTOs import URLInfo
+from src.core.AsyncCoreLogger import AsyncCoreLogger
+from src.source_collectors.common_crawler import CommonCrawlerCollector
+from src.source_collectors.common_crawler.DTOs import CommonCrawlerInputDTO
 
 
 @pytest.fixture

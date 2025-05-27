@@ -3,7 +3,7 @@ from alembic.config import Config
 from sqlalchemy import create_engine, inspect, MetaData
 from sqlalchemy.orm import scoped_session, sessionmaker
 
-from db.helper_functions import get_postgres_connection_string
+from src.db.helper_functions import get_postgres_connection_string
 from tests.helpers.AlembicRunner import AlembicRunner
 
 

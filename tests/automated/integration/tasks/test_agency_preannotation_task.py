@@ -6,22 +6,22 @@ import pytest
 from aiohttp import ClientSession
 
 from tests.helpers.test_batch_creation_parameters import TestBatchCreationParameters, TestURLCreationParameters
-from source_collectors.muckrock.MuckrockAPIInterface import MuckrockAPIInterface, AgencyLookupResponseType, AgencyLookupResponse
-from db.models import Agency, AutomatedUrlAgencySuggestion
+from src.source_collectors.muckrock.MuckrockAPIInterface import MuckrockAPIInterface, AgencyLookupResponseType, AgencyLookupResponse
+from src.db.models import Agency, AutomatedUrlAgencySuggestion
 from collector_manager.enums import CollectorType, URLStatus
-from core.DTOs.TaskOperatorRunInfo import TaskOperatorOutcome
-from core.DTOs.URLAgencySuggestionInfo import URLAgencySuggestionInfo
-from core.classes.task_operators.AgencyIdentificationTaskOperator import AgencyIdentificationTaskOperator
-from core.classes.subtasks.AutoGooglerAgencyIdentificationSubtask import AutoGooglerAgencyIdentificationSubtask
-from core.classes.subtasks.CKANAgencyIdentificationSubtask import CKANAgencyIdentificationSubtask
-from core.classes.subtasks.CommonCrawlerAgencyIdentificationSubtask import CommonCrawlerAgencyIdentificationSubtask
-from core.classes.subtasks.MuckrockAgencyIdentificationSubtask import MuckrockAgencyIdentificationSubtask
-from core.enums import SuggestionType
+from src.core.DTOs.TaskOperatorRunInfo import TaskOperatorOutcome
+from src.core.DTOs.URLAgencySuggestionInfo import URLAgencySuggestionInfo
+from src.core.classes.task_operators.AgencyIdentificationTaskOperator import AgencyIdentificationTaskOperator
+from src.core.classes.subtasks.AutoGooglerAgencyIdentificationSubtask import AutoGooglerAgencyIdentificationSubtask
+from src.core.classes.subtasks.CKANAgencyIdentificationSubtask import CKANAgencyIdentificationSubtask
+from src.core.classes.subtasks.CommonCrawlerAgencyIdentificationSubtask import CommonCrawlerAgencyIdentificationSubtask
+from src.core.classes.subtasks.MuckrockAgencyIdentificationSubtask import MuckrockAgencyIdentificationSubtask
+from src.core.enums import SuggestionType
 from pdap_access_manager import AccessManager
-from pdap_api_client.DTOs import MatchAgencyResponse, MatchAgencyInfo
-from pdap_api_client.PDAPClient import PDAPClient
-from pdap_api_client.enums import MatchAgencyResponseStatus
-from tests.helpers.DBDataCreator import DBDataCreator, BatchURLCreationInfo, BatchURLCreationInfoV2
+from src.pdap_api_client.DTOs import MatchAgencyResponse, MatchAgencyInfo
+from src.pdap_api_client.PDAPClient import PDAPClient
+from src.pdap_api_client import MatchAgencyResponseStatus
+from tests.helpers.DBDataCreator import DBDataCreator, BatchURLCreationInfoV2
 
 sample_agency_suggestions = [
     URLAgencySuggestionInfo(

@@ -9,7 +9,7 @@ from collector_manager.AsyncCollectorBase import AsyncCollectorBase
 from collector_manager.DTOs.ExampleInputDTO import ExampleInputDTO
 from collector_manager.DTOs.ExampleOutputDTO import ExampleOutputDTO
 from collector_manager.enums import CollectorType
-from core.preprocessors.ExamplePreprocessor import ExamplePreprocessor
+from src.core.preprocessors.ExamplePreprocessor import ExamplePreprocessor
 
 
 class ExampleCollector(AsyncCollectorBase):

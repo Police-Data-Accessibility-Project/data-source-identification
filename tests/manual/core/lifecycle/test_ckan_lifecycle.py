@@ -1,9 +1,9 @@
 
 import api.dependencies
-from db.DTOs.BatchInfo import BatchInfo
+from src.db.DTOs.BatchInfo import BatchInfo
 from collector_manager.enums import CollectorType
-from core.enums import BatchStatus
-from source_collectors.ckan.search_terms import group_search, package_search, organization_search
+from src.core.enums import BatchStatus
+from src.source_collectors.ckan.search_terms import group_search, package_search, organization_search
 from test_automated.integration.core.helpers.common_test_procedures import run_collector_and_wait_for_completion
 
 

@@ -4,15 +4,15 @@ from fastapi.params import Depends
 from api.dependencies import get_async_core
 from collector_manager.DTOs.ExampleInputDTO import ExampleInputDTO
 from collector_manager.enums import CollectorType
-from core.AsyncCore import AsyncCore
-from core.DTOs.CollectorStartInfo import CollectorStartInfo
-from core.DTOs.ManualBatchInputDTO import ManualBatchInputDTO
-from core.DTOs.ManualBatchResponseDTO import ManualBatchResponseDTO
-from security_manager.SecurityManager import AccessInfo, get_access_info
-from source_collectors.auto_googler.DTOs import AutoGooglerInputDTO
-from source_collectors.ckan.DTOs import CKANInputDTO
-from source_collectors.common_crawler.DTOs import CommonCrawlerInputDTO
-from source_collectors.muckrock.DTOs import MuckrockCountySearchCollectorInputDTO, \
+from src.core.AsyncCore import AsyncCore
+from src.core.DTOs.CollectorStartInfo import CollectorStartInfo
+from src.core.DTOs.ManualBatchInputDTO import ManualBatchInputDTO
+from src.core.DTOs.ManualBatchResponseDTO import ManualBatchResponseDTO
+from src.security_manager.SecurityManager import AccessInfo, get_access_info
+from src.source_collectors.auto_googler.DTOs import AutoGooglerInputDTO
+from src.source_collectors.ckan.DTOs import CKANInputDTO
+from src.source_collectors.common_crawler.DTOs import CommonCrawlerInputDTO
+from src.source_collectors.muckrock.DTOs import MuckrockCountySearchCollectorInputDTO, \
     MuckrockAllFOIARequestsCollectorInputDTO, MuckrockSimpleSearchCollectorInputDTO
 
 collector_router = APIRouter(

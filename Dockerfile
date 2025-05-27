@@ -18,21 +18,21 @@ RUN playwright install chromium
 
 # Copy project files
 COPY api ./api
-COPY db ./collector_db
+COPY src/db ./collector_db
 COPY collector_manager ./collector_manager
-COPY core ./core
-COPY html_tag_collector ./html_tag_collector
-COPY source_collectors ./source_collectors
+COPY src/core ./core
+COPY src/html_tag_collector ./html_tag_collector
+COPY src/source_collectors ./source_collectors
 COPY util ./util
 COPY alembic.ini ./alembic.ini
 COPY alembic ./alembic
 COPY apply_migrations.py ./apply_migrations.py
-COPY security_manager ./security_manager
-COPY pdap_api_client ./pdap_api_client
+COPY src/security_manager ./security_manager
+COPY src/pdap_api_client ./pdap_api_client
 COPY execute.sh ./execute.sh
 COPY .project-root ./.project-root
 
-COPY llm_api_logic ./llm_api_logic
+COPY src/llm_api_logic ./llm_api_logic
 
 # Expose the application port
 EXPOSE 80

@@ -1,19 +1,19 @@
 from http import HTTPStatus
-from unittest.mock import MagicMock, AsyncMock
+from unittest.mock import AsyncMock
 
 import pytest
 from deepdiff import DeepDiff
 
-from db.enums import TaskType
-from db.models import URL, URLErrorInfo, URLDataSource
+from src.db.enums import TaskType
+from src.db.models import URL, URLErrorInfo, URLDataSource
 from collector_manager.enums import URLStatus
-from core.DTOs.FinalReviewApprovalInfo import FinalReviewApprovalInfo
-from core.DTOs.TaskOperatorRunInfo import TaskOperatorOutcome
-from core.classes.task_operators.SubmitApprovedURLTaskOperator import SubmitApprovedURLTaskOperator
-from core.enums import RecordType, SubmitResponseStatus
+from src.core.DTOs.FinalReviewApprovalInfo import FinalReviewApprovalInfo
+from src.core.DTOs.TaskOperatorRunInfo import TaskOperatorOutcome
+from src.core.classes.task_operators.SubmitApprovedURLTaskOperator import SubmitApprovedURLTaskOperator
+from src.core.enums import RecordType, SubmitResponseStatus
 from tests.helpers.DBDataCreator import BatchURLCreationInfo, DBDataCreator
 from pdap_access_manager import RequestInfo, RequestType, ResponseInfo, DataSourcesNamespaces
-from pdap_api_client.PDAPClient import PDAPClient
+from src.pdap_api_client.PDAPClient import PDAPClient
 
 
 def mock_make_request(pdap_client: PDAPClient, urls: list[str]):

@@ -3,14 +3,14 @@ from unittest.mock import MagicMock, call, AsyncMock
 
 import pytest
 
-from db.AsyncDatabaseClient import AsyncDatabaseClient
-from db.DTOs.URLInfo import URLInfo
-from core.AsyncCoreLogger import AsyncCoreLogger
-from source_collectors.muckrock.DTOs import MuckrockSimpleSearchCollectorInputDTO, \
+from src.db import AsyncDatabaseClient
+from src.db.DTOs import URLInfo
+from src.core.AsyncCoreLogger import AsyncCoreLogger
+from src.source_collectors.muckrock.DTOs import MuckrockSimpleSearchCollectorInputDTO, \
     MuckrockCountySearchCollectorInputDTO, MuckrockAllFOIARequestsCollectorInputDTO
-from source_collectors.muckrock.classes.MuckrockCollector import MuckrockSimpleSearchCollector, \
+from src.source_collectors.muckrock.classes import MuckrockSimpleSearchCollector, \
     MuckrockCountyLevelSearchCollector, MuckrockAllFOIARequestsCollector
-from source_collectors.muckrock.classes.muckrock_fetchers.FOIAFetcher import FOIAFetchRequest
+from src.source_collectors.muckrock.classes import FOIAFetchRequest
 
 
 @pytest.fixture

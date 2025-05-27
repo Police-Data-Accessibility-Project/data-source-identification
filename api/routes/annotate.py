@@ -3,16 +3,16 @@ from typing import Optional
 from fastapi import APIRouter, Depends, Path, Query
 
 from api.dependencies import get_async_core
-from core.AsyncCore import AsyncCore
-from core.DTOs.AllAnnotationPostInfo import AllAnnotationPostInfo
-from core.DTOs.GetNextRecordTypeAnnotationResponseInfo import GetNextRecordTypeAnnotationResponseOuterInfo
-from core.DTOs.GetNextRelevanceAnnotationResponseInfo import GetNextRelevanceAnnotationResponseOuterInfo
-from core.DTOs.GetNextURLForAgencyAnnotationResponse import GetNextURLForAgencyAnnotationResponse, \
+from src.core.AsyncCore import AsyncCore
+from src.core.DTOs.AllAnnotationPostInfo import AllAnnotationPostInfo
+from src.core.DTOs.GetNextRecordTypeAnnotationResponseInfo import GetNextRecordTypeAnnotationResponseOuterInfo
+from src.core.DTOs.GetNextRelevanceAnnotationResponseInfo import GetNextRelevanceAnnotationResponseOuterInfo
+from src.core.DTOs.GetNextURLForAgencyAnnotationResponse import GetNextURLForAgencyAnnotationResponse, \
     URLAgencyAnnotationPostInfo
-from core.DTOs.GetNextURLForAllAnnotationResponse import GetNextURLForAllAnnotationResponse
-from core.DTOs.RecordTypeAnnotationPostInfo import RecordTypeAnnotationPostInfo
-from core.DTOs.RelevanceAnnotationPostInfo import RelevanceAnnotationPostInfo
-from security_manager.SecurityManager import get_access_info, AccessInfo
+from src.core.DTOs.GetNextURLForAllAnnotationResponse import GetNextURLForAllAnnotationResponse
+from src.core.DTOs.RecordTypeAnnotationPostInfo import RecordTypeAnnotationPostInfo
+from src.core.DTOs.RelevanceAnnotationPostInfo import RelevanceAnnotationPostInfo
+from src.security_manager.SecurityManager import get_access_info, AccessInfo
 
 annotate_router = APIRouter(
     prefix="/annotate",

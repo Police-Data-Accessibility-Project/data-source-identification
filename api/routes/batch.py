@@ -3,18 +3,17 @@ from typing import Optional
 from fastapi import Path, APIRouter
 from fastapi.params import Query, Depends
 
-from api.dependencies import get_core, get_async_core
-from db.DTOs.BatchInfo import BatchInfo
+from api.dependencies import get_async_core
+from src.db.DTOs.BatchInfo import BatchInfo
 from collector_manager.enums import CollectorType
-from core.AsyncCore import AsyncCore
-from core.DTOs.GetBatchLogsResponse import GetBatchLogsResponse
-from core.DTOs.GetBatchStatusResponse import GetBatchStatusResponse
-from core.DTOs.GetDuplicatesByBatchResponse import GetDuplicatesByBatchResponse
-from core.DTOs.GetURLsByBatchResponse import GetURLsByBatchResponse
-from core.DTOs.MessageResponse import MessageResponse
-from core.SourceCollectorCore import SourceCollectorCore
-from core.enums import BatchStatus
-from security_manager.SecurityManager import AccessInfo, get_access_info
+from src.core.AsyncCore import AsyncCore
+from src.core.DTOs.GetBatchLogsResponse import GetBatchLogsResponse
+from src.core.DTOs.GetBatchStatusResponse import GetBatchStatusResponse
+from src.core.DTOs.GetDuplicatesByBatchResponse import GetDuplicatesByBatchResponse
+from src.core.DTOs.GetURLsByBatchResponse import GetURLsByBatchResponse
+from src.core.DTOs.MessageResponse import MessageResponse
+from src.core.enums import BatchStatus
+from src.security_manager.SecurityManager import AccessInfo, get_access_info
 
 batch_router = APIRouter(
     prefix="/batch",

@@ -2,14 +2,14 @@ from fastapi import APIRouter
 from fastapi.params import Query, Depends
 
 from api.dependencies import get_async_core
-from core.AsyncCore import AsyncCore
-from core.DTOs.GetMetricsBacklogResponse import GetMetricsBacklogResponseDTO
-from core.DTOs.GetMetricsBatchesAggregatedResponseDTO import GetMetricsBatchesAggregatedResponseDTO
-from core.DTOs.GetMetricsBatchesBreakdownResponseDTO import GetMetricsBatchesBreakdownResponseDTO
-from core.DTOs.GetMetricsURLsAggregatedResponseDTO import GetMetricsURLsAggregatedResponseDTO
-from core.DTOs.GetMetricsURLsBreakdownPendingResponseDTO import GetMetricsURLsBreakdownPendingResponseDTO
-from core.DTOs.GetMetricsURLsBreakdownSubmittedResponseDTO import GetMetricsURLsBreakdownSubmittedResponseDTO
-from security_manager.SecurityManager import AccessInfo, get_access_info
+from src.core.AsyncCore import AsyncCore
+from src.core.DTOs.GetMetricsBacklogResponse import GetMetricsBacklogResponseDTO
+from src.core.DTOs.GetMetricsBatchesAggregatedResponseDTO import GetMetricsBatchesAggregatedResponseDTO
+from src.core.DTOs.GetMetricsBatchesBreakdownResponseDTO import GetMetricsBatchesBreakdownResponseDTO
+from src.core.DTOs.GetMetricsURLsAggregatedResponseDTO import GetMetricsURLsAggregatedResponseDTO
+from src.core.DTOs.GetMetricsURLsBreakdownPendingResponseDTO import GetMetricsURLsBreakdownPendingResponseDTO
+from src.core.DTOs.GetMetricsURLsBreakdownSubmittedResponseDTO import GetMetricsURLsBreakdownSubmittedResponseDTO
+from src.security_manager.SecurityManager import AccessInfo, get_access_info
 
 metrics_router = APIRouter(
     prefix="/metrics",

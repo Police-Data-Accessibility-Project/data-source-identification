@@ -2,13 +2,13 @@ import asyncio
 
 import pytest
 
-from db.DTOs.BatchInfo import BatchInfo
+from src.db.DTOs.BatchInfo import BatchInfo
 from collector_manager.DTOs.ExampleInputDTO import ExampleInputDTO
 from collector_manager.enums import CollectorType, URLStatus
-from core.AsyncCore import AsyncCore
-from core.DTOs.CollectorStartInfo import CollectorStartInfo
-from core.SourceCollectorCore import SourceCollectorCore
-from core.enums import BatchStatus
+from src.core.AsyncCore import AsyncCore
+from src.core.DTOs.CollectorStartInfo import CollectorStartInfo
+from src.core.SourceCollectorCore import SourceCollectorCore
+from src.core.enums import BatchStatus
 from tests.helpers.patch_functions import block_sleep
 
 

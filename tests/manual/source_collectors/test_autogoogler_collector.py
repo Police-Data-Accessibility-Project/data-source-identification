@@ -1,11 +1,11 @@
-from unittest.mock import MagicMock, AsyncMock
+from unittest.mock import AsyncMock
 
 import pytest
 
-from db.AsyncDatabaseClient import AsyncDatabaseClient
-from core.AsyncCoreLogger import AsyncCoreLogger
-from source_collectors.auto_googler.AutoGooglerCollector import AutoGooglerCollector
-from source_collectors.auto_googler.DTOs import AutoGooglerInputDTO
+from src.db import AsyncDatabaseClient
+from src.core.AsyncCoreLogger import AsyncCoreLogger
+from src.source_collectors.auto_googler.AutoGooglerCollector import AutoGooglerCollector
+from src.source_collectors.auto_googler.DTOs import AutoGooglerInputDTO
 
 @pytest.mark.asyncio
 async def test_autogoogler_collector():
