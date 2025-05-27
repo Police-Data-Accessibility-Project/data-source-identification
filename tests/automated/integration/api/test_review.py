@@ -1,12 +1,12 @@
 import pytest
 
-from db.constants import PLACEHOLDER_AGENCY_NAME
-from db.models import URL, URLOptionalDataSourceMetadata, ConfirmedURLAgency, Agency
-from collector_manager.enums import URLStatus
-from core.DTOs.FinalReviewApprovalInfo import FinalReviewApprovalInfo, FinalReviewBaseInfo, RejectionReason, \
+from src.db.constants import PLACEHOLDER_AGENCY_NAME
+from src.db.models import URL, URLOptionalDataSourceMetadata, ConfirmedURLAgency, Agency
+from src.collector_manager.enums import URLStatus
+from src.core.DTOs.FinalReviewApprovalInfo import FinalReviewApprovalInfo, RejectionReason, \
     FinalReviewRejectionInfo
-from core.DTOs.GetNextURLForFinalReviewResponse import GetNextURLForFinalReviewOuterResponse
-from core.enums import RecordType, SuggestedStatus
+from src.core.DTOs.GetNextURLForFinalReviewResponse import GetNextURLForFinalReviewOuterResponse
+from src.core.enums import RecordType, SuggestedStatus
 from tests.helpers.complex_test_data_functions import setup_for_get_next_url_for_final_review
 
 

@@ -3,7 +3,7 @@ from starlette.testclient import TestClient
 
 def test_root_endpoint_without_mocked_dependency():
     # Here, we use the app without a dependency override
-    from api.main import app
+    from src.api.main import app
     with TestClient(app) as c:
         response = c.get(
             url="/",

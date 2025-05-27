@@ -1,12 +1,12 @@
-from unittest.mock import MagicMock, AsyncMock
+from unittest.mock import AsyncMock
 
 import pytest
 from marshmallow import Schema, fields
 
-from db.AsyncDatabaseClient import AsyncDatabaseClient
-from core.AsyncCoreLogger import AsyncCoreLogger
-from source_collectors.common_crawler.CommonCrawlerCollector import CommonCrawlerCollector
-from source_collectors.common_crawler.DTOs import CommonCrawlerInputDTO
+from src.db import AsyncDatabaseClient
+from src.core.AsyncCoreLogger import AsyncCoreLogger
+from src.source_collectors.common_crawler import CommonCrawlerCollector
+from src.source_collectors.common_crawler.DTOs import CommonCrawlerInputDTO
 
 
 class CommonCrawlerSchema(Schema):

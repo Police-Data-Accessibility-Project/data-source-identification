@@ -2,10 +2,10 @@ from typing import Optional
 
 from pydantic import BaseModel
 
-from db.DTOs.InsertURLsInfo import InsertURLsInfo
-from db.DTOs.URLMapping import URLMapping
-from collector_manager.enums import URLStatus
-from core.enums import RecordType, SuggestionType
+from src.db.DTOs.InsertURLsInfo import InsertURLsInfo
+from src.db.DTOs.URLMapping import URLMapping
+from src.collector_manager.enums import URLStatus
+from src.core.enums import RecordType, SuggestionType
 from tests.helpers.DBDataCreator import BatchURLCreationInfo
 from tests.helpers.DBDataCreator import DBDataCreator
 

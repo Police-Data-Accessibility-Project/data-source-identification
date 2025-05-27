@@ -1,7 +1,7 @@
 import pytest
 
-from db.DTOs.InsertURLsInfo import InsertURLsInfo
-from core.DTOs.GetURLsResponseInfo import GetURLsResponseInfo
+from src.db.DTOs.InsertURLsInfo import InsertURLsInfo
+from src.core.DTOs.GetURLsResponseInfo import GetURLsResponseInfo
 
 
 @pytest.mark.asyncio

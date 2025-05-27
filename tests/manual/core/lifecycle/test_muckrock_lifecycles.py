@@ -1,15 +1,13 @@
-
-import api.dependencies
-from db.DTOs.BatchInfo import BatchInfo
-from collector_manager.enums import CollectorType
-from core.enums import BatchStatus
+from src.db.DTOs.BatchInfo import BatchInfo
+from src.collector_manager import CollectorType
+from src.core.enums import BatchStatus
 from test_automated.integration.core.helpers.common_test_procedures import run_collector_and_wait_for_completion
 from test_automated.integration.core.helpers.constants import ALLEGHENY_COUNTY_MUCKROCK_ID, ALLEGHENY_COUNTY_TOWN_NAMES
 
 
 def test_muckrock_simple_search_collector_lifecycle(test_core):
     ci = test_core
-    db_client = api.dependencies.db_client
+    db_client = src.api.dependencies.db_client
 
     config = {
         "search_string": "police",
@@ -31,7 +29,7 @@ def test_muckrock_simple_search_collector_lifecycle(test_core):
 
 def test_muckrock_county_level_search_collector_lifecycle(test_core):
     ci = test_core
-    db_client = api.dependencies.db_client
+    db_client = src.api.dependencies.db_client
 
     config = {
         "parent_jurisdiction_id": ALLEGHENY_COUNTY_MUCKROCK_ID,
@@ -53,7 +51,7 @@ def test_muckrock_county_level_search_collector_lifecycle(test_core):
 
 def test_muckrock_full_search_collector_lifecycle(test_core):
     ci = test_core
-    db_client = api.dependencies.db_client
+    db_client = src.api.dependencies.db_client
 
     config = {
         "start_page": 1,

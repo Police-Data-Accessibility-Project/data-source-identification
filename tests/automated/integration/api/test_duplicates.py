@@ -1,10 +1,7 @@
-import asyncio
-import time
-
 import pytest
 
-from db.DTOs.BatchInfo import BatchInfo
-from collector_manager.DTOs.ExampleInputDTO import ExampleInputDTO
+from src.db.DTOs.BatchInfo import BatchInfo
+from src.collector_manager.DTOs.ExampleInputDTO import ExampleInputDTO
 from tests.automated.integration.api.conftest import disable_task_trigger
 
 

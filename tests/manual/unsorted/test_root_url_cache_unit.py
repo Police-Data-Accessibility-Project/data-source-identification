@@ -5,7 +5,7 @@ from unittest.mock import mock_open, patch
 
 import pytest
 
-from html_tag_collector.RootURLCache import RootURLCache  # Adjust import according to your package structure
+from src.html_tag_collector import RootURLCache  # Adjust import according to your package structure
 
 
 @pytest.fixture

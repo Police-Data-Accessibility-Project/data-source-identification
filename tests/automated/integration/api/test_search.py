@@ -1,6 +1,6 @@
 import pytest
 
-from core.DTOs.SearchURLResponse import SearchURLResponse
+from src.core.DTOs.SearchURLResponse import SearchURLResponse
 
 
 @pytest.mark.asyncio

@@ -5,40 +5,40 @@ from fastapi import HTTPException
 from pydantic import BaseModel
 from starlette.testclient import TestClient
 
-from db.DTOs.BatchInfo import BatchInfo
-from db.DTOs.GetTaskStatusResponseInfo import GetTaskStatusResponseInfo
-from db.DTOs.TaskInfo import TaskInfo
-from db.enums import TaskType
-from collector_manager.DTOs.ExampleInputDTO import ExampleInputDTO
-from collector_manager.enums import CollectorType
-from core.DTOs.AllAnnotationPostInfo import AllAnnotationPostInfo
-from core.DTOs.FinalReviewApprovalInfo import FinalReviewApprovalInfo, FinalReviewBaseInfo, FinalReviewRejectionInfo
-from core.DTOs.GetBatchLogsResponse import GetBatchLogsResponse
-from core.DTOs.GetBatchStatusResponse import GetBatchStatusResponse
-from core.DTOs.GetDuplicatesByBatchResponse import GetDuplicatesByBatchResponse
-from core.DTOs.GetMetricsBacklogResponse import GetMetricsBacklogResponseDTO
-from core.DTOs.GetMetricsBatchesAggregatedResponseDTO import GetMetricsBatchesAggregatedResponseDTO
-from core.DTOs.GetMetricsBatchesBreakdownResponseDTO import GetMetricsBatchesBreakdownResponseDTO
-from core.DTOs.GetMetricsURLsAggregatedResponseDTO import GetMetricsURLsAggregatedResponseDTO
-from core.DTOs.GetMetricsURLsBreakdownPendingResponseDTO import GetMetricsURLsBreakdownPendingResponseDTO
-from core.DTOs.GetMetricsURLsBreakdownSubmittedResponseDTO import GetMetricsURLsBreakdownSubmittedResponseDTO
-from core.DTOs.GetNextRecordTypeAnnotationResponseInfo import GetNextRecordTypeAnnotationResponseOuterInfo
-from core.DTOs.GetNextRelevanceAnnotationResponseInfo import GetNextRelevanceAnnotationResponseOuterInfo
-from core.DTOs.GetNextURLForAgencyAnnotationResponse import GetNextURLForAgencyAnnotationResponse, \
+from src.db.DTOs.BatchInfo import BatchInfo
+from src.db.DTOs.GetTaskStatusResponseInfo import GetTaskStatusResponseInfo
+from src.db.DTOs.TaskInfo import TaskInfo
+from src.db.enums import TaskType
+from src.collector_manager.DTOs.ExampleInputDTO import ExampleInputDTO
+from src.collector_manager.enums import CollectorType
+from src.core.DTOs.AllAnnotationPostInfo import AllAnnotationPostInfo
+from src.core.DTOs.FinalReviewApprovalInfo import FinalReviewApprovalInfo, FinalReviewRejectionInfo
+from src.core.DTOs.GetBatchLogsResponse import GetBatchLogsResponse
+from src.core.DTOs.GetBatchStatusResponse import GetBatchStatusResponse
+from src.core.DTOs.GetDuplicatesByBatchResponse import GetDuplicatesByBatchResponse
+from src.core.DTOs.GetMetricsBacklogResponse import GetMetricsBacklogResponseDTO
+from src.core.DTOs.GetMetricsBatchesAggregatedResponseDTO import GetMetricsBatchesAggregatedResponseDTO
+from src.core.DTOs.GetMetricsBatchesBreakdownResponseDTO import GetMetricsBatchesBreakdownResponseDTO
+from src.core.DTOs.GetMetricsURLsAggregatedResponseDTO import GetMetricsURLsAggregatedResponseDTO
+from src.core.DTOs.GetMetricsURLsBreakdownPendingResponseDTO import GetMetricsURLsBreakdownPendingResponseDTO
+from src.core.DTOs.GetMetricsURLsBreakdownSubmittedResponseDTO import GetMetricsURLsBreakdownSubmittedResponseDTO
+from src.core.DTOs.GetNextRecordTypeAnnotationResponseInfo import GetNextRecordTypeAnnotationResponseOuterInfo
+from src.core.DTOs.GetNextRelevanceAnnotationResponseInfo import GetNextRelevanceAnnotationResponseOuterInfo
+from src.core.DTOs.GetNextURLForAgencyAnnotationResponse import GetNextURLForAgencyAnnotationResponse, \
     URLAgencyAnnotationPostInfo
-from core.DTOs.GetNextURLForAllAnnotationResponse import GetNextURLForAllAnnotationResponse
-from core.DTOs.GetNextURLForFinalReviewResponse import GetNextURLForFinalReviewOuterResponse
-from core.DTOs.GetTasksResponse import GetTasksResponse
-from core.DTOs.GetURLsByBatchResponse import GetURLsByBatchResponse
-from core.DTOs.GetURLsResponseInfo import GetURLsResponseInfo
-from core.DTOs.ManualBatchInputDTO import ManualBatchInputDTO
-from core.DTOs.ManualBatchResponseDTO import ManualBatchResponseDTO
-from core.DTOs.MessageResponse import MessageResponse
-from core.DTOs.RecordTypeAnnotationPostInfo import RecordTypeAnnotationPostInfo
-from core.DTOs.RelevanceAnnotationPostInfo import RelevanceAnnotationPostInfo
-from core.DTOs.SearchURLResponse import SearchURLResponse
-from core.enums import BatchStatus
-from util.helper_functions import update_if_not_none
+from src.core.DTOs.GetNextURLForAllAnnotationResponse import GetNextURLForAllAnnotationResponse
+from src.core.DTOs.GetNextURLForFinalReviewResponse import GetNextURLForFinalReviewOuterResponse
+from src.core.DTOs.GetTasksResponse import GetTasksResponse
+from src.core.DTOs.GetURLsByBatchResponse import GetURLsByBatchResponse
+from src.core.DTOs.GetURLsResponseInfo import GetURLsResponseInfo
+from src.core.DTOs.ManualBatchInputDTO import ManualBatchInputDTO
+from src.core.DTOs.ManualBatchResponseDTO import ManualBatchResponseDTO
+from src.core.DTOs.MessageResponse import MessageResponse
+from src.core.DTOs.RecordTypeAnnotationPostInfo import RecordTypeAnnotationPostInfo
+from src.core.DTOs.RelevanceAnnotationPostInfo import RelevanceAnnotationPostInfo
+from src.core.DTOs.SearchURLResponse import SearchURLResponse
+from src.core.enums import BatchStatus
+from src.util.helper_functions import update_if_not_none
 
 
 class ExpectedResponseInfo(BaseModel):

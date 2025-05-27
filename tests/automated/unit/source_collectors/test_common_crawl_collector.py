@@ -2,16 +2,16 @@ from unittest import mock
 
 import pytest
 
-from db.AsyncDatabaseClient import AsyncDatabaseClient
-from db.DTOs.URLInfo import URLInfo
-from core.AsyncCoreLogger import AsyncCoreLogger
-from source_collectors.common_crawler.CommonCrawlerCollector import CommonCrawlerCollector
-from source_collectors.common_crawler.DTOs import CommonCrawlerInputDTO
+from src.db.AsyncDatabaseClient import AsyncDatabaseClient
+from src.db.DTOs.URLInfo import URLInfo
+from src.core.AsyncCoreLogger import AsyncCoreLogger
+from src.source_collectors.common_crawler.CommonCrawlerCollector import CommonCrawlerCollector
+from src.source_collectors.common_crawler.DTOs import CommonCrawlerInputDTO
 
 
 @pytest.fixture
 def mock_get_common_crawl_search_results():
-    mock_path = "source_collectors.common_crawler.CommonCrawler.get_common_crawl_search_results"
+    mock_path = "src.source_collectors.common_crawler.CommonCrawler.get_common_crawl_search_results"
     # Results contain other keys, but those are not relevant and thus
     # can be ignored
     mock_results = [

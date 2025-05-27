@@ -1,5 +1,5 @@
-from db.AsyncDatabaseClient import AsyncDatabaseClient
-from db.models import Task
+from src.db import AsyncDatabaseClient
+from src.db.models import Task
 
 
 async def assert_database_has_no_tasks(adb_client: AsyncDatabaseClient):

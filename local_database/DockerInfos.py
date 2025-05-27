@@ -1,5 +1,5 @@
 from local_database.DTOs import DockerInfo, DockerfileInfo, HealthCheckInfo, VolumeInfo
-from util.helper_functions import get_from_env, project_path
+from src.util import get_from_env, project_path
 
 
 def get_database_docker_info() -> DockerInfo:

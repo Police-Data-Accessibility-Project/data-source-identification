@@ -7,10 +7,7 @@ Create Date: 2025-04-17 09:09:38.137131
 """
 from typing import Sequence, Union
 
-from alembic import op
-import sqlalchemy as sa
-
-from util.alembic_helpers import switch_enum_type, alter_enum_value
+from src.util.alembic_helpers import alter_enum_value
 
 # revision identifiers, used by Alembic.
 revision: str = 'e285e6e7cf71'

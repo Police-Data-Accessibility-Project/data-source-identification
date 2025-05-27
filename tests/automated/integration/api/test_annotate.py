@@ -3,21 +3,21 @@ from http import HTTPStatus
 import pytest
 from fastapi import HTTPException
 
-from db.DTOs.InsertURLsInfo import InsertURLsInfo
-from db.DTOs.URLMapping import URLMapping
-from db.models import UserUrlAgencySuggestion, UserRelevantSuggestion, UserRecordTypeSuggestion
-from core.DTOs.AllAnnotationPostInfo import AllAnnotationPostInfo
-from core.DTOs.GetNextRecordTypeAnnotationResponseInfo import GetNextRecordTypeAnnotationResponseOuterInfo
-from core.DTOs.GetNextRelevanceAnnotationResponseInfo import GetNextRelevanceAnnotationResponseOuterInfo
-from core.DTOs.GetNextURLForAgencyAnnotationResponse import URLAgencyAnnotationPostInfo
-from core.DTOs.RecordTypeAnnotationPostInfo import RecordTypeAnnotationPostInfo
-from core.DTOs.RelevanceAnnotationPostInfo import RelevanceAnnotationPostInfo
-from core.classes.ErrorManager import ErrorTypes
-from core.enums import RecordType, SuggestionType, SuggestedStatus
-from core.exceptions import FailedValidationException
+from src.db.DTOs.InsertURLsInfo import InsertURLsInfo
+from src.db.DTOs.URLMapping import URLMapping
+from src.db.models import UserUrlAgencySuggestion, UserRelevantSuggestion, UserRecordTypeSuggestion
+from src.core.DTOs.AllAnnotationPostInfo import AllAnnotationPostInfo
+from src.core.DTOs.GetNextRecordTypeAnnotationResponseInfo import GetNextRecordTypeAnnotationResponseOuterInfo
+from src.core.DTOs.GetNextRelevanceAnnotationResponseInfo import GetNextRelevanceAnnotationResponseOuterInfo
+from src.core.DTOs.GetNextURLForAgencyAnnotationResponse import URLAgencyAnnotationPostInfo
+from src.core.DTOs.RecordTypeAnnotationPostInfo import RecordTypeAnnotationPostInfo
+from src.core.DTOs.RelevanceAnnotationPostInfo import RelevanceAnnotationPostInfo
+from src.core.classes.ErrorManager import ErrorTypes
+from src.core.enums import RecordType, SuggestionType, SuggestedStatus
+from src.core.exceptions import FailedValidationException
+from src.html_tag_collector.DataClassTags import ResponseHTMLInfo
 from tests.helpers.complex_test_data_functions import AnnotateAgencySetupInfo, setup_for_annotate_agency, \
     setup_for_get_next_url_for_final_review
-from html_tag_collector.DataClassTags import ResponseHTMLInfo
 from tests.helpers.DBDataCreator import BatchURLCreationInfo
 from tests.automated.integration.api.conftest import MOCK_USER_ID
 

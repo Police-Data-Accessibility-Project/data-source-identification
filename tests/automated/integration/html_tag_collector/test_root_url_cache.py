@@ -1,6 +1,6 @@
 import pytest
 
-from html_tag_collector.RootURLCache import RootURLCacheResponseInfo, RootURLCache
+from src.html_tag_collector.RootURLCache import RootURLCacheResponseInfo, RootURLCache
 
 
 async def mock_get_request(url: str) -> RootURLCacheResponseInfo:

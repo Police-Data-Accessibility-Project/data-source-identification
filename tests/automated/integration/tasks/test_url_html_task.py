@@ -3,18 +3,18 @@ from http import HTTPStatus
 from typing import Optional
 
 import pytest
-from aiohttp import ClientError, ClientResponseError, RequestInfo
+from aiohttp import ClientResponseError, RequestInfo
 
-from db.AsyncDatabaseClient import AsyncDatabaseClient
-from db.enums import TaskType
-from collector_manager.enums import URLStatus
-from core.DTOs.TaskOperatorRunInfo import TaskOperatorOutcome
-from core.classes.task_operators.URLHTMLTaskOperator import URLHTMLTaskOperator
+from src.db.AsyncDatabaseClient import AsyncDatabaseClient
+from src.db.enums import TaskType
+from src.collector_manager.enums import URLStatus
+from src.core.DTOs.TaskOperatorRunInfo import TaskOperatorOutcome
+from src.core.classes.task_operators.URLHTMLTaskOperator import URLHTMLTaskOperator
+from src.html_tag_collector.DataClassTags import ResponseHTMLInfo
 from tests.helpers.DBDataCreator import DBDataCreator
-from html_tag_collector.DataClassTags import ResponseHTMLInfo
-from html_tag_collector.ResponseParser import HTMLResponseParser
-from html_tag_collector.RootURLCache import RootURLCache
-from html_tag_collector.URLRequestInterface import URLRequestInterface, URLResponseInfo
+from src.html_tag_collector.ResponseParser import HTMLResponseParser
+from src.html_tag_collector.RootURLCache import RootURLCache
+from src.html_tag_collector.URLRequestInterface import URLRequestInterface, URLResponseInfo
 
 
 @pytest.mark.asyncio

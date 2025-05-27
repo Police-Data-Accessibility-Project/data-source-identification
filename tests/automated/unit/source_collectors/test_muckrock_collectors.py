@@ -3,19 +3,19 @@ from unittest.mock import MagicMock, call, AsyncMock
 
 import pytest
 
-from db.AsyncDatabaseClient import AsyncDatabaseClient
-from db.DTOs.URLInfo import URLInfo
-from core.AsyncCoreLogger import AsyncCoreLogger
-from source_collectors.muckrock.DTOs import MuckrockSimpleSearchCollectorInputDTO, \
+from src.db.AsyncDatabaseClient import AsyncDatabaseClient
+from src.db.DTOs.URLInfo import URLInfo
+from src.core.AsyncCoreLogger import AsyncCoreLogger
+from src.source_collectors.muckrock.DTOs import MuckrockSimpleSearchCollectorInputDTO, \
     MuckrockCountySearchCollectorInputDTO, MuckrockAllFOIARequestsCollectorInputDTO
-from source_collectors.muckrock.classes.MuckrockCollector import MuckrockSimpleSearchCollector, \
+from src.source_collectors.muckrock.classes.MuckrockCollector import MuckrockSimpleSearchCollector, \
     MuckrockCountyLevelSearchCollector, MuckrockAllFOIARequestsCollector
-from source_collectors.muckrock.classes.muckrock_fetchers.FOIAFetcher import FOIAFetchRequest
+from src.source_collectors.muckrock.classes.muckrock_fetchers.FOIAFetcher import FOIAFetchRequest
 
 
 @pytest.fixture
 def patch_muckrock_fetcher(monkeypatch):
-    patch_path = "source_collectors.muckrock.classes.muckrock_fetchers.MuckrockFetcher.MuckrockFetcher.fetch"
+    patch_path = "src.source_collectors.muckrock.classes.muckrock_fetchers.MuckrockFetcher.MuckrockFetcher.fetch"
     inner_test_data = [
         {"absolute_url": "https://include.com/1", "title": "keyword"},
         {"absolute_url": "https://include.com/2", "title": "keyword"},
@@ -66,7 +66,7 @@ async def test_muckrock_simple_collector(patch_muckrock_fetcher):
 
 @pytest.fixture
 def patch_muckrock_county_level_search_collector_methods(monkeypatch):
-    patch_root = ("source_collectors.muckrock.classes.MuckrockCollector."
+    patch_root = ("src.source_collectors.muckrock.classes.MuckrockCollector."
                   "MuckrockCountyLevelSearchCollector.")
     patch_path_get_jurisdiction_ids = patch_root + "get_jurisdiction_ids"
     patch_path_get_foia_records = patch_root + "get_foia_records"
@@ -125,7 +125,7 @@ async def test_muckrock_county_search_collector(patch_muckrock_county_level_sear
 
 @pytest.fixture
 def patch_muckrock_full_search_collector(monkeypatch):
-    patch_path = ("source_collectors.muckrock.classes.MuckrockCollector."
+    patch_path = ("src.source_collectors.muckrock.classes.MuckrockCollector."
                   "MuckrockAllFOIARequestsCollector.get_page_data")
     test_data = [{
         "results": [
@@ -148,7 +148,7 @@ def patch_muckrock_full_search_collector(monkeypatch):
     mock.get_page_data = AsyncMock(return_value=test_data)
     monkeypatch.setattr(patch_path, mock.get_page_data)
 
-    patch_path = ("source_collectors.muckrock.classes.MuckrockCollector."
+    patch_path = ("src.source_collectors.muckrock.classes.MuckrockCollector."
                   "FOIAFetcher")
     mock.foia_fetcher = MagicMock()
     monkeypatch.setattr(patch_path, mock.foia_fetcher)

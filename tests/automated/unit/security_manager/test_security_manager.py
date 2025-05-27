@@ -4,14 +4,14 @@ import pytest
 from fastapi import HTTPException
 from jwt import InvalidTokenError
 
-from security_manager.SecurityManager import SecurityManager, Permissions, AccessInfo, get_access_info
+from src.security_manager.SecurityManager import SecurityManager, Permissions, AccessInfo, get_access_info
 
 SECRET_KEY = "test_secret_key"
 VALID_TOKEN = "valid_token"
 INVALID_TOKEN = "invalid_token"
 FAKE_PAYLOAD = {"sub": 1, "permissions": [Permissions.SOURCE_COLLECTOR.value]}
 
-PATCH_ROOT = "security_manager.SecurityManager"
+PATCH_ROOT = "src.security_manager.SecurityManager"
 
 def get_patch_path(patch_name):
     return f"{PATCH_ROOT}.{patch_name}"
