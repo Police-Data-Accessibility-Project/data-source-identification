@@ -5,15 +5,15 @@ from typing import Optional
 import pytest
 from aiohttp import ClientResponseError, RequestInfo
 
-from src.db import AsyncDatabaseClient
+from src.db.AsyncDatabaseClient import AsyncDatabaseClient
 from src.db.enums import TaskType
-from collector_manager.enums import URLStatus
+from src.collector_manager.enums import URLStatus
 from src.core.DTOs.TaskOperatorRunInfo import TaskOperatorOutcome
 from src.core.classes.task_operators.URLHTMLTaskOperator import URLHTMLTaskOperator
+from src.html_tag_collector.DataClassTags import ResponseHTMLInfo
 from tests.helpers.DBDataCreator import DBDataCreator
-from src.html_tag_collector import ResponseHTMLInfo
 from src.html_tag_collector.ResponseParser import HTMLResponseParser
-from src.html_tag_collector import RootURLCache
+from src.html_tag_collector.RootURLCache import RootURLCache
 from src.html_tag_collector.URLRequestInterface import URLRequestInterface, URLResponseInfo
 
 

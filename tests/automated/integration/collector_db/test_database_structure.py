@@ -20,11 +20,11 @@ from src.db.DTOs.InsertURLsInfo import InsertURLsInfo
 from src.db.enums import URLHTMLContentType
 from src.db.helper_functions import get_postgres_connection_string
 from src.db.models import Base, Agency
-from collector_manager.enums import CollectorType, URLStatus
+from src.collector_manager.enums import CollectorType, URLStatus
 from src.core.DTOs.URLAgencySuggestionInfo import URLAgencySuggestionInfo
 from src.core.enums import BatchStatus, SuggestionType
+from src.util.helper_functions import get_enum_values
 from tests.helpers.DBDataCreator import DBDataCreator
-from util.helper_functions import get_enum_values
 
 SATypes: TypeAlias = sa.Integer or sa.String or postgresql.ENUM or sa.TIMESTAMP or sa.Text
 

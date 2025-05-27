@@ -15,9 +15,9 @@ from src.core.DTOs.RelevanceAnnotationPostInfo import RelevanceAnnotationPostInf
 from src.core.classes.ErrorManager import ErrorTypes
 from src.core.enums import RecordType, SuggestionType, SuggestedStatus
 from src.core.exceptions import FailedValidationException
+from src.html_tag_collector.DataClassTags import ResponseHTMLInfo
 from tests.helpers.complex_test_data_functions import AnnotateAgencySetupInfo, setup_for_annotate_agency, \
     setup_for_get_next_url_for_final_review
-from src.html_tag_collector import ResponseHTMLInfo
 from tests.helpers.DBDataCreator import BatchURLCreationInfo
 from tests.automated.integration.api.conftest import MOCK_USER_ID
 

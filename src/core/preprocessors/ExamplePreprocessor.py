@@ -1,7 +1,7 @@
 from typing import List
 
 from src.db.DTOs.URLInfo import URLInfo
-from collector_manager.DTOs.ExampleOutputDTO import ExampleOutputDTO
+from src.collector_manager.DTOs.ExampleOutputDTO import ExampleOutputDTO
 from src.core.preprocessors.PreprocessorBase import PreprocessorBase
 
 

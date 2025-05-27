@@ -1,13 +1,13 @@
 
-from collector_manager.AsyncCollectorBase import AsyncCollectorBase
-from collector_manager.enums import CollectorType
+from src.collector_manager.AsyncCollectorBase import AsyncCollectorBase
+from src.collector_manager.enums import CollectorType
 from src.core.EnvVarManager import EnvVarManager
 from src.core.preprocessors.AutoGooglerPreprocessor import AutoGooglerPreprocessor
 from src.source_collectors.auto_googler.AutoGoogler import AutoGoogler
 from src.source_collectors.auto_googler.DTOs import AutoGooglerInputDTO, AutoGooglerInnerOutputDTO
 from src.source_collectors.auto_googler.GoogleSearcher import GoogleSearcher
 from src.source_collectors.auto_googler.SearchConfig import SearchConfig
-from util.helper_functions import base_model_list_dump
+from src.util.helper_functions import base_model_list_dump
 
 
 class AutoGooglerCollector(AsyncCollectorBase):

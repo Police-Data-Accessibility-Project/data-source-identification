@@ -8,7 +8,7 @@ from sqlalchemy.orm import declarative_base, relationship
 
 from src.db.enums import PGEnum, TaskType
 from src.core.enums import BatchStatus, RecordType
-from util.helper_functions import get_enum_values
+from src.util.helper_functions import get_enum_values
 
 # Base class for SQLAlchemy ORM models
 Base = declarative_base()

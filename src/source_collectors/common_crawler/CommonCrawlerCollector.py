@@ -1,5 +1,5 @@
-from collector_manager.AsyncCollectorBase import AsyncCollectorBase
-from collector_manager.enums import CollectorType
+from src.collector_manager.AsyncCollectorBase import AsyncCollectorBase
+from src.collector_manager.enums import CollectorType
 from src.core.preprocessors.CommonCrawlerPreprocessor import CommonCrawlerPreprocessor
 from src.source_collectors.common_crawler.CommonCrawler import CommonCrawler
 from src.source_collectors.common_crawler.DTOs import CommonCrawlerInputDTO

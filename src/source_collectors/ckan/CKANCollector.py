@@ -1,14 +1,14 @@
 from pydantic import BaseModel
 
-from collector_manager.AsyncCollectorBase import AsyncCollectorBase
-from collector_manager.enums import CollectorType
+from src.collector_manager.AsyncCollectorBase import AsyncCollectorBase
+from src.collector_manager.enums import CollectorType
 from src.core.preprocessors.CKANPreprocessor import CKANPreprocessor
 from src.source_collectors.ckan.DTOs import CKANInputDTO
 from src.source_collectors.ckan.ckan_scraper_toolkit import ckan_package_search, ckan_group_package_show, \
     ckan_package_search_from_organization
 from src.source_collectors.ckan.scrape_ckan_data_portals import perform_search, get_flat_list, deduplicate_entries, \
     get_collections, filter_result, parse_result
-from util.helper_functions import base_model_list_dump
+from src.util.helper_functions import base_model_list_dump
 
 SEARCH_FUNCTION_MAPPINGS = {
     "package_search": ckan_package_search,

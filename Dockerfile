@@ -15,24 +15,13 @@ RUN uv sync --locked --no-dev
 RUN playwright install-deps chromium
 RUN playwright install chromium
 
-
 # Copy project files
-COPY api ./api
-COPY src/db ./collector_db
-COPY collector_manager ./collector_manager
-COPY src/core ./core
-COPY src/html_tag_collector ./html_tag_collector
-COPY src/source_collectors ./source_collectors
-COPY util ./util
+COPY src ./src
 COPY alembic.ini ./alembic.ini
 COPY alembic ./alembic
 COPY apply_migrations.py ./apply_migrations.py
-COPY src/security_manager ./security_manager
-COPY src/pdap_api_client ./pdap_api_client
 COPY execute.sh ./execute.sh
 COPY .project-root ./.project-root
-
-COPY src/llm_api_logic ./llm_api_logic
 
 # Expose the application port
 EXPOSE 80

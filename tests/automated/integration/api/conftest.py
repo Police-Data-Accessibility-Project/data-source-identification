@@ -7,9 +7,9 @@ import pytest
 import pytest_asyncio
 from starlette.testclient import TestClient
 
-from api.main import app
+from src.api.main import app
+from src.api.routes.review import requires_final_review_permission
 from src.core.AsyncCore import AsyncCore
-from api.routes.review import requires_final_review_permission
 from src.core.DTOs.GetBatchStatusResponse import GetBatchStatusResponse
 from src.core.SourceCollectorCore import SourceCollectorCore
 from src.core.enums import BatchStatus

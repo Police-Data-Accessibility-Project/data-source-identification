@@ -6,7 +6,7 @@ from deepdiff import DeepDiff
 
 from src.db.enums import TaskType
 from src.db.models import URL, URLErrorInfo, URLDataSource
-from collector_manager.enums import URLStatus
+from src.collector_manager.enums import URLStatus
 from src.core.DTOs.FinalReviewApprovalInfo import FinalReviewApprovalInfo
 from src.core.DTOs.TaskOperatorRunInfo import TaskOperatorOutcome
 from src.core.classes.task_operators.SubmitApprovedURLTaskOperator import SubmitApprovedURLTaskOperator

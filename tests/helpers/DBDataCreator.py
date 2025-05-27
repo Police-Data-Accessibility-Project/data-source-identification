@@ -4,17 +4,17 @@ from typing import List, Optional
 
 from pydantic import BaseModel
 
-from src.db import AsyncDatabaseClient
+from src.db.AsyncDatabaseClient import AsyncDatabaseClient
 from src.db.DTOs.BatchInfo import BatchInfo
 from src.db.DTOs.DuplicateInfo import DuplicateInsertInfo
 from src.db.DTOs.InsertURLsInfo import InsertURLsInfo
 from src.db.DTOs.URLErrorInfos import URLErrorPydanticInfo
 from src.db.DTOs.URLHTMLContentInfo import URLHTMLContentInfo, HTMLContentType
-from src.db.DTOs import URLInfo
+from src.db.DTOs.URLInfo import URLInfo
 from src.db.DTOs.URLMapping import URLMapping
 from src.db.DatabaseClient import DatabaseClient
 from src.db.enums import TaskType
-from collector_manager.enums import CollectorType, URLStatus
+from src.collector_manager.enums import CollectorType, URLStatus
 from src.core.DTOs.FinalReviewApprovalInfo import FinalReviewApprovalInfo, RejectionReason
 from src.core.DTOs.URLAgencySuggestionInfo import URLAgencySuggestionInfo
 from src.core.DTOs.task_data_objects.SubmitApprovedURLTDO import SubmittedURLInfo

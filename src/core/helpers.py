@@ -2,7 +2,7 @@ from src.core.DTOs.URLAgencySuggestionInfo import URLAgencySuggestionInfo
 from src.core.enums import SuggestionType
 from src.core.exceptions import MatchAgencyError
 from src.pdap_api_client.DTOs import MatchAgencyResponse
-from src.pdap_api_client import MatchAgencyResponseStatus
+from src.pdap_api_client.enums import MatchAgencyResponseStatus
 
 
 def process_match_agency_response_to_suggestions(

@@ -3,7 +3,7 @@ from typing import Optional
 from src.db.AsyncDatabaseClient import AsyncDatabaseClient
 from src.db.DTOs.URLErrorInfos import URLErrorPydanticInfo
 from src.db.enums import TaskType
-from collector_manager.enums import CollectorType
+from src.collector_manager.enums import CollectorType
 from src.core.DTOs.task_data_objects.URLMiscellaneousMetadataTDO import URLMiscellaneousMetadataTDO
 from src.core.classes.task_operators.TaskOperatorBase import TaskOperatorBase
 from src.core.classes.subtasks.MiscellaneousMetadata.AutoGooglerMiscMetadataSubtask import AutoGooglerMiscMetadataSubtask

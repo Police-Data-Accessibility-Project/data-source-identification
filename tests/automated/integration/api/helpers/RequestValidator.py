@@ -9,8 +9,8 @@ from src.db.DTOs.BatchInfo import BatchInfo
 from src.db.DTOs.GetTaskStatusResponseInfo import GetTaskStatusResponseInfo
 from src.db.DTOs.TaskInfo import TaskInfo
 from src.db.enums import TaskType
-from collector_manager.DTOs.ExampleInputDTO import ExampleInputDTO
-from collector_manager.enums import CollectorType
+from src.collector_manager.DTOs.ExampleInputDTO import ExampleInputDTO
+from src.collector_manager.enums import CollectorType
 from src.core.DTOs.AllAnnotationPostInfo import AllAnnotationPostInfo
 from src.core.DTOs.FinalReviewApprovalInfo import FinalReviewApprovalInfo, FinalReviewRejectionInfo
 from src.core.DTOs.GetBatchLogsResponse import GetBatchLogsResponse
@@ -38,7 +38,7 @@ from src.core.DTOs.RecordTypeAnnotationPostInfo import RecordTypeAnnotationPostI
 from src.core.DTOs.RelevanceAnnotationPostInfo import RelevanceAnnotationPostInfo
 from src.core.DTOs.SearchURLResponse import SearchURLResponse
 from src.core.enums import BatchStatus
-from util.helper_functions import update_if_not_none
+from src.util.helper_functions import update_if_not_none
 
 
 class ExpectedResponseInfo(BaseModel):

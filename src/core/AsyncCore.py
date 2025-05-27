@@ -7,8 +7,8 @@ from src.db.AsyncDatabaseClient import AsyncDatabaseClient
 from src.db.DTOs.BatchInfo import BatchInfo
 from src.db.DTOs.GetTaskStatusResponseInfo import GetTaskStatusResponseInfo
 from src.db.enums import TaskType
-from collector_manager.AsyncCollectorManager import AsyncCollectorManager
-from collector_manager.enums import CollectorType
+from src.collector_manager.AsyncCollectorManager import AsyncCollectorManager
+from src.collector_manager.enums import CollectorType
 from src.core.DTOs.AllAnnotationPostInfo import AllAnnotationPostInfo
 from src.core.DTOs.CollectorStartInfo import CollectorStartInfo
 from src.core.DTOs.FinalReviewApprovalInfo import FinalReviewApprovalInfo, RejectionReason

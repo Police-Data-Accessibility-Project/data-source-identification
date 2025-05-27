@@ -3,15 +3,15 @@ from datetime import datetime, timedelta
 import pytest
 from fastapi import HTTPException
 
-from src.db import AsyncDatabaseClient
+from src.db.AsyncDatabaseClient import AsyncDatabaseClient
 from src.db.DTOs.BatchInfo import BatchInfo
 from src.db.DTOs.LogInfo import LogInfo
 from src.db.DTOs.URLErrorInfos import URLErrorPydanticInfo
-from src.db.DTOs import URLInfo
+from src.db.DTOs.URLInfo import URLInfo
 from src.db.DTOs.URLMapping import URLMapping
 from src.db.constants import PLACEHOLDER_AGENCY_NAME
 from src.db.models import URL, ReviewingUserURL, URLOptionalDataSourceMetadata, ConfirmedURLAgency, Agency
-from collector_manager.enums import URLStatus
+from src.collector_manager.enums import URLStatus
 from src.core.DTOs.FinalReviewApprovalInfo import FinalReviewApprovalInfo
 from src.core.enums import BatchStatus, RecordType, SuggestionType, SuggestedStatus
 from tests.helpers.complex_test_data_functions import setup_for_get_next_url_for_annotation, setup_for_annotate_agency

@@ -4,7 +4,7 @@ from src.source_collectors.muckrock.MuckrockAPIInterface import MuckrockAPIInter
 from src.db.AsyncDatabaseClient import AsyncDatabaseClient
 from src.db.DTOs.URLErrorInfos import URLErrorPydanticInfo
 from src.db.enums import TaskType
-from collector_manager.enums import CollectorType
+from src.collector_manager.enums import CollectorType
 from src.core.DTOs.URLAgencySuggestionInfo import URLAgencySuggestionInfo
 from src.core.DTOs.task_data_objects.AgencyIdentificationTDO import AgencyIdentificationTDO
 from src.core.classes.task_operators.TaskOperatorBase import TaskOperatorBase

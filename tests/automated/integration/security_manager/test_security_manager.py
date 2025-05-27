@@ -2,10 +2,10 @@ import jwt
 import pytest
 from starlette.testclient import TestClient
 
-from api.main import app
+from src.api.main import app
 from src.security_manager.SecurityManager import Permissions, ALGORITHM
 
-PATCH_ROOT = "security_manager.SecurityManager"
+PATCH_ROOT = "src.security_manager.SecurityManager"
 
 def get_patch_path(patch_name):
     return f"{PATCH_ROOT}.{patch_name}"

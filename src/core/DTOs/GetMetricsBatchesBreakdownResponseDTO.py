@@ -2,7 +2,7 @@ from datetime import datetime
 
 from pydantic import BaseModel
 
-from collector_manager.enums import CollectorType
+from src.collector_manager.enums import CollectorType
 from src.core.enums import BatchStatus
 
 

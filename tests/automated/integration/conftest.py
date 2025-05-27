@@ -2,8 +2,8 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from src.db import AsyncDatabaseClient
-from collector_manager.AsyncCollectorManager import AsyncCollectorManager
+from src.db.AsyncDatabaseClient import AsyncDatabaseClient
+from src.collector_manager.AsyncCollectorManager import AsyncCollectorManager
 from src.core.AsyncCore import AsyncCore
 from src.core.AsyncCoreLogger import AsyncCoreLogger
 from src.core.SourceCollectorCore import SourceCollectorCore

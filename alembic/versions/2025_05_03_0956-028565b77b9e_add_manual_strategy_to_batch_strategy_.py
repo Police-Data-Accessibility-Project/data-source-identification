@@ -8,9 +8,8 @@ Create Date: 2025-05-03 09:56:51.134406
 from typing import Sequence, Union
 
 from alembic import op
-import sqlalchemy as sa
 
-from util.alembic_helpers import switch_enum_type
+from src.util.alembic_helpers import switch_enum_type
 
 # revision identifiers, used by Alembic.
 revision: str = '028565b77b9e'

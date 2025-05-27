@@ -3,8 +3,8 @@ import asyncio
 import pytest
 
 from src.db.DTOs.BatchInfo import BatchInfo
-from collector_manager.DTOs.ExampleInputDTO import ExampleInputDTO
-from collector_manager.enums import CollectorType, URLStatus
+from src.collector_manager.DTOs.ExampleInputDTO import ExampleInputDTO
+from src.collector_manager.enums import CollectorType, URLStatus
 from src.core.AsyncCore import AsyncCore
 from src.core.DTOs.CollectorStartInfo import CollectorStartInfo
 from src.core.SourceCollectorCore import SourceCollectorCore

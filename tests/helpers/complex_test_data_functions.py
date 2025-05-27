@@ -4,7 +4,7 @@ from pydantic import BaseModel
 
 from src.db.DTOs.InsertURLsInfo import InsertURLsInfo
 from src.db.DTOs.URLMapping import URLMapping
-from collector_manager.enums import URLStatus
+from src.collector_manager.enums import URLStatus
 from src.core.enums import RecordType, SuggestionType
 from tests.helpers.DBDataCreator import BatchURLCreationInfo
 from tests.helpers.DBDataCreator import DBDataCreator

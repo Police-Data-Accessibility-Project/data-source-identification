@@ -1,7 +1,7 @@
 import itertools
 
-from collector_manager.AsyncCollectorBase import AsyncCollectorBase
-from collector_manager.enums import CollectorType
+from src.collector_manager.AsyncCollectorBase import AsyncCollectorBase
+from src.collector_manager.enums import CollectorType
 from src.core.preprocessors.MuckrockPreprocessor import MuckrockPreprocessor
 from src.source_collectors.muckrock.DTOs import MuckrockAllFOIARequestsCollectorInputDTO, \
     MuckrockCountySearchCollectorInputDTO, MuckrockSimpleSearchCollectorInputDTO

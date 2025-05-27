@@ -3,8 +3,8 @@ from typing import Optional
 
 from pydantic import BaseModel
 
+from src.collector_manager.enums import URLStatus
 from src.db.enums import URLMetadataAttributeType, ValidationStatus, ValidationSource
-from collector_manager.enums import URLStatus
 
 class GetURLsResponseErrorInfo(BaseModel):
     id: int

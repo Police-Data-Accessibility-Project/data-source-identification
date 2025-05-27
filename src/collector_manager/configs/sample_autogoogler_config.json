@@ -1,0 +1,9 @@
+{
+  "api_key": "REPLACE_ME",
+  "cse_id": "REPLACE_ME",
+  "urls_per_result": 10,
+  "queries": [
+    "Disco Elysium",
+    "Dune"
+  ]
+}

@@ -6,7 +6,7 @@ import pytest
 from aiohttp import ClientResponseError, RequestInfo
 
 from src.db.models import URLProbedFor404, URL
-from collector_manager.enums import URLStatus
+from src.collector_manager.enums import URLStatus
 from src.core.DTOs.TaskOperatorRunInfo import TaskOperatorOutcome
 from src.core.classes.task_operators.URL404ProbeTaskOperator import URL404ProbeTaskOperator
 from src.html_tag_collector.URLRequestInterface import URLResponseInfo, URLRequestInterface

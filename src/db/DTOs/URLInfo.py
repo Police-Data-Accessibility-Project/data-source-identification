@@ -3,7 +3,7 @@ from typing import Optional
 
 from pydantic import BaseModel
 
-from collector_manager.enums import URLStatus
+from src.collector_manager.enums import URLStatus
 
 
 class URLInfo(BaseModel):

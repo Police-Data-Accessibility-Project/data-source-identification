@@ -3,10 +3,10 @@ from typing import Any
 from sqlalchemy import Select, select, exists, func, Subquery, and_, not_, ColumnElement
 from sqlalchemy.orm import aliased
 
+from src.collector_manager.enums import URLStatus
 from src.db.enums import TaskType
 from src.db.models import URL, URLHTMLContent, AutomatedUrlAgencySuggestion, URLOptionalDataSourceMetadata, Batch, \
     ConfirmedURLAgency, LinkTaskURL, Task, UserUrlAgencySuggestion, UserRecordTypeSuggestion, UserRelevantSuggestion
-from collector_manager.enums import URLStatus
 from src.core.enums import BatchStatus
 
 

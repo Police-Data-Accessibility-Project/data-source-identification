@@ -3,7 +3,7 @@ from typing import Optional
 import pytest
 
 from src.db.models import URL, URLOptionalDataSourceMetadata
-from collector_manager.enums import CollectorType
+from src.collector_manager.enums import CollectorType
 from src.core.DTOs.TaskOperatorRunInfo import TaskOperatorOutcome
 from src.core.classes.task_operators.URLMiscellaneousMetadataTaskOperator import URLMiscellaneousMetadataTaskOperator
 from tests.helpers.DBDataCreator import DBDataCreator

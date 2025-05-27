@@ -1,14 +1,13 @@
 import time
 
-import api.dependencies
-from collector_manager.enums import CollectorType
+from src.collector_manager import CollectorType
 from src.core.SourceCollectorCore import SourceCollectorCore
 from src.core.enums import BatchStatus
 
 
 def test_common_crawler_lifecycle(test_core: SourceCollectorCore):
     core = test_core
-    db_client = api.dependencies.db_client
+    db_client = src.api.dependencies.db_client
 
     config = {
         "common_crawl_id": "CC-MAIN-2023-50",

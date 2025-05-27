@@ -2,7 +2,7 @@ from typing import Dict
 
 from pydantic import BaseModel
 
-from collector_manager.enums import CollectorType
+from src.collector_manager.enums import CollectorType
 
 
 class GetMetricsBatchesAggregatedInnerResponseDTO(BaseModel):

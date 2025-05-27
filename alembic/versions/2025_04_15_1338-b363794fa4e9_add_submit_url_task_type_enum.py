@@ -8,7 +8,7 @@ Create Date: 2025-04-15 13:38:58.293627
 from typing import Sequence, Union
 
 
-from util.alembic_helpers import switch_enum_type
+from src.util.alembic_helpers import switch_enum_type
 
 # revision identifiers, used by Alembic.
 revision: str = 'b363794fa4e9'

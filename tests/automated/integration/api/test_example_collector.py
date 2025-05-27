@@ -3,11 +3,11 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from src.db import AsyncDatabaseClient
+from src.db.AsyncDatabaseClient import AsyncDatabaseClient
 from src.db.DTOs.BatchInfo import BatchInfo
-from collector_manager.DTOs.ExampleInputDTO import ExampleInputDTO
-from collector_manager.ExampleCollector import ExampleCollector
-from collector_manager.enums import CollectorType
+from src.collector_manager.DTOs.ExampleInputDTO import ExampleInputDTO
+from src.collector_manager.ExampleCollector import ExampleCollector
+from src.collector_manager.enums import CollectorType
 from src.core.AsyncCoreLogger import AsyncCoreLogger
 from src.core.DTOs.BatchStatusInfo import BatchStatusInfo
 from src.core.DTOs.GetBatchLogsResponse import GetBatchLogsResponse

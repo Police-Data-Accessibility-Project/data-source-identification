@@ -2,9 +2,8 @@ import os
 
 import dotenv
 
-import api.dependencies
 from src.db.DTOs.BatchInfo import BatchInfo
-from collector_manager.enums import CollectorType
+from src.collector_manager import CollectorType
 from src.core.enums import BatchStatus
 from test_automated.integration.core.helpers.common_test_procedures import run_collector_and_wait_for_completion
 
@@ -12,7 +11,7 @@ from test_automated.integration.core.helpers.common_test_procedures import run_c
 def test_auto_googler_collector_lifecycle(test_core):
     # TODO: Rework for Async
     ci = test_core
-    db_client = api.dependencies.db_client
+    db_client = src.api.dependencies.db_client
 
     dotenv.load_dotenv()
     config = {
@@ -30,7 +29,7 @@ def test_auto_googler_collector_lifecycle(test_core):
         config=config
     )
 
-    batch_info: BatchInfo = api.dependencies.db_client.get_batch_by_id(1)
+    batch_info: BatchInfo = src.api.dependencies.db_client.get_batch_by_id(1)
     assert batch_info.strategy == "auto_googler"
     assert batch_info.status == BatchStatus.READY_TO_LABEL
     assert batch_info.total_url_count == 20

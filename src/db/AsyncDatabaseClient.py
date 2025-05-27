@@ -12,6 +12,7 @@ from sqlalchemy.orm import selectinload, joinedload, QueryableAttribute, aliased
 from sqlalchemy.sql.functions import coalesce
 from starlette import status
 
+from src.collector_manager.enums import URLStatus, CollectorType
 from src.db.ConfigManager import ConfigManager
 from src.db.DTOConverter import DTOConverter
 from src.db.DTOs.BatchInfo import BatchInfo
@@ -31,7 +32,6 @@ from src.db.models import URL, URLErrorInfo, URLHTMLContent, Base, \
     UserUrlAgencySuggestion, AutoRelevantSuggestion, AutoRecordTypeSuggestion, UserRelevantSuggestion, \
     UserRecordTypeSuggestion, ReviewingUserURL, URLOptionalDataSourceMetadata, ConfirmedURLAgency, Duplicate, Log, \
     BacklogSnapshot, URLDataSource, URLCheckedForDuplicate, URLProbedFor404
-from collector_manager.enums import URLStatus, CollectorType
 from src.core.DTOs.AllAnnotationPostInfo import AllAnnotationPostInfo
 from src.core.DTOs.FinalReviewApprovalInfo import FinalReviewApprovalInfo, RejectionReason
 from src.core.DTOs.GetMetricsBacklogResponse import GetMetricsBacklogResponseDTO, GetMetricsBacklogResponseInnerDTO

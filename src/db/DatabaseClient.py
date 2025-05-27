@@ -5,6 +5,7 @@ from sqlalchemy import create_engine, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import sessionmaker, scoped_session, Session
 
+from src.collector_manager.enums import URLStatus
 from src.db.ConfigManager import ConfigManager
 from src.db.DTOs.BatchInfo import BatchInfo
 from src.db.DTOs.DuplicateInfo import DuplicateInsertInfo
@@ -13,7 +14,6 @@ from src.db.DTOs.LogInfo import LogInfo
 from src.db.DTOs.URLInfo import URLInfo
 from src.db.DTOs.URLMapping import URLMapping
 from src.db.models import Base, Batch, URL, Log, Duplicate, URLDataSource
-from collector_manager.enums import URLStatus
 from src.core.DTOs.task_data_objects.SubmitApprovedURLTDO import SubmittedURLInfo
 from src.core.EnvVarManager import EnvVarManager
 from src.core.enums import BatchStatus

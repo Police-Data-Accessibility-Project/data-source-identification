@@ -1,7 +1,5 @@
-
-import api.dependencies
 from src.db.DTOs.BatchInfo import BatchInfo
-from collector_manager.enums import CollectorType
+from src.collector_manager import CollectorType
 from src.core.enums import BatchStatus
 from src.source_collectors.ckan.search_terms import group_search, package_search, organization_search
 from test_automated.integration.core.helpers.common_test_procedures import run_collector_and_wait_for_completion
@@ -9,7 +7,7 @@ from test_automated.integration.core.helpers.common_test_procedures import run_c
 
 def test_ckan_lifecycle(test_core):
     ci = test_core
-    db_client = api.dependencies.db_client
+    db_client = src.api.dependencies.db_client
 
     config = {
         "package_search": package_search,

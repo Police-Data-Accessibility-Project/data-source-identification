@@ -2,7 +2,7 @@ import pytest
 
 from src.db.constants import PLACEHOLDER_AGENCY_NAME
 from src.db.models import URL, URLOptionalDataSourceMetadata, ConfirmedURLAgency, Agency
-from collector_manager.enums import URLStatus
+from src.collector_manager.enums import URLStatus
 from src.core.DTOs.FinalReviewApprovalInfo import FinalReviewApprovalInfo, RejectionReason, \
     FinalReviewRejectionInfo
 from src.core.DTOs.GetNextURLForFinalReviewResponse import GetNextURLForFinalReviewOuterResponse
