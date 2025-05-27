@@ -1,7 +1,7 @@
 from typing import Optional, Any
 
 
-from collector_db.DatabaseClient import DatabaseClient
+from db.DatabaseClient import DatabaseClient
 from core.enums import BatchStatus
 
 

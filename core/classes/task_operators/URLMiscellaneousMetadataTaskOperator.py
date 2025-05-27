@@ -1,8 +1,8 @@
 from typing import Optional
 
-from collector_db.AsyncDatabaseClient import AsyncDatabaseClient
-from collector_db.DTOs.URLErrorInfos import URLErrorPydanticInfo
-from collector_db.enums import TaskType
+from db.AsyncDatabaseClient import AsyncDatabaseClient
+from db.DTOs.URLErrorInfos import URLErrorPydanticInfo
+from db.enums import TaskType
 from collector_manager.enums import CollectorType
 from core.DTOs.task_data_objects.URLMiscellaneousMetadataTDO import URLMiscellaneousMetadataTDO
 from core.classes.task_operators.TaskOperatorBase import TaskOperatorBase

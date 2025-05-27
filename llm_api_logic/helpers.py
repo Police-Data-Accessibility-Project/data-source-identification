@@ -1,4 +1,4 @@
-from collector_db.DTOs.URLHTMLContentInfo import URLHTMLContentInfo
+from db.DTOs.URLHTMLContentInfo import URLHTMLContentInfo
 
 
 def dictify_html_info(html_infos: list[URLHTMLContentInfo]) -> dict[str, str]:

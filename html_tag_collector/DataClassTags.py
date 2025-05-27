@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from collector_db.DTOs.URLHTMLContentInfo import URLHTMLContentInfo, HTMLContentType
+from db.DTOs.URLHTMLContentInfo import URLHTMLContentInfo, HTMLContentType
 
 
 @dataclass

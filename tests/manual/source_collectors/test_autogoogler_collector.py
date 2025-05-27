@@ -2,7 +2,7 @@ from unittest.mock import MagicMock, AsyncMock
 
 import pytest
 
-from collector_db.AsyncDatabaseClient import AsyncDatabaseClient
+from db.AsyncDatabaseClient import AsyncDatabaseClient
 from core.AsyncCoreLogger import AsyncCoreLogger
 from source_collectors.auto_googler.AutoGooglerCollector import AutoGooglerCollector
 from source_collectors.auto_googler.DTOs import AutoGooglerInputDTO

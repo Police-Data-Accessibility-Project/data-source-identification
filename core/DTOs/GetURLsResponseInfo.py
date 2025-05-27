@@ -3,7 +3,7 @@ from typing import Optional
 
 from pydantic import BaseModel
 
-from collector_db.enums import URLMetadataAttributeType, ValidationStatus, ValidationSource
+from db.enums import URLMetadataAttributeType, ValidationStatus, ValidationSource
 from collector_manager.enums import URLStatus
 
 class GetURLsResponseErrorInfo(BaseModel):

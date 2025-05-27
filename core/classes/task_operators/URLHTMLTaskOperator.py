@@ -1,9 +1,9 @@
 from http import HTTPStatus
 
-from collector_db.AsyncDatabaseClient import AsyncDatabaseClient
-from collector_db.DTOs.URLErrorInfos import URLErrorPydanticInfo
-from collector_db.DTOs.URLInfo import URLInfo
-from collector_db.enums import TaskType
+from db.AsyncDatabaseClient import AsyncDatabaseClient
+from db.DTOs.URLErrorInfos import URLErrorPydanticInfo
+from db.DTOs.URLInfo import URLInfo
+from db.enums import TaskType
 from core.DTOs.task_data_objects.UrlHtmlTDO import UrlHtmlTDO
 from core.classes.HTMLContentInfoGetter import HTMLContentInfoGetter
 from core.classes.task_operators.TaskOperatorBase import TaskOperatorBase

@@ -2,14 +2,14 @@ from unittest.mock import MagicMock, AsyncMock
 
 import pytest
 
-from collector_db.AsyncDatabaseClient import AsyncDatabaseClient
+from db.AsyncDatabaseClient import AsyncDatabaseClient
 from core.AsyncCoreLogger import AsyncCoreLogger
 from source_collectors.muckrock.DTOs import MuckrockSimpleSearchCollectorInputDTO, \
     MuckrockCountySearchCollectorInputDTO, MuckrockAllFOIARequestsCollectorInputDTO
 from source_collectors.muckrock.classes.MuckrockCollector import MuckrockSimpleSearchCollector, \
     MuckrockCountyLevelSearchCollector, MuckrockAllFOIARequestsCollector
 from source_collectors.muckrock.schemas import MuckrockURLInfoSchema
-from tests.test_automated.integration.core.helpers.constants import ALLEGHENY_COUNTY_MUCKROCK_ID, \
+from tests.automated.integration.core.helpers.constants import ALLEGHENY_COUNTY_MUCKROCK_ID, \
     ALLEGHENY_COUNTY_TOWN_NAMES
 
 

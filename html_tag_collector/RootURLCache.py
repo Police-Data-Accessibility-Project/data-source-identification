@@ -5,7 +5,7 @@ from urllib.parse import urlparse
 from aiohttp import ClientSession
 from bs4 import BeautifulSoup
 
-from collector_db.AsyncDatabaseClient import AsyncDatabaseClient
+from db.AsyncDatabaseClient import AsyncDatabaseClient
 from html_tag_collector.constants import REQUEST_HEADERS
 
 DEBUG = False

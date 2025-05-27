@@ -3,7 +3,7 @@ import os
 
 from openai import AsyncOpenAI
 
-from collector_db.DTOs.URLHTMLContentInfo import URLHTMLContentInfo
+from db.DTOs.URLHTMLContentInfo import URLHTMLContentInfo
 from core.enums import RecordType
 from llm_api_logic.LLMRecordClassifierBase import RecordClassifierBase
 

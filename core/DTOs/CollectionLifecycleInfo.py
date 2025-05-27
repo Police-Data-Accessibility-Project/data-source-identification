@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 
-from collector_db.DTOs.DuplicateInfo import DuplicateInfo
-from collector_db.DTOs.URLMapping import URLMapping
+from db.DTOs.DuplicateInfo import DuplicateInfo
+from db.DTOs.URLMapping import URLMapping
 
 
 class CollectionLifecycleInfo(BaseModel):

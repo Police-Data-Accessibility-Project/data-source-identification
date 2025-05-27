@@ -3,7 +3,7 @@ from unittest.mock import MagicMock, AsyncMock
 import pytest
 from marshmallow import Schema, fields
 
-from collector_db.AsyncDatabaseClient import AsyncDatabaseClient
+from db.AsyncDatabaseClient import AsyncDatabaseClient
 from core.AsyncCoreLogger import AsyncCoreLogger
 from source_collectors.common_crawler.CommonCrawlerCollector import CommonCrawlerCollector
 from source_collectors.common_crawler.DTOs import CommonCrawlerInputDTO

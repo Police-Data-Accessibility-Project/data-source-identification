@@ -1,4 +1,4 @@
-from collector_db.DTOs.URLHTMLContentInfo import URLHTMLContentInfo, HTMLContentType
+from db.DTOs.URLHTMLContentInfo import URLHTMLContentInfo, HTMLContentType
 from html_tag_collector.DataClassTags import ResponseHTMLInfo
 
 

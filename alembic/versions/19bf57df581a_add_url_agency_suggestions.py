@@ -9,7 +9,7 @@ from typing import Sequence, Union
 
 from alembic import op
 import sqlalchemy as sa
-from collector_db.enums import PGEnum
+from db.enums import PGEnum
 # revision identifiers, used by Alembic.
 revision: str = '19bf57df581a'
 down_revision: Union[str, None] = '072b32a45b1c'

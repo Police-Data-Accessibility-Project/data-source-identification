@@ -3,10 +3,10 @@ from typing import Optional
 from pydantic import BaseModel
 from sqlalchemy.exc import IntegrityError
 
-from collector_db.AsyncDatabaseClient import AsyncDatabaseClient
-from collector_db.DTOs.BatchInfo import BatchInfo
-from collector_db.DTOs.GetTaskStatusResponseInfo import GetTaskStatusResponseInfo
-from collector_db.enums import TaskType
+from db.AsyncDatabaseClient import AsyncDatabaseClient
+from db.DTOs.BatchInfo import BatchInfo
+from db.DTOs.GetTaskStatusResponseInfo import GetTaskStatusResponseInfo
+from db.enums import TaskType
 from collector_manager.AsyncCollectorManager import AsyncCollectorManager
 from collector_manager.enums import CollectorType
 from core.DTOs.AllAnnotationPostInfo import AllAnnotationPostInfo

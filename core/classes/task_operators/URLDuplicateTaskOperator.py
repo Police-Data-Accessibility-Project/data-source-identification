@@ -2,8 +2,8 @@ from http import HTTPStatus
 
 from aiohttp import ClientResponseError
 
-from collector_db.AsyncDatabaseClient import AsyncDatabaseClient
-from collector_db.enums import TaskType
+from db.AsyncDatabaseClient import AsyncDatabaseClient
+from db.enums import TaskType
 from core.DTOs.task_data_objects.URLDuplicateTDO import URLDuplicateTDO
 from core.classes.task_operators.TaskOperatorBase import TaskOperatorBase
 from pdap_api_client.PDAPClient import PDAPClient

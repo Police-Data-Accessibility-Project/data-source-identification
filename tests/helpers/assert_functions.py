@@ -1,5 +1,5 @@
-from collector_db.AsyncDatabaseClient import AsyncDatabaseClient
-from collector_db.models import Task
+from db.AsyncDatabaseClient import AsyncDatabaseClient
+from db.models import Task
 
 
 async def assert_database_has_no_tasks(adb_client: AsyncDatabaseClient):

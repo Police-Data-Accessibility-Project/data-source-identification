@@ -3,9 +3,9 @@ import logging
 from core.classes.task_operators.URL404ProbeTaskOperator import URL404ProbeTaskOperator
 from core.classes.task_operators.URLDuplicateTaskOperator import URLDuplicateTaskOperator
 from source_collectors.muckrock.MuckrockAPIInterface import MuckrockAPIInterface
-from collector_db.AsyncDatabaseClient import AsyncDatabaseClient
-from collector_db.DTOs.TaskInfo import TaskInfo
-from collector_db.enums import TaskType
+from db.AsyncDatabaseClient import AsyncDatabaseClient
+from db.DTOs.TaskInfo import TaskInfo
+from db.enums import TaskType
 from core.DTOs.GetTasksResponse import GetTasksResponse
 from core.DTOs.TaskOperatorRunInfo import TaskOperatorRunInfo, TaskOperatorOutcome
 from core.FunctionTrigger import FunctionTrigger

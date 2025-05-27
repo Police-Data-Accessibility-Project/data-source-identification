@@ -1,7 +1,7 @@
 import traceback
 from abc import ABC, abstractmethod
-from collector_db.AsyncDatabaseClient import AsyncDatabaseClient
-from collector_db.enums import TaskType
+from db.AsyncDatabaseClient import AsyncDatabaseClient
+from db.enums import TaskType
 from core.DTOs.TaskOperatorRunInfo import TaskOperatorOutcome, TaskOperatorRunInfo
 from core.enums import BatchStatus
 
