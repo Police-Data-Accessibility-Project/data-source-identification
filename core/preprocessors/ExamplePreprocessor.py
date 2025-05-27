@@ -1,6 +1,6 @@
 from typing import List
 
-from collector_db.DTOs.URLInfo import URLInfo
+from db.DTOs.URLInfo import URLInfo
 from collector_manager.DTOs.ExampleOutputDTO import ExampleOutputDTO
 from core.preprocessors.PreprocessorBase import PreprocessorBase
 

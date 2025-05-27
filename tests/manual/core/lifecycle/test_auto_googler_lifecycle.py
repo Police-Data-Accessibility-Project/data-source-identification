@@ -3,7 +3,7 @@ import os
 import dotenv
 
 import api.dependencies
-from collector_db.DTOs.BatchInfo import BatchInfo
+from db.DTOs.BatchInfo import BatchInfo
 from collector_manager.enums import CollectorType
 from core.enums import BatchStatus
 from test_automated.integration.core.helpers.common_test_procedures import run_collector_and_wait_for_completion

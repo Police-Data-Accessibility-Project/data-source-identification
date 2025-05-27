@@ -4,7 +4,7 @@ from fastapi import Path, APIRouter
 from fastapi.params import Query, Depends
 
 from api.dependencies import get_core, get_async_core
-from collector_db.DTOs.BatchInfo import BatchInfo
+from db.DTOs.BatchInfo import BatchInfo
 from collector_manager.enums import CollectorType
 from core.AsyncCore import AsyncCore
 from core.DTOs.GetBatchLogsResponse import GetBatchLogsResponse

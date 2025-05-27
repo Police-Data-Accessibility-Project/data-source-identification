@@ -2,7 +2,7 @@ from typing import Optional
 
 from pydantic import BaseModel, Field
 
-from collector_db.DTOs.URLMapping import URLMapping
+from db.DTOs.URLMapping import URLMapping
 from core.DTOs.ResponseURLInfo import ResponseURLInfo
 from html_tag_collector.DataClassTags import ResponseHTMLInfo
 

@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import List
 
-from collector_db.DTOs.URLInfo import URLInfo
+from db.DTOs.URLInfo import URLInfo
 
 
 class CKANPreprocessor:

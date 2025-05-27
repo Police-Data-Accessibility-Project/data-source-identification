@@ -1,7 +1,7 @@
 import pytest
 
-from collector_db.AsyncDatabaseClient import AsyncDatabaseClient
-from collector_db.DTOs.URLInfo import URLInfo
+from db.AsyncDatabaseClient import AsyncDatabaseClient
+from db.DTOs.URLInfo import URLInfo
 from core.classes.task_operators.URLHTMLTaskOperator import URLHTMLTaskOperator
 from tests.helpers.DBDataCreator import DBDataCreator
 from html_tag_collector.ResponseParser import HTMLResponseParser

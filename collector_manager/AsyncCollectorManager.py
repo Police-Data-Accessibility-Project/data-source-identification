@@ -5,7 +5,7 @@ from typing import Dict
 from fastapi import HTTPException
 from pydantic import BaseModel
 
-from collector_db.AsyncDatabaseClient import AsyncDatabaseClient
+from db.AsyncDatabaseClient import AsyncDatabaseClient
 from collector_manager.AsyncCollectorBase import AsyncCollectorBase
 from collector_manager.CollectorManager import InvalidCollectorError
 from collector_manager.collector_mapping import COLLECTOR_MAPPING

@@ -14,8 +14,8 @@ from api.routes.root import root_router
 from api.routes.search import search_router
 from api.routes.task import task_router
 from api.routes.url import url_router
-from collector_db.AsyncDatabaseClient import AsyncDatabaseClient
-from collector_db.DatabaseClient import DatabaseClient
+from db.AsyncDatabaseClient import AsyncDatabaseClient
+from db.DatabaseClient import DatabaseClient
 from collector_manager.AsyncCollectorManager import AsyncCollectorManager
 from core.AsyncCore import AsyncCore
 from core.AsyncCoreLogger import AsyncCoreLogger

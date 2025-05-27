@@ -1,7 +1,7 @@
 import asyncio
 
-from collector_db.AsyncDatabaseClient import AsyncDatabaseClient
-from collector_db.DTOs.LogInfo import LogInfo
+from db.AsyncDatabaseClient import AsyncDatabaseClient
+from db.DTOs.LogInfo import LogInfo
 
 
 class AsyncCoreLogger:

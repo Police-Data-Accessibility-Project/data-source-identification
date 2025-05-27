@@ -2,8 +2,8 @@ from http import HTTPStatus
 
 from pydantic import BaseModel
 
-from collector_db.AsyncDatabaseClient import AsyncDatabaseClient
-from collector_db.enums import TaskType
+from db.AsyncDatabaseClient import AsyncDatabaseClient
+from db.enums import TaskType
 from core.DTOs.task_data_objects.URL404ProbeTDO import URL404ProbeTDO
 from core.classes.task_operators.TaskOperatorBase import TaskOperatorBase
 from html_tag_collector.URLRequestInterface import URLRequestInterface

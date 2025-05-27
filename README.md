@@ -67,7 +67,7 @@ To access the API documentation, visit `http://{host}:8000/docs`.
 To run tests on the container, run:
 
 ```bash
-docker exec data-source-identification-app-1 pytest /app/tests/test_automated
+docker exec data-source-identification-app-1 pytest /app/tests/automated
 ```
 
 Be sure to inspect the `docker-compose.yml` file in the root directory -- some environment variables are dependant upon the Operating System you are using.

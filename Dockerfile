@@ -18,7 +18,7 @@ RUN playwright install chromium
 
 # Copy project files
 COPY api ./api
-COPY collector_db ./collector_db
+COPY db ./collector_db
 COPY collector_manager ./collector_manager
 COPY core ./core
 COPY html_tag_collector ./html_tag_collector
@@ -31,12 +31,6 @@ COPY security_manager ./security_manager
 COPY pdap_api_client ./pdap_api_client
 COPY execute.sh ./execute.sh
 COPY .project-root ./.project-root
-
-COPY tests/conftest.py ./tests/conftest.py
-COPY tests/__init__.py ./tests/__init__.py
-COPY tests/test_automated ./tests/test_automated
-COPY tests/test_alembic ./tests/test_alembic
-COPY tests/helpers ./tests/helpers
 
 COPY llm_api_logic ./llm_api_logic
 

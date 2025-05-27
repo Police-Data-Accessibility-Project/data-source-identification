@@ -6,9 +6,9 @@ from typing import Type, Optional
 
 from pydantic import BaseModel
 
-from collector_db.AsyncDatabaseClient import AsyncDatabaseClient
-from collector_db.DTOs.InsertURLsInfo import InsertURLsInfo
-from collector_db.DTOs.LogInfo import LogInfo
+from db.AsyncDatabaseClient import AsyncDatabaseClient
+from db.DTOs.InsertURLsInfo import InsertURLsInfo
+from db.DTOs.LogInfo import LogInfo
 from collector_manager.enums import CollectorType
 from core.AsyncCoreLogger import AsyncCoreLogger
 from core.FunctionTrigger import FunctionTrigger

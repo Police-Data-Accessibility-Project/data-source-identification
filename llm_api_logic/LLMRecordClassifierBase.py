@@ -4,7 +4,7 @@ from typing import Any
 
 from openai import AsyncOpenAI
 
-from collector_db.DTOs.URLHTMLContentInfo import URLHTMLContentInfo
+from db.DTOs.URLHTMLContentInfo import URLHTMLContentInfo
 from llm_api_logic.RecordTypeStructuredOutput import RecordTypeStructuredOutput
 from llm_api_logic.constants import RECORD_CLASSIFICATION_QUERY_CONTENT
 from llm_api_logic.helpers import dictify_html_info

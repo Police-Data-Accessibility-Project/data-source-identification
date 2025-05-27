@@ -3,9 +3,9 @@ from typing import Optional
 from fastapi import APIRouter, Depends, Query, Path
 
 from api.dependencies import get_async_core
-from collector_db.DTOs.GetTaskStatusResponseInfo import GetTaskStatusResponseInfo
-from collector_db.DTOs.TaskInfo import TaskInfo
-from collector_db.enums import TaskType
+from db.DTOs.GetTaskStatusResponseInfo import GetTaskStatusResponseInfo
+from db.DTOs.TaskInfo import TaskInfo
+from db.enums import TaskType
 from core.AsyncCore import AsyncCore
 from core.enums import BatchStatus
 from security_manager.SecurityManager import AccessInfo, get_access_info

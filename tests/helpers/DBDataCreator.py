@@ -5,16 +5,16 @@ from typing import List, Optional
 
 from pydantic import BaseModel, model_validator
 
-from collector_db.AsyncDatabaseClient import AsyncDatabaseClient
-from collector_db.DTOs.BatchInfo import BatchInfo
-from collector_db.DTOs.DuplicateInfo import DuplicateInsertInfo
-from collector_db.DTOs.InsertURLsInfo import InsertURLsInfo
-from collector_db.DTOs.URLErrorInfos import URLErrorPydanticInfo
-from collector_db.DTOs.URLHTMLContentInfo import URLHTMLContentInfo, HTMLContentType
-from collector_db.DTOs.URLInfo import URLInfo
-from collector_db.DTOs.URLMapping import URLMapping
-from collector_db.DatabaseClient import DatabaseClient
-from collector_db.enums import TaskType
+from db.AsyncDatabaseClient import AsyncDatabaseClient
+from db.DTOs.BatchInfo import BatchInfo
+from db.DTOs.DuplicateInfo import DuplicateInsertInfo
+from db.DTOs.InsertURLsInfo import InsertURLsInfo
+from db.DTOs.URLErrorInfos import URLErrorPydanticInfo
+from db.DTOs.URLHTMLContentInfo import URLHTMLContentInfo, HTMLContentType
+from db.DTOs.URLInfo import URLInfo
+from db.DTOs.URLMapping import URLMapping
+from db.DatabaseClient import DatabaseClient
+from db.enums import TaskType
 from collector_manager.enums import CollectorType, URLStatus
 from core.DTOs.FinalReviewApprovalInfo import FinalReviewApprovalInfo, RejectionReason
 from core.DTOs.URLAgencySuggestionInfo import URLAgencySuggestionInfo
