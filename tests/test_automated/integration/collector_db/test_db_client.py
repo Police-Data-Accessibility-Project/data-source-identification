@@ -273,7 +273,7 @@ async def test_get_next_url_for_final_review_favor_more_components(db_data_creat
 async def test_get_next_url_for_final_review_no_annotations(db_data_creator: DBDataCreator):
     """
     Test in the case of one URL with no annotations.
-    Should be returned if it is the only one available.
+    No annotations should be returned
     """
     batch_id = db_data_creator.batch()
     url_mapping = db_data_creator.urls(batch_id=batch_id, url_count=1).url_mappings[0]
@@ -282,22 +282,7 @@ async def test_get_next_url_for_final_review_no_annotations(db_data_creator: DBD
         batch_id=None
     )
 
-    assert result.id == url_mapping.url_id
-
-    annotations = result.annotations
-
-    agency = annotations.agency
-    assert agency.confirmed == []
-    assert agency.auto.unknown is True
-    assert agency.auto.suggestions == []
-
-    record_type = annotations.record_type
-    assert record_type.auto is None
-    assert record_type.user is None
-
-    relevant = annotations.relevant
-    assert relevant.auto is None
-    assert relevant.user is None
+    assert result is None
 
 @pytest.mark.asyncio
 async def test_get_next_url_for_final_review_only_confirmed_urls(db_data_creator: DBDataCreator):
