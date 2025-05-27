@@ -1018,26 +1018,43 @@ class AsyncDatabaseClient:
                 ).subquery()
             )
 
-        def count_subquery(model: Type[Base]):
-            return (
-                select(
-                    model.url_id,
-                    func.count(model.url_id).label("count")
-                ).group_by(model.url_id).subquery()
-            )
+        user_models = [
+            UserRelevantSuggestion,
+            UserRecordTypeSuggestion,
+            UserUrlAgencySuggestion
+        ]
 
         models = [
             AutoRelevantSuggestion,
-            UserRelevantSuggestion,
             AutoRecordTypeSuggestion,
-            UserRecordTypeSuggestion,
             AutomatedUrlAgencySuggestion,
-            UserUrlAgencySuggestion
+            *user_models
+        ]
+
+        # The below relationships are joined directly to the URL
+        single_join_relationships = [
+            URL.html_content,
+            URL.auto_record_type_suggestion,
+            URL.auto_relevant_suggestion,
+            URL.user_relevant_suggestion,
+            URL.user_record_type_suggestion,
+            URL.optional_data_source_metadata,
+        ]
+
+        # The below relationships are joined to entities that are joined to the URL
+        double_join_relationships = [
+            (URL.automated_agency_suggestions, AutomatedUrlAgencySuggestion.agency),
+            (URL.user_agency_suggestion, UserUrlAgencySuggestion.agency),
+            (URL.confirmed_agencies, ConfirmedURLAgency.agency)
         ]
 
         exist_subqueries = [
             annotations_exist_subquery(model=model)
             for model in models
+        ]
+        user_exist_subqueries = [
+            annotations_exist_subquery(model=model)
+            for model in user_models
         ]
 
         sum_of_exist_subqueries = (
@@ -1064,39 +1081,27 @@ class AsyncDatabaseClient:
                 subquery, URL.id == subquery.c.url_id
             )
 
+        where_subqueries = [
+            subquery.c.exists == 1
+            for subquery in user_exist_subqueries
+        ]
+
         url_query = url_query.where(
-                URL.outcome == URLStatus.PENDING.value
+            and_(
+                URL.outcome == URLStatus.PENDING.value,
+                *where_subqueries
             )
+        )
         if batch_id is not None:
             url_query = url_query.where(
                 URL.batch_id == batch_id
             )
 
-        # The below relationships are joined directly to the URL
-        single_join_relationships = [
-            URL.html_content,
-            URL.auto_record_type_suggestion,
-            URL.auto_relevant_suggestion,
-            URL.user_relevant_suggestion,
-            URL.user_record_type_suggestion,
-            URL.optional_data_source_metadata,
-        ]
-
-        options = [
-            joinedload(relationship) for relationship in single_join_relationships
-        ]
-
-        # The below relationships are joined to entities that are joined to the URL
-        double_join_relationships = [
-            (URL.automated_agency_suggestions, AutomatedUrlAgencySuggestion.agency),
-            (URL.user_agency_suggestion, UserUrlAgencySuggestion.agency),
-            (URL.confirmed_agencies, ConfirmedURLAgency.agency)
-        ]
-        for primary, secondary in double_join_relationships:
-            options.append(joinedload(primary).joinedload(secondary))
-
         # Apply options
-        url_query = url_query.options(*options)
+        url_query = url_query.options(
+            *[joinedload(relationship) for relationship in single_join_relationships],
+            *[joinedload(primary).joinedload(secondary) for primary, secondary in double_join_relationships]
+        )
 
         # Apply order clause
         url_query = url_query.order_by(

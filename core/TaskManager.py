@@ -47,8 +47,6 @@ class TaskManager:
         self.task_trigger = FunctionTrigger(self.run_tasks)
         self.task_status: TaskType = TaskType.IDLE
 
-
-
     #region Task Operators
     async def get_url_html_task_operator(self):
         operator = URLHTMLTaskOperator(
