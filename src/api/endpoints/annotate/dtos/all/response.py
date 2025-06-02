@@ -3,15 +3,14 @@ from typing import Optional
 from pydantic import Field, BaseModel
 
 from src.api.endpoints.annotate.dtos.agency.response import GetNextURLForAgencyAgencyInfo
+from src.api.endpoints.annotate.dtos.shared.base.response import AnnotationInnerResponseInfoBase
 from src.core.enums import RecordType
-from src.core.tasks.operators.url_html.scraper.parser.dtos.response_html import ResponseHTMLInfo
 
 
-class GetNextURLForAllAnnotationInnerResponse(BaseModel):
-    url_id: int
-    url: str
-    html_info: ResponseHTMLInfo
-    agency_suggestions: Optional[list[GetNextURLForAgencyAgencyInfo]]
+class GetNextURLForAllAnnotationInnerResponse(AnnotationInnerResponseInfoBase):
+    agency_suggestions: Optional[list[GetNextURLForAgencyAgencyInfo]] = Field(
+        title="The auto-labeler's suggestions for agencies"
+    )
     suggested_relevant: Optional[bool] = Field(
         title="Whether the auto-labeler identified the URL as relevant or not"
     )

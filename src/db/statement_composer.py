@@ -8,6 +8,7 @@ from src.db.enums import TaskType
 from src.db.models.core import URL, URLHTMLContent, AutomatedUrlAgencySuggestion, URLOptionalDataSourceMetadata, Batch, \
     ConfirmedURLAgency, LinkTaskURL, Task, UserUrlAgencySuggestion, UserRecordTypeSuggestion, UserRelevantSuggestion
 from src.core.enums import BatchStatus
+from src.db.types import UserSuggestionType
 
 
 class StatementComposer:
@@ -96,6 +97,18 @@ class StatementComposer:
 
         return query
 
+    @staticmethod
+    def user_suggestion_exists(
+        model_to_include: UserSuggestionType
+    ) -> ColumnElement[bool]:
+        subquery = exists(
+            select(model_to_include)
+            .where(
+                model_to_include.url_id == URL.id,
+            )
+        )
+        return subquery
+
 
     @staticmethod
     def user_suggestion_not_exists(
@@ -106,12 +119,7 @@ class StatementComposer:
         #
 
         subquery = not_(
-                    exists(
-                        select(model_to_exclude)
-                        .where(
-                            model_to_exclude.url_id == URL.id,
-                        )
-                    )
+                    StatementComposer.user_suggestion_exists(model_to_exclude)
                 )
 
         return subquery
