@@ -3,7 +3,7 @@ from collections import deque
 
 import pytest
 
-from src.core.FunctionTrigger import FunctionTrigger
+from src.core.function_trigger import FunctionTrigger
 
 
 @pytest.mark.asyncio

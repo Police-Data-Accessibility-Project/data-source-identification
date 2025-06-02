@@ -2,19 +2,10 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from src.db.AsyncDatabaseClient import AsyncDatabaseClient
-from src.collector_manager.AsyncCollectorManager import AsyncCollectorManager
-from src.core.AsyncCore import AsyncCore
-from src.core.AsyncCoreLogger import AsyncCoreLogger
-from src.core.SourceCollectorCore import SourceCollectorCore
-
-
-@pytest.fixture
-def test_core(db_client_test):
-    core = SourceCollectorCore(
-        db_client=db_client_test,
-    )
-    yield core
+from src.collectors.manager import AsyncCollectorManager
+from src.core.core import AsyncCore
+from src.core.logger import AsyncCoreLogger
+from src.db.client.async_ import AsyncDatabaseClient
 
 
 @pytest.fixture

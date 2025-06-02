@@ -3,15 +3,14 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from src.db.AsyncDatabaseClient import AsyncDatabaseClient
-from src.db.DTOs.BatchInfo import BatchInfo
-from src.collector_manager.DTOs.ExampleInputDTO import ExampleInputDTO
-from src.collector_manager.ExampleCollector import ExampleCollector
-from src.collector_manager.enums import CollectorType
-from src.core.AsyncCoreLogger import AsyncCoreLogger
-from src.core.DTOs.BatchStatusInfo import BatchStatusInfo
-from src.core.DTOs.GetBatchLogsResponse import GetBatchLogsResponse
-from src.core.DTOs.GetBatchStatusResponse import GetBatchStatusResponse
+from src.api.endpoints.batch.dtos.get.logs import GetBatchLogsResponse
+from src.api.endpoints.batch.dtos.get.status import GetBatchStatusResponse
+from src.db.client.async_ import AsyncDatabaseClient
+from src.db.dtos.batch_info import BatchInfo
+from src.collectors.source_collectors.example.dtos.input import ExampleInputDTO
+from src.collectors.source_collectors.example.core import ExampleCollector
+from src.collectors.enums import CollectorType
+from src.core.logger import AsyncCoreLogger
 from src.core.enums import BatchStatus
 from tests.helpers.patch_functions import block_sleep
 from tests.automated.integration.api.conftest import disable_task_trigger
@@ -52,7 +51,7 @@ async def test_example_collector(api_test_helper, monkeypatch):
         status=BatchStatus.IN_PROCESS
     )
     assert len(bsr.results) == 1
-    bsi: BatchStatusInfo = bsr.results[0]
+    bsi: BatchInfo = bsr.results[0]
 
     assert bsi.id == batch_id
     assert bsi.strategy == CollectorType.EXAMPLE.value
@@ -69,7 +68,7 @@ async def test_example_collector(api_test_helper, monkeypatch):
     )
 
     assert len(csr.results) == 1
-    bsi: BatchStatusInfo = csr.results[0]
+    bsi: BatchInfo = csr.results[0]
 
     assert bsi.id == batch_id
     assert bsi.strategy == CollectorType.EXAMPLE.value

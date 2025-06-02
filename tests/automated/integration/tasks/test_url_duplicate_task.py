@@ -3,15 +3,15 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from src.db.DTOs.URLMapping import URLMapping
-from src.db.models import URL, URLCheckedForDuplicate
-from src.collector_manager.enums import URLStatus
-from src.core.DTOs.TaskOperatorRunInfo import TaskOperatorOutcome
-from src.core.classes.task_operators.URLDuplicateTaskOperator import URLDuplicateTaskOperator
-from tests.helpers.DBDataCreator import DBDataCreator
+from src.core.tasks.operators.url_duplicate.core import URLDuplicateTaskOperator
+from src.db.dtos.url_mapping import URLMapping
+from src.db.models.core import URL, URLCheckedForDuplicate
+from src.collectors.enums import URLStatus
+from src.core.tasks.enums import TaskOperatorOutcome
+from tests.helpers.db_data_creator import DBDataCreator
 from tests.helpers.test_batch_creation_parameters import TestBatchCreationParameters, TestURLCreationParameters
 from pdap_access_manager import ResponseInfo
-from src.pdap_api_client.PDAPClient import PDAPClient
+from src.pdap_api.client import PDAPClient
 
 
 @pytest.mark.asyncio

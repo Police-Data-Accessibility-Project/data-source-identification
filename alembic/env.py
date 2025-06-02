@@ -5,8 +5,8 @@ from alembic import context
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 
-from src.db.helper_functions import get_postgres_connection_string
-from src.db.models import Base
+from src.db.helpers import get_postgres_connection_string
+from src.db.models.templates import Base
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

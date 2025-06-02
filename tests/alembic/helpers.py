@@ -3,7 +3,7 @@ from typing import Optional
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from tests.helpers.AlembicRunner import AlembicRunner
+from tests.helpers.alembic_runner import AlembicRunner
 
 
 def get_enum_values(enum_name: str, session: Session) -> list[str]:

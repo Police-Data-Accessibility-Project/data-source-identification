@@ -3,7 +3,7 @@ from typing import Optional
 
 from pydantic import BaseModel, model_validator
 
-from src.collector_manager.enums import URLStatus, CollectorType
+from src.collectors.enums import URLStatus, CollectorType
 from src.core.enums import BatchStatus, RecordType, SuggestedStatus
 
 

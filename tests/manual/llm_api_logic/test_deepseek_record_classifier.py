@@ -1,12 +1,12 @@
 import pytest
 
-from src.db.DTOs.URLHTMLContentInfo import URLHTMLContentInfo
-from src.llm_api_logic.DeepSeekRecordClassifier import DeepSeekRecordClassifier
+from src.db.dtos.url_html_content_info import URLHTMLContentInfo
+from src.core.tasks.operators.record_type.llm_api.record_classifier.deepseek import DeepSeekRecordClassifier
 
 
 @pytest.mark.asyncio
 async def test_deepseek_record_classifier():
-    from src.db.DTOs.URLHTMLContentInfo import HTMLContentType as hct
+    from src.db.dtos.url_html_content_info import HTMLContentType as hct
 
     d = {
         hct.TITLE: "Oath of Office for Newly Promoted Corporal Lumpkin with Acworth Police – City of Acworth, GA",

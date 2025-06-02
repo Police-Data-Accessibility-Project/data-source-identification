@@ -1,0 +1,2 @@
+class CKANAPIError(Exception):
+    pass

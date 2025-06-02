@@ -1,9 +1,9 @@
 
 import pytest
 
-from src.db.models import Batch, URL, URLOptionalDataSourceMetadata
-from src.collector_manager.enums import CollectorType
-from src.core.DTOs.ManualBatchInputDTO import ManualBatchInnerInputDTO, ManualBatchInputDTO
+from src.api.endpoints.collector.dtos.manual_batch.post import ManualBatchInnerInputDTO, ManualBatchInputDTO
+from src.db.models.core import Batch, URL, URLOptionalDataSourceMetadata
+from src.collectors.enums import CollectorType
 from src.core.enums import RecordType
 
 

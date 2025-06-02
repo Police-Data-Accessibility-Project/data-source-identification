@@ -1,11 +1,12 @@
 import pytest
 
+from src.api.endpoints.review.dtos.approve import FinalReviewApprovalInfo
+from src.api.endpoints.review.dtos.get import GetNextURLForFinalReviewOuterResponse
+from src.api.endpoints.review.dtos.reject import FinalReviewRejectionInfo
+from src.api.endpoints.review.enums import RejectionReason
 from src.db.constants import PLACEHOLDER_AGENCY_NAME
-from src.db.models import URL, URLOptionalDataSourceMetadata, ConfirmedURLAgency, Agency
-from src.collector_manager.enums import URLStatus
-from src.core.DTOs.FinalReviewApprovalInfo import FinalReviewApprovalInfo, RejectionReason, \
-    FinalReviewRejectionInfo
-from src.core.DTOs.GetNextURLForFinalReviewResponse import GetNextURLForFinalReviewOuterResponse
+from src.db.models.core import URL, URLOptionalDataSourceMetadata, ConfirmedURLAgency, Agency
+from src.collectors.enums import URLStatus
 from src.core.enums import RecordType, SuggestedStatus
 from tests.helpers.complex_test_data_functions import setup_for_get_next_url_for_final_review
 

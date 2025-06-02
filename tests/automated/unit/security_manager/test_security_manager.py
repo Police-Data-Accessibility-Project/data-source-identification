@@ -4,7 +4,9 @@ import pytest
 from fastapi import HTTPException
 from jwt import InvalidTokenError
 
-from src.security_manager.SecurityManager import SecurityManager, Permissions, AccessInfo, get_access_info
+from src.security.manager import SecurityManager, get_access_info
+from src.security.dtos.access_info import AccessInfo
+from src.security.enums import Permissions
 
 SECRET_KEY = "test_secret_key"
 VALID_TOKEN = "valid_token"

@@ -3,14 +3,15 @@ from unittest.mock import AsyncMock, call
 
 import pytest
 
-from src.db import AsyncDatabaseClient
+from src.db.client.async_ import AsyncDatabaseClient
 from src.db.enums import TaskType
-from src.db.models import Task
-from src.core.AsyncCore import AsyncCore
-from src.core.DTOs.TaskOperatorRunInfo import TaskOperatorRunInfo, TaskOperatorOutcome
-from src.core.TaskManager import TaskManager
+from src.db.models.core import Task
+from src.core.core import AsyncCore
+from src.core.tasks.dtos.run_info import TaskOperatorRunInfo
+from src.core.tasks.enums import TaskOperatorOutcome
+from src.core.tasks.manager import TaskManager
 from src.core.enums import BatchStatus
-from tests.helpers.DBDataCreator import DBDataCreator
+from tests.helpers.db_data_creator import DBDataCreator
 
 def setup_async_core(adb_client: AsyncDatabaseClient):
     return AsyncCore(

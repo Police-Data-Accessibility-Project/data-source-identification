@@ -1,27 +1,27 @@
 import asyncio
 from dataclasses import dataclass
-from typing import Generator
+from typing import Generator, Any, AsyncGenerator
 from unittest.mock import AsyncMock
 
 import pytest
 import pytest_asyncio
 from starlette.testclient import TestClient
 
+from src.api.endpoints.batch.dtos.get.status import GetBatchStatusResponse
+from src.api.endpoints.review.routes import requires_final_review_permission
 from src.api.main import app
-from src.api.routes.review import requires_final_review_permission
-from src.core.AsyncCore import AsyncCore
-from src.core.DTOs.GetBatchStatusResponse import GetBatchStatusResponse
-from src.core.SourceCollectorCore import SourceCollectorCore
+from src.core.core import AsyncCore
 from src.core.enums import BatchStatus
-from src.security_manager.SecurityManager import get_access_info, AccessInfo, Permissions
-from tests.helpers.DBDataCreator import DBDataCreator
+from src.security.manager import get_access_info
+from src.security.dtos.access_info import AccessInfo
+from src.security.enums import Permissions
 from tests.automated.integration.api.helpers.RequestValidator import RequestValidator
+from tests.helpers.db_data_creator import DBDataCreator
 
 
 @dataclass
 class APITestHelper:
     request_validator: RequestValidator
-    core: SourceCollectorCore
     async_core: AsyncCore
     db_data_creator: DBDataCreator
 
@@ -83,10 +83,13 @@ def client() -> Generator[TestClient, None, None]:
 
 
 @pytest_asyncio.fixture
-async def api_test_helper(client: TestClient, db_data_creator, monkeypatch) -> APITestHelper:
+async def api_test_helper(
+    client: TestClient,
+    db_data_creator,
+    monkeypatch
+) -> AsyncGenerator[APITestHelper, Any]:
     yield APITestHelper(
         request_validator=RequestValidator(client=client),
-        core=client.app.state.core,
         async_core=client.app.state.async_core,
         db_data_creator=db_data_creator,
     )

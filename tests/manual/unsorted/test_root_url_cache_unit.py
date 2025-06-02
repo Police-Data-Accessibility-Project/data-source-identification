@@ -5,8 +5,6 @@ from unittest.mock import mock_open, patch
 
 import pytest
 
-from src.html_tag_collector import RootURLCache  # Adjust import according to your package structure
-
 
 @pytest.fixture
 def temp_file():
