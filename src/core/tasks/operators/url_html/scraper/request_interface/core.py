@@ -37,7 +37,7 @@ class URLRequestInterface:
         if simple_response.content_type != HTML_CONTENT_TYPE:
             return simple_response
 
-        await self.get_dynamic_html_content(rr, url)
+        return await self.get_dynamic_html_content(rr, url)
 
     async def get_dynamic_html_content(self, rr, url):
         # For HTML responses, attempt to load the page to check for dynamic html content

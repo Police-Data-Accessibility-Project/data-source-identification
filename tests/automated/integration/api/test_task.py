@@ -1,7 +1,7 @@
 import pytest
 
 from src.db.enums import TaskType
-from tests.automated.integration.api.conftest import APITestHelper
+from tests.helpers.api_test_helper import APITestHelper
 
 
 async def task_setup(ath: APITestHelper) -> int:
