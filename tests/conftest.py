@@ -1,3 +1,5 @@
+from typing import Any, Generator
+
 import pytest
 from alembic.config import Config
 from sqlalchemy import create_engine, inspect, MetaData
@@ -97,7 +99,7 @@ def wipe_database():
 
 
 @pytest.fixture
-def db_client_test(wipe_database) -> DatabaseClient:
+def db_client_test(wipe_database) -> Generator[DatabaseClient, Any, None]:
     # Drop pre-existing table
     conn = get_postgres_connection_string()
     db_client = DatabaseClient(db_url=conn)
@@ -105,7 +107,7 @@ def db_client_test(wipe_database) -> DatabaseClient:
     db_client.engine.dispose()
 
 @pytest.fixture
-def adb_client_test(wipe_database) -> AsyncDatabaseClient:
+def adb_client_test(wipe_database) -> Generator[AsyncDatabaseClient, Any, None]:
     conn = get_postgres_connection_string(is_async=True)
     adb_client = AsyncDatabaseClient(db_url=conn)
     yield adb_client

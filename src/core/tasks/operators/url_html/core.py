@@ -37,11 +37,13 @@ class URLHTMLTaskOperator(TaskOperatorBase):
         await self.get_raw_html_data_for_urls(tdos)
         success_subset, error_subset = await self.separate_success_and_error_subsets(tdos)
         non_404_error_subset, is_404_error_subset = await self.separate_error_and_404_subsets(error_subset)
+        await self.process_html_data(success_subset)
+        await self.update_database(is_404_error_subset, non_404_error_subset, success_subset)
+
+    async def update_database(self, is_404_error_subset, non_404_error_subset, success_subset):
         await self.update_errors_in_database(non_404_error_subset)
         await self.update_404s_in_database(is_404_error_subset)
-        await self.process_html_data(success_subset)
         await self.update_html_data_in_database(success_subset)
-
 
     async def get_just_urls(self, tdos: list[UrlHtmlTDO]):
         return [task_info.url_info.url for task_info in tdos]

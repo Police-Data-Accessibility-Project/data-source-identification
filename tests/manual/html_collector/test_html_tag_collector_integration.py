@@ -1,9 +1,12 @@
 import pytest
 
-from src.core.tasks.operators.url_html import URLHTMLTaskOperator
+from src.core.tasks.operators.url_html.core import URLHTMLTaskOperator
+from src.core.tasks.operators.url_html.scraper.parser.core import HTMLResponseParser
+from src.core.tasks.operators.url_html.scraper.request_interface.core import URLRequestInterface
+from src.core.tasks.operators.url_html.scraper.root_url_cache.core import RootURLCache
+from src.db.client.async_ import AsyncDatabaseClient
+from src.db.dtos.url_info import URLInfo
 from tests.helpers.db_data_creator import DBDataCreator
-from src.core.tasks.operators.url_html.scraper import HTMLResponseParser
-from src.core.tasks.operators.url_html.scraper.request_interface import URLRequestInterface
 
 URLS = [
     "https://pdap.io",
@@ -70,7 +73,6 @@ async def test_url_html_cycle(
     for url in URLS:
         url_infos.append(URLInfo(url=url))
     await adb_client.insert_urls(url_infos=url_infos, batch_id=batch_id)
-
 
     operator = URLHTMLTaskOperator(
         adb_client=adb_client,
