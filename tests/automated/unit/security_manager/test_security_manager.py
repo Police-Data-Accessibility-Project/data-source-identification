@@ -13,15 +13,14 @@ VALID_TOKEN = "valid_token"
 INVALID_TOKEN = "invalid_token"
 FAKE_PAYLOAD = {"sub": 1, "permissions": [Permissions.SOURCE_COLLECTOR.value]}
 
-PATCH_ROOT = "src.security_manager.SecurityManager"
+PATCH_ROOT = "src.security.manager"
 
 def get_patch_path(patch_name):
     return f"{PATCH_ROOT}.{patch_name}"
 
 @pytest.fixture
-def mock_get_secret_key(mocker):
-    mocker.patch(get_patch_path("get_secret_key"), return_value=SECRET_KEY)
-
+def mock_get_secret_key(monkeypatch):
+    monkeypatch.setenv("DS_APP_SECRET_KEY", SECRET_KEY)
 
 
 @pytest.fixture
