@@ -19,6 +19,7 @@ from src.api.endpoints.annotate.dtos.all.response import GetNextURLForAllAnnotat
     GetNextURLForAllAnnotationInnerResponse
 from src.api.endpoints.annotate.dtos.record_type.response import GetNextRecordTypeAnnotationResponseInfo
 from src.api.endpoints.annotate.dtos.relevance.response import GetNextRelevanceAnnotationResponseInfo
+from src.api.endpoints.annotate.dtos.shared.batch import AnnotationBatchInfo
 from src.api.endpoints.collector.dtos.manual_batch.post import ManualBatchInputDTO
 from src.api.endpoints.collector.dtos.manual_batch.response import ManualBatchResponseDTO
 from src.api.endpoints.metrics.dtos.get.backlog import GetMetricsBacklogResponseDTO, GetMetricsBacklogResponseInnerDTO
@@ -68,6 +69,7 @@ from src.core.tasks.operators.url_duplicate.tdo import URLDuplicateTDO
 from src.core.tasks.operators.url_miscellaneous_metadata.tdo import URLMiscellaneousMetadataTDO, URLHTMLMetadataInfo
 from src.core.env_var_manager import EnvVarManager
 from src.core.enums import BatchStatus, SuggestionType, RecordType, SuggestedStatus
+from src.db.types import UserSuggestionType
 
 # Type Hints
 
@@ -257,7 +259,14 @@ class AsyncDatabaseClient:
                 url_id=url.id
             ),
             suggested_relevant=suggestion,
-            html_info=html_response_info
+            html_info=html_response_info,
+            batch_info=await self.get_annotation_batch_info(
+                session,
+                batch_id=batch_id,
+                models=[
+                    UserRelevantSuggestion
+                ]
+            )
         )
 
     #endregion relevant
@@ -298,7 +307,14 @@ class AsyncDatabaseClient:
                 url_id=url.id
             ),
             suggested_record_type=suggestion,
-            html_info=html_response_info
+            html_info=html_response_info,
+            batch_info=await self.get_annotation_batch_info(
+                session,
+                batch_id=batch_id,
+                models=[
+                    UserRecordTypeSuggestion,
+                ]
+            )
         )
 
 
@@ -916,10 +932,19 @@ class AsyncDatabaseClient:
 
         return GetNextURLForAgencyAnnotationResponse(
             next_annotation=GetNextURLForAgencyAnnotationInnerResponse(
-                url_id=url_id,
-                url=url,
+                url_info=URLMapping(
+                    url=url,
+                    url_id=url_id
+                ),
                 html_info=response_html_info,
-                agency_suggestions=agency_suggestions
+                agency_suggestions=agency_suggestions,
+                batch_info=await self.get_annotation_batch_info(
+                    session,
+                    batch_id=batch_id,
+                    models=[
+                        UserUrlAgencySuggestion,
+                    ]
+                )
             )
         )
 
@@ -1747,12 +1772,23 @@ class AsyncDatabaseClient:
 
         return GetNextURLForAllAnnotationResponse(
             next_annotation=GetNextURLForAllAnnotationInnerResponse(
-                url_id=url.id,
-                url=url.url,
+                url_info=URLMapping(
+                    url_id=url.id,
+                    url=url.url
+                ),
                 html_info=html_response_info,
                 suggested_relevant=auto_relevant,
                 suggested_record_type=auto_record_type,
-                agency_suggestions=agency_suggestions
+                agency_suggestions=agency_suggestions,
+                batch_info=await self.get_annotation_batch_info(
+                    session,
+                    batch_id=batch_id,
+                    models=[
+                        UserUrlAgencySuggestion,
+                        UserRecordTypeSuggestion,
+                        UserRelevantSuggestion
+                    ]
+                )
             )
         )
 
@@ -2381,3 +2417,57 @@ class AsyncDatabaseClient:
         raw_result = await session.execute(query)
         urls = raw_result.scalars().all()
         return [URL404ProbeTDO(url=url.url, url_id=url.id) for url in urls]
+
+    @staticmethod
+    async def get_annotation_batch_info(
+        session: AsyncSession,
+        batch_id: Optional[int],
+        models: List[UserSuggestionType]
+    ) -> Optional[AnnotationBatchInfo]:
+        if batch_id is None:
+            return None
+
+        sc = StatementComposer
+        include_queries = [
+            sc.user_suggestion_exists(model)
+            for model in models
+        ]
+
+        select_url = select(func.count(URL.id))
+
+        common_where_clause = [
+            URL.outcome == URLStatus.PENDING.value,
+            URL.batch_id == batch_id,
+            ]
+
+        annotated_query = (
+            select_url
+            .where(
+                *common_where_clause,
+                *include_queries,
+            )
+        )
+
+        exclude_queries = [
+            sc.user_suggestion_not_exists(model)
+            for model in models
+        ]
+
+        not_annotated_query = (
+            select_url
+            .where(
+                *common_where_clause,
+                *exclude_queries,
+            )
+        )
+
+        annotated_result_raw = await session.execute(annotated_query)
+        annotated_result = annotated_result_raw.scalars().one_or_none()
+        not_annotated_result_raw = await session.execute(not_annotated_query)
+        not_annotated_result = not_annotated_result_raw.scalars().one_or_none()
+
+        return AnnotationBatchInfo(
+            count_annotated=annotated_result,
+            count_not_annotated=not_annotated_result,
+            total_urls=annotated_result + not_annotated_result
+        )

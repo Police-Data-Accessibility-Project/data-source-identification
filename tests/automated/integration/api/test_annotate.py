@@ -406,7 +406,7 @@ async def test_annotate_agency_multiple_auto_suggestions(api_test_helper):
     assert response.next_annotation
     next_annotation = response.next_annotation
     # Check that url_id matches the one we inserted
-    assert next_annotation.url_id == buci.url_ids[0]
+    assert next_annotation.url_info.url_id == buci.url_ids[0]
 
     # Check that html data is present
     assert next_annotation.html_info.description != ""
@@ -448,7 +448,7 @@ async def test_annotate_agency_multiple_auto_suggestions_no_html(api_test_helper
     assert response.next_annotation
     next_annotation = response.next_annotation
     # Check that url_id matches the one we inserted
-    assert next_annotation.url_id == buci.url_ids[0]
+    assert next_annotation.url_info.url_id == buci.url_ids[0]
 
     # Check that html data is not present
     assert next_annotation.html_info.description == ""
@@ -476,7 +476,7 @@ async def test_annotate_agency_single_unknown_auto_suggestion(api_test_helper):
     assert response.next_annotation
     next_annotation = response.next_annotation
     # Check that url_id matches the one we inserted
-    assert next_annotation.url_id == buci.url_ids[0]
+    assert next_annotation.url_info.url_id == buci.url_ids[0]
 
     # Check that html data is present
     assert next_annotation.html_info.description != ""
@@ -532,7 +532,7 @@ async def test_annotate_agency_other_user_annotation(api_test_helper):
     assert response.next_annotation
     next_annotation = response.next_annotation
     # Check that url_id matches the one we inserted
-    assert next_annotation.url_id == url_ids[0]
+    assert next_annotation.url_info.url_id == url_ids[0]
 
     # Check that html data is present
     assert next_annotation.html_info.description != ""
@@ -645,7 +645,7 @@ async def test_annotate_all(api_test_helper):
         batch_id=setup_info_2.batch_id
     )
 
-    assert get_response_1.next_annotation.url_id != get_response_2.next_annotation.url_id
+    assert get_response_1.next_annotation.url_info.url_id != get_response_2.next_annotation.url_info.url_id
 
     # Annotate the first and submit
     agency_id = await ath.db_data_creator.agency()
@@ -663,7 +663,7 @@ async def test_annotate_all(api_test_helper):
     assert post_response_1.next_annotation is not None
 
     # Confirm the second is received
-    assert post_response_1.next_annotation.url_id == url_mapping_2.url_id
+    assert post_response_1.next_annotation.url_info.url_id == url_mapping_2.url_id
 
     # Upon submitting the second, confirm that no more URLs are returned through either POST or GET
     post_response_2 = await ath.request_validator.post_all_annotations_and_get_next(
@@ -729,7 +729,7 @@ async def test_annotate_all_post_batch_filtering(api_test_helper):
         )
     )
 
-    assert post_response_1.next_annotation.url_id == url_mapping_3.url_id
+    assert post_response_1.next_annotation.url_info.url_id == url_mapping_3.url_id
 
 
 @pytest.mark.asyncio

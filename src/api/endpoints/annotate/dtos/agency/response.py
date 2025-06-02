@@ -2,8 +2,8 @@ from typing import Optional
 
 from pydantic import BaseModel
 
+from src.api.endpoints.annotate.dtos.shared.base.response import AnnotationInnerResponseInfoBase
 from src.core.enums import SuggestionType
-from src.core.tasks.operators.url_html.scraper.parser.dtos.response_html import ResponseHTMLInfo
 
 class GetNextURLForAgencyAgencyInfo(BaseModel):
     suggestion_type: SuggestionType
@@ -13,13 +13,10 @@ class GetNextURLForAgencyAgencyInfo(BaseModel):
     county: Optional[str] = None
     locality: Optional[str] = None
 
-class GetNextURLForAgencyAnnotationInnerResponse(BaseModel):
-    url_id: int
-    url: str
+class GetNextURLForAgencyAnnotationInnerResponse(AnnotationInnerResponseInfoBase):
     agency_suggestions: list[
         GetNextURLForAgencyAgencyInfo
     ]
-    html_info: ResponseHTMLInfo
 
 class GetNextURLForAgencyAnnotationResponse(BaseModel):
     next_annotation: Optional[GetNextURLForAgencyAnnotationInnerResponse]
