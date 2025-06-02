@@ -1,10 +1,4 @@
-from src.core.AsyncCore import AsyncCore
-from src.core.SourceCollectorCore import SourceCollectorCore
-
-
-def get_core() -> SourceCollectorCore:
-    from src.api.main import app
-    return app.state.core
+from src.core.core import AsyncCore
 
 
 def get_async_core() -> AsyncCore:

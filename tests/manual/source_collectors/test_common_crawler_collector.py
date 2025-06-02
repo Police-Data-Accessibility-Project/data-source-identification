@@ -3,10 +3,9 @@ from unittest.mock import AsyncMock
 import pytest
 from marshmallow import Schema, fields
 
-from src.db import AsyncDatabaseClient
-from src.core.AsyncCoreLogger import AsyncCoreLogger
-from src.source_collectors.common_crawler import CommonCrawlerCollector
-from src.source_collectors.common_crawler.DTOs import CommonCrawlerInputDTO
+from src.core.logger import AsyncCoreLogger
+from src.collectors.source_collectors.common_crawler import collector
+from src.collectors.source_collectors.common_crawler import CommonCrawlerInputDTO
 
 
 class CommonCrawlerSchema(Schema):

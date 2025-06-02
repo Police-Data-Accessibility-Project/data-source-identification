@@ -1,12 +1,15 @@
 import time
 
-from src.collector_manager import CollectorType
-from src.core.SourceCollectorCore import SourceCollectorCore
+import pytest
+
+from src.collectors import CollectorType
+from src.core.core import AsyncCore
 from src.core.enums import BatchStatus
 
 
-def test_common_crawler_lifecycle(test_core: SourceCollectorCore):
-    core = test_core
+@pytest.mark.asyncio
+async def test_common_crawler_lifecycle(test_async_core: AsyncCore, monkeypatch):
+    acore = test_async_core
     db_client = src.api.dependencies.db_client
 
     config = {
@@ -22,10 +25,10 @@ def test_common_crawler_lifecycle(test_core: SourceCollectorCore):
     )
     assert response == "Started common_crawler collector with CID: 1"
 
-    response = core.get_status(1)
+    response = await acore.get_status(1)
     while response == "1 (common_crawler) - RUNNING":
         time.sleep(1)
-        response = core.get_status(1)
+        response = await acore.get_status(1)
 
     assert response == "1 (common_crawler) - COMPLETED"
     response = core.close_collector(1)

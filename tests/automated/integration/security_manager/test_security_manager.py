@@ -3,16 +3,9 @@ import pytest
 from starlette.testclient import TestClient
 
 from src.api.main import app
-from src.security_manager.SecurityManager import Permissions, ALGORITHM
+from src.security.constants import ALGORITHM
+from src.security.enums import Permissions
 
-PATCH_ROOT = "src.security_manager.SecurityManager"
-
-def get_patch_path(patch_name):
-    return f"{PATCH_ROOT}.{patch_name}"
-
-@pytest.fixture
-def mock_get_secret_key(mocker):
-    mocker.patch(get_patch_path("get_secret_key"), return_value=SECRET_KEY)
 
 SECRET_KEY = "test_secret_key"
 VALID_TOKEN = "valid_token"
@@ -23,11 +16,11 @@ FAKE_PAYLOAD = {
 }
 
 def test_api_with_valid_token(
-        mock_get_secret_key,
         monkeypatch
 ):
 
     monkeypatch.setenv("DISCORD_WEBHOOK_URL", "https://discord.com")
+    monkeypatch.setenv("DS_APP_SECRET_KEY", SECRET_KEY)
     token = jwt.encode(FAKE_PAYLOAD, SECRET_KEY, algorithm=ALGORITHM)
 
     # Create Test Client

@@ -5,23 +5,26 @@ from unittest.mock import MagicMock, AsyncMock, patch
 import pytest
 from aiohttp import ClientSession
 
-from src.pdap_api_client.enums import MatchAgencyResponseStatus
+from src.collectors.source_collectors.muckrock.api_interface.core import MuckrockAPIInterface
+from src.collectors.source_collectors.muckrock.api_interface.lookup_response import AgencyLookupResponse
+from src.collectors.source_collectors.muckrock.enums import AgencyLookupResponseType
+from src.core.tasks.operators.agency_identification.core import AgencyIdentificationTaskOperator
+from src.pdap_api.enums import MatchAgencyResponseStatus
 from tests.helpers.test_batch_creation_parameters import TestBatchCreationParameters, TestURLCreationParameters
-from src.source_collectors.muckrock.MuckrockAPIInterface import MuckrockAPIInterface, AgencyLookupResponseType, AgencyLookupResponse
-from src.db.models import Agency, AutomatedUrlAgencySuggestion
-from src.collector_manager.enums import CollectorType, URLStatus
-from src.core.DTOs.TaskOperatorRunInfo import TaskOperatorOutcome
-from src.core.DTOs.URLAgencySuggestionInfo import URLAgencySuggestionInfo
-from src.core.classes.task_operators.AgencyIdentificationTaskOperator import AgencyIdentificationTaskOperator
-from src.core.classes.subtasks.AutoGooglerAgencyIdentificationSubtask import AutoGooglerAgencyIdentificationSubtask
-from src.core.classes.subtasks.CKANAgencyIdentificationSubtask import CKANAgencyIdentificationSubtask
-from src.core.classes.subtasks.CommonCrawlerAgencyIdentificationSubtask import CommonCrawlerAgencyIdentificationSubtask
-from src.core.classes.subtasks.MuckrockAgencyIdentificationSubtask import MuckrockAgencyIdentificationSubtask
+from src.db.models.core import Agency, AutomatedUrlAgencySuggestion
+from src.collectors.enums import CollectorType, URLStatus
+from src.core.tasks.enums import TaskOperatorOutcome
+from src.core.tasks.operators.agency_identification.dtos.suggestion import URLAgencySuggestionInfo
+from src.core.tasks.subtasks.agency_identification.auto_googler import AutoGooglerAgencyIdentificationSubtask
+from src.core.tasks.subtasks.agency_identification.ckan import CKANAgencyIdentificationSubtask
+from src.core.tasks.subtasks.agency_identification.common_crawler import CommonCrawlerAgencyIdentificationSubtask
+from src.core.tasks.subtasks.agency_identification.muckrock import MuckrockAgencyIdentificationSubtask
 from src.core.enums import SuggestionType
 from pdap_access_manager import AccessManager
-from src.pdap_api_client.DTOs import MatchAgencyResponse, MatchAgencyInfo
-from src.pdap_api_client.PDAPClient import PDAPClient
-from tests.helpers.DBDataCreator import DBDataCreator, BatchURLCreationInfoV2
+from src.pdap_api.dtos.match_agency.response import MatchAgencyResponse
+from src.pdap_api.dtos.match_agency.post import MatchAgencyInfo
+from src.pdap_api.client import PDAPClient
+from tests.helpers.db_data_creator import DBDataCreator, BatchURLCreationInfoV2
 
 sample_agency_suggestions = [
     URLAgencySuggestionInfo(

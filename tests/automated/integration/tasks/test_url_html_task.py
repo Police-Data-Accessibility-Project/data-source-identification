@@ -5,16 +5,17 @@ from typing import Optional
 import pytest
 from aiohttp import ClientResponseError, RequestInfo
 
-from src.db.AsyncDatabaseClient import AsyncDatabaseClient
+from src.core.tasks.operators.url_html.core import URLHTMLTaskOperator
+from src.core.tasks.operators.url_html.scraper.parser.core import HTMLResponseParser
+from src.core.tasks.operators.url_html.scraper.parser.dtos.response_html import ResponseHTMLInfo
+from src.core.tasks.operators.url_html.scraper.request_interface.core import URLRequestInterface
+from src.db.client.async_ import AsyncDatabaseClient
 from src.db.enums import TaskType
-from src.collector_manager.enums import URLStatus
-from src.core.DTOs.TaskOperatorRunInfo import TaskOperatorOutcome
-from src.core.classes.task_operators.URLHTMLTaskOperator import URLHTMLTaskOperator
-from src.html_tag_collector.DataClassTags import ResponseHTMLInfo
-from tests.helpers.DBDataCreator import DBDataCreator
-from src.html_tag_collector.ResponseParser import HTMLResponseParser
-from src.html_tag_collector.RootURLCache import RootURLCache
-from src.html_tag_collector.URLRequestInterface import URLRequestInterface, URLResponseInfo
+from src.collectors.enums import URLStatus
+from src.core.tasks.enums import TaskOperatorOutcome
+from tests.helpers.db_data_creator import DBDataCreator
+from src.core.tasks.operators.url_html.scraper.root_url_cache.core import RootURLCache
+from src.core.tasks.operators.url_html.scraper.request_interface.dtos.url_response import URLResponseInfo
 
 
 @pytest.mark.asyncio

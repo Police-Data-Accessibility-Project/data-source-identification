@@ -1,9 +1,9 @@
 import pytest
 
-from src.db.DTOs.BatchInfo import BatchInfo
-from src.db.DTOs.InsertURLsInfo import InsertURLsInfo
-from src.collector_manager.DTOs.ExampleInputDTO import ExampleInputDTO
-from src.collector_manager.enums import CollectorType, URLStatus
+from src.db.dtos.batch_info import BatchInfo
+from src.db.dtos.insert_urls_info import InsertURLsInfo
+from src.collectors.source_collectors.example.dtos.input import ExampleInputDTO
+from src.collectors.enums import CollectorType, URLStatus
 from src.core.enums import BatchStatus
 
 @pytest.mark.asyncio

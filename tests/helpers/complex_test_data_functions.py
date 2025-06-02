@@ -2,12 +2,12 @@ from typing import Optional
 
 from pydantic import BaseModel
 
-from src.db.DTOs.InsertURLsInfo import InsertURLsInfo
-from src.db.DTOs.URLMapping import URLMapping
-from src.collector_manager.enums import URLStatus
+from src.db.dtos.insert_urls_info import InsertURLsInfo
+from src.db.dtos.url_mapping import URLMapping
+from src.collectors.enums import URLStatus
 from src.core.enums import RecordType, SuggestionType
-from tests.helpers.DBDataCreator import BatchURLCreationInfo
-from tests.helpers.DBDataCreator import DBDataCreator
+from tests.helpers.db_data_creator import BatchURLCreationInfo
+from tests.helpers.db_data_creator import DBDataCreator
 
 class AnnotationSetupInfo(BaseModel):
     batch_id: int

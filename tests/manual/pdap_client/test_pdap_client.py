@@ -2,7 +2,7 @@ import pytest
 from aiohttp import ClientSession
 
 from pdap_access_manager import AccessManager
-from src.pdap_api_client.PDAPClient import PDAPClient
+from src.pdap_api.client import PDAPClient
 from src.util import get_from_env
 
 

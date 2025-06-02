@@ -3,12 +3,12 @@ from unittest.mock import MagicMock
 import pytest
 
 from src.db.enums import TaskType
-from src.db.models import AutoRecordTypeSuggestion
-from src.core.DTOs.TaskOperatorRunInfo import TaskOperatorOutcome
-from src.core.classes.task_operators.URLRecordTypeTaskOperator import URLRecordTypeTaskOperator
+from src.db.models.core import AutoRecordTypeSuggestion
+from src.core.tasks.enums import TaskOperatorOutcome
+from src.core.tasks.operators.record_type.core import URLRecordTypeTaskOperator
 from src.core.enums import RecordType
-from tests.helpers.DBDataCreator import DBDataCreator
-from src.llm_api_logic.DeepSeekRecordClassifier import DeepSeekRecordClassifier
+from tests.helpers.db_data_creator import DBDataCreator
+from src.core.tasks.operators.record_type.llm_api.record_classifier.deepseek import DeepSeekRecordClassifier
 
 @pytest.mark.asyncio
 async def test_url_record_type_task(db_data_creator: DBDataCreator):

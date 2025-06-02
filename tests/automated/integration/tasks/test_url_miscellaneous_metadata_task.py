@@ -2,11 +2,11 @@ from typing import Optional
 
 import pytest
 
-from src.db.models import URL, URLOptionalDataSourceMetadata
-from src.collector_manager.enums import CollectorType
-from src.core.DTOs.TaskOperatorRunInfo import TaskOperatorOutcome
-from src.core.classes.task_operators.URLMiscellaneousMetadataTaskOperator import URLMiscellaneousMetadataTaskOperator
-from tests.helpers.DBDataCreator import DBDataCreator
+from src.core.tasks.operators.url_miscellaneous_metadata.core import URLMiscellaneousMetadataTaskOperator
+from src.db.models.core import URL, URLOptionalDataSourceMetadata
+from src.collectors.enums import CollectorType
+from src.core.tasks.enums import TaskOperatorOutcome
+from tests.helpers.db_data_creator import DBDataCreator
 
 
 def batch_and_url(

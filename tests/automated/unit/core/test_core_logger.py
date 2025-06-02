@@ -3,8 +3,8 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from src.db.DTOs.LogInfo import LogInfo
-from src.core.AsyncCoreLogger import AsyncCoreLogger
+from src.db.dtos.log_info import LogInfo
+from src.core.logger import AsyncCoreLogger
 
 
 @pytest.mark.asyncio

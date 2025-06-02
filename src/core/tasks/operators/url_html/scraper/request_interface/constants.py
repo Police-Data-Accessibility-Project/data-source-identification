@@ -1,0 +1,2 @@
+HTML_CONTENT_TYPE = "text/html"
+MAX_CONCURRENCY = 5

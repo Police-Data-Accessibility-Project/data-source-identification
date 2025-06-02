@@ -1,12 +1,9 @@
 import pytest
 
-from src.db import AsyncDatabaseClient
-from src.db.DTOs import URLInfo
-from src.core.classes.task_operators.URLHTMLTaskOperator import URLHTMLTaskOperator
-from tests.helpers.DBDataCreator import DBDataCreator
-from src.html_tag_collector.ResponseParser import HTMLResponseParser
-from src.html_tag_collector import RootURLCache
-from src.html_tag_collector.URLRequestInterface import URLRequestInterface
+from src.core.tasks.operators.url_html import URLHTMLTaskOperator
+from tests.helpers.db_data_creator import DBDataCreator
+from src.core.tasks.operators.url_html.scraper import HTMLResponseParser
+from src.core.tasks.operators.url_html.scraper.request_interface import URLRequestInterface
 
 URLS = [
     "https://pdap.io",

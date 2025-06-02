@@ -1,6 +1,6 @@
 import pytest
 
-from src.core.DTOs.SearchURLResponse import SearchURLResponse
+from src.api.endpoints.search.dtos.response import SearchURLResponse
 
 
 @pytest.mark.asyncio

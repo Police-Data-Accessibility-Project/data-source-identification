@@ -2,16 +2,17 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from src.db.AsyncDatabaseClient import AsyncDatabaseClient
-from src.db.DTOs.URLInfo import URLInfo
-from src.core.AsyncCoreLogger import AsyncCoreLogger
-from src.source_collectors.auto_googler.AutoGooglerCollector import AutoGooglerCollector
-from src.source_collectors.auto_googler.DTOs import GoogleSearchQueryResultsInnerDTO, AutoGooglerInputDTO
+from src.collectors.source_collectors.auto_googler.dtos.query_results import GoogleSearchQueryResultsInnerDTO
+from src.collectors.source_collectors.auto_googler.dtos.input import AutoGooglerInputDTO
+from src.db.client.async_ import AsyncDatabaseClient
+from src.db.dtos.url_info import URLInfo
+from src.core.logger import AsyncCoreLogger
+from src.collectors.source_collectors.auto_googler.collector import AutoGooglerCollector
 
 
 @pytest.fixture
 def patch_get_query_results(monkeypatch):
-    patch_path = "src.source_collectors.auto_googler.GoogleSearcher.GoogleSearcher.get_query_results"
+    patch_path = "src.collectors.source_collectors.auto_googler.searcher.GoogleSearcher.get_query_results"
     mock = AsyncMock()
     mock.side_effect = [
         [GoogleSearchQueryResultsInnerDTO(url="https://include.com/1", title="keyword", snippet="snippet 1"),],

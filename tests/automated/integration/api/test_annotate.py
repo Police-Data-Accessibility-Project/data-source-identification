@@ -3,22 +3,22 @@ from http import HTTPStatus
 import pytest
 from fastapi import HTTPException
 
-from src.db.DTOs.InsertURLsInfo import InsertURLsInfo
-from src.db.DTOs.URLMapping import URLMapping
-from src.db.models import UserUrlAgencySuggestion, UserRelevantSuggestion, UserRecordTypeSuggestion
-from src.core.DTOs.AllAnnotationPostInfo import AllAnnotationPostInfo
-from src.core.DTOs.GetNextRecordTypeAnnotationResponseInfo import GetNextRecordTypeAnnotationResponseOuterInfo
-from src.core.DTOs.GetNextRelevanceAnnotationResponseInfo import GetNextRelevanceAnnotationResponseOuterInfo
-from src.core.DTOs.GetNextURLForAgencyAnnotationResponse import URLAgencyAnnotationPostInfo
-from src.core.DTOs.RecordTypeAnnotationPostInfo import RecordTypeAnnotationPostInfo
-from src.core.DTOs.RelevanceAnnotationPostInfo import RelevanceAnnotationPostInfo
-from src.core.classes.ErrorManager import ErrorTypes
+from src.api.endpoints.annotate.dtos.agency.post import URLAgencyAnnotationPostInfo
+from src.api.endpoints.annotate.dtos.all.post import AllAnnotationPostInfo
+from src.api.endpoints.annotate.dtos.record_type.post import RecordTypeAnnotationPostInfo
+from src.api.endpoints.annotate.dtos.record_type.response import GetNextRecordTypeAnnotationResponseOuterInfo
+from src.api.endpoints.annotate.dtos.relevance.post import RelevanceAnnotationPostInfo
+from src.api.endpoints.annotate.dtos.relevance.response import GetNextRelevanceAnnotationResponseOuterInfo
+from src.core.tasks.operators.url_html.scraper.parser.dtos.response_html import ResponseHTMLInfo
+from src.db.dtos.insert_urls_info import InsertURLsInfo
+from src.db.dtos.url_mapping import URLMapping
+from src.db.models.core import UserUrlAgencySuggestion, UserRelevantSuggestion, UserRecordTypeSuggestion
+from src.core.error_manager.enums import ErrorTypes
 from src.core.enums import RecordType, SuggestionType, SuggestedStatus
 from src.core.exceptions import FailedValidationException
-from src.html_tag_collector.DataClassTags import ResponseHTMLInfo
 from tests.helpers.complex_test_data_functions import AnnotateAgencySetupInfo, setup_for_annotate_agency, \
     setup_for_get_next_url_for_final_review
-from tests.helpers.DBDataCreator import BatchURLCreationInfo
+from tests.helpers.db_data_creator import BatchURLCreationInfo
 from tests.automated.integration.api.conftest import MOCK_USER_ID
 
 def check_url_mappings_match(

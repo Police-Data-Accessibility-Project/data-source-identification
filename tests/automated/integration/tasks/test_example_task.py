@@ -3,9 +3,9 @@ import types
 import pytest
 
 from src.db.enums import TaskType
-from src.core.DTOs.TaskOperatorRunInfo import TaskOperatorOutcome
-from src.core.classes.task_operators.TaskOperatorBase import TaskOperatorBase
-from tests.helpers.DBDataCreator import DBDataCreator
+from src.core.tasks.enums import TaskOperatorOutcome
+from src.core.tasks.operators.base import TaskOperatorBase
+from tests.helpers.db_data_creator import DBDataCreator
 
 class ExampleTaskOperator(TaskOperatorBase):
 

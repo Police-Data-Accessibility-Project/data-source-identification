@@ -3,14 +3,14 @@ from alembic.config import Config
 from sqlalchemy import create_engine, inspect, MetaData
 from sqlalchemy.orm import scoped_session, sessionmaker
 
-from src.db.AsyncDatabaseClient import AsyncDatabaseClient
-from src.db.DatabaseClient import DatabaseClient
-from src.db.helper_functions import get_postgres_connection_string
-from src.db.models import Base
-from src.core.EnvVarManager import EnvVarManager
+from src.db.client.async_ import AsyncDatabaseClient
+from src.db.client.sync import DatabaseClient
+from src.db.helpers import get_postgres_connection_string
+from src.db.models.templates import Base
+from src.core.env_var_manager import EnvVarManager
 from src.util.helper_functions import load_from_environment
-from tests.helpers.AlembicRunner import AlembicRunner
-from tests.helpers.DBDataCreator import DBDataCreator
+from tests.helpers.alembic_runner import AlembicRunner
+from tests.helpers.db_data_creator import DBDataCreator
 
 
 @pytest.fixture(autouse=True, scope="session")

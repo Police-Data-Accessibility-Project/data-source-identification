@@ -1,5 +1,5 @@
-from src.db.DTOs.BatchInfo import BatchInfo
-from src.collector_manager import CollectorType
+from src.db.dtos.batch_info import BatchInfo
+from src.collectors import CollectorType
 from src.core.enums import BatchStatus
 from test_automated.integration.core.helpers.common_test_procedures import run_collector_and_wait_for_completion
 from test_automated.integration.core.helpers.constants import ALLEGHENY_COUNTY_MUCKROCK_ID, ALLEGHENY_COUNTY_TOWN_NAMES

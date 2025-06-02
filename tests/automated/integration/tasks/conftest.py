@@ -3,7 +3,7 @@ from unittest.mock import MagicMock, AsyncMock
 import pytest
 
 from pdap_access_manager import AccessManager
-from src.pdap_api_client.PDAPClient import PDAPClient
+from src.pdap_api.client import PDAPClient
 
 
 @pytest.fixture

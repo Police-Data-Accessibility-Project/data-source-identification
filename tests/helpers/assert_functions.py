@@ -1,4 +1,4 @@
-from src.db import AsyncDatabaseClient
+from src.db.client import async_
 from src.db.models import Task
 
 
