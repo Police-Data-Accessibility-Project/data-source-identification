@@ -11,7 +11,7 @@ from src.api.endpoints.annotate.dtos.record_type.response import GetNextRecordTy
 from src.api.endpoints.annotate.dtos.relevance.response import GetNextRelevanceAnnotationResponseOuterInfo
 from src.api.endpoints.batch.dtos.get.duplicates import GetDuplicatesByBatchResponse
 from src.api.endpoints.batch.dtos.get.logs import GetBatchLogsResponse
-from src.api.endpoints.batch.dtos.get.status import GetBatchStatusResponse
+from src.api.endpoints.batch.dtos.get.summaries import GetBatchSummariesResponse
 from src.api.endpoints.batch.dtos.get.urls import GetURLsByBatchResponse
 from src.api.endpoints.batch.dtos.post.abort import MessageResponse
 from src.api.endpoints.collector.dtos.collector_start import CollectorStartInfo
@@ -86,14 +86,14 @@ class AsyncCore:
             status: Optional[BatchStatus],
             has_pending_urls: Optional[bool],
             page: int
-    ) -> GetBatchStatusResponse:
-        results = await self.adb_client.get_recent_batch_status_info(
+    ) -> GetBatchSummariesResponse:
+        results = await self.adb_client.get_batch_summaries(
             collector_type=collector_type,
             status=status,
             page=page,
             has_pending_urls=has_pending_urls
         )
-        return GetBatchStatusResponse(results=results)
+        return results
 
     async def get_batch_logs(self, batch_id: int) -> GetBatchLogsResponse:
         logs = await self.adb_client.get_logs_by_batch_id(batch_id)

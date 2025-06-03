@@ -20,6 +20,7 @@ from src.api.endpoints.annotate.dtos.all.response import GetNextURLForAllAnnotat
 from src.api.endpoints.annotate.dtos.record_type.response import GetNextRecordTypeAnnotationResponseInfo
 from src.api.endpoints.annotate.dtos.relevance.response import GetNextRelevanceAnnotationResponseInfo
 from src.api.endpoints.annotate.dtos.shared.batch import AnnotationBatchInfo
+from src.api.endpoints.batch.dtos.get.summaries import GetBatchSummariesResponse
 from src.api.endpoints.collector.dtos.manual_batch.post import ManualBatchInputDTO
 from src.api.endpoints.collector.dtos.manual_batch.response import ManualBatchResponseDTO
 from src.api.endpoints.metrics.dtos.get.backlog import GetMetricsBacklogResponseDTO, GetMetricsBacklogResponseInnerDTO
@@ -52,8 +53,9 @@ from src.db.dtos.url_error_info import URLErrorPydanticInfo
 from src.db.dtos.url_html_content_info import URLHTMLContentInfo, HTMLContentType
 from src.db.dtos.url_info import URLInfo
 from src.db.dtos.url_mapping import URLMapping
+from src.db.queries.implementations.core.get_recent_batch_summaries.builder import GetRecentBatchSummariesQueryBuilder
 from src.db.statement_composer import StatementComposer
-from src.db.constants import PLACEHOLDER_AGENCY_NAME
+from src.db.constants import PLACEHOLDER_AGENCY_NAME, STANDARD_ROW_LIMIT
 from src.db.enums import TaskType
 from src.db.models.templates import Base
 from src.db.models.core import URL, URLErrorInfo, URLHTMLContent, \
@@ -1618,52 +1620,22 @@ class AsyncDatabaseClient:
         return final_results
 
     @session_manager
-    async def get_recent_batch_status_info(
+    async def get_batch_summaries(
         self,
         session,
         page: int,
         collector_type: Optional[CollectorType] = None,
         status: Optional[BatchStatus] = None,
         has_pending_urls: Optional[bool] = None
-    ) -> List[BatchInfo]:
+    ) -> GetBatchSummariesResponse:
         # Get only the batch_id, collector_type, status, and created_at
-        limit = 100
-        query = Select(Batch)
-        if has_pending_urls is not None:
-            pending_url_subquery = Select(URL).where(
-                and_(
-                    URL.batch_id == Batch.id,
-                    URL.outcome == URLStatus.PENDING.value
-                )
-            )
-
-            if has_pending_urls:
-                # Query for all that have pending URLs
-                query = query.where(exists(
-                    pending_url_subquery
-                ))
-            else:
-                # Query for all that DO NOT have pending URLs
-                # (or that have no URLs at all)
-                query = query.where(
-                    not_(
-                        exists(
-                            pending_url_subquery
-                        )
-                    )
-                )
-        if collector_type:
-            query = query.filter(Batch.strategy == collector_type.value)
-        if status:
-            query = query.filter(Batch.status == status.value)
-
-        query = (query.
-                 order_by(Batch.date_generated.desc()).
-                 limit(limit).
-                 offset((page - 1) * limit))
-        raw_results = await session.execute(query)
-        batches = raw_results.scalars().all()
-        return [BatchInfo(**batch.__dict__) for batch in batches]
+        builder = GetRecentBatchSummariesQueryBuilder(
+            page=page,
+            collector_type=collector_type,
+            status=status,
+            has_pending_urls=has_pending_urls
+        )
+        return await builder.run(session)
 
     @session_manager
     async def get_logs_by_batch_id(self, session, batch_id: int) -> List[LogOutputInfo]:

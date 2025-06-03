@@ -4,7 +4,7 @@ from unittest.mock import AsyncMock
 import pytest
 
 from src.api.endpoints.batch.dtos.get.logs import GetBatchLogsResponse
-from src.api.endpoints.batch.dtos.get.status import GetBatchStatusResponse
+from src.api.endpoints.batch.dtos.get.summaries import GetBatchSummariesResponse
 from src.db.client.async_ import AsyncDatabaseClient
 from src.db.dtos.batch_info import BatchInfo
 from src.collectors.source_collectors.example.dtos.input import ExampleInputDTO
@@ -47,7 +47,7 @@ async def test_example_collector(api_test_helper, monkeypatch):
 
 
     # Check that batch currently shows as In Process
-    bsr: GetBatchStatusResponse = ath.request_validator.get_batch_statuses(
+    bsr: GetBatchSummariesResponse = ath.request_validator.get_batch_statuses(
         status=BatchStatus.IN_PROCESS
     )
     assert len(bsr.results) == 1
@@ -62,7 +62,7 @@ async def test_example_collector(api_test_helper, monkeypatch):
 
     await ath.wait_for_all_batches_to_complete()
 
-    csr: GetBatchStatusResponse = ath.request_validator.get_batch_statuses(
+    csr: GetBatchSummariesResponse = ath.request_validator.get_batch_statuses(
         collector_type=CollectorType.EXAMPLE,
         status=BatchStatus.READY_TO_LABEL
     )

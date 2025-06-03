@@ -1,7 +1,7 @@
 import asyncio
 from dataclasses import dataclass
 
-from src.api.endpoints.batch.dtos.get.status import GetBatchStatusResponse
+from src.api.endpoints.batch.dtos.get.summaries import GetBatchSummariesResponse
 from src.core.core import AsyncCore
 from src.core.enums import BatchStatus
 from tests.automated.integration.api.helpers.RequestValidator import RequestValidator
@@ -19,7 +19,7 @@ class APITestHelper:
 
     async def wait_for_all_batches_to_complete(self):
         for i in range(20):
-            data: GetBatchStatusResponse = self.request_validator.get_batch_statuses(
+            data: GetBatchSummariesResponse = self.request_validator.get_batch_statuses(
                 status=BatchStatus.IN_PROCESS
             )
             if len(data.results) == 0:

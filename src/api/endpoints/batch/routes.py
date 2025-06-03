@@ -6,7 +6,7 @@ from fastapi.params import Query, Depends
 from src.api.dependencies import get_async_core
 from src.api.endpoints.batch.dtos.get.duplicates import GetDuplicatesByBatchResponse
 from src.api.endpoints.batch.dtos.get.logs import GetBatchLogsResponse
-from src.api.endpoints.batch.dtos.get.status import GetBatchStatusResponse
+from src.api.endpoints.batch.dtos.get.summaries import GetBatchSummariesResponse
 from src.api.endpoints.batch.dtos.get.urls import GetURLsByBatchResponse
 from src.api.endpoints.batch.dtos.post.abort import MessageResponse
 from src.db.dtos.batch_info import BatchInfo
@@ -43,7 +43,7 @@ async def get_batch_status(
         ),
         core: AsyncCore = Depends(get_async_core),
         access_info: AccessInfo = Depends(get_access_info),
-) -> GetBatchStatusResponse:
+) -> GetBatchSummariesResponse:
     """
     Get the status of recent batches
     """

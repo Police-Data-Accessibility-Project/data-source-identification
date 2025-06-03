@@ -4,10 +4,11 @@ from sqlalchemy import Select, select, exists, func, Subquery, and_, not_, Colum
 from sqlalchemy.orm import aliased
 
 from src.collectors.enums import URLStatus
+from src.core.enums import BatchStatus
+from src.db.constants import STANDARD_ROW_LIMIT
 from src.db.enums import TaskType
 from src.db.models.core import URL, URLHTMLContent, AutomatedUrlAgencySuggestion, URLOptionalDataSourceMetadata, Batch, \
-    ConfirmedURLAgency, LinkTaskURL, Task, UserUrlAgencySuggestion, UserRecordTypeSuggestion, UserRelevantSuggestion
-from src.core.enums import BatchStatus
+    ConfirmedURLAgency, LinkTaskURL, Task
 from src.db.types import UserSuggestionType
 
 
@@ -18,13 +19,14 @@ class StatementComposer:
 
     @staticmethod
     def pending_urls_without_html_data() -> Select:
-        exclude_subquery = (select(1).
-                     select_from(LinkTaskURL).
-                     join(Task, LinkTaskURL.task_id == Task.id).
-                     where(LinkTaskURL.url_id == URL.id).
-                     where(Task.task_type == TaskType.HTML.value).
-                     where(Task.task_status == BatchStatus.READY_TO_LABEL.value)
-                     )
+        exclude_subquery = (
+            select(1).
+            select_from(LinkTaskURL).
+            join(Task, LinkTaskURL.task_id == Task.id).
+            where(LinkTaskURL.url_id == URL.id).
+            where(Task.task_type == TaskType.HTML.value).
+            where(Task.task_status == BatchStatus.READY_TO_LABEL.value)
+         )
         query = (
             select(URL).
             outerjoin(URLHTMLContent).
@@ -32,15 +34,12 @@ class StatementComposer:
             where(~exists(exclude_subquery)).
             where(URL.outcome == URLStatus.PENDING.value)
         )
-
-
         return query
-
 
     @staticmethod
     def exclude_urls_with_extant_model(
-            statement: Select,
-            model: Any
+        statement: Select,
+        model: Any
     ):
         return (statement.where(
                         ~exists(
@@ -50,9 +49,6 @@ class StatementComposer:
                             )
                         )
                     ))
-
-
-
 
     @staticmethod
     def simple_count_subquery(model, attribute: str, label: str) -> Subquery:
@@ -78,7 +74,6 @@ class StatementComposer:
             ~exists().where(ConfirmedURLAgency.url_id == URL.id)
         )
         return statement
-
 
     @staticmethod
     def pending_urls_missing_miscellaneous_metadata_query() -> Select:
@@ -109,19 +104,13 @@ class StatementComposer:
         )
         return subquery
 
-
     @staticmethod
     def user_suggestion_not_exists(
-            model_to_exclude: UserUrlAgencySuggestion or
-                              UserRecordTypeSuggestion or
-                              UserRelevantSuggestion
+            model_to_exclude: UserSuggestionType
     ) -> ColumnElement[bool]:
-        #
-
         subquery = not_(
-                    StatementComposer.user_suggestion_exists(model_to_exclude)
-                )
-
+            StatementComposer.user_suggestion_exists(model_to_exclude)
+        )
         return subquery
 
     @staticmethod
@@ -131,3 +120,13 @@ class StatementComposer:
     @staticmethod
     def sum_distinct(field, label):
         return func.sum(func.distinct(field)).label(label)
+
+    @staticmethod
+    def add_limit_and_page_offset(query: Select, page: int):
+        zero_offset_page = page - 1
+        rows_offset = zero_offset_page * STANDARD_ROW_LIMIT
+        return query.offset(
+            rows_offset
+        ).limit(
+            STANDARD_ROW_LIMIT
+        )
