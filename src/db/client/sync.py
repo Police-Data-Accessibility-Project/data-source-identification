@@ -61,15 +61,12 @@ class DatabaseClient:
             user_id=batch_info.user_id,
             status=batch_info.status.value,
             parameters=batch_info.parameters,
-            total_url_count=batch_info.total_url_count,
-            original_url_count=batch_info.original_url_count,
-            duplicate_url_count=batch_info.duplicate_url_count,
             compute_time=batch_info.compute_time,
-            strategy_success_rate=batch_info.strategy_success_rate,
-            metadata_success_rate=batch_info.metadata_success_rate,
-            agency_match_rate=batch_info.agency_match_rate,
-            record_type_match_rate=batch_info.record_type_match_rate,
-            record_category_match_rate=batch_info.record_category_match_rate,
+            strategy_success_rate=0,
+            metadata_success_rate=0,
+            agency_match_rate=0,
+            record_type_match_rate=0,
+            record_category_match_rate=0,
         )
         if batch_info.date_generated is not None:
             batch.date_generated = batch_info.date_generated

@@ -15,7 +15,8 @@ from src.api.endpoints.annotate.dtos.relevance.post import RelevanceAnnotationPo
 from src.api.endpoints.annotate.dtos.relevance.response import GetNextRelevanceAnnotationResponseOuterInfo
 from src.api.endpoints.batch.dtos.get.duplicates import GetDuplicatesByBatchResponse
 from src.api.endpoints.batch.dtos.get.logs import GetBatchLogsResponse
-from src.api.endpoints.batch.dtos.get.status import GetBatchStatusResponse
+from src.api.endpoints.batch.dtos.get.summaries.response import GetBatchSummariesResponse
+from src.api.endpoints.batch.dtos.get.summaries.summary import BatchSummary
 from src.api.endpoints.batch.dtos.get.urls import GetURLsByBatchResponse
 from src.api.endpoints.batch.dtos.post.abort import MessageResponse
 from src.api.endpoints.collector.dtos.manual_batch.post import ManualBatchInputDTO
@@ -194,7 +195,7 @@ class RequestValidator:
             collector_type: Optional[CollectorType] = None,
             status: Optional[BatchStatus] = None,
             has_pending_urls: Optional[bool] = None
-    ) -> GetBatchStatusResponse:
+    ) -> GetBatchSummariesResponse:
         params = {}
         update_if_not_none(
             target=params,
@@ -208,7 +209,7 @@ class RequestValidator:
             url=f"/batch",
             params=params
         )
-        return GetBatchStatusResponse(**data)
+        return GetBatchSummariesResponse(**data)
 
     def example_collector(self, dto: ExampleInputDTO) -> dict:
         data = self.post(
@@ -217,11 +218,11 @@ class RequestValidator:
         )
         return data
 
-    def get_batch_info(self, batch_id: int) -> BatchInfo:
+    def get_batch_info(self, batch_id: int) -> BatchSummary:
         data = self.get(
             url=f"/batch/{batch_id}"
         )
-        return BatchInfo(**data)
+        return BatchSummary(**data)
 
     def get_batch_urls(self, batch_id: int, page: int = 1) -> GetURLsByBatchResponse:
         data = self.get(

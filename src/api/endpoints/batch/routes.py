@@ -6,15 +6,15 @@ from fastapi.params import Query, Depends
 from src.api.dependencies import get_async_core
 from src.api.endpoints.batch.dtos.get.duplicates import GetDuplicatesByBatchResponse
 from src.api.endpoints.batch.dtos.get.logs import GetBatchLogsResponse
-from src.api.endpoints.batch.dtos.get.status import GetBatchStatusResponse
+from src.api.endpoints.batch.dtos.get.summaries.response import GetBatchSummariesResponse
+from src.api.endpoints.batch.dtos.get.summaries.summary import BatchSummary
 from src.api.endpoints.batch.dtos.get.urls import GetURLsByBatchResponse
 from src.api.endpoints.batch.dtos.post.abort import MessageResponse
-from src.db.dtos.batch_info import BatchInfo
 from src.collectors.enums import CollectorType
 from src.core.core import AsyncCore
 from src.core.enums import BatchStatus
-from src.security.manager import get_access_info
 from src.security.dtos.access_info import AccessInfo
+from src.security.manager import get_access_info
 
 batch_router = APIRouter(
     prefix="/batch",
@@ -43,7 +43,7 @@ async def get_batch_status(
         ),
         core: AsyncCore = Depends(get_async_core),
         access_info: AccessInfo = Depends(get_access_info),
-) -> GetBatchStatusResponse:
+) -> GetBatchSummariesResponse:
     """
     Get the status of recent batches
     """
@@ -60,9 +60,8 @@ async def get_batch_info(
         batch_id: int = Path(description="The batch id"),
         core: AsyncCore = Depends(get_async_core),
         access_info: AccessInfo = Depends(get_access_info),
-) -> BatchInfo:
-    result = await core.get_batch_info(batch_id)
-    return result
+) -> BatchSummary:
+    return await core.get_batch_info(batch_id)
 
 @batch_router.get("/{batch_id}/urls")
 async def get_urls_by_batch(

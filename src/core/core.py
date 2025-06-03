@@ -1,5 +1,7 @@
+from http import HTTPStatus
 from typing import Optional
 
+from fastapi import HTTPException
 from pydantic import BaseModel
 from sqlalchemy.exc import IntegrityError
 
@@ -11,7 +13,8 @@ from src.api.endpoints.annotate.dtos.record_type.response import GetNextRecordTy
 from src.api.endpoints.annotate.dtos.relevance.response import GetNextRelevanceAnnotationResponseOuterInfo
 from src.api.endpoints.batch.dtos.get.duplicates import GetDuplicatesByBatchResponse
 from src.api.endpoints.batch.dtos.get.logs import GetBatchLogsResponse
-from src.api.endpoints.batch.dtos.get.status import GetBatchStatusResponse
+from src.api.endpoints.batch.dtos.get.summaries.response import GetBatchSummariesResponse
+from src.api.endpoints.batch.dtos.get.summaries.summary import BatchSummary
 from src.api.endpoints.batch.dtos.get.urls import GetURLsByBatchResponse
 from src.api.endpoints.batch.dtos.post.abort import MessageResponse
 from src.api.endpoints.collector.dtos.collector_start import CollectorStartInfo
@@ -62,8 +65,14 @@ class AsyncCore:
         await self.collector_manager.shutdown_all_collectors()
 
     #region Batch
-    async def get_batch_info(self, batch_id: int) -> BatchInfo:
-        return await self.adb_client.get_batch_by_id(batch_id)
+    async def get_batch_info(self, batch_id: int) -> BatchSummary:
+        result = await self.adb_client.get_batch_by_id(batch_id)
+        if result is None:
+            raise HTTPException(
+                status_code=HTTPStatus.BAD_REQUEST,
+                detail=f"Batch {batch_id} does not exist"
+            )
+        return result
 
     async def get_urls_by_batch(self, batch_id: int, page: int = 1) -> GetURLsByBatchResponse:
         url_infos = await self.adb_client.get_urls_by_batch(batch_id, page)
@@ -77,23 +86,20 @@ class AsyncCore:
         dup_infos = await self.adb_client.get_duplicates_by_batch_id(batch_id, page=page)
         return GetDuplicatesByBatchResponse(duplicates=dup_infos)
 
-    async def get_batch_status(self, batch_id: int) -> BatchInfo:
-        return await self.adb_client.get_batch_by_id(batch_id)
-
     async def get_batch_statuses(
             self,
             collector_type: Optional[CollectorType],
             status: Optional[BatchStatus],
             has_pending_urls: Optional[bool],
             page: int
-    ) -> GetBatchStatusResponse:
-        results = await self.adb_client.get_recent_batch_status_info(
+    ) -> GetBatchSummariesResponse:
+        results = await self.adb_client.get_batch_summaries(
             collector_type=collector_type,
             status=status,
             page=page,
             has_pending_urls=has_pending_urls
         )
-        return GetBatchStatusResponse(results=results)
+        return results
 
     async def get_batch_logs(self, batch_id: int) -> GetBatchLogsResponse:
         logs = await self.adb_client.get_logs_by_batch_id(batch_id)
