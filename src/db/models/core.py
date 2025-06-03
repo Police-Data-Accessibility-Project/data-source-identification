@@ -43,11 +43,6 @@ class Batch(StandardModel):
         batch_status_enum,
         nullable=False
     )
-    # The number of URLs in the batch
-    # TODO: Add means to update after execution
-    total_url_count = Column(Integer, nullable=False, default=0)
-    original_url_count = Column(Integer, nullable=False, default=0)
-    duplicate_url_count = Column(Integer, nullable=False, default=0)
     date_generated = Column(TIMESTAMP, nullable=False, server_default=CURRENT_TIME_SERVER_DEFAULT)
     # How often URLs ended up approved in the database
     strategy_success_rate = Column(Float)

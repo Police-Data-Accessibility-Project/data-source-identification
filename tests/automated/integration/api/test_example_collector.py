@@ -4,7 +4,8 @@ from unittest.mock import AsyncMock
 import pytest
 
 from src.api.endpoints.batch.dtos.get.logs import GetBatchLogsResponse
-from src.api.endpoints.batch.dtos.get.summaries import GetBatchSummariesResponse
+from src.api.endpoints.batch.dtos.get.summaries.response import GetBatchSummariesResponse
+from src.api.endpoints.batch.dtos.get.summaries.summary import BatchSummary
 from src.db.client.async_ import AsyncDatabaseClient
 from src.db.dtos.batch_info import BatchInfo
 from src.collectors.source_collectors.example.dtos.input import ExampleInputDTO
@@ -68,15 +69,15 @@ async def test_example_collector(api_test_helper, monkeypatch):
     )
 
     assert len(csr.results) == 1
-    bsi: BatchInfo = csr.results[0]
+    bsi: BatchSummary = csr.results[0]
 
     assert bsi.id == batch_id
     assert bsi.strategy == CollectorType.EXAMPLE.value
     assert bsi.status == BatchStatus.READY_TO_LABEL
 
-    bi: BatchInfo = ath.request_validator.get_batch_info(batch_id=batch_id)
+    bi: BatchSummary = ath.request_validator.get_batch_info(batch_id=batch_id)
     assert bi.status == BatchStatus.READY_TO_LABEL
-    assert bi.total_url_count == 2
+    assert bi.url_counts.total == 2
     assert bi.parameters == dto.model_dump()
     assert bi.strategy == CollectorType.EXAMPLE.value
     assert bi.user_id is not None
@@ -124,7 +125,7 @@ async def test_example_collector_error(api_test_helper, monkeypatch):
 
     await ath.wait_for_all_batches_to_complete()
 
-    bi: BatchInfo = ath.request_validator.get_batch_info(batch_id=batch_id)
+    bi: BatchSummary = ath.request_validator.get_batch_info(batch_id=batch_id)
 
     assert bi.status == BatchStatus.ERROR
 

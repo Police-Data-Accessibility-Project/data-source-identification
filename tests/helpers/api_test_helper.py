@@ -1,7 +1,7 @@
 import asyncio
 from dataclasses import dataclass
 
-from src.api.endpoints.batch.dtos.get.summaries import GetBatchSummariesResponse
+from src.api.endpoints.batch.dtos.get.summaries.response import GetBatchSummariesResponse
 from src.core.core import AsyncCore
 from src.core.enums import BatchStatus
 from tests.automated.integration.api.helpers.RequestValidator import RequestValidator

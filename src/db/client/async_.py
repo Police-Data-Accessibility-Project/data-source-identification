@@ -20,7 +20,8 @@ from src.api.endpoints.annotate.dtos.all.response import GetNextURLForAllAnnotat
 from src.api.endpoints.annotate.dtos.record_type.response import GetNextRecordTypeAnnotationResponseInfo
 from src.api.endpoints.annotate.dtos.relevance.response import GetNextRelevanceAnnotationResponseInfo
 from src.api.endpoints.annotate.dtos.shared.batch import AnnotationBatchInfo
-from src.api.endpoints.batch.dtos.get.summaries import GetBatchSummariesResponse
+from src.api.endpoints.batch.dtos.get.summaries.response import GetBatchSummariesResponse
+from src.api.endpoints.batch.dtos.get.summaries.summary import BatchSummary
 from src.api.endpoints.collector.dtos.manual_batch.post import ManualBatchInputDTO
 from src.api.endpoints.collector.dtos.manual_batch.response import ManualBatchResponseDTO
 from src.api.endpoints.metrics.dtos.get.backlog import GetMetricsBacklogResponseDTO, GetMetricsBacklogResponseInnerDTO
@@ -1365,12 +1366,17 @@ class AsyncDatabaseClient:
         session.add(rejecting_user_url)
 
     @session_manager
-    async def get_batch_by_id(self, session, batch_id: int) -> Optional[BatchInfo]:
+    async def get_batch_by_id(self, session, batch_id: int) -> Optional[BatchSummary]:
         """Retrieve a batch by ID."""
-        query = Select(Batch).where(Batch.id == batch_id)
-        result = await session.execute(query)
-        batch = result.scalars().first()
-        return BatchInfo(**batch.__dict__)
+        builder = GetRecentBatchSummariesQueryBuilder(
+            batch_id=batch_id
+        )
+        summaries = await builder.run(session)
+        if len(summaries) == 0:
+            return None
+        batch_summary = summaries[0]
+        return batch_summary
+
 
     @session_manager
     async def get_urls_by_batch(self, session, batch_id: int, page: int = 1) -> List[URLInfo]:
@@ -1434,15 +1440,12 @@ class AsyncDatabaseClient:
             user_id=batch_info.user_id,
             status=batch_info.status.value,
             parameters=batch_info.parameters,
-            total_url_count=batch_info.total_url_count,
-            original_url_count=batch_info.original_url_count,
-            duplicate_url_count=batch_info.duplicate_url_count,
             compute_time=batch_info.compute_time,
-            strategy_success_rate=batch_info.strategy_success_rate,
-            metadata_success_rate=batch_info.metadata_success_rate,
-            agency_match_rate=batch_info.agency_match_rate,
-            record_type_match_rate=batch_info.record_type_match_rate,
-            record_category_match_rate=batch_info.record_category_match_rate,
+            strategy_success_rate=0,
+            metadata_success_rate=0,
+            agency_match_rate=0,
+            record_type_match_rate=0,
+            record_category_match_rate=0,
         )
         if batch_info.date_generated is not None:
             batch.date_generated = batch_info.date_generated
@@ -1635,7 +1638,10 @@ class AsyncDatabaseClient:
             status=status,
             has_pending_urls=has_pending_urls
         )
-        return await builder.run(session)
+        summaries = await builder.run(session)
+        return GetBatchSummariesResponse(
+            results=summaries
+        )
 
     @session_manager
     async def get_logs_by_batch_id(self, session, batch_id: int) -> List[LogOutputInfo]:

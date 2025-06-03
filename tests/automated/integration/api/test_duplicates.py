@@ -1,5 +1,6 @@
 import pytest
 
+from src.api.endpoints.batch.dtos.get.summaries.summary import BatchSummary
 from src.db.dtos.batch_info import BatchInfo
 from src.collectors.source_collectors.example.dtos.input import ExampleInputDTO
 from tests.automated.integration.api.conftest import disable_task_trigger
@@ -31,13 +32,13 @@ async def test_duplicates(api_test_helper):
     await ath.wait_for_all_batches_to_complete()
 
 
-    bi_1: BatchInfo = ath.request_validator.get_batch_info(batch_id_1)
-    bi_2: BatchInfo = ath.request_validator.get_batch_info(batch_id_2)
+    bi_1: BatchSummary = ath.request_validator.get_batch_info(batch_id_1)
+    bi_2: BatchSummary = ath.request_validator.get_batch_info(batch_id_2)
 
-    bi_1.total_url_count = 2
-    bi_2.total_url_count = 0
-    bi_1.duplicate_url_count = 0
-    bi_2.duplicate_url_count = 2
+    bi_1.url_counts.total = 2
+    bi_2.url_counts.total = 0
+    bi_1.url_counts.duplicate = 0
+    bi_2.url_counts.duplicate = 2
 
     url_info_1 = ath.request_validator.get_batch_urls(batch_id_1)
     url_info_2 = ath.request_validator.get_batch_urls(batch_id_2)

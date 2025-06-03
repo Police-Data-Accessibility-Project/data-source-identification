@@ -19,12 +19,14 @@ class URLCountsCTEQueryBuilder(QueryBuilderBase):
         has_pending_urls: Optional[bool] = None,
         collector_type: Optional[CollectorType] = None,
         status: Optional[BatchStatus] = None,
+        batch_id: Optional[int] = None
     ):
         super().__init__(URLCountsLabels())
         self.page = page
         self.has_pending_urls = has_pending_urls
         self.collector_type = collector_type
         self.status = status
+        self.batch_id = batch_id
 
 
     def get_core_query(self):
@@ -49,11 +51,16 @@ class URLCountsCTEQueryBuilder(QueryBuilderBase):
         query = self.apply_pending_urls_filter(query)
         query = self.apply_collector_type_filter(query)
         query = self.apply_status_filter(query)
+        query = self.apply_batch_id_filter(query)
         query = query.group_by(Batch.id)
         query = add_page_offset(query, page=self.page)
         query = query.order_by(Batch.id)
         self.query = query.cte("url_counts")
 
+    def apply_batch_id_filter(self, query: Select):
+        if self.batch_id is None:
+            return query
+        return query.where(Batch.id == self.batch_id)
 
     def apply_pending_urls_filter(self, query: Select):
         if self.has_pending_urls is None:

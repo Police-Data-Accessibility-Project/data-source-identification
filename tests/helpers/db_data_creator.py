@@ -60,7 +60,6 @@ class DBDataCreator:
             BatchInfo(
                 strategy=strategy.value,
                 status=batch_status,
-                total_url_count=1,
                 parameters={"test_key": "test_value"},
                 user_id=1,
                 date_generated=created_at

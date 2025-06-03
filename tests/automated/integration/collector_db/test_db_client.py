@@ -30,7 +30,7 @@ async def test_insert_urls(
         parameters={},
         user_id=1
     )
-    batch_id = db_client_test.insert_batch(batch_info)
+    batch_id = await adb_client_test.insert_batch(batch_info)
 
     urls = [
         URLInfo(

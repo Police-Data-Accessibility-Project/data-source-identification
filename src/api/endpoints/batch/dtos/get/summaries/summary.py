@@ -3,16 +3,9 @@ from typing import Optional
 
 from pydantic import BaseModel
 
+from src.api.endpoints.batch.dtos.get.summaries.counts import BatchSummaryURLCounts
 from src.core.enums import BatchStatus
 
-
-class BatchSummaryURLCounts(BaseModel):
-    total: int
-    pending: int
-    duplicate: int
-    not_relevant: int
-    submitted: int
-    errored: int
 
 class BatchSummary(BaseModel):
     id: int
@@ -23,6 +16,3 @@ class BatchSummary(BaseModel):
     compute_time: Optional[float]
     date_generated: datetime.datetime
     url_counts: BatchSummaryURLCounts
-
-class GetBatchSummariesResponse(BaseModel):
-    results: list[BatchSummary]

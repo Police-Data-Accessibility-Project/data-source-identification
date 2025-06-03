@@ -3,7 +3,8 @@ from typing import Optional
 from sqlalchemy import Select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.api.endpoints.batch.dtos.get.summaries import GetBatchSummariesResponse, BatchSummary, BatchSummaryURLCounts
+from src.api.endpoints.batch.dtos.get.summaries.counts import BatchSummaryURLCounts
+from src.api.endpoints.batch.dtos.get.summaries.summary import BatchSummary
 from src.collectors.enums import CollectorType
 from src.core.enums import BatchStatus
 from src.db.models.core import Batch
@@ -20,6 +21,7 @@ class GetRecentBatchSummariesQueryBuilder(QueryBuilderBase):
         has_pending_urls: Optional[bool] = None,
         collector_type: Optional[CollectorType] = None,
         status: Optional[BatchStatus] = None,
+        batch_id: Optional[int] = None,
     ):
         super().__init__()
         self.url_counts_cte = URLCountsCTEQueryBuilder(
@@ -27,9 +29,10 @@ class GetRecentBatchSummariesQueryBuilder(QueryBuilderBase):
             has_pending_urls=has_pending_urls,
             collector_type=collector_type,
             status=status,
+            batch_id=batch_id,
         )
 
-    async def run(self, session: AsyncSession) -> GetBatchSummariesResponse:
+    async def run(self, session: AsyncSession) -> list[BatchSummary]:
         self.url_counts_cte.build()
         builder = self.url_counts_cte
         count_labels: URLCountsLabels = builder.labels
@@ -70,6 +73,4 @@ class GetRecentBatchSummariesQueryBuilder(QueryBuilderBase):
                 )
             )
 
-        return GetBatchSummariesResponse(
-            results=summaries,
-        )
+        return summaries
