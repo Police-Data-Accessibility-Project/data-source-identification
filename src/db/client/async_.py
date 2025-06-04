@@ -54,6 +54,7 @@ from src.db.dtos.url_error_info import URLErrorPydanticInfo
 from src.db.dtos.url_html_content_info import URLHTMLContentInfo, HTMLContentType
 from src.db.dtos.url_info import URLInfo
 from src.db.dtos.url_mapping import URLMapping
+from src.db.queries.implementations.core.get_next_url_for_final_review import GetNextURLForFinalReviewQueryBuilder
 from src.db.queries.implementations.core.get_recent_batch_summaries.builder import GetRecentBatchSummariesQueryBuilder
 from src.db.statement_composer import StatementComposer
 from src.db.constants import PLACEHOLDER_AGENCY_NAME, STANDARD_ROW_LIMIT
@@ -123,10 +124,10 @@ class AsyncDatabaseClient:
     # region relevant
     @session_manager
     async def add_auto_relevant_suggestion(
-            self,
-            session: AsyncSession,
-            url_id: int,
-            relevant: bool
+        self,
+        session: AsyncSession,
+        url_id: int,
+        relevant: bool
     ):
         suggestion = AutoRelevantSuggestion(
             url_id=url_id,
@@ -136,10 +137,10 @@ class AsyncDatabaseClient:
 
     @staticmethod
     async def get_user_suggestion(
-            session: AsyncSession,
-            model: UserSuggestionModel,
-            user_id: int,
-            url_id: int
+        session: AsyncSession,
+        model: UserSuggestionModel,
+        user_id: int,
+        url_id: int
     ) -> Optional[UserSuggestionModel]:
         statement = Select(model).where(
             and_(
@@ -152,11 +153,11 @@ class AsyncDatabaseClient:
 
     @staticmethod
     async def get_next_url_for_user_annotation(
-            session: AsyncSession,
-            user_suggestion_model_to_exclude: UserSuggestionModel,
-            auto_suggestion_relationship: QueryableAttribute,
-            batch_id: Optional[int],
-            check_if_annotated_not_relevant: bool = False
+        session: AsyncSession,
+        user_suggestion_model_to_exclude: UserSuggestionModel,
+        auto_suggestion_relationship: QueryableAttribute,
+        batch_id: Optional[int],
+        check_if_annotated_not_relevant: bool = False
     ) -> URL:
         url_query = (
             select(
@@ -186,9 +187,9 @@ class AsyncDatabaseClient:
             url_query = url_query.where(URL.batch_id == batch_id)
 
         url_query = url_query.options(
-                joinedload(auto_suggestion_relationship),
-                joinedload(URL.html_content)
-            ).limit(1)
+            joinedload(auto_suggestion_relationship),
+            joinedload(URL.html_content)
+        ).limit(1)
 
         raw_result = await session.execute(url_query)
 
@@ -206,11 +207,11 @@ class AsyncDatabaseClient:
 
     @session_manager
     async def add_user_relevant_suggestion(
-            self,
-            session: AsyncSession,
-            url_id: int,
-            user_id: int,
-            suggested_status: SuggestedStatus
+        self,
+        session: AsyncSession,
+        url_id: int,
+        user_id: int,
+        suggested_status: SuggestedStatus
     ):
         prior_suggestion = await self.get_user_suggestion(
             session,
@@ -231,10 +232,10 @@ class AsyncDatabaseClient:
 
     @session_manager
     async def get_next_url_for_relevance_annotation(
-            self,
-            session: AsyncSession,
-            user_id: int,
-            batch_id: Optional[int]
+        self,
+        session: AsyncSession,
+        user_id: int,
+        batch_id: Optional[int]
     ) -> Optional[GetNextRelevanceAnnotationResponseInfo]:
 
         url = await self.get_next_url_for_user_annotation(
@@ -272,16 +273,16 @@ class AsyncDatabaseClient:
             )
         )
 
-    #endregion relevant
+    # endregion relevant
 
-    #region record_type
+    # region record_type
 
     @session_manager
     async def get_next_url_for_record_type_annotation(
-            self,
-            session: AsyncSession,
-            user_id: int,
-            batch_id: Optional[int]
+        self,
+        session: AsyncSession,
+        user_id: int,
+        batch_id: Optional[int]
     ) -> Optional[GetNextRecordTypeAnnotationResponseInfo]:
 
         url = await self.get_next_url_for_user_annotation(
@@ -320,12 +321,11 @@ class AsyncDatabaseClient:
             )
         )
 
-
     @session_manager
     async def add_auto_record_type_suggestions(
-            self,
-            session: AsyncSession,
-            url_and_record_type_list: list[tuple[int, RecordType]]
+        self,
+        session: AsyncSession,
+        url_and_record_type_list: list[tuple[int, RecordType]]
     ):
         for url_id, record_type in url_and_record_type_list:
             suggestion = AutoRecordTypeSuggestion(
@@ -336,10 +336,10 @@ class AsyncDatabaseClient:
 
     @session_manager
     async def add_auto_record_type_suggestion(
-            self,
-            session: AsyncSession,
-            url_id: int,
-            record_type: RecordType
+        self,
+        session: AsyncSession,
+        url_id: int,
+        record_type: RecordType
     ):
 
         suggestion = AutoRecordTypeSuggestion(
@@ -350,9 +350,9 @@ class AsyncDatabaseClient:
 
     @session_manager
     async def add_auto_relevance_suggestions(
-            self,
-            session: AsyncSession,
-            url_and_relevance_type_list: list[tuple[int, bool]]
+        self,
+        session: AsyncSession,
+        url_and_relevance_type_list: list[tuple[int, bool]]
     ):
         for url_id, relevant in url_and_relevance_type_list:
             suggestion = AutoRelevantSuggestion(
@@ -363,11 +363,11 @@ class AsyncDatabaseClient:
 
     @session_manager
     async def add_user_record_type_suggestion(
-            self,
-            session: AsyncSession,
-            url_id: int,
-            user_id: int,
-            record_type: RecordType
+        self,
+        session: AsyncSession,
+        url_id: int,
+        user_id: int,
+        record_type: RecordType
     ):
         prior_suggestion = await self.get_user_suggestion(
             session,
@@ -386,7 +386,7 @@ class AsyncDatabaseClient:
         )
         session.add(suggestion)
 
-    #endregion record_type
+    # endregion record_type
 
     @session_manager
     async def add_url_error_infos(self, session: AsyncSession, url_error_infos: list[URLErrorPydanticInfo]):
@@ -409,12 +409,14 @@ class AsyncDatabaseClient:
         results = scalar_result.all()
         final_results = []
         for url, error, updated_at, task_id in results:
-            final_results.append(URLErrorPydanticInfo(
-                url_id=url.id,
-                error=error,
-                updated_at=updated_at,
-                task_id=task_id
-            ))
+            final_results.append(
+                URLErrorPydanticInfo(
+                    url_id=url.id,
+                    error=error,
+                    updated_at=updated_at,
+                    task_id=task_id
+                )
+            )
 
         return final_results
 
@@ -439,8 +441,8 @@ class AsyncDatabaseClient:
 
     @session_manager
     async def get_pending_urls_missing_miscellaneous_metadata(
-            self,
-            session: AsyncSession
+        self,
+        session: AsyncSession
     ) -> list[URLMiscellaneousMetadataTDO]:
         query = StatementComposer.pending_urls_missing_miscellaneous_metadata_query()
         query = (
@@ -497,8 +499,6 @@ class AsyncDatabaseClient:
             )
             session.add(metadata_object)
 
-
-
     @session_manager
     async def get_pending_urls_without_html_data(self, session: AsyncSession) -> list[URLInfo]:
         # TODO: Add test that includes some urls WITH html data. Check they're not returned
@@ -508,11 +508,10 @@ class AsyncDatabaseClient:
         results: list[URL] = scalar_result.all()
         return DTOConverter.url_list_to_url_info_list(results)
 
-
     async def get_urls_with_html_data_and_without_models(
-            self,
-            session: AsyncSession,
-            model: Type[Base]
+        self,
+        session: AsyncSession,
+        model: Type[Base]
     ):
         statement = (select(URL)
                      .options(selectinload(URL.html_content))
@@ -530,8 +529,8 @@ class AsyncDatabaseClient:
 
     @session_manager
     async def get_urls_with_html_data_and_without_auto_record_type_suggestion(
-            self,
-            session: AsyncSession
+        self,
+        session: AsyncSession
     ):
         return await self.get_urls_with_html_data_and_without_models(
             session=session,
@@ -540,8 +539,8 @@ class AsyncDatabaseClient:
 
     @session_manager
     async def get_urls_with_html_data_and_without_auto_relevant_suggestion(
-            self,
-            session: AsyncSession
+        self,
+        session: AsyncSession
     ):
         return await self.get_urls_with_html_data_and_without_models(
             session=session,
@@ -549,9 +548,9 @@ class AsyncDatabaseClient:
         )
 
     async def has_urls_with_html_data_and_without_models(
-            self,
-            session: AsyncSession,
-            model: Type[Base]
+        self,
+        session: AsyncSession,
+        model: Type[Base]
     ) -> bool:
         statement = (select(URL)
                      .join(URLHTMLContent)
@@ -564,7 +563,6 @@ class AsyncDatabaseClient:
         statement = statement.limit(1)
         scalar_result = await session.scalars(statement)
         return bool(scalar_result.first())
-
 
     @session_manager
     async def has_urls_with_html_data_and_without_auto_record_type_suggestion(self, session: AsyncSession) -> bool:
@@ -579,7 +577,6 @@ class AsyncDatabaseClient:
             session=session,
             model=AutoRelevantSuggestion
         )
-
 
     @session_manager
     async def get_all(self, session, model: Base, order_by_attribute: Optional[str] = None) -> list[Base]:
@@ -653,9 +650,9 @@ class AsyncDatabaseClient:
 
     @session_manager
     async def initiate_task(
-            self,
-            session: AsyncSession,
-            task_type: TaskType
+        self,
+        session: AsyncSession,
+        task_type: TaskType
     ) -> int:
         # Create Task
         task = Task(
@@ -750,11 +747,11 @@ class AsyncDatabaseClient:
 
     @session_manager
     async def get_tasks(
-            self,
-            session: AsyncSession,
-            task_type: Optional[TaskType] = None,
-            task_status: Optional[BatchStatus] = None,
-            page: int = 1
+        self,
+        session: AsyncSession,
+        task_type: Optional[TaskType] = None,
+        task_status: Optional[BatchStatus] = None,
+        page: int = 1
     ) -> GetTasksResponse:
         url_count_subquery = self.statement_composer.simple_count_subquery(
             LinkTaskURL,
@@ -805,8 +802,8 @@ class AsyncDatabaseClient:
 
     @session_manager
     async def has_urls_without_agency_suggestions(
-            self,
-            session: AsyncSession
+        self,
+        session: AsyncSession
     ) -> bool:
         statement = (
             select(
@@ -851,10 +848,10 @@ class AsyncDatabaseClient:
 
     @session_manager
     async def get_next_url_agency_for_annotation(
-            self,
-            session: AsyncSession,
-            user_id: int,
-            batch_id: Optional[int]
+        self,
+        session: AsyncSession,
+        user_id: int,
+        batch_id: Optional[int]
     ) -> GetNextURLForAgencyAnnotationResponse:
         """
         Retrieve URL for annotation
@@ -953,9 +950,9 @@ class AsyncDatabaseClient:
 
     @session_manager
     async def upsert_new_agencies(
-            self,
-            session: AsyncSession,
-            suggestions: list[URLAgencySuggestionInfo]
+        self,
+        session: AsyncSession,
+        suggestions: list[URLAgencySuggestionInfo]
     ):
         """
         Add or update agencies in the database
@@ -972,9 +969,9 @@ class AsyncDatabaseClient:
 
     @session_manager
     async def add_confirmed_agency_url_links(
-            self,
-            session: AsyncSession,
-            suggestions: list[URLAgencySuggestionInfo]
+        self,
+        session: AsyncSession,
+        suggestions: list[URLAgencySuggestionInfo]
     ):
         for suggestion in suggestions:
             confirmed_agency = ConfirmedURLAgency(
@@ -985,9 +982,9 @@ class AsyncDatabaseClient:
 
     @session_manager
     async def add_agency_auto_suggestions(
-            self,
-            session: AsyncSession,
-            suggestions: list[URLAgencySuggestionInfo]
+        self,
+        session: AsyncSession,
+        suggestions: list[URLAgencySuggestionInfo]
     ):
         for suggestion in suggestions:
             url_agency_suggestion = AutomatedUrlAgencySuggestion(
@@ -1001,12 +998,12 @@ class AsyncDatabaseClient:
 
     @session_manager
     async def add_agency_manual_suggestion(
-            self,
-            session: AsyncSession,
-            agency_id: Optional[int],
-            url_id: int,
-            user_id: int,
-            is_new: bool
+        self,
+        session: AsyncSession,
+        agency_id: Optional[int],
+        url_id: int,
+        user_id: int,
+        is_new: bool
     ):
         if is_new and agency_id is not None:
             raise ValueError("agency_id must be None when is_new is True")
@@ -1038,181 +1035,31 @@ class AsyncDatabaseClient:
 
     @session_manager
     async def get_next_url_for_final_review(
-            self,
-            session: AsyncSession,
-            batch_id: Optional[int]
+        self,
+        session: AsyncSession,
+        batch_id: Optional[int]
     ) -> Optional[GetNextURLForFinalReviewResponse]:
 
-
-        def annotations_exist_subquery(model: Type[Base]):
-            return (
-                select(
-                    URL.id.label("url_id"),
-                    case(
-                        (
-                            exists().where(URL.id == model.url_id), 1
-                        ),
-                        else_=0
-                    ).label("exists")
-                ).subquery()
-            )
-
-        user_models = [
-            UserRelevantSuggestion,
-            UserRecordTypeSuggestion,
-            UserUrlAgencySuggestion
-        ]
-
-        models = [
-            AutoRelevantSuggestion,
-            AutoRecordTypeSuggestion,
-            AutomatedUrlAgencySuggestion,
-            *user_models
-        ]
-
-        # The below relationships are joined directly to the URL
-        single_join_relationships = [
-            URL.html_content,
-            URL.auto_record_type_suggestion,
-            URL.auto_relevant_suggestion,
-            URL.user_relevant_suggestion,
-            URL.user_record_type_suggestion,
-            URL.optional_data_source_metadata,
-        ]
-
-        # The below relationships are joined to entities that are joined to the URL
-        double_join_relationships = [
-            (URL.automated_agency_suggestions, AutomatedUrlAgencySuggestion.agency),
-            (URL.user_agency_suggestion, UserUrlAgencySuggestion.agency),
-            (URL.confirmed_agencies, ConfirmedURLAgency.agency)
-        ]
-
-        exist_subqueries = [
-            annotations_exist_subquery(model=model)
-            for model in models
-        ]
-        user_exist_subqueries = [
-            annotations_exist_subquery(model=model)
-            for model in user_models
-        ]
-
-        sum_of_exist_subqueries = (
-            sum(
-                [
-                    subquery.c.exists
-                    for subquery in exist_subqueries]
-            )
+        builder = GetNextURLForFinalReviewQueryBuilder(
+            batch_id=batch_id
         )
-
-
-        # Basic URL query
-        url_query = (
-            select(
-                URL,
-                (
-                    sum_of_exist_subqueries
-                ).label("total_distinct_annotation_count"),
-            )
-        )
-
-        for subquery in exist_subqueries:
-            url_query = url_query.outerjoin(
-                subquery, URL.id == subquery.c.url_id
-            )
-
-        where_subqueries = [
-            subquery.c.exists == 1
-            for subquery in user_exist_subqueries
-        ]
-
-        url_query = url_query.where(
-            and_(
-                URL.outcome == URLStatus.PENDING.value,
-                *where_subqueries
-            )
-        )
-        if batch_id is not None:
-            url_query = url_query.where(
-                URL.batch_id == batch_id
-            )
-
-        # Apply options
-        url_query = url_query.options(
-            *[joinedload(relationship) for relationship in single_join_relationships],
-            *[joinedload(primary).joinedload(secondary) for primary, secondary in double_join_relationships]
-        )
-
-        # Apply order clause
-        url_query = url_query.order_by(
-            desc("total_distinct_annotation_count"),
-            asc(URL.id)
-        )
-
-        # Apply limit
-        url_query = url_query.limit(1)
-
-        # Execute query
-        raw_result = await session.execute(url_query)
-
-        full_result = raw_result.unique().all()
-
-        if len(full_result) == 0:
-            return None
-        result: URL = full_result[0][0]
-
-        # Convert html content to response format
-        html_content = result.html_content
-        html_content_infos = [URLHTMLContentInfo(**html_info.__dict__) for html_info in html_content]
-
-        if result.optional_data_source_metadata is None:
-            optional_metadata = FinalReviewOptionalMetadata()
-        else:
-            optional_metadata = FinalReviewOptionalMetadata(
-                record_formats=result.optional_data_source_metadata.record_formats,
-                data_portal_type=result.optional_data_source_metadata.data_portal_type,
-                supplying_entity=result.optional_data_source_metadata.supplying_entity
-            )
-
-
-        # Return
-        return GetNextURLForFinalReviewResponse(
-            id=result.id,
-            url=result.url,
-            html_info=convert_to_response_html_info(html_content_infos),
-            name=result.name,
-            description=result.description,
-            annotations=FinalReviewAnnotationInfo(
-                relevant=DTOConverter.final_review_annotation_relevant_info(
-                    user_suggestion=result.user_relevant_suggestion,
-                    auto_suggestion=result.auto_relevant_suggestion
-                ),
-                record_type=DTOConverter.final_review_annotation_record_type_info(
-                    user_suggestion=result.user_record_type_suggestion,
-                    auto_suggestion=result.auto_record_type_suggestion
-                ),
-                agency=DTOConverter.final_review_annotation_agency_info(
-                    automated_agency_suggestions=result.automated_agency_suggestions,
-                    user_agency_suggestion=result.user_agency_suggestion,
-                    confirmed_agencies=result.confirmed_agencies
-                )
-            ),
-            optional_metadata=optional_metadata
-        )
+        result = await builder.run(session)
+        return result
 
     @session_manager
     async def approve_url(
-            self,
-            session: AsyncSession,
-            approval_info: FinalReviewApprovalInfo,
-            user_id: int,
+        self,
+        session: AsyncSession,
+        approval_info: FinalReviewApprovalInfo,
+        user_id: int,
     ) -> None:
 
         # Get URL
         def update_if_not_none(
-                model,
-                field,
-                value: Optional[Any],
-                required: bool=False
+            model,
+            field,
+            value: Optional[Any],
+            required: bool = False
         ):
             if value is not None:
                 setattr(model, field, value)
@@ -1225,7 +1072,6 @@ class AsyncDatabaseClient:
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail=f"Must specify {field} if it does not already exist"
                 )
-
 
         query = (
             Select(URL)
@@ -1274,7 +1120,7 @@ class AsyncDatabaseClient:
                 existing_agency = await session.execute(query)
                 existing_agency = existing_agency.scalars().first()
                 if existing_agency is None:
-                # If not, create it
+                    # If not, create it
                     agency = Agency(
                         agency_id=new_agency_id,
                         name=PLACEHOLDER_AGENCY_NAME,
@@ -1329,11 +1175,11 @@ class AsyncDatabaseClient:
 
     @session_manager
     async def reject_url(
-            self,
-            session: AsyncSession,
-            url_id: int,
-            user_id: int,
-            rejection_reason: RejectionReason
+        self,
+        session: AsyncSession,
+        url_id: int,
+        user_id: int,
+        rejection_reason: RejectionReason
     ) -> None:
 
         query = (
@@ -1376,7 +1222,6 @@ class AsyncDatabaseClient:
             return None
         batch_summary = summaries[0]
         return batch_summary
-
 
     @session_manager
     async def get_urls_by_batch(self, session, batch_id: int, page: int = 1) -> List[URLInfo]:
@@ -1453,7 +1298,6 @@ class AsyncDatabaseClient:
         await session.flush()
         return batch.id
 
-
     async def insert_urls(self, url_infos: List[URLInfo], batch_id: int) -> InsertURLsInfo:
         url_mappings = []
         duplicates = []
@@ -1501,7 +1345,6 @@ class AsyncDatabaseClient:
         batch.status = batch_status.value
         batch.compute_time = compute_time
 
-
     @session_manager
     async def has_validated_urls(self, session: AsyncSession) -> bool:
         query = (
@@ -1514,8 +1357,8 @@ class AsyncDatabaseClient:
 
     @session_manager
     async def get_validated_urls(
-            self,
-            session: AsyncSession
+        self,
+        session: AsyncSession
     ) -> list[SubmitApprovedURLTDO]:
         query = (
             select(URL)
@@ -1580,7 +1423,6 @@ class AsyncDatabaseClient:
             if info.submitted_at is not None:
                 url_data_source_object.created_at = info.submitted_at
             session.add(url_data_source_object)
-
 
             await session.execute(query)
 
@@ -1685,18 +1527,22 @@ class AsyncDatabaseClient:
             state = autosuggestion[3]
             county = autosuggestion[4]
             locality = autosuggestion[5]
-            agency_suggestions.append(GetNextURLForAgencyAgencyInfo(
-                suggestion_type=SuggestionType.AUTO_SUGGESTION if not is_unknown else SuggestionType.UNKNOWN,
-                pdap_agency_id=agency_id,
-                agency_name=name,
-                state=state,
-                county=county,
-                locality=locality
-            ))
+            agency_suggestions.append(
+                GetNextURLForAgencyAgencyInfo(
+                    suggestion_type=SuggestionType.AUTO_SUGGESTION if not is_unknown else SuggestionType.UNKNOWN,
+                    pdap_agency_id=agency_id,
+                    agency_name=name,
+                    state=state,
+                    county=county,
+                    locality=locality
+                )
+            )
         return agency_suggestions
 
     @session_manager
-    async def get_next_url_for_all_annotations(self, session, batch_id: Optional[int] = None) -> GetNextURLForAllAnnotationResponse:
+    async def get_next_url_for_all_annotations(
+        self, session, batch_id: Optional[int] = None
+        ) -> GetNextURLForAllAnnotationResponse:
         query = (
             Select(URL)
             .where(
@@ -1772,11 +1618,11 @@ class AsyncDatabaseClient:
 
     @session_manager
     async def add_all_annotations_to_url(
-            self,
-            session,
-            user_id: int,
-            url_id: int,
-            post_info: AllAnnotationPostInfo
+        self,
+        session,
+        user_id: int,
+        url_id: int,
+        post_info: AllAnnotationPostInfo
     ):
 
         # Add relevant annotation
@@ -1808,10 +1654,10 @@ class AsyncDatabaseClient:
 
     @session_manager
     async def upload_manual_batch(
-            self,
-            session: AsyncSession,
-            user_id: int,
-            dto: ManualBatchInputDTO
+        self,
+        session: AsyncSession,
+        user_id: int,
+        dto: ManualBatchInputDTO
     ) -> ManualBatchResponseDTO:
         batch = Batch(
             strategy=CollectorType.MANUAL.value,
@@ -1856,7 +1702,6 @@ class AsyncDatabaseClient:
             session.add(optional_metadata)
             url_ids.append(url.id)
 
-
         return ManualBatchResponseDTO(
             batch_id=batch_id,
             urls=url_ids,
@@ -1886,8 +1731,10 @@ class AsyncDatabaseClient:
         def batch_column(status: BatchStatus, label):
             return sc.count_distinct(
                 case(
-                    (Batch.status == status.value,
-                    Batch.id)
+                    (
+                        Batch.status == status.value,
+                        Batch.id
+                    )
                 ),
                 label=label
             )
@@ -1901,8 +1748,10 @@ class AsyncDatabaseClient:
         def url_column(status: URLStatus, label):
             return sc.count_distinct(
                 case(
-                    (URL.outcome == status.value,
-                    URL.id)
+                    (
+                        URL.outcome == status.value,
+                        URL.id
+                    )
                 ),
                 label=label
             )
@@ -1922,7 +1771,7 @@ class AsyncDatabaseClient:
             Batch.strategy
         ).subquery("url_count")
 
-    # Combine
+        # Combine
         query = select(
             Batch.strategy,
             batch_count_subquery.c.done_count.label("batch_done_count"),
@@ -1972,9 +1821,9 @@ class AsyncDatabaseClient:
 
     @session_manager
     async def get_batches_breakdown_metrics(
-            self,
-            session: AsyncSession,
-            page: int
+        self,
+        session: AsyncSession,
+        page: int
     ) -> GetMetricsBatchesBreakdownResponseDTO:
         sc = StatementComposer
 
@@ -1988,8 +1837,10 @@ class AsyncDatabaseClient:
         def url_column(status: URLStatus, label):
             return sc.count_distinct(
                 case(
-                    (URL.outcome == status.value,
-                    URL.id)
+                    (
+                        URL.outcome == status.value,
+                        URL.id
+                    )
                 ),
                 label=label
             )
@@ -2106,8 +1957,10 @@ class AsyncDatabaseClient:
         def case_column(status: URLStatus, label):
             return sc.count_distinct(
                 case(
-                    (URL.outcome == status.value,
-                    URL.id)
+                    (
+                        URL.outcome == status.value,
+                        URL.id
+                    )
                 ),
                 label=label
             )
@@ -2150,19 +2003,18 @@ class AsyncDatabaseClient:
                 URL.id.label("url_id"),
                 case((UserRecordTypeSuggestion.url_id != None, literal(True)), else_=literal(False)).label(
                     "has_user_record_type_annotation"
-                    ),
+                ),
                 case((UserRelevantSuggestion.url_id != None, literal(True)), else_=literal(False)).label(
                     "has_user_relevant_annotation"
-                    ),
+                ),
                 case((UserUrlAgencySuggestion.url_id != None, literal(True)), else_=literal(False)).label(
                     "has_user_agency_annotation"
-                    ),
+                ),
             )
             .outerjoin(UserRecordTypeSuggestion, URL.id == UserRecordTypeSuggestion.url_id)
             .outerjoin(UserRelevantSuggestion, URL.id == UserRelevantSuggestion.url_id)
             .outerjoin(UserUrlAgencySuggestion, URL.id == UserUrlAgencySuggestion.url_id)
         ).cte("flags")
-
 
         month = func.date_trunc('month', URL.created_at)
 
@@ -2171,14 +2023,20 @@ class AsyncDatabaseClient:
             select(
                 month.label('month'),
                 func.count(URL.id).label('count_total'),
-                func.count(case(
-                    (flags.c.has_user_record_type_annotation == True, 1))
+                func.count(
+                    case(
+                        (flags.c.has_user_record_type_annotation == True, 1)
+                    )
                 ).label('user_record_type_count'),
-                func.count(case(
-                    (flags.c.has_user_relevant_annotation == True, 1))
+                func.count(
+                    case(
+                        (flags.c.has_user_relevant_annotation == True, 1)
+                    )
                 ).label('user_relevant_count'),
-                func.count(case(
-                    (flags.c.has_user_agency_annotation == True, 1))
+                func.count(
+                    case(
+                        (flags.c.has_user_agency_annotation == True, 1)
+                    )
                 ).label('user_agency_count'),
             )
             .outerjoin(flags, flags.c.url_id == URL.id)
@@ -2253,7 +2111,6 @@ class AsyncDatabaseClient:
 
         return GetMetricsBacklogResponseDTO(entries=final_results)
 
-
     @session_manager
     async def populate_backlog_snapshot(
         self,
@@ -2291,7 +2148,7 @@ class AsyncDatabaseClient:
             URL.outcome == URLStatus.PENDING.value,
             URLCheckedForDuplicate.id == None
         ).limit(1)
-        )
+                 )
 
         raw_result = await session.execute(query)
         result = raw_result.one_or_none()
@@ -2308,12 +2165,11 @@ class AsyncDatabaseClient:
             URL.outcome == URLStatus.PENDING.value,
             URLCheckedForDuplicate.id == None
         ).limit(100)
-        )
+                 )
 
         raw_result = await session.execute(query)
         urls = raw_result.scalars().all()
         return [URLDuplicateTDO(url=url.url, url_id=url.id) for url in urls]
-
 
     @session_manager
     async def mark_all_as_duplicates(self, session: AsyncSession, url_ids: List[int]):
@@ -2342,7 +2198,6 @@ class AsyncDatabaseClient:
             set_={"last_probed_at": dt}
         )
         await session.execute(update_stmt)
-
 
     @session_manager
     async def mark_as_checked_for_duplicates(self, session: AsyncSession, url_ids: list[int]):
@@ -2416,7 +2271,7 @@ class AsyncDatabaseClient:
         common_where_clause = [
             URL.outcome == URLStatus.PENDING.value,
             URL.batch_id == batch_id,
-            ]
+        ]
 
         annotated_query = (
             select_url
