@@ -34,6 +34,7 @@ class TaskManager:
             html_parser: HTMLResponseParser,
             discord_poster: DiscordPoster,
             pdap_client: PDAPClient,
+            muckrock_api_interface: MuckrockAPIInterface
     ):
         # Dependencies
         self.adb_client = adb_client
@@ -41,6 +42,7 @@ class TaskManager:
         self.url_request_interface = url_request_interface
         self.html_parser = html_parser
         self.discord_poster = discord_poster
+        self.muckrock_api_interface = muckrock_api_interface
 
         self.logger = logging.getLogger(__name__)
         self.logger.addHandler(logging.StreamHandler())
@@ -65,11 +67,10 @@ class TaskManager:
         return operator
 
     async def get_agency_identification_task_operator(self):
-        muckrock_api_interface = MuckrockAPIInterface()
         operator = AgencyIdentificationTaskOperator(
             adb_client=self.adb_client,
             pdap_client=self.pdap_client,
-            muckrock_api_interface=muckrock_api_interface
+            muckrock_api_interface=self.muckrock_api_interface
         )
         return operator
 

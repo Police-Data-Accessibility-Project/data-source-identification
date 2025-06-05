@@ -85,7 +85,7 @@ async def test_insert_logs(db_data_creator: DBDataCreator):
 async def test_delete_old_logs(db_data_creator: DBDataCreator):
     batch_id = db_data_creator.batch()
 
-    old_datetime = datetime.now() - timedelta(days=1)
+    old_datetime = datetime.now() - timedelta(days=7)
     db_client = db_data_creator.db_client
     adb_client = db_data_creator.adb_client
     log_infos = []
