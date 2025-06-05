@@ -17,6 +17,7 @@ from src.api.endpoints.search.routes import search_router
 from src.api.endpoints.task.routes import task_router
 from src.api.endpoints.url.routes import url_router
 from src.collectors.manager import AsyncCollectorManager
+from src.collectors.source_collectors.muckrock.api_interface.core import MuckrockAPIInterface
 from src.core.core import AsyncCore
 from src.core.logger import AsyncCoreLogger
 from src.core.env_var_manager import EnvVarManager
@@ -62,6 +63,9 @@ async def lifespan(app: FastAPI):
                 api_key=env_var_manager.pdap_api_key,
                 session=session
             )
+        ),
+        muckrock_api_interface=MuckrockAPIInterface(
+            session=session
         )
     )
     async_collector_manager = AsyncCollectorManager(
