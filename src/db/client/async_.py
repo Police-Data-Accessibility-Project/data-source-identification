@@ -1498,7 +1498,7 @@ class AsyncDatabaseClient:
         Delete logs older than a day
         """
         statement = delete(Log).where(
-            Log.created_at < datetime.now() - timedelta(days=1)
+            Log.created_at < datetime.now() - timedelta(days=7)
         )
         await session.execute(statement)
 
