@@ -4,6 +4,7 @@ from typing import List, Optional
 
 from pydantic import BaseModel
 
+from src.api.endpoints.annotate.dtos.agency.post import URLAgencyAnnotationPostInfo
 from src.api.endpoints.review.dtos.approve import FinalReviewApprovalInfo
 from src.api.endpoints.review.enums import RejectionReason
 from src.db.client.async_ import AsyncDatabaseClient
@@ -21,7 +22,8 @@ from src.core.tasks.operators.agency_identification.dtos.suggestion import URLAg
 from src.core.tasks.operators.submit_approved_url.tdo import SubmittedURLInfo
 from src.core.tasks.operators.url_miscellaneous_metadata.tdo import URLMiscellaneousMetadataTDO
 from src.core.enums import BatchStatus, SuggestionType, RecordType, SuggestedStatus
-from tests.helpers.test_batch_creation_parameters import TestBatchCreationParameters, AnnotationInfo
+from tests.helpers.batch_creation_parameters.annotation_info import AnnotationInfo
+from tests.helpers.batch_creation_parameters.core import TestBatchCreationParameters
 from tests.helpers.simple_test_data_functions import generate_test_urls
 
 
@@ -171,7 +173,11 @@ class DBDataCreator:
             relevant=relevant
         )
 
-    async def annotate(self, url_id: int, annotation_info: AnnotationInfo):
+    async def annotate(
+        self,
+        url_id: int,
+        annotation_info: AnnotationInfo
+    ):
         info = annotation_info
         if info.user_relevant is not None:
             await self.user_relevant_suggestion_v2(url_id=url_id, suggested_status=info.user_relevant)
@@ -182,7 +188,7 @@ class DBDataCreator:
         if info.auto_record_type is not None:
             await self.auto_record_type_suggestions(url_id=url_id, record_type=info.auto_record_type)
         if info.user_agency is not None:
-            await self.agency_user_suggestions(url_id=url_id, agency_id=info.user_agency)
+            await self.agency_user_suggestions(url_id=url_id, agency_annotation_info=info.user_agency)
         if info.auto_agency is not None:
             await self.agency_auto_suggestions(url_id=url_id, count=1, suggestion_type=SuggestionType.AUTO_SUGGESTION)
         if info.confirmed_agency is not None:
@@ -192,7 +198,8 @@ class DBDataCreator:
                 final_review_approval_info = FinalReviewApprovalInfo(
                     url_id=url_id,
                     record_type=annotation_info.user_record_type,
-                    agency_ids=[annotation_info.user_agency] if annotation_info.user_agency is not None else None,
+                    agency_ids=[annotation_info.user_agency.suggested_agency]
+                    if annotation_info.user_agency is not None else None,
                     description="Test Description",
                 )
                 await self.adb_client.approve_url(
@@ -478,16 +485,18 @@ class DBDataCreator:
             self,
             url_id: int,
             user_id: Optional[int] = None,
-            agency_id: Optional[int] = None
+            agency_annotation_info: Optional[URLAgencyAnnotationPostInfo] = None
     ):
         if user_id is None:
             user_id = randint(1, 99999999)
 
-        if agency_id is None:
-            agency_id = await self.agency()
+        if agency_annotation_info is None:
+            agency_annotation_info = URLAgencyAnnotationPostInfo(
+                suggested_agency=await self.agency()
+            )
         await self.adb_client.add_agency_manual_suggestion(
-            agency_id=agency_id,
+            agency_id=agency_annotation_info.suggested_agency,
             url_id=url_id,
             user_id=user_id,
-            is_new=False
+            is_new=agency_annotation_info.is_new
         )

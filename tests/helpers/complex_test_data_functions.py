@@ -2,6 +2,7 @@ from typing import Optional
 
 from pydantic import BaseModel
 
+from src.api.endpoints.annotate.dtos.agency.post import URLAgencyAnnotationPostInfo
 from src.db.dtos.insert_urls_info import InsertURLsInfo
 from src.db.dtos.url_mapping import URLMapping
 from src.collectors.enums import URLStatus
@@ -83,7 +84,9 @@ async def setup_for_get_next_url_for_final_review(
         agency_id = await db_data_creator.agency()
         await db_data_creator.agency_user_suggestions(
             url_id=url_mapping.url_id,
-            agency_id=agency_id
+            agency_annotation_info=URLAgencyAnnotationPostInfo(
+                suggested_agency=agency_id
+            )
         )
         return agency_id
 
