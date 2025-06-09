@@ -12,7 +12,8 @@ from src.collectors.enums import URLStatus
 from src.core.tasks.enums import TaskOperatorOutcome
 from src.core.tasks.operators.url_html.scraper.request_interface.dtos.url_response import URLResponseInfo
 from tests.helpers.db_data_creator import DBDataCreator
-from tests.helpers.test_batch_creation_parameters import TestBatchCreationParameters, TestURLCreationParameters
+from tests.helpers.batch_creation_parameters.url_creation_parameters import TestURLCreationParameters
+from tests.helpers.batch_creation_parameters.core import TestBatchCreationParameters
 
 
 @pytest.mark.asyncio

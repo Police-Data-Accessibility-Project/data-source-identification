@@ -102,6 +102,10 @@ class DTOConverter:
         suggestion = user_url_agency_suggestion
         if suggestion is None:
             return None
+        if suggestion.is_new:
+            return GetNextURLForAgencyAgencyInfo(
+                suggestion_type=SuggestionType.NEW_AGENCY,
+            )
         return GetNextURLForAgencyAgencyInfo(
             suggestion_type=SuggestionType.USER_SUGGESTION,
             pdap_agency_id=suggestion.agency_id,

@@ -1,10 +1,12 @@
 import pendulum
 import pytest
 
+from src.api.endpoints.annotate.dtos.agency.post import URLAgencyAnnotationPostInfo
 from src.collectors.enums import URLStatus, CollectorType
 from src.core.enums import BatchStatus, RecordType, SuggestedStatus
-from tests.helpers.test_batch_creation_parameters import TestBatchCreationParameters, TestURLCreationParameters, \
-    AnnotationInfo
+from tests.helpers.batch_creation_parameters.annotation_info import AnnotationInfo
+from tests.helpers.batch_creation_parameters.url_creation_parameters import TestURLCreationParameters
+from tests.helpers.batch_creation_parameters.core import TestBatchCreationParameters
 
 
 @pytest.mark.asyncio
@@ -290,7 +292,9 @@ async def test_get_urls_breakdown_pending_metrics(api_test_helper):
                 annotation_info=AnnotationInfo(
                     user_relevant=SuggestedStatus.RELEVANT,
                     user_record_type=RecordType.INCARCERATION_RECORDS,
-                    user_agency=agency_id
+                    user_agency=URLAgencyAnnotationPostInfo(
+                        suggested_agency=agency_id
+                    )
                 )
             ),
         ]

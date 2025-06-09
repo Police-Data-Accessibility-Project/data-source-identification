@@ -5,7 +5,8 @@ from src.db.dtos.insert_urls_info import InsertURLsInfo
 from src.collectors.source_collectors.example.dtos.input import ExampleInputDTO
 from src.collectors.enums import CollectorType, URLStatus
 from src.core.enums import BatchStatus
-from tests.helpers.test_batch_creation_parameters import TestBatchCreationParameters, TestURLCreationParameters
+from tests.helpers.batch_creation_parameters.url_creation_parameters import TestURLCreationParameters
+from tests.helpers.batch_creation_parameters.core import TestBatchCreationParameters
 
 
 @pytest.mark.asyncio

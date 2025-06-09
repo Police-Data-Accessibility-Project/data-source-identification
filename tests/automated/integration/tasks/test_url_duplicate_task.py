@@ -9,7 +9,8 @@ from src.db.models.core import URL, URLCheckedForDuplicate
 from src.collectors.enums import URLStatus
 from src.core.tasks.enums import TaskOperatorOutcome
 from tests.helpers.db_data_creator import DBDataCreator
-from tests.helpers.test_batch_creation_parameters import TestBatchCreationParameters, TestURLCreationParameters
+from tests.helpers.batch_creation_parameters.url_creation_parameters import TestURLCreationParameters
+from tests.helpers.batch_creation_parameters.core import TestBatchCreationParameters
 from pdap_access_manager import ResponseInfo
 from src.pdap_api.client import PDAPClient
 
