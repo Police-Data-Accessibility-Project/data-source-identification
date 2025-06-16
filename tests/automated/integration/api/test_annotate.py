@@ -12,10 +12,12 @@ from src.api.endpoints.annotate.dtos.relevance.response import GetNextRelevanceA
 from src.core.tasks.operators.url_html.scraper.parser.dtos.response_html import ResponseHTMLInfo
 from src.db.dtos.insert_urls_info import InsertURLsInfo
 from src.db.dtos.url_mapping import URLMapping
-from src.db.models.core import UserUrlAgencySuggestion, UserRelevantSuggestion, UserRecordTypeSuggestion
+from src.db.models.instantiations.url.suggestion.agency.user import UserUrlAgencySuggestion
 from src.core.error_manager.enums import ErrorTypes
 from src.core.enums import RecordType, SuggestionType, SuggestedStatus
 from src.core.exceptions import FailedValidationException
+from src.db.models.instantiations.url.suggestion.record_type.user import UserRecordTypeSuggestion
+from src.db.models.instantiations.url.suggestion.relevant.user import UserRelevantSuggestion
 from tests.helpers.complex_test_data_functions import AnnotateAgencySetupInfo, setup_for_annotate_agency, \
     setup_for_get_next_url_for_final_review
 from tests.helpers.db_data_creator import BatchURLCreationInfo

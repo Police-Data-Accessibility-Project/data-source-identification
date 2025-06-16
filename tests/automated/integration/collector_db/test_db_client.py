@@ -11,7 +11,11 @@ from src.db.dtos.url_error_info import URLErrorPydanticInfo
 from src.db.dtos.url_info import URLInfo
 from src.db.dtos.url_mapping import URLMapping
 from src.db.constants import PLACEHOLDER_AGENCY_NAME
-from src.db.models.core import URL, ReviewingUserURL, URLOptionalDataSourceMetadata, ConfirmedURLAgency, Agency
+from src.db.models.instantiations.confirmed_url_agency import ConfirmedURLAgency
+from src.db.models.instantiations.agency import Agency
+from src.db.models.instantiations.url.reviewing_user import ReviewingUserURL
+from src.db.models.instantiations.url.optional_data_source_metadata import URLOptionalDataSourceMetadata
+from src.db.models.instantiations.url.core import URL
 from src.collectors.enums import URLStatus
 from src.core.enums import BatchStatus, RecordType, SuggestionType, SuggestedStatus
 from tests.helpers.complex_test_data_functions import setup_for_get_next_url_for_annotation, setup_for_annotate_agency

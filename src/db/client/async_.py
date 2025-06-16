@@ -4,7 +4,7 @@ from operator import or_
 from typing import Optional, Type, Any, List
 
 from fastapi import HTTPException
-from sqlalchemy import select, exists, func, case, desc, Select, not_, and_, update, asc, delete, literal
+from sqlalchemy import select, exists, func, case, Select, not_, and_, update, delete, literal
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
@@ -35,8 +35,7 @@ from src.api.endpoints.metrics.dtos.get.urls.breakdown.pending import GetMetrics
 from src.api.endpoints.metrics.dtos.get.urls.breakdown.submitted import GetMetricsURLsBreakdownSubmittedResponseDTO, \
     GetMetricsURLsBreakdownSubmittedInnerDTO
 from src.api.endpoints.review.dtos.approve import FinalReviewApprovalInfo
-from src.api.endpoints.review.dtos.get import GetNextURLForFinalReviewResponse, FinalReviewOptionalMetadata, \
-    FinalReviewAnnotationInfo
+from src.api.endpoints.review.dtos.get import GetNextURLForFinalReviewResponse
 from src.api.endpoints.review.enums import RejectionReason
 from src.api.endpoints.search.dtos.response import SearchURLResponse
 from src.api.endpoints.task.dtos.get.tasks import GetTasksResponse, GetTasksResponseTaskInfo
@@ -54,17 +53,36 @@ from src.db.dtos.url_error_info import URLErrorPydanticInfo
 from src.db.dtos.url_html_content_info import URLHTMLContentInfo, HTMLContentType
 from src.db.dtos.url_info import URLInfo
 from src.db.dtos.url_mapping import URLMapping
+from src.db.models.instantiations.url.suggestion.agency.auto import AutomatedUrlAgencySuggestion
+from src.db.models.instantiations.url.suggestion.record_type.user import UserRecordTypeSuggestion
+from src.db.models.instantiations.url.suggestion.relevant.auto import AutoRelevantSuggestion
+from src.db.models.instantiations.url.suggestion.relevant.user import UserRelevantSuggestion
 from src.db.queries.implementations.core.get_next_url_for_final_review import GetNextURLForFinalReviewQueryBuilder
 from src.db.queries.implementations.core.get_recent_batch_summaries.builder import GetRecentBatchSummariesQueryBuilder
 from src.db.statement_composer import StatementComposer
-from src.db.constants import PLACEHOLDER_AGENCY_NAME, STANDARD_ROW_LIMIT
+from src.db.constants import PLACEHOLDER_AGENCY_NAME
 from src.db.enums import TaskType
 from src.db.models.templates import Base
-from src.db.models.core import URL, URLErrorInfo, URLHTMLContent, \
-    RootURL, Task, TaskError, LinkTaskURL, Batch, Agency, AutomatedUrlAgencySuggestion, \
-    UserUrlAgencySuggestion, AutoRelevantSuggestion, AutoRecordTypeSuggestion, UserRelevantSuggestion, \
-    UserRecordTypeSuggestion, ReviewingUserURL, URLOptionalDataSourceMetadata, ConfirmedURLAgency, Duplicate, Log, \
-    BacklogSnapshot, URLDataSource, URLCheckedForDuplicate, URLProbedFor404
+from src.db.models.instantiations.confirmed_url_agency import ConfirmedURLAgency
+from src.db.models.instantiations.link_task_url import LinkTaskURL
+from src.db.models.instantiations.url.error_info import URLErrorInfo
+from src.db.models.instantiations.agency import Agency
+from src.db.models.instantiations.duplicate import Duplicate
+from src.db.models.instantiations.log import Log
+from src.db.models.instantiations.task.error import TaskError
+from src.db.models.instantiations.task.core import Task
+from src.db.models.instantiations.backlog_snapshot import BacklogSnapshot
+from src.db.models.instantiations.url.suggestion.record_type.auto import AutoRecordTypeSuggestion
+from src.db.models.instantiations.url.suggestion.agency.user import UserUrlAgencySuggestion
+from src.db.models.instantiations.url.data_source import URLDataSource
+from src.db.models.instantiations.root_url_cache import RootURL
+from src.db.models.instantiations.url.html_content import URLHTMLContent
+from src.db.models.instantiations.url.reviewing_user import ReviewingUserURL
+from src.db.models.instantiations.url.optional_data_source_metadata import URLOptionalDataSourceMetadata
+from src.db.models.instantiations.url.probed_for_404 import URLProbedFor404
+from src.db.models.instantiations.url.checked_for_duplicate import URLCheckedForDuplicate
+from src.db.models.instantiations.url.core import URL
+from src.db.models.instantiations.batch import Batch
 from src.core.tasks.operators.agency_identification.dtos.suggestion import URLAgencySuggestionInfo
 from src.core.tasks.operators.agency_identification.dtos.tdo import AgencyIdentificationTDO
 from src.core.tasks.operators.submit_approved_url.tdo import SubmitApprovedURLTDO, SubmittedURLInfo

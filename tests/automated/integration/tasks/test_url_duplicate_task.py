@@ -5,7 +5,8 @@ import pytest
 
 from src.core.tasks.operators.url_duplicate.core import URLDuplicateTaskOperator
 from src.db.dtos.url_mapping import URLMapping
-from src.db.models.core import URL, URLCheckedForDuplicate
+from src.db.models.instantiations.url.checked_for_duplicate import URLCheckedForDuplicate
+from src.db.models.instantiations.url.core import URL
 from src.collectors.enums import URLStatus
 from src.core.tasks.enums import TaskOperatorOutcome
 from tests.helpers.db_data_creator import DBDataCreator

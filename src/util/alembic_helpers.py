@@ -53,3 +53,22 @@ def alter_enum_value(
     Changes one value of an enum type
     """
     op.execute(f"ALTER TYPE {enum_name} RENAME VALUE '{old_value}' TO '{new_value}'")
+
+def created_at_column():
+    """Returns a standard `created_at` column."""
+    return sa.Column(
+        'created_at',
+        sa.DateTime(),
+        server_default=sa.text('now()'),
+        nullable=False
+    )
+
+def updated_at_column():
+    """Returns a standard `updated_at` column."""
+    return sa.Column(
+        'updated_at',
+        sa.DateTime(),
+        server_default=sa.text('now()'),
+        server_onupdate=sa.text('now()'),
+        nullable=False
+    )

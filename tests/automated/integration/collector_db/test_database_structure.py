@@ -19,7 +19,7 @@ from sqlalchemy.exc import DataError
 from src.db.dtos.insert_urls_info import InsertURLsInfo
 from src.db.enums import URLHTMLContentType
 from src.db.helpers import get_postgres_connection_string
-from src.db.models.core import Agency
+from src.db.models.instantiations.agency import Agency
 from src.collectors.enums import CollectorType, URLStatus
 from src.core.tasks.operators.agency_identification.dtos.suggestion import URLAgencySuggestionInfo
 from src.core.enums import BatchStatus, SuggestionType

@@ -5,7 +5,10 @@ from src.api.endpoints.review.dtos.get import GetNextURLForFinalReviewOuterRespo
 from src.api.endpoints.review.dtos.reject import FinalReviewRejectionInfo
 from src.api.endpoints.review.enums import RejectionReason
 from src.db.constants import PLACEHOLDER_AGENCY_NAME
-from src.db.models.core import URL, URLOptionalDataSourceMetadata, ConfirmedURLAgency, Agency
+from src.db.models.instantiations.confirmed_url_agency import ConfirmedURLAgency
+from src.db.models.instantiations.agency import Agency
+from src.db.models.instantiations.url.optional_data_source_metadata import URLOptionalDataSourceMetadata
+from src.db.models.instantiations.url.core import URL
 from src.collectors.enums import URLStatus
 from src.core.enums import RecordType, SuggestedStatus
 from tests.helpers.complex_test_data_functions import setup_for_get_next_url_for_final_review
