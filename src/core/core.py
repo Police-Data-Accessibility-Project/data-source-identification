@@ -23,7 +23,8 @@ from src.api.endpoints.collector.dtos.manual_batch.response import ManualBatchRe
 from src.api.endpoints.metrics.dtos.get.backlog import GetMetricsBacklogResponseDTO
 from src.api.endpoints.metrics.dtos.get.batches.aggregated import GetMetricsBatchesAggregatedResponseDTO
 from src.api.endpoints.metrics.dtos.get.batches.breakdown import GetMetricsBatchesBreakdownResponseDTO
-from src.api.endpoints.metrics.dtos.get.urls.aggregated import GetMetricsURLsAggregatedResponseDTO
+from src.api.endpoints.metrics.dtos.get.urls.aggregated.core import GetMetricsURLsAggregatedResponseDTO
+from src.api.endpoints.metrics.dtos.get.urls.aggregated.pending import GetMetricsURLsAggregatedPendingResponseDTO
 from src.api.endpoints.metrics.dtos.get.urls.breakdown.pending import GetMetricsURLsBreakdownPendingResponseDTO
 from src.api.endpoints.metrics.dtos.get.urls.breakdown.submitted import GetMetricsURLsBreakdownSubmittedResponseDTO
 from src.api.endpoints.review.dtos.approve import FinalReviewApprovalInfo
@@ -335,3 +336,6 @@ class AsyncCore:
 
     async def get_backlog_metrics(self) -> GetMetricsBacklogResponseDTO:
         return await self.adb_client.get_backlog_metrics()
+
+    async def get_urls_aggregated_pending_metrics(self) -> GetMetricsURLsAggregatedPendingResponseDTO:
+        return await self.adb_client.get_urls_aggregated_pending_metrics()

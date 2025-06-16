@@ -29,7 +29,7 @@ from src.api.endpoints.metrics.dtos.get.batches.aggregated import GetMetricsBatc
     GetMetricsBatchesAggregatedInnerResponseDTO
 from src.api.endpoints.metrics.dtos.get.batches.breakdown import GetMetricsBatchesBreakdownInnerResponseDTO, \
     GetMetricsBatchesBreakdownResponseDTO
-from src.api.endpoints.metrics.dtos.get.urls.aggregated import GetMetricsURLsAggregatedResponseDTO
+from src.api.endpoints.metrics.dtos.get.urls.aggregated.core import GetMetricsURLsAggregatedResponseDTO
 from src.api.endpoints.metrics.dtos.get.urls.breakdown.pending import GetMetricsURLsBreakdownPendingResponseDTO, \
     GetMetricsURLsBreakdownPendingResponseInnerDTO
 from src.api.endpoints.metrics.dtos.get.urls.breakdown.submitted import GetMetricsURLsBreakdownSubmittedResponseDTO, \
@@ -2283,3 +2283,6 @@ class AsyncDatabaseClient:
             count_not_annotated=not_annotated_result,
             total_urls=annotated_result + not_annotated_result
         )
+
+    async def get_urls_aggregated_pending_metrics(self):
+        pass
