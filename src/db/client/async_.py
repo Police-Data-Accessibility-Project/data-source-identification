@@ -57,7 +57,7 @@ from src.db.models.instantiations.url.suggestion.agency.auto import AutomatedUrl
 from src.db.models.instantiations.url.suggestion.record_type.user import UserRecordTypeSuggestion
 from src.db.models.instantiations.url.suggestion.relevant.auto import AutoRelevantSuggestion
 from src.db.models.instantiations.url.suggestion.relevant.user import UserRelevantSuggestion
-from src.db.queries.implementations.core.final_review.get_next import GetNextURLForFinalReviewQueryBuilder
+from src.db.queries.implementations.core.final_review.get import GetNextURLForFinalReviewQueryBuilder
 from src.db.queries.implementations.core.get_recent_batch_summaries.builder import GetRecentBatchSummariesQueryBuilder
 from src.db.statement_composer import StatementComposer
 from src.db.constants import PLACEHOLDER_AGENCY_NAME

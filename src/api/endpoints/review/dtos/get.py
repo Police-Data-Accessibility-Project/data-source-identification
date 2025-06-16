@@ -64,6 +64,14 @@ class FinalReviewOptionalMetadata(BaseModel):
         default=None
     )
 
+class FinalReviewBatchInfo(BaseModel):
+    count_reviewed: int = Field(
+        title="The number of URLs in the batch that have been reviewed",
+    )
+    count_ready_for_review: int = Field(
+        title="The number of URLs in the batch that are ready for review",
+    )
+
 class GetNextURLForFinalReviewResponse(BaseModel):
     id: int = Field(title="The id of the URL")
     url: str = Field(title="The URL")
@@ -75,6 +83,9 @@ class GetNextURLForFinalReviewResponse(BaseModel):
     )
     optional_metadata: FinalReviewOptionalMetadata = Field(
         title="Optional metadata for the source",
+    )
+    batch_info: Optional[FinalReviewBatchInfo] = Field(
+        title="Information about the batch",
     )
 
 class GetNextURLForFinalReviewOuterResponse(BaseModel):

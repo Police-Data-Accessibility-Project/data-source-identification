@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
 from src.api.endpoints.review.dtos.get import GetNextURLForFinalReviewResponse, FinalReviewOptionalMetadata, \
-    FinalReviewAnnotationInfo
+    FinalReviewAnnotationInfo, FinalReviewBatchInfo
 from src.collectors.enums import URLStatus
 from src.core.tasks.operators.url_html.scraper.parser.util import convert_to_response_html_info
 from src.db.dto_converter import DTOConverter
@@ -84,17 +84,16 @@ class GetNextURLForFinalReviewQueryBuilder(QueryBuilderBase):
     def _get_where_exist_clauses(
         self,
         query: FromClause,
-        models: list[Type[URLDependentMixin]],
     ):
         where_clauses = []
-        for model in models:
+        for model in self.user_models:
             label = self.get_exists_label(model)
             where_clause = getattr(query.c, label) == 1
             where_clauses.append(where_clause)
         return where_clauses
 
     def _build_base_query(self, anno_exists_query: FromClause, ):
-        where_exist_clauses_v2 = self._get_where_exist_clauses(anno_exists_query, self.user_models)
+        where_exist_clauses = self._get_where_exist_clauses(anno_exists_query)
 
         return (
             select(
@@ -109,7 +108,7 @@ class GetNextURLForFinalReviewQueryBuilder(QueryBuilderBase):
             .where(
                 and_(
                     URL.outcome == URLStatus.PENDING.value,
-                    *where_exist_clauses_v2
+                    *where_exist_clauses
                 )
             )
         )
@@ -163,19 +162,81 @@ class GetNextURLForFinalReviewQueryBuilder(QueryBuilderBase):
             supplying_entity=url.optional_data_source_metadata.supplying_entity
         )
 
+    async def get_batch_info(self, session: AsyncSession) -> Optional[FinalReviewBatchInfo]:
+        if self.batch_id is None:
+            return None
+
+        count_label = "count"
+        count_reviewed_query = (
+            select(
+                URL.batch_id,
+                func.count(URL.id).label(count_label)
+            )
+            .where(
+                URL.outcome.in_(
+                    [
+                        URLStatus.VALIDATED.value,
+                        URLStatus.NOT_RELEVANT.value,
+                        URLStatus.SUBMITTED.value,
+                        URLStatus.INDIVIDUAL_RECORD.value
+                    ]
+                ),
+                URL.batch_id == self.batch_id
+            )
+            .group_by(URL.batch_id)
+            .subquery("count_reviewed")
+        )
+
+        anno_exists_query = await self.get_anno_exists_query()
+        count_ready_query = (
+            select(
+                URL.batch_id,
+                func.count(URL.id).label(count_label)
+            )
+            .join(
+                anno_exists_query,
+                anno_exists_query.c.id == URL.id
+            )
+            .where(
+                URL.batch_id == self.batch_id,
+                URL.outcome == URLStatus.PENDING.value,
+                *self._get_where_exist_clauses(
+                    anno_exists_query
+                )
+            )
+            .group_by(URL.batch_id)
+            .subquery("count_ready")
+        )
+
+        full_query = (
+            select(
+                func.coalesce(count_reviewed_query.c[count_label], 0).label("count_reviewed"),
+                func.coalesce(count_ready_query.c[count_label], 0).label("count_ready_for_review")
+            )
+            .select_from(
+                count_reviewed_query.outerjoin(
+                    count_ready_query,
+                    count_reviewed_query.c.batch_id == count_ready_query.c.batch_id
+                )
+            )
+        )
+
+        raw_result = await session.execute(full_query)
+        return FinalReviewBatchInfo(**raw_result.mappings().one())
+
+
+
+
+
+
+
+
     async def run(
         self,
         session: AsyncSession
     ) -> Optional[GetNextURLForFinalReviewResponse]:
 
-        annotation_exists_cases_all = await self._annotation_exists_case(self.models)
-        anno_exists_query = select(
-            URL.id,
-            *annotation_exists_cases_all
-        )
-        anno_exists_query = await self._outer_join_models(anno_exists_query, self.models)
-        anno_exists_query = anno_exists_query.where(URL.outcome == URLStatus.PENDING.value)
-        anno_exists_query = anno_exists_query.group_by(URL.id).cte("annotations_exist")
+        anno_exists_query = await self.get_anno_exists_query()
 
         url_query = self._build_base_query(anno_exists_query)
         url_query = await self._apply_batch_id_filter(url_query, self.batch_id)
@@ -194,6 +255,7 @@ class GetNextURLForFinalReviewQueryBuilder(QueryBuilderBase):
         html_content_infos = await self._extract_html_content_infos(result)
         optional_metadata = await self._extract_optional_metadata(result)
 
+        batch_info = await self.get_batch_info(session)
         try:
             return GetNextURLForFinalReviewResponse(
                 id=result.id,
@@ -216,10 +278,22 @@ class GetNextURLForFinalReviewQueryBuilder(QueryBuilderBase):
                         confirmed_agencies=result.confirmed_agencies
                     )
                 ),
-                optional_metadata=optional_metadata
+                optional_metadata=optional_metadata,
+                batch_info=batch_info
             )
         except Exception as e:
             raise FailedQueryException(f"Failed to convert result for url id {result.id} to response") from e
+
+    async def get_anno_exists_query(self):
+        annotation_exists_cases_all = await self._annotation_exists_case(self.models)
+        anno_exists_query = select(
+            URL.id,
+            *annotation_exists_cases_all
+        )
+        anno_exists_query = await self._outer_join_models(anno_exists_query, self.models)
+        anno_exists_query = anno_exists_query.where(URL.outcome == URLStatus.PENDING.value)
+        anno_exists_query = anno_exists_query.group_by(URL.id).cte("annotations_exist")
+        return anno_exists_query
 
 
 

@@ -334,9 +334,14 @@ class RequestValidator:
         )
         return GetTasksResponse(**data)
 
-    async def review_next_source(self) -> GetNextURLForFinalReviewOuterResponse:
+    async def review_next_source(self, batch_id: Optional[int] = None) -> GetNextURLForFinalReviewOuterResponse:
+        if batch_id is not None:
+            params = {"batch_id": batch_id}
+        else:
+            params = None
         data = self.get(
-            url=f"/review/next-source"
+            url=f"/review/next-source",
+            params=params
         )
         return GetNextURLForFinalReviewOuterResponse(**data)
 
