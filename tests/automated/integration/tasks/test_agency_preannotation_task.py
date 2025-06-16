@@ -11,7 +11,8 @@ from src.collectors.source_collectors.muckrock.enums import AgencyLookupResponse
 from src.core.tasks.operators.agency_identification.core import AgencyIdentificationTaskOperator
 from src.db.models.instantiations.url.suggestion.agency.auto import AutomatedUrlAgencySuggestion
 from src.pdap_api.enums import MatchAgencyResponseStatus
-from tests.helpers.test_batch_creation_parameters import TestBatchCreationParameters, TestURLCreationParameters
+from tests.helpers.batch_creation_parameters.url_creation_parameters import TestURLCreationParameters
+from tests.helpers.batch_creation_parameters.core import TestBatchCreationParameters
 from src.db.models.instantiations.agency import Agency
 from src.collectors.enums import CollectorType, URLStatus
 from src.core.tasks.enums import TaskOperatorOutcome

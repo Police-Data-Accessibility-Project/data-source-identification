@@ -10,6 +10,7 @@ from src.collectors.enums import URLStatus
 from src.core.tasks.operators.url_html.scraper.parser.util import convert_to_response_html_info
 from src.db.dto_converter import DTOConverter
 from src.db.dtos.url_html_content_info import URLHTMLContentInfo
+from src.db.exceptions import FailedQueryException
 from src.db.models.instantiations.confirmed_url_agency import ConfirmedURLAgency
 from src.db.models.instantiations.url.suggestion.agency.auto import AutomatedUrlAgencySuggestion
 from src.db.models.instantiations.url.suggestion.record_type.auto import AutoRecordTypeSuggestion
@@ -193,29 +194,32 @@ class GetNextURLForFinalReviewQueryBuilder(QueryBuilderBase):
         html_content_infos = await self._extract_html_content_infos(result)
         optional_metadata = await self._extract_optional_metadata(result)
 
-        return GetNextURLForFinalReviewResponse(
-            id=result.id,
-            url=result.url,
-            html_info=convert_to_response_html_info(html_content_infos),
-            name=result.name,
-            description=result.description,
-            annotations=FinalReviewAnnotationInfo(
-                relevant=DTOConverter.final_review_annotation_relevant_info(
-                    user_suggestion=result.user_relevant_suggestion,
-                    auto_suggestion=result.auto_relevant_suggestion
+        try:
+            return GetNextURLForFinalReviewResponse(
+                id=result.id,
+                url=result.url,
+                html_info=convert_to_response_html_info(html_content_infos),
+                name=result.name,
+                description=result.description,
+                annotations=FinalReviewAnnotationInfo(
+                    relevant=DTOConverter.final_review_annotation_relevant_info(
+                        user_suggestion=result.user_relevant_suggestion,
+                        auto_suggestion=result.auto_relevant_suggestion
+                    ),
+                    record_type=DTOConverter.final_review_annotation_record_type_info(
+                        user_suggestion=result.user_record_type_suggestion,
+                        auto_suggestion=result.auto_record_type_suggestion
+                    ),
+                    agency=DTOConverter.final_review_annotation_agency_info(
+                        automated_agency_suggestions=result.automated_agency_suggestions,
+                        user_agency_suggestion=result.user_agency_suggestion,
+                        confirmed_agencies=result.confirmed_agencies
+                    )
                 ),
-                record_type=DTOConverter.final_review_annotation_record_type_info(
-                    user_suggestion=result.user_record_type_suggestion,
-                    auto_suggestion=result.auto_record_type_suggestion
-                ),
-                agency=DTOConverter.final_review_annotation_agency_info(
-                    automated_agency_suggestions=result.automated_agency_suggestions,
-                    user_agency_suggestion=result.user_agency_suggestion,
-                    confirmed_agencies=result.confirmed_agencies
-                )
-            ),
-            optional_metadata=optional_metadata
-        )
+                optional_metadata=optional_metadata
+            )
+        except Exception as e:
+            raise FailedQueryException(f"Failed to convert result for url id {result.id} to response") from e
 
 
 
