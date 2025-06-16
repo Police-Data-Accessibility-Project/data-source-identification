@@ -5,7 +5,7 @@ import pytest
 
 from src.db.client.async_ import AsyncDatabaseClient
 from src.db.enums import TaskType
-from src.db.models.core import Task
+from src.db.models.instantiations.task.core import Task
 from src.core.core import AsyncCore
 from src.core.tasks.dtos.run_info import TaskOperatorRunInfo
 from src.core.tasks.enums import TaskOperatorOutcome

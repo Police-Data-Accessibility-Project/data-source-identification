@@ -14,7 +14,11 @@ from src.db.dtos.log_info import LogInfo
 from src.db.dtos.url_info import URLInfo
 from src.db.dtos.url_mapping import URLMapping
 from src.db.models.templates import Base
-from src.db.models.core import Batch, URL, Log, Duplicate, URLDataSource
+from src.db.models.instantiations.duplicate import Duplicate
+from src.db.models.instantiations.log import Log
+from src.db.models.instantiations.url.data_source import URLDataSource
+from src.db.models.instantiations.url.core import URL
+from src.db.models.instantiations.batch import Batch
 from src.core.tasks.operators.submit_approved_url.tdo import SubmittedURLInfo
 from src.core.env_var_manager import EnvVarManager
 from src.core.enums import BatchStatus

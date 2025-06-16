@@ -41,6 +41,7 @@ class TaskType(PyEnum):
     DUPLICATE_DETECTION = "Duplicate Detection"
     IDLE = "Idle"
     PROBE_404 = "404 Probe"
+    SYNC_AGENCIES = "Sync Agencies"
 
 class PGEnum(TypeDecorator):
     impl = postgresql.ENUM

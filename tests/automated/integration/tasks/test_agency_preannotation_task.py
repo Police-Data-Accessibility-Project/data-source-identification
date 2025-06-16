@@ -9,10 +9,11 @@ from src.collectors.source_collectors.muckrock.api_interface.core import Muckroc
 from src.collectors.source_collectors.muckrock.api_interface.lookup_response import AgencyLookupResponse
 from src.collectors.source_collectors.muckrock.enums import AgencyLookupResponseType
 from src.core.tasks.operators.agency_identification.core import AgencyIdentificationTaskOperator
+from src.db.models.instantiations.url.suggestion.agency.auto import AutomatedUrlAgencySuggestion
 from src.pdap_api.enums import MatchAgencyResponseStatus
 from tests.helpers.batch_creation_parameters.url_creation_parameters import TestURLCreationParameters
 from tests.helpers.batch_creation_parameters.core import TestBatchCreationParameters
-from src.db.models.core import Agency, AutomatedUrlAgencySuggestion
+from src.db.models.instantiations.agency import Agency
 from src.collectors.enums import CollectorType, URLStatus
 from src.core.tasks.enums import TaskOperatorOutcome
 from src.core.tasks.operators.agency_identification.dtos.suggestion import URLAgencySuggestionInfo

@@ -1,6 +1,6 @@
 from typing import Optional, Type
 
-from sqlalchemy import case, exists, select, func, Select, and_, desc, asc, FromClause
+from sqlalchemy import case, select, func, Select, and_, desc, asc, FromClause
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
@@ -11,8 +11,14 @@ from src.core.tasks.operators.url_html.scraper.parser.util import convert_to_res
 from src.db.dto_converter import DTOConverter
 from src.db.dtos.url_html_content_info import URLHTMLContentInfo
 from src.db.exceptions import FailedQueryException
-from src.db.models.core import URL, UserRelevantSuggestion, UserRecordTypeSuggestion, UserUrlAgencySuggestion, \
-    AutoRelevantSuggestion, AutoRecordTypeSuggestion, AutomatedUrlAgencySuggestion, ConfirmedURLAgency
+from src.db.models.instantiations.confirmed_url_agency import ConfirmedURLAgency
+from src.db.models.instantiations.url.suggestion.agency.auto import AutomatedUrlAgencySuggestion
+from src.db.models.instantiations.url.suggestion.record_type.auto import AutoRecordTypeSuggestion
+from src.db.models.instantiations.url.suggestion.agency.user import UserUrlAgencySuggestion
+from src.db.models.instantiations.url.core import URL
+from src.db.models.instantiations.url.suggestion.record_type.user import UserRecordTypeSuggestion
+from src.db.models.instantiations.url.suggestion.relevant.auto import AutoRelevantSuggestion
+from src.db.models.instantiations.url.suggestion.relevant.user import UserRelevantSuggestion
 from src.db.models.mixins import URLDependentMixin
 from src.db.queries.base.builder import QueryBuilderBase
 

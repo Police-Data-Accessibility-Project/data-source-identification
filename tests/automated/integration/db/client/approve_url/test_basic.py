@@ -3,7 +3,10 @@ import pytest
 from src.api.endpoints.review.dtos.approve import FinalReviewApprovalInfo
 from src.collectors.enums import URLStatus
 from src.core.enums import RecordType
-from src.db.models.core import URL, ConfirmedURLAgency, ReviewingUserURL, URLOptionalDataSourceMetadata
+from src.db.models.instantiations.confirmed_url_agency import ConfirmedURLAgency
+from src.db.models.instantiations.url.core import URL
+from src.db.models.instantiations.url.optional_data_source_metadata import URLOptionalDataSourceMetadata
+from src.db.models.instantiations.url.reviewing_user import ReviewingUserURL
 from tests.helpers.complex_test_data_functions import setup_for_get_next_url_for_final_review
 from tests.helpers.db_data_creator import DBDataCreator
 

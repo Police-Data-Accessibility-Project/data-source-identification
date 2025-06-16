@@ -9,10 +9,15 @@ from src.core.tasks.operators.url_html.scraper.parser.mapping import ENUM_TO_ATT
 from src.db.dtos.url_html_content_info import HTMLContentType, URLHTMLContentInfo
 from src.db.dtos.url_info import URLInfo
 from src.db.dtos.url_with_html import URLWithHTML
-from src.db.models.core import AutomatedUrlAgencySuggestion, UserUrlAgencySuggestion, URLHTMLContent, URL, \
-    AutoRecordTypeSuggestion, UserRecordTypeSuggestion, UserRelevantSuggestion, AutoRelevantSuggestion, \
-    ConfirmedURLAgency
-
+from src.db.models.instantiations.confirmed_url_agency import ConfirmedURLAgency
+from src.db.models.instantiations.url.suggestion.agency.auto import AutomatedUrlAgencySuggestion
+from src.db.models.instantiations.url.suggestion.record_type.auto import AutoRecordTypeSuggestion
+from src.db.models.instantiations.url.suggestion.agency.user import UserUrlAgencySuggestion
+from src.db.models.instantiations.url.html_content import URLHTMLContent
+from src.db.models.instantiations.url.core import URL
+from src.db.models.instantiations.url.suggestion.record_type.user import UserRecordTypeSuggestion
+from src.db.models.instantiations.url.suggestion.relevant.auto import AutoRelevantSuggestion
+from src.db.models.instantiations.url.suggestion.relevant.user import UserRelevantSuggestion
 
 
 class DTOConverter:
