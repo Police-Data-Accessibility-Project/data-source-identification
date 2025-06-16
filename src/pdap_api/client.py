@@ -1,6 +1,8 @@
+from datetime import datetime
 from typing import Optional
 
 from src.core.tasks.operators.submit_approved_url.tdo import SubmitApprovedURLTDO, SubmittedURLInfo
+from src.pdap_api.dtos.agencies_sync import AgenciesSyncResponseInnerInfo, AgenciesSyncResponseInfo
 from src.pdap_api.dtos.match_agency.response import MatchAgencyResponse
 from src.pdap_api.dtos.unique_url_duplicate import UniqueURLDuplicateInfo
 from src.pdap_api.dtos.match_agency.post import MatchAgencyInfo
@@ -143,3 +145,34 @@ class PDAPClient:
             results.append(response_object)
 
         return results
+
+    async def sync_agencies(
+        self,
+        page: int,
+        update_at: Optional[datetime],
+    ) -> AgenciesSyncResponseInfo:
+        url =self.access_manager.build_url(
+            namespace=DataSourcesNamespaces.SOURCE_COLLECTOR,
+            subdomains=[
+                "agencies",
+                "sync"
+            ]
+        )
+        headers = await self.access_manager.jwt_header()
+        headers['Content-Type'] = "application/json"
+        request_info = RequestInfo(
+            type_=RequestType.GET,
+            url=url,
+            headers=headers,
+            params={
+                "page": page,
+                "update_at": update_at
+            }
+        )
+        response_info = await self.access_manager.make_request(request_info)
+        return AgenciesSyncResponseInfo(
+            agencies=[
+                AgenciesSyncResponseInnerInfo(**entry)
+                for entry in response_info.data["agencies"]
+            ]
+        )
