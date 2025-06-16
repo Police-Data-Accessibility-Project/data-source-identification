@@ -57,7 +57,7 @@ from src.db.models.instantiations.url.suggestion.agency.auto import AutomatedUrl
 from src.db.models.instantiations.url.suggestion.record_type.user import UserRecordTypeSuggestion
 from src.db.models.instantiations.url.suggestion.relevant.auto import AutoRelevantSuggestion
 from src.db.models.instantiations.url.suggestion.relevant.user import UserRelevantSuggestion
-from src.db.queries.implementations.core.get_next_url_for_final_review import GetNextURLForFinalReviewQueryBuilder
+from src.db.queries.implementations.core.final_review.get import GetNextURLForFinalReviewQueryBuilder
 from src.db.queries.implementations.core.get_recent_batch_summaries.builder import GetRecentBatchSummariesQueryBuilder
 from src.db.statement_composer import StatementComposer
 from src.db.constants import PLACEHOLDER_AGENCY_NAME
@@ -214,16 +214,6 @@ class AsyncDatabaseClient:
         return raw_result.unique().scalars().one_or_none()
 
     @session_manager
-    async def get_batch_status(
-        self,
-        session: AsyncSession,
-        batch_id: int
-    ) -> BatchStatus:
-        statement = select(Batch).where(Batch.id == batch_id)
-        result = await session.execute(statement)
-        return BatchStatus(result.unique().scalar_one().status)
-
-    @session_manager
     async def add_user_relevant_suggestion(
         self,
         session: AsyncSession,
@@ -365,19 +355,6 @@ class AsyncDatabaseClient:
             record_type=record_type.value
         )
         session.add(suggestion)
-
-    @session_manager
-    async def add_auto_relevance_suggestions(
-        self,
-        session: AsyncSession,
-        url_and_relevance_type_list: list[tuple[int, bool]]
-    ):
-        for url_id, relevant in url_and_relevance_type_list:
-            suggestion = AutoRelevantSuggestion(
-                url_id=url_id,
-                relevant=relevant
-            )
-            session.add(suggestion)
 
     @session_manager
     async def add_user_record_type_suggestion(
@@ -555,15 +532,6 @@ class AsyncDatabaseClient:
             model=AutoRecordTypeSuggestion
         )
 
-    @session_manager
-    async def get_urls_with_html_data_and_without_auto_relevant_suggestion(
-        self,
-        session: AsyncSession
-    ):
-        return await self.get_urls_with_html_data_and_without_models(
-            session=session,
-            model=AutoRelevantSuggestion
-        )
 
     async def has_urls_with_html_data_and_without_models(
         self,
@@ -587,13 +555,6 @@ class AsyncDatabaseClient:
         return await self.has_urls_with_html_data_and_without_models(
             session=session,
             model=AutoRecordTypeSuggestion
-        )
-
-    @session_manager
-    async def has_urls_with_html_data_and_without_auto_relevant_suggestion(self, session: AsyncSession) -> bool:
-        return await self.has_urls_with_html_data_and_without_models(
-            session=session,
-            model=AutoRelevantSuggestion
         )
 
     @session_manager
