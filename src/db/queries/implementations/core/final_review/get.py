@@ -11,6 +11,7 @@ from src.core.tasks.operators.url_html.scraper.parser.util import convert_to_res
 from src.db.dto_converter import DTOConverter
 from src.db.dtos.url_html_content_info import URLHTMLContentInfo
 from src.db.exceptions import FailedQueryException
+from src.db.models.instantiations.batch import Batch
 from src.db.models.instantiations.confirmed_url_agency import ConfirmedURLAgency
 from src.db.models.instantiations.url.suggestion.agency.auto import AutomatedUrlAgencySuggestion
 from src.db.models.instantiations.url.suggestion.record_type.auto import AutoRecordTypeSuggestion
@@ -169,8 +170,12 @@ class GetNextURLForFinalReviewQueryBuilder(QueryBuilderBase):
         count_label = "count"
         count_reviewed_query = (
             select(
-                URL.batch_id,
+                Batch.id.label("batch_id"),
                 func.count(URL.id).label(count_label)
+            )
+            .outerjoin(
+                URL,
+                URL.batch_id == Batch.id
             )
             .where(
                 URL.outcome.in_(
@@ -183,7 +188,7 @@ class GetNextURLForFinalReviewQueryBuilder(QueryBuilderBase):
                 ),
                 URL.batch_id == self.batch_id
             )
-            .group_by(URL.batch_id)
+            .group_by(Batch.id)
             .subquery("count_reviewed")
         )
 
@@ -214,8 +219,8 @@ class GetNextURLForFinalReviewQueryBuilder(QueryBuilderBase):
                 func.coalesce(count_ready_query.c[count_label], 0).label("count_ready_for_review")
             )
             .select_from(
-                count_reviewed_query.outerjoin(
-                    count_ready_query,
+                count_ready_query.outerjoin(
+                    count_reviewed_query,
                     count_reviewed_query.c.batch_id == count_ready_query.c.batch_id
                 )
             )
