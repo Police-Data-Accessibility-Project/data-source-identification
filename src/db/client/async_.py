@@ -41,6 +41,7 @@ from src.api.endpoints.search.dtos.response import SearchURLResponse
 from src.api.endpoints.task.dtos.get.tasks import GetTasksResponse, GetTasksResponseTaskInfo
 from src.api.endpoints.url.dtos.response import GetURLsResponseInfo, GetURLsResponseErrorInfo, GetURLsResponseInnerInfo
 from src.collectors.enums import URLStatus, CollectorType
+from src.core.tasks.operators.agency_sync.dtos.parameters import AgencySyncParameters
 from src.core.tasks.operators.url_html.scraper.parser.util import convert_to_response_html_info
 from src.db.config_manager import ConfigManager
 from src.db.dto_converter import DTOConverter
@@ -94,6 +95,7 @@ from src.core.tasks.operators.url_miscellaneous_metadata.tdo import URLMiscellan
 from src.core.env_var_manager import EnvVarManager
 from src.core.enums import BatchStatus, SuggestionType, RecordType, SuggestedStatus
 from src.db.types import UserSuggestionType
+from src.pdap_api.dtos.agencies_sync import AgenciesSyncResponseInnerInfo
 
 # Type Hints
 
@@ -2296,3 +2298,23 @@ class AsyncDatabaseClient:
             session=session
         )
         return result
+
+    async def last_full_agencies_sync_over_a_day_ago(self) -> bool:
+        pass
+
+    async def get_agencies_sync_parameters(self) -> AgencySyncParameters:
+        pass
+
+    async def upsert_agencies(
+        self,
+        agencies: list[AgenciesSyncResponseInnerInfo]
+    ):
+        pass
+
+    async def update_agencies_sync_progress(self, page: int):
+        query = update(
+
+        )
+
+    async def mark_full_agencies_sync(self):
+        pass

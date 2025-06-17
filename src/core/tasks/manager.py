@@ -3,6 +3,7 @@ import logging
 from src.api.endpoints.task.dtos.get.tasks import GetTasksResponse
 from src.collectors.source_collectors.muckrock.api_interface.core import MuckrockAPIInterface
 from src.core.tasks.operators.agency_identification.core import AgencyIdentificationTaskOperator
+from src.core.tasks.operators.agency_sync.core import SyncAgenciesTaskOperator
 from src.core.tasks.operators.base import TaskOperatorBase
 from src.core.tasks.operators.submit_approved_url.core import SubmitApprovedURLTaskOperator
 from src.core.tasks.operators.url_404_probe.core import URL404ProbeTaskOperator
@@ -101,6 +102,13 @@ class TaskManager:
         )
         return operator
 
+    async def get_sync_agencies_task_operator(self):
+        operator = SyncAgenciesTaskOperator(
+            adb_client=self.adb_client,
+            pdap_client=self.pdap_client
+        )
+        return operator
+
     async def get_task_operators(self) -> list[TaskOperatorBase]:
         return [
             await self.get_url_html_task_operator(),
@@ -109,7 +117,8 @@ class TaskManager:
             await self.get_url_record_type_task_operator(),
             await self.get_agency_identification_task_operator(),
             await self.get_url_miscellaneous_metadata_task_operator(),
-            await self.get_submit_approved_url_task_operator()
+            await self.get_submit_approved_url_task_operator(),
+            await self.get_sync_agencies_task_operator()
         ]
 
     #endregion

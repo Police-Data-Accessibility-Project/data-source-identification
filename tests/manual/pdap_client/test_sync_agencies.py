@@ -1,13 +1,18 @@
 import pytest
 import time
 
+from src.core.tasks.operators.agency_sync.dtos.parameters import AgencySyncParameters
+
+
 @pytest.mark.asyncio
 async def test_sync_agencies(pdap_client_dev):
 
     start = time.perf_counter()
     response = await pdap_client_dev.sync_agencies(
-        page=1,
-        update_at=None
+        params=AgencySyncParameters(
+            page=1,
+            cutoff_date=None
+        )
     )
     end = time.perf_counter()
     print(response)
