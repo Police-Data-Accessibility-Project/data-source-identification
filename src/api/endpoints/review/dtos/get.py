@@ -92,3 +92,6 @@ class GetNextURLForFinalReviewOuterResponse(BaseModel):
     next_source: Optional[GetNextURLForFinalReviewResponse] = Field(
         title="The next source to be reviewed",
     )
+    remaining: int = Field(
+        title="The number of URLs left to review",
+    )

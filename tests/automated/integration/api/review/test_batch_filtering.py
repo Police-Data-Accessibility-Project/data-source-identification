@@ -17,6 +17,7 @@ async def test_batch_filtering(
     outer_result = await ath.request_validator.review_next_source(
         batch_id=batch_url_creation_info.batch_id
     )
+    assert outer_result.remaining == 2
     batch_info = outer_result.next_source.batch_info
     assert batch_info.count_reviewed == 4
     assert batch_info.count_ready_for_review == 2

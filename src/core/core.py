@@ -28,6 +28,7 @@ from src.api.endpoints.metrics.dtos.get.urls.aggregated.pending import GetMetric
 from src.api.endpoints.metrics.dtos.get.urls.breakdown.pending import GetMetricsURLsBreakdownPendingResponseDTO
 from src.api.endpoints.metrics.dtos.get.urls.breakdown.submitted import GetMetricsURLsBreakdownSubmittedResponseDTO
 from src.api.endpoints.review.dtos.approve import FinalReviewApprovalInfo
+from src.api.endpoints.review.dtos.get import GetNextURLForFinalReviewOuterResponse
 from src.api.endpoints.review.enums import RejectionReason
 from src.api.endpoints.search.dtos.response import SearchURLResponse
 from src.api.endpoints.task.dtos.get.tasks import GetTasksResponse
@@ -258,7 +259,7 @@ class AsyncCore:
     async def get_next_source_for_review(
             self,
             batch_id: Optional[int]
-    ):
+    ) -> GetNextURLForFinalReviewOuterResponse:
         return await self.adb_client.get_next_url_for_final_review(
             batch_id=batch_id
         )
