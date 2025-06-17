@@ -32,6 +32,13 @@ class AnnotationExistsCTEQueryBuilder(QueryBuilderBase):
     def get_exists_label(self, model: Type[URLDependentMixin]):
         return f"{model.__name__}_exists"
 
+    def get_all(self) -> list[Any]:
+        l = [self.url_id]
+        for model in ALL_ANNOTATION_MODELS:
+            label = self.get_exists_label(model)
+            l.append(self.get(label))
+        return l
+
     async def _annotation_exists_case(
         self,
     ):

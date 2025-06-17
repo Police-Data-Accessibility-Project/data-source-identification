@@ -36,7 +36,9 @@ class PendingAnnotationExistsCTEQueryBuilder(AnnotationExistsCTEQueryBuilder):
         await super().build()
 
         self.query = (
-            self.query
+            select(
+                *self.get_all()
+            )
             .join(
                 URL,
                 URL.id == self.url_id
@@ -92,14 +94,14 @@ class GetMetricsURLSAggregatedPendingQueryBuilder(QueryBuilderBase):
     async def get_count_breakdown_count_query(self):
         pb = self.pending_builder
         true_count = (
-            case(pb.has_user_relevant_annotation, else_=0)
-            + case(pb.has_user_record_type_annotation, else_=0)
-            + case(pb.has_user_agency_annotation, else_=0)
+            pb.has_user_relevant_annotation +
+            pb.has_user_record_type_annotation +
+            pb.has_user_agency_annotation
         ).label("true_count")
         true_count_query = (
             select(
                 true_count,
-                func.count(func.count()).label("url_count")
+                func.count().label("url_count")
             ).select_from(
                 pb.query
             ).group_by(
@@ -115,7 +117,7 @@ class GetMetricsURLSAggregatedPendingQueryBuilder(QueryBuilderBase):
         pb = self.pending_builder
 
         def func_sum(col, label):
-            return func.sum(case((col, 1), else_=0)).label(label)
+            return func.sum(col).label(label)
 
         anno_count_query = select(
             func_sum(pb.has_user_relevant_annotation, "has_user_relevant_annotation").label(

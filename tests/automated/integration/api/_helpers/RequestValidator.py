@@ -25,6 +25,7 @@ from src.api.endpoints.metrics.dtos.get.backlog import GetMetricsBacklogResponse
 from src.api.endpoints.metrics.dtos.get.batches.aggregated import GetMetricsBatchesAggregatedResponseDTO
 from src.api.endpoints.metrics.dtos.get.batches.breakdown import GetMetricsBatchesBreakdownResponseDTO
 from src.api.endpoints.metrics.dtos.get.urls.aggregated.core import GetMetricsURLsAggregatedResponseDTO
+from src.api.endpoints.metrics.dtos.get.urls.aggregated.pending import GetMetricsURLsAggregatedPendingResponseDTO
 from src.api.endpoints.metrics.dtos.get.urls.breakdown.pending import GetMetricsURLsBreakdownPendingResponseDTO
 from src.api.endpoints.metrics.dtos.get.urls.breakdown.submitted import GetMetricsURLsBreakdownSubmittedResponseDTO
 from src.api.endpoints.review.dtos.approve import FinalReviewApprovalInfo
@@ -456,3 +457,9 @@ class RequestValidator:
             url="/metrics/urls/aggregate",
         )
         return GetMetricsURLsAggregatedResponseDTO(**data)
+
+    async def get_urls_aggregated_pending_metrics(self) -> GetMetricsURLsAggregatedPendingResponseDTO:
+        data = self.get_v2(
+            url="/metrics/urls/aggregate/pending",
+        )
+        return GetMetricsURLsAggregatedPendingResponseDTO(**data)
