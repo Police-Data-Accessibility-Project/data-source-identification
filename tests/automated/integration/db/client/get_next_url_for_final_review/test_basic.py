@@ -25,9 +25,10 @@ async def test_get_next_url_for_final_review_basic(db_data_creator: DBDataCreato
     )
 
 
-    result = await db_data_creator.adb_client.get_next_url_for_final_review(
+    outer_result = await db_data_creator.adb_client.get_next_url_for_final_review(
         batch_id=None
     )
+    result = outer_result.next_source
 
     assert result.url == url_mapping.url
     html_info = result.html_info

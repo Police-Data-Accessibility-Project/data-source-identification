@@ -45,6 +45,7 @@ async def test_approve_and_get_next_source_for_review(api_test_helper):
         )
     )
 
+    assert result.remaining == 0
     assert result.next_source is None
 
     adb_client = db_data_creator.adb_client

@@ -28,8 +28,7 @@ async def get_next_source(
                     "If not specified, defaults to first qualifying URL",
         default=None),
 ) -> GetNextURLForFinalReviewOuterResponse:
-    next_source = await core.get_next_source_for_review(batch_id=batch_id)
-    return GetNextURLForFinalReviewOuterResponse(next_source=next_source)
+    return await core.get_next_source_for_review(batch_id=batch_id)
 
 @review_router.post("/approve-source")
 async def approve_source(
@@ -45,8 +44,7 @@ async def approve_source(
         approval_info,
         access_info=access_info,
     )
-    next_source = await core.get_next_source_for_review(batch_id=batch_id)
-    return GetNextURLForFinalReviewOuterResponse(next_source=next_source)
+    return await core.get_next_source_for_review(batch_id=batch_id)
 
 @review_router.post("/reject-source")
 async def reject_source(
@@ -63,5 +61,4 @@ async def reject_source(
         access_info=access_info,
         rejection_reason=review_info.rejection_reason
     )
-    next_source = await core.get_next_source_for_review(batch_id=batch_id)
-    return GetNextURLForFinalReviewOuterResponse(next_source=next_source)
+    return await core.get_next_source_for_review(batch_id=batch_id)

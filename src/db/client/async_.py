@@ -35,7 +35,7 @@ from src.api.endpoints.metrics.dtos.get.urls.breakdown.pending import GetMetrics
 from src.api.endpoints.metrics.dtos.get.urls.breakdown.submitted import GetMetricsURLsBreakdownSubmittedResponseDTO, \
     GetMetricsURLsBreakdownSubmittedInnerDTO
 from src.api.endpoints.review.dtos.approve import FinalReviewApprovalInfo
-from src.api.endpoints.review.dtos.get import GetNextURLForFinalReviewResponse
+from src.api.endpoints.review.dtos.get import GetNextURLForFinalReviewResponse, GetNextURLForFinalReviewOuterResponse
 from src.api.endpoints.review.enums import RejectionReason
 from src.api.endpoints.search.dtos.response import SearchURLResponse
 from src.api.endpoints.task.dtos.get.tasks import GetTasksResponse, GetTasksResponseTaskInfo
@@ -1019,7 +1019,7 @@ class AsyncDatabaseClient:
         self,
         session: AsyncSession,
         batch_id: Optional[int]
-    ) -> Optional[GetNextURLForFinalReviewResponse]:
+    ) -> GetNextURLForFinalReviewOuterResponse:
 
         builder = GetNextURLForFinalReviewQueryBuilder(
             batch_id=batch_id

@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
 from src.api.endpoints.review.dtos.get import GetNextURLForFinalReviewResponse, FinalReviewOptionalMetadata, \
-    FinalReviewAnnotationInfo, FinalReviewBatchInfo
+    FinalReviewAnnotationInfo, FinalReviewBatchInfo, GetNextURLForFinalReviewOuterResponse
 from src.collectors.enums import URLStatus
 from src.core.tasks.operators.url_html.scraper.parser.util import convert_to_response_html_info
 from src.db.constants import ALL_ANNOTATION_MODELS, USER_ANNOTATION_MODELS
@@ -211,16 +211,27 @@ class GetNextURLForFinalReviewQueryBuilder(QueryBuilderBase):
     async def run(
         self,
         session: AsyncSession
-    ) -> Optional[GetNextURLForFinalReviewResponse]:
+    ) -> GetNextURLForFinalReviewOuterResponse:
         await self.anno_exists_builder.build()
 
         url_query = await self.build_url_query()
 
-        raw_result = await session.execute(url_query)
+        raw_result = await session.execute(url_query.limit(1))
         row = raw_result.unique().first()
 
         if row is None:
-            return None
+            return GetNextURLForFinalReviewOuterResponse(
+                next_source=None,
+                remaining=0
+            )
+
+        count_query = (
+            select(
+                func.count()
+            ).select_from(url_query.subquery("count"))
+        )
+        remaining_result = (await session.execute(count_query)).scalar()
+
 
         result: URL = row[0]
 
@@ -229,7 +240,8 @@ class GetNextURLForFinalReviewQueryBuilder(QueryBuilderBase):
 
         batch_info = await self.get_batch_info(session)
         try:
-            return GetNextURLForFinalReviewResponse(
+
+            next_source = GetNextURLForFinalReviewResponse(
                 id=result.id,
                 url=result.url,
                 html_info=convert_to_response_html_info(html_content_infos),
@@ -253,6 +265,10 @@ class GetNextURLForFinalReviewQueryBuilder(QueryBuilderBase):
                 optional_metadata=optional_metadata,
                 batch_info=batch_info
             )
+            return GetNextURLForFinalReviewOuterResponse(
+                next_source=next_source,
+                remaining=remaining_result
+            )
         except Exception as e:
             raise FailedQueryException(f"Failed to convert result for url id {result.id} to response") from e
 
@@ -262,7 +278,7 @@ class GetNextURLForFinalReviewQueryBuilder(QueryBuilderBase):
         url_query = await self._apply_batch_id_filter(url_query, self.batch_id)
         url_query = await self._apply_options(url_query)
         url_query = await self._apply_order_clause(url_query)
-        url_query = url_query.limit(1)
+
         return url_query
 
 

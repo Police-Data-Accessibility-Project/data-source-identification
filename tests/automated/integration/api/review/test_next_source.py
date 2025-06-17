@@ -21,6 +21,7 @@ async def test_review_next_source(api_test_helper):
     confirmed_agency_id = await ath.db_data_creator.agency_confirmed_suggestion(url_id=url_mapping.url_id)
 
     outer_result = await ath.request_validator.review_next_source()
+    assert outer_result.remaining == 1
 
     result = outer_result.next_source
 

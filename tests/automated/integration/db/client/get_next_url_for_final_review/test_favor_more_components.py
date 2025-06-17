@@ -39,4 +39,4 @@ async def test_get_next_url_for_final_review_favor_more_components(db_data_creat
         batch_id=None
     )
 
-    assert result.id == url_mapping_with_user_anno.url_id
+    assert result.next_source.id == url_mapping_with_user_anno.url_id

@@ -21,4 +21,4 @@ async def test_get_next_url_for_final_review_only_confirmed_urls(db_data_creator
         batch_id=None
     )
 
-    assert result is None
+    assert result.next_source is None
