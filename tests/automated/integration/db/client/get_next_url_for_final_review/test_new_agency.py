@@ -29,9 +29,10 @@ async def test_get_next_url_for_final_review_new_agency(db_data_creator: DBDataC
         ]
     )
     creation_info = await db_data_creator.batch_v2(parameters)
-    result = await db_data_creator.adb_client.get_next_url_for_final_review(
+    outer_result = await db_data_creator.adb_client.get_next_url_for_final_review(
         batch_id=None
     )
+    result = outer_result.next_source
 
     assert result is not None
     user_suggestion = result.annotations.agency.user

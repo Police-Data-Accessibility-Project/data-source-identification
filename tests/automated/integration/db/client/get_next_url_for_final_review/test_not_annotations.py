@@ -16,4 +16,4 @@ async def test_get_next_url_for_final_review_no_annotations(db_data_creator: DBD
         batch_id=None
     )
 
-    assert result is None
+    assert result.next_source is None

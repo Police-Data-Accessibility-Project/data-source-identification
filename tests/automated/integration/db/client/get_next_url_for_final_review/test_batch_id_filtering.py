@@ -26,11 +26,11 @@ async def test_get_next_url_for_final_review_batch_id_filtering(db_data_creator:
         batch_id=setup_info_2.batch_id
     )
 
-    assert result_with_batch_id.url == url_mapping_2.url
+    assert result_with_batch_id.next_source.url == url_mapping_2.url
 
     # If no batch id is provided, return first valid URL
     result_no_batch_id =await db_data_creator.adb_client.get_next_url_for_final_review(
         batch_id=None
     )
 
-    assert result_no_batch_id.url == url_mapping_1.url
+    assert result_no_batch_id.next_source.url == url_mapping_1.url
