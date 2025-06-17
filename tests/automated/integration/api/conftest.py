@@ -11,7 +11,7 @@ from src.core.core import AsyncCore
 from src.security.manager import get_access_info
 from src.security.dtos.access_info import AccessInfo
 from src.security.enums import Permissions
-from tests.automated.integration.api.helpers.RequestValidator import RequestValidator
+from tests.automated.integration.api._helpers.RequestValidator import RequestValidator
 from tests.helpers.api_test_helper import APITestHelper
 
 MOCK_USER_ID = 1

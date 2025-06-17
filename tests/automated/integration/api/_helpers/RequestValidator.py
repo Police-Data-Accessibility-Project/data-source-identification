@@ -24,7 +24,8 @@ from src.api.endpoints.collector.dtos.manual_batch.response import ManualBatchRe
 from src.api.endpoints.metrics.dtos.get.backlog import GetMetricsBacklogResponseDTO
 from src.api.endpoints.metrics.dtos.get.batches.aggregated import GetMetricsBatchesAggregatedResponseDTO
 from src.api.endpoints.metrics.dtos.get.batches.breakdown import GetMetricsBatchesBreakdownResponseDTO
-from src.api.endpoints.metrics.dtos.get.urls.aggregated import GetMetricsURLsAggregatedResponseDTO
+from src.api.endpoints.metrics.dtos.get.urls.aggregated.core import GetMetricsURLsAggregatedResponseDTO
+from src.api.endpoints.metrics.dtos.get.urls.aggregated.pending import GetMetricsURLsAggregatedPendingResponseDTO
 from src.api.endpoints.metrics.dtos.get.urls.breakdown.pending import GetMetricsURLsBreakdownPendingResponseDTO
 from src.api.endpoints.metrics.dtos.get.urls.breakdown.submitted import GetMetricsURLsBreakdownSubmittedResponseDTO
 from src.api.endpoints.review.dtos.approve import FinalReviewApprovalInfo
@@ -33,7 +34,6 @@ from src.api.endpoints.review.dtos.reject import FinalReviewRejectionInfo
 from src.api.endpoints.search.dtos.response import SearchURLResponse
 from src.api.endpoints.task.dtos.get.tasks import GetTasksResponse
 from src.api.endpoints.url.dtos.response import GetURLsResponseInfo
-from src.db.dtos.batch_info import BatchInfo
 from src.api.endpoints.task.dtos.get.task_status import GetTaskStatusResponseInfo
 from src.api.endpoints.task.dtos.get.task import TaskInfo
 from src.db.enums import TaskType
@@ -457,3 +457,9 @@ class RequestValidator:
             url="/metrics/urls/aggregate",
         )
         return GetMetricsURLsAggregatedResponseDTO(**data)
+
+    async def get_urls_aggregated_pending_metrics(self) -> GetMetricsURLsAggregatedPendingResponseDTO:
+        data = self.get_v2(
+            url="/metrics/urls/aggregate/pending",
+        )
+        return GetMetricsURLsAggregatedPendingResponseDTO(**data)

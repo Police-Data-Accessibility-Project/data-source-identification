@@ -29,7 +29,7 @@ from src.api.endpoints.metrics.dtos.get.batches.aggregated import GetMetricsBatc
     GetMetricsBatchesAggregatedInnerResponseDTO
 from src.api.endpoints.metrics.dtos.get.batches.breakdown import GetMetricsBatchesBreakdownInnerResponseDTO, \
     GetMetricsBatchesBreakdownResponseDTO
-from src.api.endpoints.metrics.dtos.get.urls.aggregated import GetMetricsURLsAggregatedResponseDTO
+from src.api.endpoints.metrics.dtos.get.urls.aggregated.core import GetMetricsURLsAggregatedResponseDTO
 from src.api.endpoints.metrics.dtos.get.urls.breakdown.pending import GetMetricsURLsBreakdownPendingResponseDTO, \
     GetMetricsURLsBreakdownPendingResponseInnerDTO
 from src.api.endpoints.metrics.dtos.get.urls.breakdown.submitted import GetMetricsURLsBreakdownSubmittedResponseDTO, \
@@ -59,6 +59,8 @@ from src.db.models.instantiations.url.suggestion.relevant.auto import AutoReleva
 from src.db.models.instantiations.url.suggestion.relevant.user import UserRelevantSuggestion
 from src.db.queries.implementations.core.final_review.get import GetNextURLForFinalReviewQueryBuilder
 from src.db.queries.implementations.core.get_recent_batch_summaries.builder import GetRecentBatchSummariesQueryBuilder
+from src.db.queries.implementations.core.metrics.urls.aggregated.pending import \
+    GetMetricsURLSAggregatedPendingQueryBuilder
 from src.db.statement_composer import StatementComposer
 from src.db.constants import PLACEHOLDER_AGENCY_NAME
 from src.db.enums import TaskType
@@ -2283,3 +2285,14 @@ class AsyncDatabaseClient:
             count_not_annotated=not_annotated_result,
             total_urls=annotated_result + not_annotated_result
         )
+
+    @session_manager
+    async def get_urls_aggregated_pending_metrics(
+        self,
+        session: AsyncSession
+    ):
+        builder = GetMetricsURLSAggregatedPendingQueryBuilder()
+        result = await builder.run(
+            session=session
+        )
+        return result
