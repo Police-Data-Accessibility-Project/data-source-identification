@@ -10,7 +10,7 @@ from typing import Sequence, Union
 from alembic import op
 import sqlalchemy as sa
 
-from src.util.alembic_helpers import created_at_column, updated_at_column, switch_enum_type
+from src.util.alembic_helpers import created_at_column, updated_at_column, switch_enum_type, id_column
 
 # revision identifiers, used by Alembic.
 revision: str = 'fb199cf58ecd'
@@ -33,13 +33,14 @@ def upgrade() -> None:
 
     op.create_table(
         'agencies_sync_state',
+        id_column(),
         sa.Column('last_full_sync_at', sa.DateTime(), nullable=True),
         sa.Column('current_cutoff_date', sa.Date(), nullable=True),
         sa.Column('current_page', sa.Integer(), nullable=True),
     )
 
     # Add row to `agencies_sync_state` table
-    op.execute('INSERT INTO agencies_sync_state VALUES (null, null, null)')
+    op.execute('INSERT INTO agencies_sync_state (last_full_sync_at, current_cutoff_date, current_page) VALUES (null, null, null)')
 
     # Add 'Sync Agencies' to TaskType Enum
     switch_enum_type(

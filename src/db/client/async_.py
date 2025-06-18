@@ -54,6 +54,7 @@ from src.db.dtos.url_error_info import URLErrorPydanticInfo
 from src.db.dtos.url_html_content_info import URLHTMLContentInfo, HTMLContentType
 from src.db.dtos.url_info import URLInfo
 from src.db.dtos.url_mapping import URLMapping
+from src.db.models.instantiations.sync_state_agencies import AgenciesSyncState
 from src.db.models.instantiations.url.suggestion.agency.auto import AutomatedUrlAgencySuggestion
 from src.db.models.instantiations.url.suggestion.record_type.user import UserRecordTypeSuggestion
 from src.db.models.instantiations.url.suggestion.relevant.auto import AutoRelevantSuggestion
@@ -172,6 +173,14 @@ class AsyncDatabaseClient:
         )
         result = await session.execute(statement)
         return result.unique().scalar_one_or_none()
+
+    @session_manager
+    async def execute(self, session: AsyncSession, statement):
+        await session.execute(statement)
+
+    @session_manager
+    async def add(self, session: AsyncSession, model: Base):
+        session.add(model)
 
     @staticmethod
     async def get_next_url_for_user_annotation(
@@ -346,19 +355,16 @@ class AsyncDatabaseClient:
             )
             session.add(suggestion)
 
-    @session_manager
     async def add_auto_record_type_suggestion(
         self,
-        session: AsyncSession,
         url_id: int,
         record_type: RecordType
     ):
-
         suggestion = AutoRecordTypeSuggestion(
             url_id=url_id,
             record_type=record_type.value
         )
-        session.add(suggestion)
+        await self.add(suggestion)
 
     @session_manager
     async def add_user_record_type_suggestion(
@@ -583,10 +589,9 @@ class AsyncDatabaseClient:
             d[result.url] = result.page_title
         return d
 
-    @session_manager
-    async def add_to_root_url_cache(self, session: AsyncSession, url: str, page_title: str) -> None:
+    async def add_to_root_url_cache(self, url: str, page_title: str) -> None:
         cache = RootURL(url=url, page_title=page_title)
-        session.add(cache)
+        await self.add(cache)
 
     @session_manager
     async def get_urls(self, session: AsyncSession, page: int, errors: bool) -> GetURLsResponseInfo:
@@ -652,16 +657,13 @@ class AsyncDatabaseClient:
     async def update_task_status(self, session: AsyncSession, task_id: int, status: BatchStatus):
         task = await session.get(Task, task_id)
         task.task_status = status.value
-        await session.commit()
 
-    @session_manager
-    async def add_task_error(self, session: AsyncSession, task_id: int, error: str):
+    async def add_task_error(self, task_id: int, error: str):
         task_error = TaskError(
             task_id=task_id,
             error=error
         )
-        session.add(task_error)
-        await session.commit()
+        await self.add(task_error)
 
     @session_manager
     async def get_task_info(self, session: AsyncSession, task_id: int) -> TaskInfo:
@@ -976,8 +978,6 @@ class AsyncDatabaseClient:
                 is_unknown=suggestion.suggestion_type == SuggestionType.UNKNOWN
             )
             session.add(url_agency_suggestion)
-
-        await session.commit()
 
     @session_manager
     async def add_agency_manual_suggestion(
@@ -1475,15 +1475,14 @@ class AsyncDatabaseClient:
         logs = raw_results.scalars().all()
         return ([LogOutputInfo(**log.__dict__) for log in logs])
 
-    @session_manager
-    async def delete_old_logs(self, session):
+    async def delete_old_logs(self):
         """
         Delete logs older than a day
         """
         statement = delete(Log).where(
             Log.created_at < datetime.now() - timedelta(days=7)
         )
-        await session.execute(statement)
+        await self.execute(statement)
 
     async def get_agency_suggestions(self, session, url_id: int) -> List[GetNextURLForAgencyAgencyInfo]:
         # Get relevant autosuggestions and agency info, if an associated agency exists
@@ -2154,20 +2153,16 @@ class AsyncDatabaseClient:
         urls = raw_result.scalars().all()
         return [URLDuplicateTDO(url=url.url, url_id=url.id) for url in urls]
 
-    @session_manager
-    async def mark_all_as_duplicates(self, session: AsyncSession, url_ids: List[int]):
+    async def mark_all_as_duplicates(self, url_ids: List[int]):
         query = update(URL).where(URL.id.in_(url_ids)).values(outcome=URLStatus.DUPLICATE.value)
-        await session.execute(query)
+        await self.execute(query)
 
-    @session_manager
-    async def mark_all_as_404(self, session: AsyncSession, url_ids: List[int]):
+    async def mark_all_as_404(self, url_ids: List[int]):
         query = update(URL).where(URL.id.in_(url_ids)).values(outcome=URLStatus.NOT_FOUND.value)
-        await session.execute(query)
+        await self.execute(query)
 
-    @session_manager
     async def mark_all_as_recently_probed_for_404(
         self,
-        session: AsyncSession,
         url_ids: List[int],
         dt: datetime = func.now()
     ):
@@ -2180,7 +2175,7 @@ class AsyncDatabaseClient:
             index_elements=['url_id'],
             set_={"last_probed_at": dt}
         )
-        await session.execute(update_stmt)
+        await self.execute(update_stmt)
 
     @session_manager
     async def mark_as_checked_for_duplicates(self, session: AsyncSession, url_ids: list[int]):
@@ -2313,8 +2308,11 @@ class AsyncDatabaseClient:
 
     async def update_agencies_sync_progress(self, page: int):
         query = update(
-
+            AgenciesSyncState
+        ).values(
+            page=page
         )
+        await self.execute(query)
 
     async def mark_full_agencies_sync(self):
         pass
