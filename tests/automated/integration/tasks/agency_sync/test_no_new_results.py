@@ -11,6 +11,7 @@ from src.db.models.instantiations.sync_state_agencies import AgenciesSyncState
 from tests.automated.integration.tasks.agency_sync.data import THIRD_CALL_RESPONSE
 from tests.automated.integration.tasks.agency_sync.existence_checker import AgencyChecker
 from tests.automated.integration.tasks.agency_sync.helpers import patch_sync_agencies, check_sync_concluded
+from tests.helpers.assert_functions import assert_task_run_success
 
 
 @pytest.mark.asyncio
@@ -30,7 +31,8 @@ async def test_agency_sync_task_no_new_results(
     )
 
     with patch_sync_agencies([THIRD_CALL_RESPONSE]):
-        await operator.run_task(1)
+        run_info = await operator.run_task(1)
+        assert_task_run_success(run_info)
         mock_func: MagicMock = operator.pdap_client.sync_agencies
         mock_func.assert_called_once_with(
             params=AgencySyncParameters(

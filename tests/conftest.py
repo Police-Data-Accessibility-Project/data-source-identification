@@ -1,3 +1,4 @@
+import logging
 from typing import Any, Generator
 
 import pytest
@@ -17,6 +18,7 @@ from tests.helpers.db_data_creator import DBDataCreator
 
 @pytest.fixture(autouse=True, scope="session")
 def setup_and_teardown():
+    logging.disable(logging.INFO)
     # Set up environment variables that must be defined
     # outside of tests
     required_env_vars: dict = load_from_environment(

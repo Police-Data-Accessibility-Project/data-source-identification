@@ -4,10 +4,10 @@ from operator import or_
 from typing import Optional, Type, Any, List
 
 from fastapi import HTTPException
-from sqlalchemy import select, exists, func, case, Select, not_, and_, update, delete, literal, text
+from sqlalchemy import select, exists, func, case, Select, not_, and_, update, delete, literal, text, bindparam
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.dialects.postgresql import insert as pg_insert
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import IntegrityError, NoResultFound
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.orm import selectinload, joinedload, QueryableAttribute, aliased
 from sqlalchemy.sql.functions import coalesce
@@ -164,9 +164,14 @@ class AsyncDatabaseClient:
         self,
         session: AsyncSession,
         model: Base,
-        mappings: list[dict]
+        mappings: list[dict],
     ):
-        session.bulk_update_mappings(model, mappings)
+        # Note, mapping must include primary key
+        await session.execute(
+            update(model),
+            mappings
+        )
+
 
     @session_manager
     async def scalar(self, session: AsyncSession, statement):
@@ -2342,17 +2347,28 @@ class AsyncDatabaseClient:
         synced_over_a_day_ago = (await session.execute(query)).scalar()
         return synced_over_a_day_ago
 
-    async def get_agencies_sync_parameters(self) -> AgencySyncParameters:
+    @session_manager
+    async def get_agencies_sync_parameters(
+        self,
+        session: AsyncSession
+    ) -> AgencySyncParameters:
         query = select(
             AgenciesSyncState.current_page,
             AgenciesSyncState.current_cutoff_date
         )
-        raw_result = await self.mapping(query)
+        try:
+            result = (await session.execute(query)).mappings().one()
+            return AgencySyncParameters(
+                page=result['current_page'],
+                cutoff_date=result['current_cutoff_date']
+            )
+        except NoResultFound:
+            # Add value
+            state = AgenciesSyncState()
+            session.add(state)
+            return AgencySyncParameters(page=None, cutoff_date=None)
 
-        return AgencySyncParameters(
-            page=raw_result['current_page'],
-            cutoff_date=raw_result['current_cutoff_date']
-        )
+
 
     async def upsert_agencies(
         self,

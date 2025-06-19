@@ -50,7 +50,7 @@ async def update_existing_agencies_updated_at(db_data_creator):
         update_mappings.append(update_mapping)
     await db_data_creator.adb_client.bulk_update(
         model=Agency,
-        mappings=update_mappings
+        mappings=update_mappings,
     )
 
 

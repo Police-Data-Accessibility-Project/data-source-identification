@@ -31,7 +31,7 @@ def upgrade() -> None:
         sa.Column('ds_last_updated_at', sa.DateTime(), nullable=True)
     )
 
-    op.create_table(
+    table = op.create_table(
         'agencies_sync_state',
         id_column(),
         sa.Column('last_full_sync_at', sa.DateTime(), nullable=True),
@@ -40,7 +40,16 @@ def upgrade() -> None:
     )
 
     # Add row to `agencies_sync_state` table
-    op.execute('INSERT INTO agencies_sync_state (last_full_sync_at, current_cutoff_date, current_page) VALUES (null, null, null)')
+    op.bulk_insert(
+        table,
+        [
+            {
+                "last_full_sync_at": None,
+                "current_cutoff_date": None,
+                "current_page": None
+            }
+        ]
+    )
 
     # Add 'Sync Agencies' to TaskType Enum
     switch_enum_type(
