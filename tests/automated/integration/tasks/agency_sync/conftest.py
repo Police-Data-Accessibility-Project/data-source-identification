@@ -1,0 +1,24 @@
+from unittest.mock import patch
+
+import pytest
+import pytest_asyncio
+
+from src.core.tasks.operators.agency_sync.core import SyncAgenciesTaskOperator
+from tests.automated.integration.tasks.agency_sync.data import AGENCIES_SYNC_RESPONSES
+from tests.automated.integration.tasks.agency_sync.helpers import update_existing_agencies_updated_at, \
+    add_existing_agencies
+
+@pytest_asyncio.fixture
+async def setup(
+    db_data_creator,
+    mock_pdap_client
+) -> SyncAgenciesTaskOperator:
+    await add_existing_agencies(db_data_creator)
+    await update_existing_agencies_updated_at(db_data_creator)
+
+    return SyncAgenciesTaskOperator(
+        adb_client=db_data_creator.adb_client,
+        pdap_client=mock_pdap_client
+    )
+
+
