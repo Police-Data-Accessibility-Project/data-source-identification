@@ -78,15 +78,15 @@ Be sure to inspect the `docker-compose.yml` file in the root directory -- some e
 
 ```mermaid
 flowchart TD
-    SourceCollectors["**Source Collectors:** automatic searches, citation follower, portal scrapers, agency crawlers, common crawler"]
+    SourceCollectors["**Source Collectors:** batches of potentially useful URLs created with a variety of strategies"]
     Logging["Logging source collection attempts"]
     API["Submitting sources to the **Data Sources API** for approval"]
-    Identifier["**Data Source Identifier:** agency matcher, duplicate checker, tag collector, ML metadata labelers"]
-    LabelStudio["Human labeling of missing or uncertain metadata in LabelStudio"]
+    Identifier["**Data Source Identifier:** automatically collecting metadata and attempting to identify properties"]
+    SourceCollectorLabeling["Human labeling of missing or uncertain metadata in Source Collector"]
 
-    Identifier --> LabelStudio
+    Identifier --> SourceCollectorLabeling
     Identifier ---> API
-    LabelStudio --> API
+    SourceCollectorLabeling --> API
     Identifier --> Logging
 
     SourceCollectors --> Identifier
@@ -123,72 +123,31 @@ sequenceDiagram
 
 participant HF as Hugging Face
 participant GH as GitHub
-participant LS as Label Studio
+participant SC as Source Collector app
 participant PDAP as PDAP API
 
 loop create batches of URLs <br/>for human labeling
-  GH ->> GH: Crawl for a new batch<br/> of URLs with common_crawler<br/> or other methods
-  GH ->> GH: Add metadata to each batch<br/> with source_tag_collector
-  GH ->> LS: Add the batch as <br/> labeling tasks in <br/> the Label Studio project
-  LS -->> GH: Confirm batch created
-  GH ->> GH: add batches to a log file <br/> in this repo with URL<br/> and batch IDs
-end
+  SC ->> SC: Crawl for a new batch<br/> of URLs with common_crawler<br/> or other methods
+  SC ->> SC: Add metadata to each batch<br/> with source_tag_collector
+  SC ->> SC: Add labeling tasks in <br/> the Source Collector app
 
 loop annotate URLs
-  LS ->> LS: Users annotate using<br/>Label Studio interface
+  SC ->> SC: Users label using<br/>Retool interface
+  SC ->> SC: Reviewers finalize <br/> and submit labels
 end
 
 loop update training data <br/> with new annotations
-  GH ->> LS: Check for completed <br/> annotation tasks
-  LS -->> GH: Confirm new annotations <br/> since last check
-  GH ->> HF: Write new annotations to <br/> training-urls dataset
-  GH ->> GH: log batch status to file
-end
-
-loop check PDAP database <br/>for new sources
-  GH ->> PDAP: Trigger action to check <br/> for new data sources
-  PDAP -->> GH: confirm sources available <br/> since last check
-  GH ->> GH: Collect additional metadata
-  GH ->> HF: Write sources to <br/> training dataset
+  SC ->> SC: Check for completed <br/> annotation tasks
+  SC -->> PDAP: Submit labeled URLs to the app
+  SC ->> HF: Write all annotations to <br/> training-urls dataset
+  SC ->> SC: maintain batch status
 end
 
 loop model training
-  GH ->> HF: retrain ML models with <br/>updated data using <br/>trainer in hugging_face
+  HF ->> HF: retrain ML models with <br/>updated data using <br/>trainer in hugging_face
 end
 
-```
-
-## Using trained models to identify URLs
-
-Each of these steps may be attempted with regex, human identification, or machine learning. We combine several machine learning (ML) models, each focusing on a specific task or property.
-
-```mermaid
-%% Here's a guide to mermaid syntax: https://mermaid.js.org/syntax/flowchart.html
-
-sequenceDiagram
-
-participant HF as Hugging Face
-participant GH as GitHub
-participant PDAP as PDAP API
-
-GH ->> GH: Start with a batch of URLs from <br/> common_crawler or another source <br/> with a batch log file
-GH ->> PDAP: Check for duplicate URLs
-PDAP ->> GH: Report back duplicates to remove
-GH ->> HF: Create batch for identification
-HF -->> GH: Confirm batch created
-
-loop trigger Hugging Face models to add <br/>labels to the same dataset
-  GH ->> HF: Check URLs for relevance <br/> to police, courts, or jails
-  HF -->> GH: complete
-  GH ->> HF: Check relevant URLs for <br/> "individual records"
-  HF -->> GH: complete
-  note over HF,GH: Ignore irrelevant and <br/> individual record sources <br/> for following steps
-  GH ->> HF: Identify an agency or <br/> geographic area
-  GH ->> HF: Identify record_type, <br/> name, and description
-  HF -->> GH: Confirm batch complete
 end
-
-GH ->> PDAP: Submit URLs for manual approval
 ```
 
 # Docstring and Type Checking
