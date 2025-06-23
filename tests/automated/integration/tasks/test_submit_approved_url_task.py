@@ -5,13 +5,13 @@ import pytest
 from deepdiff import DeepDiff
 
 from src.api.endpoints.review.dtos.approve import FinalReviewApprovalInfo
-from src.core.tasks.operators.submit_approved_url.core import SubmitApprovedURLTaskOperator
+from src.core.tasks.url.operators.submit_approved_url.core import SubmitApprovedURLTaskOperator
 from src.db.enums import TaskType
 from src.db.models.instantiations.url.error_info import URLErrorInfo
 from src.db.models.instantiations.url.data_source import URLDataSource
 from src.db.models.instantiations.url.core import URL
 from src.collectors.enums import URLStatus
-from src.core.tasks.enums import TaskOperatorOutcome
+from src.core.tasks.url.enums import TaskOperatorOutcome
 from src.core.enums import RecordType, SubmitResponseStatus
 from tests.helpers.db_data_creator import BatchURLCreationInfo, DBDataCreator
 from pdap_access_manager import RequestInfo, RequestType, ResponseInfo, DataSourcesNamespaces

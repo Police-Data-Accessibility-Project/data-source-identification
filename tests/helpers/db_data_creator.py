@@ -7,6 +7,7 @@ from pydantic import BaseModel
 from src.api.endpoints.annotate.dtos.agency.post import URLAgencyAnnotationPostInfo
 from src.api.endpoints.review.dtos.approve import FinalReviewApprovalInfo
 from src.api.endpoints.review.enums import RejectionReason
+from src.core.tasks.url.operators.agency_identification.dtos.suggestion import URLAgencySuggestionInfo
 from src.db.client.async_ import AsyncDatabaseClient
 from src.db.dtos.batch_info import BatchInfo
 from src.db.dtos.duplicate_info import DuplicateInsertInfo
@@ -18,9 +19,8 @@ from src.db.dtos.url_mapping import URLMapping
 from src.db.client.sync import DatabaseClient
 from src.db.enums import TaskType
 from src.collectors.enums import CollectorType, URLStatus
-from src.core.tasks.operators.agency_identification.dtos.suggestion import URLAgencySuggestionInfo
-from src.core.tasks.operators.submit_approved_url.tdo import SubmittedURLInfo
-from src.core.tasks.operators.url_miscellaneous_metadata.tdo import URLMiscellaneousMetadataTDO
+from src.core.tasks.url.operators.submit_approved_url.tdo import SubmittedURLInfo
+from src.core.tasks.url.operators.url_miscellaneous_metadata.tdo import URLMiscellaneousMetadataTDO
 from src.core.enums import BatchStatus, SuggestionType, RecordType, SuggestedStatus
 from tests.helpers.batch_creation_parameters.annotation_info import AnnotationInfo
 from tests.helpers.batch_creation_parameters.core import TestBatchCreationParameters

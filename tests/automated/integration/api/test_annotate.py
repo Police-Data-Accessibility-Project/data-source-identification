@@ -9,7 +9,7 @@ from src.api.endpoints.annotate.dtos.record_type.post import RecordTypeAnnotatio
 from src.api.endpoints.annotate.dtos.record_type.response import GetNextRecordTypeAnnotationResponseOuterInfo
 from src.api.endpoints.annotate.dtos.relevance.post import RelevanceAnnotationPostInfo
 from src.api.endpoints.annotate.dtos.relevance.response import GetNextRelevanceAnnotationResponseOuterInfo
-from src.core.tasks.operators.url_html.scraper.parser.dtos.response_html import ResponseHTMLInfo
+from src.core.tasks.url.operators.url_html.scraper.parser.dtos.response_html import ResponseHTMLInfo
 from src.db.dtos.insert_urls_info import InsertURLsInfo
 from src.db.dtos.url_mapping import URLMapping
 from src.db.models.instantiations.url.suggestion.agency.user import UserUrlAgencySuggestion

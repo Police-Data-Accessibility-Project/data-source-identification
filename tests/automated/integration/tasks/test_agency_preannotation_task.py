@@ -8,19 +8,19 @@ from aiohttp import ClientSession
 from src.collectors.source_collectors.muckrock.api_interface.core import MuckrockAPIInterface
 from src.collectors.source_collectors.muckrock.api_interface.lookup_response import AgencyLookupResponse
 from src.collectors.source_collectors.muckrock.enums import AgencyLookupResponseType
-from src.core.tasks.operators.agency_identification.core import AgencyIdentificationTaskOperator
+from src.core.tasks.url.operators.agency_identification.core import AgencyIdentificationTaskOperator
+from src.core.tasks.url.operators.agency_identification.dtos.suggestion import URLAgencySuggestionInfo
 from src.db.models.instantiations.url.suggestion.agency.auto import AutomatedUrlAgencySuggestion
 from src.pdap_api.enums import MatchAgencyResponseStatus
 from tests.helpers.batch_creation_parameters.url_creation_parameters import TestURLCreationParameters
 from tests.helpers.batch_creation_parameters.core import TestBatchCreationParameters
 from src.db.models.instantiations.agency import Agency
 from src.collectors.enums import CollectorType, URLStatus
-from src.core.tasks.enums import TaskOperatorOutcome
-from src.core.tasks.operators.agency_identification.dtos.suggestion import URLAgencySuggestionInfo
-from src.core.tasks.subtasks.agency_identification.auto_googler import AutoGooglerAgencyIdentificationSubtask
-from src.core.tasks.subtasks.agency_identification.ckan import CKANAgencyIdentificationSubtask
-from src.core.tasks.subtasks.agency_identification.common_crawler import CommonCrawlerAgencyIdentificationSubtask
-from src.core.tasks.subtasks.agency_identification.muckrock import MuckrockAgencyIdentificationSubtask
+from src.core.tasks.url.enums import TaskOperatorOutcome
+from src.core.tasks.url.subtasks.agency_identification.auto_googler import AutoGooglerAgencyIdentificationSubtask
+from src.core.tasks.url.subtasks.agency_identification.ckan import CKANAgencyIdentificationSubtask
+from src.core.tasks.url.subtasks.agency_identification.common_crawler import CommonCrawlerAgencyIdentificationSubtask
+from src.core.tasks.url.subtasks.agency_identification.muckrock import MuckrockAgencyIdentificationSubtask
 from src.core.enums import SuggestionType
 from pdap_access_manager import AccessManager
 from src.pdap_api.dtos.match_agency.response import MatchAgencyResponse

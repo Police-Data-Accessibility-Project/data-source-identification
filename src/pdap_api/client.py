@@ -1,13 +1,14 @@
-from datetime import datetime
 from typing import Optional
 
-from src.core.tasks.operators.submit_approved_url.tdo import SubmitApprovedURLTDO, SubmittedURLInfo
+from pdap_access_manager import AccessManager, DataSourcesNamespaces, RequestInfo, RequestType
+
+from src.core.tasks.scheduled.operators.agency_sync.dtos.parameters import AgencySyncParameters
+from src.core.tasks.url.operators.submit_approved_url.tdo import SubmitApprovedURLTDO, SubmittedURLInfo
 from src.pdap_api.dtos.agencies_sync import AgenciesSyncResponseInnerInfo, AgenciesSyncResponseInfo
+from src.pdap_api.dtos.match_agency.post import MatchAgencyInfo
 from src.pdap_api.dtos.match_agency.response import MatchAgencyResponse
 from src.pdap_api.dtos.unique_url_duplicate import UniqueURLDuplicateInfo
-from src.pdap_api.dtos.match_agency.post import MatchAgencyInfo
 from src.pdap_api.enums import MatchAgencyResponseStatus
-from pdap_access_manager import AccessManager, DataSourcesNamespaces, RequestInfo, RequestType
 
 
 class PDAPClient:
@@ -148,8 +149,7 @@ class PDAPClient:
 
     async def sync_agencies(
         self,
-        page: int,
-        update_at: Optional[datetime],
+        params: AgencySyncParameters
     ) -> AgenciesSyncResponseInfo:
         url =self.access_manager.build_url(
             namespace=DataSourcesNamespaces.SOURCE_COLLECTOR,
@@ -165,8 +165,8 @@ class PDAPClient:
             url=url,
             headers=headers,
             params={
-                "page": page,
-                "update_at": update_at
+                "page": params.page,
+                "update_at": params.cutoff_date
             }
         )
         response_info = await self.access_manager.make_request(request_info)

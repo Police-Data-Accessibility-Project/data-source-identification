@@ -9,7 +9,7 @@ from src.db.models.templates import Base
 
 class AgenciesSyncState(Base):
     __tablename__ = 'agencies_sync_state'
-
+    id = Column(Integer, primary_key=True)
     last_full_sync_at = Column(
         DateTime(),
         nullable=True,

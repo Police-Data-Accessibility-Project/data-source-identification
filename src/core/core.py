@@ -31,6 +31,7 @@ from src.api.endpoints.review.dtos.approve import FinalReviewApprovalInfo
 from src.api.endpoints.review.dtos.get import GetNextURLForFinalReviewOuterResponse
 from src.api.endpoints.review.enums import RejectionReason
 from src.api.endpoints.search.dtos.response import SearchURLResponse
+from src.api.endpoints.task.dtos.get.task import TaskInfo
 from src.api.endpoints.task.dtos.get.tasks import GetTasksResponse
 from src.api.endpoints.url.dtos.response import GetURLsResponseInfo
 from src.db.client.async_ import AsyncDatabaseClient
@@ -39,7 +40,7 @@ from src.api.endpoints.task.dtos.get.task_status import GetTaskStatusResponseInf
 from src.db.enums import TaskType
 from src.collectors.manager import AsyncCollectorManager
 from src.collectors.enums import CollectorType
-from src.core.tasks.manager import TaskManager
+from src.core.tasks.url.manager import TaskManager
 from src.core.error_manager.core import ErrorManager
 from src.core.enums import BatchStatus, RecordType, AnnotationType, SuggestedStatus
 
@@ -141,7 +142,7 @@ class AsyncCore:
 
     # endregion
     async def get_current_task_status(self) -> GetTaskStatusResponseInfo:
-        return GetTaskStatusResponseInfo(status=self.task_manager.task_status)
+        return GetTaskStatusResponseInfo(status=self.task_manager.manager_status)
 
     async def run_tasks(self):
         await self.task_manager.trigger_task_run()
@@ -152,14 +153,16 @@ class AsyncCore:
             task_type: TaskType,
             task_status: BatchStatus
     ) -> GetTasksResponse:
-        return await self.task_manager.get_tasks(
+        return await self.adb_client.get_tasks(
             page=page,
             task_type=task_type,
             task_status=task_status
         )
 
-    async def get_task_info(self, task_id):
-        return await self.task_manager.get_task_info(task_id)
+
+    async def get_task_info(self, task_id: int) -> TaskInfo:
+        return await self.adb_client.get_task_info(task_id=task_id)
+
 
     #region Annotations and Review
 

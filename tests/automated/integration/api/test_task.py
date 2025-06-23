@@ -49,7 +49,7 @@ async def test_get_task_status(api_test_helper):
     assert response.status == TaskType.IDLE
 
     for task in [task for task in TaskType]:
-        await ath.async_core.task_manager.set_task_status(task)
+        await ath.async_core.task_manager.set_manager_status(task)
         response = await ath.request_validator.get_current_task_status()
 
         assert response.status == task

@@ -54,6 +54,16 @@ def alter_enum_value(
     """
     op.execute(f"ALTER TYPE {enum_name} RENAME VALUE '{old_value}' TO '{new_value}'")
 
+def id_column():
+    """Returns a standard `id` column."""
+    return sa.Column(
+        'id',
+        sa.Integer(),
+        primary_key=True,
+        autoincrement=True,
+        nullable=False
+    )
+
 def created_at_column():
     """Returns a standard `created_at` column."""
     return sa.Column(

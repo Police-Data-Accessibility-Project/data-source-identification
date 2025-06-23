@@ -4,9 +4,10 @@ from operator import or_
 from typing import Optional, Type, Any, List
 
 from fastapi import HTTPException
-from sqlalchemy import select, exists, func, case, Select, not_, and_, update, delete, literal
+from sqlalchemy import select, exists, func, case, Select, not_, and_, update, delete, literal, text
 from sqlalchemy.dialects import postgresql
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.dialects.postgresql import insert as pg_insert
+from sqlalchemy.exc import IntegrityError, NoResultFound
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.orm import selectinload, joinedload, QueryableAttribute, aliased
 from sqlalchemy.sql.functions import coalesce
@@ -35,65 +36,71 @@ from src.api.endpoints.metrics.dtos.get.urls.breakdown.pending import GetMetrics
 from src.api.endpoints.metrics.dtos.get.urls.breakdown.submitted import GetMetricsURLsBreakdownSubmittedResponseDTO, \
     GetMetricsURLsBreakdownSubmittedInnerDTO
 from src.api.endpoints.review.dtos.approve import FinalReviewApprovalInfo
-from src.api.endpoints.review.dtos.get import GetNextURLForFinalReviewResponse, GetNextURLForFinalReviewOuterResponse
+from src.api.endpoints.review.dtos.get import GetNextURLForFinalReviewOuterResponse
 from src.api.endpoints.review.enums import RejectionReason
 from src.api.endpoints.search.dtos.response import SearchURLResponse
+from src.api.endpoints.task.dtos.get.task import TaskInfo
 from src.api.endpoints.task.dtos.get.tasks import GetTasksResponse, GetTasksResponseTaskInfo
 from src.api.endpoints.url.dtos.response import GetURLsResponseInfo, GetURLsResponseErrorInfo, GetURLsResponseInnerInfo
 from src.collectors.enums import URLStatus, CollectorType
-from src.core.tasks.operators.url_html.scraper.parser.util import convert_to_response_html_info
+from src.core.enums import BatchStatus, SuggestionType, RecordType, SuggestedStatus
+from src.core.env_var_manager import EnvVarManager
+from src.core.tasks.scheduled.operators.agency_sync.dtos.parameters import AgencySyncParameters
+from src.core.tasks.url.operators.agency_identification.dtos.suggestion import URLAgencySuggestionInfo
+from src.core.tasks.url.operators.agency_identification.dtos.tdo import AgencyIdentificationTDO
+from src.core.tasks.url.operators.submit_approved_url.tdo import SubmitApprovedURLTDO, SubmittedURLInfo
+from src.core.tasks.url.operators.url_404_probe.tdo import URL404ProbeTDO
+from src.core.tasks.url.operators.url_duplicate.tdo import URLDuplicateTDO
+from src.core.tasks.url.operators.url_html.scraper.parser.util import convert_to_response_html_info
+from src.core.tasks.url.operators.url_miscellaneous_metadata.tdo import URLMiscellaneousMetadataTDO, URLHTMLMetadataInfo
 from src.db.config_manager import ConfigManager
+from src.db.constants import PLACEHOLDER_AGENCY_NAME
 from src.db.dto_converter import DTOConverter
 from src.db.dtos.batch_info import BatchInfo
 from src.db.dtos.duplicate_info import DuplicateInsertInfo, DuplicateInfo
 from src.db.dtos.insert_urls_info import InsertURLsInfo
 from src.db.dtos.log_info import LogInfo, LogOutputInfo
-from src.api.endpoints.task.dtos.get.task import TaskInfo
 from src.db.dtos.url_error_info import URLErrorPydanticInfo
 from src.db.dtos.url_html_content_info import URLHTMLContentInfo, HTMLContentType
 from src.db.dtos.url_info import URLInfo
 from src.db.dtos.url_mapping import URLMapping
+from src.db.enums import TaskType
+from src.db.models.instantiations.agency import Agency
+from src.db.models.instantiations.backlog_snapshot import BacklogSnapshot
+from src.db.models.instantiations.batch import Batch
+from src.db.models.instantiations.confirmed_url_agency import ConfirmedURLAgency
+from src.db.models.instantiations.duplicate import Duplicate
+from src.db.models.instantiations.link_task_url import LinkTaskURL
+from src.db.models.instantiations.log import Log
+from src.db.models.instantiations.root_url_cache import RootURL
+from src.db.models.instantiations.sync_state_agencies import AgenciesSyncState
+from src.db.models.instantiations.task.core import Task
+from src.db.models.instantiations.task.error import TaskError
+from src.db.models.instantiations.url.checked_for_duplicate import URLCheckedForDuplicate
+from src.db.models.instantiations.url.core import URL
+from src.db.models.instantiations.url.data_source import URLDataSource
+from src.db.models.instantiations.url.error_info import URLErrorInfo
+from src.db.models.instantiations.url.html_content import URLHTMLContent
+from src.db.models.instantiations.url.optional_data_source_metadata import URLOptionalDataSourceMetadata
+from src.db.models.instantiations.url.probed_for_404 import URLProbedFor404
+from src.db.models.instantiations.url.reviewing_user import ReviewingUserURL
 from src.db.models.instantiations.url.suggestion.agency.auto import AutomatedUrlAgencySuggestion
+from src.db.models.instantiations.url.suggestion.agency.user import UserUrlAgencySuggestion
+from src.db.models.instantiations.url.suggestion.record_type.auto import AutoRecordTypeSuggestion
 from src.db.models.instantiations.url.suggestion.record_type.user import UserRecordTypeSuggestion
 from src.db.models.instantiations.url.suggestion.relevant.auto import AutoRelevantSuggestion
 from src.db.models.instantiations.url.suggestion.relevant.user import UserRelevantSuggestion
+from src.db.models.templates import Base
 from src.db.queries.implementations.core.final_review.get import GetNextURLForFinalReviewQueryBuilder
 from src.db.queries.implementations.core.get_recent_batch_summaries.builder import GetRecentBatchSummariesQueryBuilder
 from src.db.queries.implementations.core.metrics.urls.aggregated.pending import \
     GetMetricsURLSAggregatedPendingQueryBuilder
+from src.db.queries.implementations.core.tasks.agency_sync.upsert import get_upsert_agencies_mappings
 from src.db.statement_composer import StatementComposer
-from src.db.constants import PLACEHOLDER_AGENCY_NAME
-from src.db.enums import TaskType
-from src.db.models.templates import Base
-from src.db.models.instantiations.confirmed_url_agency import ConfirmedURLAgency
-from src.db.models.instantiations.link_task_url import LinkTaskURL
-from src.db.models.instantiations.url.error_info import URLErrorInfo
-from src.db.models.instantiations.agency import Agency
-from src.db.models.instantiations.duplicate import Duplicate
-from src.db.models.instantiations.log import Log
-from src.db.models.instantiations.task.error import TaskError
-from src.db.models.instantiations.task.core import Task
-from src.db.models.instantiations.backlog_snapshot import BacklogSnapshot
-from src.db.models.instantiations.url.suggestion.record_type.auto import AutoRecordTypeSuggestion
-from src.db.models.instantiations.url.suggestion.agency.user import UserUrlAgencySuggestion
-from src.db.models.instantiations.url.data_source import URLDataSource
-from src.db.models.instantiations.root_url_cache import RootURL
-from src.db.models.instantiations.url.html_content import URLHTMLContent
-from src.db.models.instantiations.url.reviewing_user import ReviewingUserURL
-from src.db.models.instantiations.url.optional_data_source_metadata import URLOptionalDataSourceMetadata
-from src.db.models.instantiations.url.probed_for_404 import URLProbedFor404
-from src.db.models.instantiations.url.checked_for_duplicate import URLCheckedForDuplicate
-from src.db.models.instantiations.url.core import URL
-from src.db.models.instantiations.batch import Batch
-from src.core.tasks.operators.agency_identification.dtos.suggestion import URLAgencySuggestionInfo
-from src.core.tasks.operators.agency_identification.dtos.tdo import AgencyIdentificationTDO
-from src.core.tasks.operators.submit_approved_url.tdo import SubmitApprovedURLTDO, SubmittedURLInfo
-from src.core.tasks.operators.url_404_probe.tdo import URL404ProbeTDO
-from src.core.tasks.operators.url_duplicate.tdo import URLDuplicateTDO
-from src.core.tasks.operators.url_miscellaneous_metadata.tdo import URLMiscellaneousMetadataTDO, URLHTMLMetadataInfo
-from src.core.env_var_manager import EnvVarManager
-from src.core.enums import BatchStatus, SuggestionType, RecordType, SuggestedStatus
 from src.db.types import UserSuggestionType
+from src.pdap_api.dtos.agencies_sync import AgenciesSyncResponseInnerInfo
+
+import logging
 
 # Type Hints
 
@@ -110,9 +117,10 @@ class AsyncDatabaseClient:
     def __init__(self, db_url: Optional[str] = None):
         if db_url is None:
             db_url = EnvVarManager.get().get_postgres_connection_string(is_async=True)
+        echo = ConfigManager.get_sqlalchemy_echo()
         self.engine = create_async_engine(
             url=db_url,
-            echo=ConfigManager.get_sqlalchemy_echo(),
+            echo=echo,
         )
         self.session_maker = async_sessionmaker(bind=self.engine, expire_on_commit=False)
         self.statement_composer = StatementComposer()
@@ -140,6 +148,76 @@ class AsyncDatabaseClient:
                         raise e
 
         return wrapper
+
+
+    @session_manager
+    async def execute(self, session: AsyncSession, statement):
+        await session.execute(statement)
+
+    @session_manager
+    async def add(self, session: AsyncSession, model: Base):
+        session.add(model)
+
+    @session_manager
+    async def add_all(self, session: AsyncSession, models: list[Base]):
+        session.add_all(models)
+
+    @session_manager
+    async def bulk_update(
+        self,
+        session: AsyncSession,
+        model: Base,
+        mappings: list[dict],
+    ):
+        # Note, mapping must include primary key
+        await session.execute(
+            update(model),
+            mappings
+        )
+
+    @session_manager
+    async def bulk_upsert(
+        self,
+        session: AsyncSession,
+        model: Base,
+        mappings: list[dict],
+        id_value: str = "id"
+    ):
+
+        query = pg_insert(model)
+
+        set_ = {}
+        for k, v in mappings[0].items():
+            if k == id_value:
+                continue
+            set_[k] = getattr(query.excluded, k)
+
+        query = query.on_conflict_do_update(
+            index_elements=[id_value],
+            set_=set_
+        )
+
+
+        # Note, mapping must include primary key
+        await session.execute(
+            query,
+            mappings
+        )
+
+    @session_manager
+    async def scalar(self, session: AsyncSession, statement):
+        return (await session.execute(statement)).scalar()
+
+    @session_manager
+    async def scalars(self, session: AsyncSession, statement):
+        return (await session.execute(statement)).scalars().all()
+
+    @session_manager
+    async def mapping(self, session: AsyncSession, statement):
+        return (await session.execute(statement)).mappings().one()
+
+
+
 
     # region relevant
     @session_manager
@@ -344,19 +422,16 @@ class AsyncDatabaseClient:
             )
             session.add(suggestion)
 
-    @session_manager
     async def add_auto_record_type_suggestion(
         self,
-        session: AsyncSession,
         url_id: int,
         record_type: RecordType
     ):
-
         suggestion = AutoRecordTypeSuggestion(
             url_id=url_id,
             record_type=record_type.value
         )
-        session.add(suggestion)
+        await self.add(suggestion)
 
     @session_manager
     async def add_user_record_type_suggestion(
@@ -560,7 +635,12 @@ class AsyncDatabaseClient:
         )
 
     @session_manager
-    async def get_all(self, session, model: Base, order_by_attribute: Optional[str] = None) -> list[Base]:
+    async def get_all(
+        self,
+        session,
+        model: Base,
+        order_by_attribute: Optional[str] = None
+    ) -> list[Base]:
         """
         Get all records of a model
         Used primarily in testing
@@ -581,10 +661,9 @@ class AsyncDatabaseClient:
             d[result.url] = result.page_title
         return d
 
-    @session_manager
-    async def add_to_root_url_cache(self, session: AsyncSession, url: str, page_title: str) -> None:
+    async def add_to_root_url_cache(self, url: str, page_title: str) -> None:
         cache = RootURL(url=url, page_title=page_title)
-        session.add(cache)
+        await self.add(cache)
 
     @session_manager
     async def get_urls(self, session: AsyncSession, page: int, errors: bool) -> GetURLsResponseInfo:
@@ -650,16 +729,13 @@ class AsyncDatabaseClient:
     async def update_task_status(self, session: AsyncSession, task_id: int, status: BatchStatus):
         task = await session.get(Task, task_id)
         task.task_status = status.value
-        await session.commit()
 
-    @session_manager
-    async def add_task_error(self, session: AsyncSession, task_id: int, error: str):
+    async def add_task_error(self, task_id: int, error: str):
         task_error = TaskError(
             task_id=task_id,
             error=error
         )
-        session.add(task_error)
-        await session.commit()
+        await self.add(task_error)
 
     @session_manager
     async def get_task_info(self, session: AsyncSession, task_id: int) -> TaskInfo:
@@ -800,7 +876,9 @@ class AsyncDatabaseClient:
         return len(result) != 0
 
     @session_manager
-    async def get_urls_without_agency_suggestions(self, session: AsyncSession) -> list[AgencyIdentificationTDO]:
+    async def get_urls_without_agency_suggestions(
+        self, session: AsyncSession
+    ) -> list[AgencyIdentificationTDO]:
         """
         Retrieve URLs without confirmed or suggested agencies
         Args:
@@ -974,8 +1052,6 @@ class AsyncDatabaseClient:
                 is_unknown=suggestion.suggestion_type == SuggestionType.UNKNOWN
             )
             session.add(url_agency_suggestion)
-
-        await session.commit()
 
     @session_manager
     async def add_agency_manual_suggestion(
@@ -1473,15 +1549,14 @@ class AsyncDatabaseClient:
         logs = raw_results.scalars().all()
         return ([LogOutputInfo(**log.__dict__) for log in logs])
 
-    @session_manager
-    async def delete_old_logs(self, session):
+    async def delete_old_logs(self):
         """
         Delete logs older than a day
         """
         statement = delete(Log).where(
             Log.created_at < datetime.now() - timedelta(days=7)
         )
-        await session.execute(statement)
+        await self.execute(statement)
 
     async def get_agency_suggestions(self, session, url_id: int) -> List[GetNextURLForAgencyAgencyInfo]:
         # Get relevant autosuggestions and agency info, if an associated agency exists
@@ -2152,24 +2227,19 @@ class AsyncDatabaseClient:
         urls = raw_result.scalars().all()
         return [URLDuplicateTDO(url=url.url, url_id=url.id) for url in urls]
 
-    @session_manager
-    async def mark_all_as_duplicates(self, session: AsyncSession, url_ids: List[int]):
+    async def mark_all_as_duplicates(self, url_ids: List[int]):
         query = update(URL).where(URL.id.in_(url_ids)).values(outcome=URLStatus.DUPLICATE.value)
-        await session.execute(query)
+        await self.execute(query)
 
-    @session_manager
-    async def mark_all_as_404(self, session: AsyncSession, url_ids: List[int]):
+    async def mark_all_as_404(self, url_ids: List[int]):
         query = update(URL).where(URL.id.in_(url_ids)).values(outcome=URLStatus.NOT_FOUND.value)
-        await session.execute(query)
+        await self.execute(query)
 
-    @session_manager
     async def mark_all_as_recently_probed_for_404(
         self,
-        session: AsyncSession,
         url_ids: List[int],
         dt: datetime = func.now()
     ):
-        from sqlalchemy.dialects.postgresql import insert as pg_insert
         values = [
             {"url_id": url_id, "last_probed_at": dt} for url_id in url_ids
         ]
@@ -2178,7 +2248,7 @@ class AsyncDatabaseClient:
             index_elements=['url_id'],
             set_={"last_probed_at": dt}
         )
-        await session.execute(update_stmt)
+        await self.execute(update_stmt)
 
     @session_manager
     async def mark_as_checked_for_duplicates(self, session: AsyncSession, url_ids: list[int]):
@@ -2296,3 +2366,54 @@ class AsyncDatabaseClient:
             session=session
         )
         return result
+
+    @session_manager
+    async def get_agencies_sync_parameters(
+        self,
+        session: AsyncSession
+    ) -> AgencySyncParameters:
+        query = select(
+            AgenciesSyncState.current_page,
+            AgenciesSyncState.current_cutoff_date
+        )
+        try:
+            result = (await session.execute(query)).mappings().one()
+            return AgencySyncParameters(
+                page=result['current_page'],
+                cutoff_date=result['current_cutoff_date']
+            )
+        except NoResultFound:
+            # Add value
+            state = AgenciesSyncState()
+            session.add(state)
+            return AgencySyncParameters(page=None, cutoff_date=None)
+
+
+
+    async def upsert_agencies(
+        self,
+        agencies: list[AgenciesSyncResponseInnerInfo]
+    ):
+        await self.bulk_upsert(
+            model=Agency,
+            mappings=get_upsert_agencies_mappings(agencies),
+            id_value="agency_id",
+        )
+
+    async def update_agencies_sync_progress(self, page: int):
+        query = update(
+            AgenciesSyncState
+        ).values(
+            current_page=page
+        )
+        await self.execute(query)
+
+    async def mark_full_agencies_sync(self):
+        query = update(
+            AgenciesSyncState
+        ).values(
+            last_full_sync_at=func.now(),
+            current_cutoff_date=func.now() - text('interval \'1 day\''),
+            current_page=None
+        )
+        await self.execute(query)

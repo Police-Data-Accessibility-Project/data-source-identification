@@ -3,11 +3,11 @@ import types
 import pytest
 
 from src.db.enums import TaskType
-from src.core.tasks.enums import TaskOperatorOutcome
-from src.core.tasks.operators.base import TaskOperatorBase
+from src.core.tasks.url.enums import TaskOperatorOutcome
+from src.core.tasks.url.operators.base import URLTaskOperatorBase
 from tests.helpers.db_data_creator import DBDataCreator
 
-class ExampleTaskOperator(TaskOperatorBase):
+class ExampleTaskOperator(URLTaskOperatorBase):
 
     @property
     def task_type(self) -> TaskType:

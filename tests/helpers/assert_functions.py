@@ -1,7 +1,6 @@
-from src.db.client import async_
-from src.db.models import Task
+from src.core.tasks.base.run_info import TaskOperatorRunInfo
+from src.core.tasks.url.enums import TaskOperatorOutcome
 
 
-async def assert_database_has_no_tasks(adb_client: AsyncDatabaseClient):
-    tasks = await adb_client.get_all(Task)
-    assert len(tasks) == 0
+def assert_task_run_success(run_info: TaskOperatorRunInfo):
+    assert run_info.outcome == TaskOperatorOutcome.SUCCESS, run_info.message

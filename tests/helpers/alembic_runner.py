@@ -24,7 +24,6 @@ class AlembicRunner:
         self.reflect()
 
     def downgrade(self, revision: str):
-        print("Downgrading...")
         command.downgrade(self.alembic_config, revision)
 
     def stamp(self, revision: str):

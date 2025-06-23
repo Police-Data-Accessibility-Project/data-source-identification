@@ -1,6 +1,6 @@
-from src.core.tasks.operators.agency_identification.dtos.suggestion import URLAgencySuggestionInfo
 from src.core.enums import SuggestionType
 from src.core.exceptions import MatchAgencyError
+from src.core.tasks.url.operators.agency_identification.dtos.suggestion import URLAgencySuggestionInfo
 from src.pdap_api.dtos.match_agency.response import MatchAgencyResponse
 from src.pdap_api.enums import MatchAgencyResponseStatus
 

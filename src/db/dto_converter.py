@@ -4,8 +4,8 @@ from src.api.endpoints.annotate.dtos.agency.response import GetNextURLForAgencyA
 from src.api.endpoints.review.dtos.get import FinalReviewAnnotationRelevantInfo, FinalReviewAnnotationAgencyAutoInfo, \
     FinalReviewAnnotationRecordTypeInfo, FinalReviewAnnotationAgencyInfo
 from src.core.enums import RecordType, SuggestionType
-from src.core.tasks.operators.url_html.scraper.parser.dtos.response_html import ResponseHTMLInfo
-from src.core.tasks.operators.url_html.scraper.parser.mapping import ENUM_TO_ATTRIBUTE_MAPPING
+from src.core.tasks.url.operators.url_html.scraper.parser.dtos.response_html import ResponseHTMLInfo
+from src.core.tasks.url.operators.url_html.scraper.parser.mapping import ENUM_TO_ATTRIBUTE_MAPPING
 from src.db.dtos.url_html_content_info import HTMLContentType, URLHTMLContentInfo
 from src.db.dtos.url_info import URLInfo
 from src.db.dtos.url_with_html import URLWithHTML
