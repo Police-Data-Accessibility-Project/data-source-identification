@@ -26,6 +26,23 @@ def upgrade() -> None:
         created_at_column()
     )
 
+    # Add trigger for updated_at to update on any change
+    op.execute("""
+    CREATE OR REPLACE FUNCTION update_updated_at_column()
+    RETURNS TRIGGER AS $$
+    BEGIN
+        NEW.updated_at = CURRENT_TIMESTAMP;
+        RETURN NEW;
+    END;
+    $$ LANGUAGE plpgsql;
+    """)
+    op.execute("""
+    CREATE TRIGGER set_updated_at
+    BEFORE UPDATE ON agencies
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
+    """)
+
     op.add_column(
         AGENCIES_TABLE_NAME,
         sa.Column('ds_last_updated_at', sa.DateTime(), nullable=True)

@@ -2,11 +2,11 @@ from typing import Optional
 
 import pytest
 
-from src.core.tasks.operators.url_miscellaneous_metadata.core import URLMiscellaneousMetadataTaskOperator
+from src.core.tasks.url.operators.url_miscellaneous_metadata.core import URLMiscellaneousMetadataTaskOperator
 from src.db.models.instantiations.url.optional_data_source_metadata import URLOptionalDataSourceMetadata
 from src.db.models.instantiations.url.core import URL
 from src.collectors.enums import CollectorType
-from src.core.tasks.enums import TaskOperatorOutcome
+from src.core.tasks.url.enums import TaskOperatorOutcome
 from tests.helpers.db_data_creator import DBDataCreator
 
 

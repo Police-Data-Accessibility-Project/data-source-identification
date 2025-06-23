@@ -16,5 +16,5 @@ class ConfigManager:
         SQLALCHEMY_ECHO is set to False by default.
         """
         load_dotenv()
-        echo = os.getenv("SQLALCHEMY_ECHO", False)
+        echo = bool(os.getenv("SQLALCHEMY_ECHO", False))
         return echo

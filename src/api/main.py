@@ -21,13 +21,16 @@ from src.collectors.source_collectors.muckrock.api_interface.core import Muckroc
 from src.core.core import AsyncCore
 from src.core.logger import AsyncCoreLogger
 from src.core.env_var_manager import EnvVarManager
-from src.core.scheduled_task_manager import AsyncScheduledTaskManager
-from src.core.tasks.manager import TaskManager
-from src.core.tasks.operators.url_html.scraper.parser.core import HTMLResponseParser
-from src.core.tasks.operators.url_html.scraper.request_interface.core import URLRequestInterface
+from src.core.tasks.handler import TaskHandler
+from src.core.tasks.scheduled.loader import ScheduledTaskOperatorLoader
+from src.core.tasks.scheduled.manager import AsyncScheduledTaskManager
+from src.core.tasks.url.loader import URLTaskOperatorLoader
+from src.core.tasks.url.manager import TaskManager
+from src.core.tasks.url.operators.url_html.scraper.parser.core import HTMLResponseParser
+from src.core.tasks.url.operators.url_html.scraper.request_interface.core import URLRequestInterface
 from src.db.client.async_ import AsyncDatabaseClient
 from src.db.client.sync import DatabaseClient
-from src.core.tasks.operators.url_html.scraper.root_url_cache.core import RootURLCache
+from src.core.tasks.url.operators.url_html.scraper.root_url_cache.core import RootURLCache
 from src.pdap_api.client import PDAPClient
 
 
@@ -47,26 +50,35 @@ async def lifespan(app: FastAPI):
 
     session = aiohttp.ClientSession()
 
-    task_manager = TaskManager(
+    task_handler = TaskHandler(
         adb_client=adb_client,
-        url_request_interface=URLRequestInterface(),
-        html_parser=HTMLResponseParser(
-            root_url_cache=RootURLCache()
-        ),
         discord_poster=DiscordPoster(
             webhook_url=env_var_manager.discord_webhook_url
-        ),
-        pdap_client=PDAPClient(
-            access_manager=AccessManager(
-                email=env_var_manager.pdap_email,
-                password=env_var_manager.pdap_password,
-                api_key=env_var_manager.pdap_api_key,
+        )
+    )
+    pdap_client = PDAPClient(
+        access_manager=AccessManager(
+            data_sources_url=env_var_manager.pdap_api_url,
+            email=env_var_manager.pdap_email,
+            password=env_var_manager.pdap_password,
+            api_key=env_var_manager.pdap_api_key,
+            session=session
+        )
+    )
+
+    task_manager = TaskManager(
+        handler=task_handler,
+        loader=URLTaskOperatorLoader(
+            adb_client=adb_client,
+            url_request_interface=URLRequestInterface(),
+            html_parser=HTMLResponseParser(
+                root_url_cache=RootURLCache()
+            ),
+            pdap_client=pdap_client,
+            muckrock_api_interface=MuckrockAPIInterface(
                 session=session
             )
         ),
-        muckrock_api_interface=MuckrockAPIInterface(
-            session=session
-        )
     )
     async_collector_manager = AsyncCollectorManager(
         logger=core_logger,
@@ -79,7 +91,15 @@ async def lifespan(app: FastAPI):
         task_manager=task_manager,
         collector_manager=async_collector_manager
     )
-    async_scheduled_task_manager = AsyncScheduledTaskManager(async_core=async_core)
+    async_scheduled_task_manager = AsyncScheduledTaskManager(
+        async_core=async_core,
+        handler=task_handler,
+        loader=ScheduledTaskOperatorLoader(
+            adb_client=adb_client,
+            pdap_client=pdap_client
+        )
+    )
+    await async_scheduled_task_manager.setup()
 
     # Pass dependencies into the app state
     app.state.async_core = async_core

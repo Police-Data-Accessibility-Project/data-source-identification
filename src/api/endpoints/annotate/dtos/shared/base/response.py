@@ -3,7 +3,7 @@ from typing import Optional
 from pydantic import BaseModel, Field
 
 from src.api.endpoints.annotate.dtos.shared.batch import AnnotationBatchInfo
-from src.core.tasks.operators.url_html.scraper.parser.dtos.response_html import ResponseHTMLInfo
+from src.core.tasks.url.operators.url_html.scraper.parser.dtos.response_html import ResponseHTMLInfo
 from src.db.dtos.url_mapping import URLMapping
 
 

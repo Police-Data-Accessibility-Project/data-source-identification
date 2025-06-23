@@ -1,15 +1,15 @@
-from datetime import datetime
-
 import pytest
-from sqlalchemy import select, insert, update
+from sqlalchemy import select
 
-from src.core.tasks.operators.agency_sync.core import SyncAgenciesTaskOperator
+from src.core.tasks.scheduled.operators.agency_sync.core import SyncAgenciesTaskOperator
+from src.core.tasks.url.enums import TaskOperatorOutcome
 from src.db.models.instantiations.agency import Agency
 from src.db.models.instantiations.sync_state_agencies import AgenciesSyncState
-from tests.automated.integration.tasks.agency_sync.data import AGENCIES_SYNC_RESPONSES, FIRST_CALL_RESPONSE, \
+from tests.automated.integration.tasks.agency_sync.data import FIRST_CALL_RESPONSE, \
     THIRD_CALL_RESPONSE, SECOND_CALL_RESPONSE
 from tests.automated.integration.tasks.agency_sync.existence_checker import AgencyChecker
 from tests.automated.integration.tasks.agency_sync.helpers import patch_sync_agencies, check_sync_concluded
+from tests.helpers.assert_functions import assert_task_run_success
 
 
 @pytest.mark.asyncio
@@ -28,9 +28,9 @@ async def test_agency_sync_interruption(
     with patch_sync_agencies(
         [FIRST_CALL_RESPONSE, ValueError("test error")]
     ):
-        await operator.run_task(1)
+        run_info = await operator.run_task(1)
+        assert run_info.outcome == TaskOperatorOutcome.ERROR, run_info.message
 
-    assert await operator.meets_task_prerequisites()
 
     # Get current updated_ats from database for the 5 recently updated
     query = (
@@ -54,14 +54,12 @@ async def test_agency_sync_interruption(
             AgenciesSyncState
         )
     )
-    assert sync_state_results.current_page == 1
+    assert sync_state_results.current_page == 2
     assert sync_state_results.last_full_sync_at is None
     assert sync_state_results.current_cutoff_date is None
 
     with patch_sync_agencies([SECOND_CALL_RESPONSE, THIRD_CALL_RESPONSE]):
         await operator.run_task(2)
-    assert not await operator.meets_task_prerequisites()
-
 
     await check_sync_concluded(db_client)
 

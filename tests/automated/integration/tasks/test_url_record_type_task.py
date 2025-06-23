@@ -4,11 +4,11 @@ import pytest
 
 from src.db.enums import TaskType
 from src.db.models.instantiations.url.suggestion.record_type.auto import AutoRecordTypeSuggestion
-from src.core.tasks.enums import TaskOperatorOutcome
-from src.core.tasks.operators.record_type.core import URLRecordTypeTaskOperator
+from src.core.tasks.url.enums import TaskOperatorOutcome
+from src.core.tasks.url.operators.record_type.core import URLRecordTypeTaskOperator
 from src.core.enums import RecordType
 from tests.helpers.db_data_creator import DBDataCreator
-from src.core.tasks.operators.record_type.llm_api.record_classifier.deepseek import DeepSeekRecordClassifier
+from src.core.tasks.url.operators.record_type.llm_api.record_classifier.deepseek import DeepSeekRecordClassifier
 
 @pytest.mark.asyncio
 async def test_url_record_type_task(db_data_creator: DBDataCreator):

@@ -1,10 +1,6 @@
-from unittest.mock import patch
-
-import pytest
 import pytest_asyncio
 
-from src.core.tasks.operators.agency_sync.core import SyncAgenciesTaskOperator
-from tests.automated.integration.tasks.agency_sync.data import AGENCIES_SYNC_RESPONSES
+from src.core.tasks.scheduled.operators.agency_sync.core import SyncAgenciesTaskOperator
 from tests.automated.integration.tasks.agency_sync.helpers import update_existing_agencies_updated_at, \
     add_existing_agencies
 

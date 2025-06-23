@@ -2,7 +2,7 @@ from contextlib import contextmanager
 from datetime import timedelta
 from unittest.mock import patch
 
-from sqlalchemy import select, func
+from sqlalchemy import select, func, TIMESTAMP, cast
 
 from src.db.client.async_ import AsyncDatabaseClient
 from src.db.models.instantiations.agency import Agency
@@ -12,11 +12,12 @@ from tests.automated.integration.tasks.agency_sync.data import PREEXISTING_AGENC
 
 
 async def check_sync_concluded(
-    db_client: AsyncDatabaseClient
+    db_client: AsyncDatabaseClient,
+    check_updated_at: bool = True
 ):
     current_db_datetime = await db_client.scalar(
         select(
-            func.current_timestamp()
+            cast(func.now(), TIMESTAMP)
         )
     )
 
@@ -27,7 +28,10 @@ async def check_sync_concluded(
     )
     assert sync_state_results.current_page is None
     assert sync_state_results.last_full_sync_at > current_db_datetime - timedelta(minutes=5)
-    assert sync_state_results.current_cutoff_date > current_db_datetime - timedelta(days=2)
+    assert sync_state_results.current_cutoff_date > (current_db_datetime - timedelta(days=2)).date()
+
+    if not check_updated_at:
+        return
 
     updated_ats = await db_client.scalars(
         select(

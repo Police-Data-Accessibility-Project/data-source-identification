@@ -1,5 +1,5 @@
-from src.core.tasks.dtos.run_info import TaskOperatorRunInfo
-from src.core.tasks.enums import TaskOperatorOutcome
+from src.core.tasks.base.run_info import TaskOperatorRunInfo
+from src.core.tasks.url.enums import TaskOperatorOutcome
 
 
 def assert_task_run_success(run_info: TaskOperatorRunInfo):
