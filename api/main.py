@@ -66,7 +66,8 @@ async def setup_database(db_client):
 
 app = FastAPI(
     title="Source Collector API",
-    description="API for collecting data sources",
+    description="API for collecting data sources"
+    "\n\nBy accessing our API, you are agreeing to our [Terms of Service](https://docs.pdap.io/meta/operations/legal/terms-of-service). Please read them before you start.",
     version="0.1.0",
     lifespan=lifespan
 )
