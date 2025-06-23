@@ -1,16 +1,25 @@
-from unittest.mock import MagicMock
+from unittest.mock import AsyncMock
 
-from collector_db.DatabaseClient import DatabaseClient
-from core.CoreLogger import CoreLogger
-from source_collectors.muckrock.DTOs import MuckrockSimpleSearchCollectorInputDTO, \
-    MuckrockCountySearchCollectorInputDTO, MuckrockAllFOIARequestsCollectorInputDTO
-from source_collectors.muckrock.classes.MuckrockCollector import MuckrockSimpleSearchCollector, \
+import pytest
+from marshmallow import Schema, fields
+
+from src.core.logger import AsyncCoreLogger
+from src.collectors.source_collectors.muckrock.collectors.all_foia.dto import MuckrockAllFOIARequestsCollectorInputDTO
+from src.collectors.source_collectors.muckrock.collectors.county.dto import MuckrockCountySearchCollectorInputDTO
+from src.collectors.source_collectors.muckrock.collectors.simple.dto import MuckrockSimpleSearchCollectorInputDTO
+from src.collectors.source_collectors import MuckrockSimpleSearchCollector, \
     MuckrockCountyLevelSearchCollector, MuckrockAllFOIARequestsCollector
-from source_collectors.muckrock.schemas import MuckrockURLInfoSchema
-from test_automated.integration.core.helpers import ALLEGHENY_COUNTY_MUCKROCK_ID, ALLEGHENY_COUNTY_TOWN_NAMES
+from src.db.client.async_ import AsyncDatabaseClient
+from tests.automated.integration.core.helpers.constants import ALLEGHENY_COUNTY_MUCKROCK_ID, \
+    ALLEGHENY_COUNTY_TOWN_NAMES
+
+class MuckrockURLInfoSchema(Schema):
+    url = fields.String(required=True)
+    metadata = fields.Dict(required=True)
 
 
-def test_muckrock_simple_search_collector():
+@pytest.mark.asyncio
+async def test_muckrock_simple_search_collector():
 
     collector = MuckrockSimpleSearchCollector(
         batch_id=1,
@@ -18,44 +27,51 @@ def test_muckrock_simple_search_collector():
             search_string="police",
             max_results=10
         ),
-        logger=MagicMock(spec=CoreLogger),
-        db_client=MagicMock(spec=DatabaseClient),
+        logger=AsyncMock(spec=AsyncCoreLogger),
+        adb_client=AsyncMock(spec=AsyncDatabaseClient),
         raise_error=True
     )
-    collector.run()
+    await collector.run()
     schema = MuckrockURLInfoSchema(many=True)
     schema.load(collector.data["urls"])
     assert len(collector.data["urls"]) >= 10
+    print(collector.data)
 
 
-def test_muckrock_county_level_search_collector():
+@pytest.mark.asyncio
+async def test_muckrock_county_level_search_collector():
     collector = MuckrockCountyLevelSearchCollector(
         batch_id=1,
         dto=MuckrockCountySearchCollectorInputDTO(
             parent_jurisdiction_id=ALLEGHENY_COUNTY_MUCKROCK_ID,
             town_names=ALLEGHENY_COUNTY_TOWN_NAMES
         ),
-        logger=MagicMock(spec=CoreLogger),
-        db_client=MagicMock(spec=DatabaseClient)
+        logger=AsyncMock(spec=AsyncCoreLogger),
+        adb_client=AsyncMock(spec=AsyncDatabaseClient),
+        raise_error=True
     )
-    collector.run()
+    await collector.run()
     schema = MuckrockURLInfoSchema(many=True)
     schema.load(collector.data["urls"])
     assert len(collector.data["urls"]) >= 10
+    print(collector.data)
 
 
 
-def test_muckrock_full_search_collector():
+@pytest.mark.asyncio
+async def test_muckrock_full_search_collector():
     collector = MuckrockAllFOIARequestsCollector(
         batch_id=1,
         dto=MuckrockAllFOIARequestsCollectorInputDTO(
             start_page=1,
             total_pages=2
         ),
-        logger=MagicMock(spec=CoreLogger),
-        db_client=MagicMock(spec=DatabaseClient)
+        logger=AsyncMock(spec=AsyncCoreLogger),
+        adb_client=AsyncMock(spec=AsyncDatabaseClient),
+        raise_error=True
     )
-    collector.run()
+    await collector.run()
     assert len(collector.data["urls"]) >= 1
     schema = MuckrockURLInfoSchema(many=True)
     schema.load(collector.data["urls"])
+    print(collector.data)

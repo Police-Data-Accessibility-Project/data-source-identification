@@ -8,23 +8,32 @@ name | description of purpose
 agency_identifier | Matches URLs with an agency from the PDAP database
 annotation_pipeline | Automated pipeline for generating training data in our ML data source identification models. Manages common crawl, HTML tag collection, and Label Studio import/export
 html_tag_collector | Collects HTML header, meta, and title tags and appends them to a JSON file. The idea is to make a richer dataset for algorithm training and data labeling.
-hugging_face | Utilities for interacting with our machine learning space at [Hugging Face](https://huggingface.co/PDAP)
 identification_pipeline.py | The core python script uniting this modular pipeline. More details below.
-openai-playground | Scripts for accessing the openai API on PDAP's shared account
+llm_api_logic | Scripts for accessing the openai API on PDAP's shared account
 source_collectors| Tools for extracting metadata from different sources, including CKAN data portals and Common Crawler
 collector_db | Database for storing data from source collectors
 collector_manager | A module which provides a unified interface for interacting with source collectors and relevant data
 core | A module which integrates other components, such as collector_manager and collector_db
 api | API for interacting with collector_manager, core, and collector_db
 local_database | Resources for setting up a test database for local development
+security_manager| A module which provides a unified interface for interacting with authentication and authorization |
+tests | Unit and integration tests |
+util | various utility functions |
+
+## Installation
+
+```
+uv sync
+```
 
 ## How to use
 
-1. Create an .env file in this directory with these contents, or set the environment variable another way: `VUE_APP_PDAP_API_KEY=KeyGoesHere`
-2. Create a file in this directory containing a list of urls to be identified, or modify the existing `urls.csv` file. This requires one URL per line with at least a `url` column.
-3. Run `python3 identification_pipeline.py urls.csv`
-4. Results will be written in the same directory as results.csv
-5. If importing "identification_pipeline_main" function, it expects a dataframe as an argument and returns a resulting dataframe
+1. Create an .env file in this directory following the instructions in `ENV.md`
+   1. If necessary, start up the database using `docker compose up -d` while in the `local_database` directory
+2. Run `fastapi dev main.py` to start up the fast API server
+3. In a browser, navigate to `http://localhost:8000/docs` to see the full list of API endpoints
+
+Note that to access API endpoints, you will need to have a valid Bearer Token from the Data Sources API at `https://data-sources.pdap.io/api`
 
 # Contributing
 
@@ -58,7 +67,7 @@ To access the API documentation, visit `http://{host}:8000/docs`.
 To run tests on the container, run:
 
 ```bash
-docker exec data-source-identification-app-1 pytest /app/tests/test_automated
+docker exec data-source-identification-app-1 pytest /app/tests/automated
 ```
 
 Be sure to inspect the `docker-compose.yml` file in the root directory -- some environment variables are dependant upon the Operating System you are using.

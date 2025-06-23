@@ -1,2 +1,0 @@
-class InvalidPreprocessorError(Exception):
-    pass
