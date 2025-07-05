@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
-from src.db.dtos.url_html_content_info import URLHTMLContentInfo
+from src.db.dtos.url.html_content import URLHTMLContentInfo
 
 
 class URLAnnotationInfo(BaseModel):

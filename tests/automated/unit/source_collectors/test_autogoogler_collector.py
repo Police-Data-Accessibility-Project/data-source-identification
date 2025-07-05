@@ -5,7 +5,7 @@ import pytest
 from src.collectors.source_collectors.auto_googler.dtos.query_results import GoogleSearchQueryResultsInnerDTO
 from src.collectors.source_collectors.auto_googler.dtos.input import AutoGooglerInputDTO
 from src.db.client.async_ import AsyncDatabaseClient
-from src.db.dtos.url_info import URLInfo
+from src.db.dtos.url.core import URLInfo
 from src.core.logger import AsyncCoreLogger
 from src.collectors.source_collectors.auto_googler.collector import AutoGooglerCollector
 

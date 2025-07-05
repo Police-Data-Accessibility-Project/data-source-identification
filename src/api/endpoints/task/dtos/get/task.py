@@ -3,8 +3,8 @@ from typing import Optional
 
 from pydantic import BaseModel
 
-from src.db.dtos.url_error_info import URLErrorPydanticInfo
-from src.db.dtos.url_info import URLInfo
+from src.db.dtos.url.error import URLErrorPydanticInfo
+from src.db.dtos.url.core import URLInfo
 from src.db.enums import TaskType
 from src.core.enums import BatchStatus
 

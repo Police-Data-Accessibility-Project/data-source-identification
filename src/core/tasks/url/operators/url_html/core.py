@@ -1,8 +1,9 @@
 from http import HTTPStatus
 
 from src.db.client.async_ import AsyncDatabaseClient
-from src.db.dtos.url_error_info import URLErrorPydanticInfo
-from src.db.dtos.url_info import URLInfo
+from src.db.dtos.url.error import URLErrorPydanticInfo
+from src.db.dtos.url.core import URLInfo
+from src.db.dtos.url.raw_html import RawHTMLInfo
 from src.db.enums import TaskType
 from src.core.tasks.url.operators.url_html.tdo import UrlHtmlTDO
 from src.core.tasks.url.operators.url_html.content_info_getter import HTMLContentInfoGetter
@@ -40,7 +41,12 @@ class URLHTMLTaskOperator(URLTaskOperatorBase):
         await self.process_html_data(success_subset)
         await self.update_database(is_404_error_subset, non_404_error_subset, success_subset)
 
-    async def update_database(self, is_404_error_subset, non_404_error_subset, success_subset):
+    async def update_database(
+        self,
+        is_404_error_subset: list[UrlHtmlTDO],
+        non_404_error_subset: list[UrlHtmlTDO],
+        success_subset: list[UrlHtmlTDO]
+    ):
         await self.update_errors_in_database(non_404_error_subset)
         await self.update_404s_in_database(is_404_error_subset)
         await self.update_html_data_in_database(success_subset)
@@ -115,6 +121,7 @@ class URLHTMLTaskOperator(URLTaskOperatorBase):
 
     async def process_html_data(self, tdos: list[UrlHtmlTDO]):
         for tdto in tdos:
+
             html_tag_info = await self.html_parser.parse(
                 url=tdto.url_info.url,
                 html_content=tdto.url_response_info.html,
@@ -124,12 +131,19 @@ class URLHTMLTaskOperator(URLTaskOperatorBase):
 
     async def update_html_data_in_database(self, tdos: list[UrlHtmlTDO]):
         html_content_infos = []
+        raw_html_data = []
         for tdto in tdos:
             hcig = HTMLContentInfoGetter(
                 response_html_info=tdto.html_tag_info,
                 url_id=tdto.url_info.id
             )
+            rhi = RawHTMLInfo(
+                url_id=tdto.url_info.id,
+                html=tdto.url_response_info.html
+            )
+            raw_html_data.append(rhi)
             results = hcig.get_all_html_content()
             html_content_infos.extend(results)
 
         await self.adb_client.add_html_content_infos(html_content_infos)
+        await self.adb_client.add_raw_html(raw_html_data)

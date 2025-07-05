@@ -17,7 +17,7 @@ from sqlalchemy.dialects import postgresql
 from sqlalchemy.exc import DataError
 
 from src.core.tasks.url.operators.agency_identification.dtos.suggestion import URLAgencySuggestionInfo
-from src.db.dtos.insert_urls_info import InsertURLsInfo
+from src.db.dtos.url.insert import InsertURLsInfo
 from src.db.enums import URLHTMLContentType
 from src.db.helpers import get_postgres_connection_string
 from src.db.models.instantiations.agency import Agency

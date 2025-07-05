@@ -8,6 +8,7 @@ dependencies = [
     "apscheduler~=3.11.0",
     "asyncpg~=0.30.0",
     "beautifulsoup4>=4.12.3",
+    "brotli>=1.1.0",
     "bs4~=0.0.2",
     "ckanapi~=4.8",
     "datasets~=2.19.1",

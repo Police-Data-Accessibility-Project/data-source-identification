@@ -1,4 +1,4 @@
-from src.db.dtos.url_html_content_info import URLHTMLContentInfo
+from src.db.dtos.url.html_content import URLHTMLContentInfo
 
 
 def dictify_html_info(html_infos: list[URLHTMLContentInfo]) -> dict[str, str]:

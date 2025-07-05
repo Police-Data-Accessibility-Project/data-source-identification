@@ -78,3 +78,8 @@ class URL(UpdatedAtMixin, CreatedAtMixin, StandardModel):
         uselist=False,
         back_populates="url"
     )
+    compressed_html = relationship(
+        "URLCompressedHTML",
+        uselist=False,
+        back_populates="url"
+    )

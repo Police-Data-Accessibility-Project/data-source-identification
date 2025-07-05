@@ -9,13 +9,13 @@ from src.api.endpoints.review.dtos.approve import FinalReviewApprovalInfo
 from src.api.endpoints.review.enums import RejectionReason
 from src.core.tasks.url.operators.agency_identification.dtos.suggestion import URLAgencySuggestionInfo
 from src.db.client.async_ import AsyncDatabaseClient
-from src.db.dtos.batch_info import BatchInfo
-from src.db.dtos.duplicate_info import DuplicateInsertInfo
-from src.db.dtos.insert_urls_info import InsertURLsInfo
-from src.db.dtos.url_error_info import URLErrorPydanticInfo
-from src.db.dtos.url_html_content_info import URLHTMLContentInfo, HTMLContentType
-from src.db.dtos.url_info import URLInfo
-from src.db.dtos.url_mapping import URLMapping
+from src.db.dtos.batch import BatchInfo
+from src.db.dtos.duplicate import DuplicateInsertInfo
+from src.db.dtos.url.insert import InsertURLsInfo
+from src.db.dtos.url.error import URLErrorPydanticInfo
+from src.db.dtos.url.html_content import URLHTMLContentInfo, HTMLContentType
+from src.db.dtos.url.core import URLInfo
+from src.db.dtos.url.mapping import URLMapping
 from src.db.client.sync import DatabaseClient
 from src.db.enums import TaskType
 from src.collectors.enums import CollectorType, URLStatus

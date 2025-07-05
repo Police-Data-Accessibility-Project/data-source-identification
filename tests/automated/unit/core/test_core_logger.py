@@ -3,7 +3,7 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from src.db.dtos.log_info import LogInfo
+from src.db.dtos.log import LogInfo
 from src.core.logger import AsyncCoreLogger
 
 

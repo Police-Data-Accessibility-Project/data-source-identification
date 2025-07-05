@@ -1,7 +1,7 @@
 from typing import Optional
 
 from src.db.client.async_ import AsyncDatabaseClient
-from src.db.dtos.url_error_info import URLErrorPydanticInfo
+from src.db.dtos.url.error import URLErrorPydanticInfo
 from src.db.enums import TaskType
 from src.collectors.enums import CollectorType
 from src.core.tasks.url.operators.url_miscellaneous_metadata.tdo import URLMiscellaneousMetadataTDO

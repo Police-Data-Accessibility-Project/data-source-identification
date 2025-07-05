@@ -2,7 +2,7 @@ from typing import List
 
 from pydantic import BaseModel
 
-from src.db.dtos.duplicate_info import DuplicateInfo
+from src.db.dtos.duplicate import DuplicateInfo
 
 
 class GetDuplicatesByBatchResponse(BaseModel):

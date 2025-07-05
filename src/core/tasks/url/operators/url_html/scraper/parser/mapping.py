@@ -1,4 +1,4 @@
-from src.db.dtos.url_html_content_info import HTMLContentType
+from src.db.dtos.url.html_content import HTMLContentType
 
 ENUM_TO_ATTRIBUTE_MAPPING = {
     HTMLContentType.TITLE: "title",

@@ -2,7 +2,7 @@ from typing import Optional
 
 from pydantic import BaseModel
 
-from src.db.dtos.url_with_html import URLWithHTML
+from src.db.dtos.url.with_html import URLWithHTML
 from src.core.enums import RecordType
 
 

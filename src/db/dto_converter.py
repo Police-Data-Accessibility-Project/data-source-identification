@@ -6,9 +6,9 @@ from src.api.endpoints.review.dtos.get import FinalReviewAnnotationRelevantInfo,
 from src.core.enums import RecordType, SuggestionType
 from src.core.tasks.url.operators.url_html.scraper.parser.dtos.response_html import ResponseHTMLInfo
 from src.core.tasks.url.operators.url_html.scraper.parser.mapping import ENUM_TO_ATTRIBUTE_MAPPING
-from src.db.dtos.url_html_content_info import HTMLContentType, URLHTMLContentInfo
-from src.db.dtos.url_info import URLInfo
-from src.db.dtos.url_with_html import URLWithHTML
+from src.db.dtos.url.html_content import HTMLContentType, URLHTMLContentInfo
+from src.db.dtos.url.core import URLInfo
+from src.db.dtos.url.with_html import URLWithHTML
 from src.db.models.instantiations.confirmed_url_agency import ConfirmedURLAgency
 from src.db.models.instantiations.url.suggestion.agency.auto import AutomatedUrlAgencySuggestion
 from src.db.models.instantiations.url.suggestion.record_type.auto import AutoRecordTypeSuggestion

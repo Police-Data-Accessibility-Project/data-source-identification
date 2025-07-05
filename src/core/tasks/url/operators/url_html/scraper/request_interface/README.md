@@ -1,0 +1,1 @@
+The URL Request Interface module is responsible for making HTTP requests to a URL and returning the response information.
