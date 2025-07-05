@@ -1,7 +1,7 @@
 import pytest_asyncio
 
 from src.core.tasks.scheduled.operators.agency_sync.core import SyncAgenciesTaskOperator
-from tests.automated.integration.tasks.agency_sync.helpers import update_existing_agencies_updated_at, \
+from tests.automated.integration.tasks.scheduled.agency_sync.helpers import update_existing_agencies_updated_at, \
     add_existing_agencies
 
 @pytest_asyncio.fixture

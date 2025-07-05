@@ -4,7 +4,7 @@ from operator import or_
 from typing import Optional, Type, Any, List
 
 from fastapi import HTTPException
-from sqlalchemy import select, exists, func, case, Select, not_, and_, update, delete, literal, text
+from sqlalchemy import select, exists, func, case, Select, not_, and_, update, delete, literal, text, insert
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.exc import IntegrityError, NoResultFound
@@ -56,14 +56,15 @@ from src.core.tasks.url.operators.url_miscellaneous_metadata.tdo import URLMisce
 from src.db.config_manager import ConfigManager
 from src.db.constants import PLACEHOLDER_AGENCY_NAME
 from src.db.dto_converter import DTOConverter
-from src.db.dtos.batch_info import BatchInfo
-from src.db.dtos.duplicate_info import DuplicateInsertInfo, DuplicateInfo
-from src.db.dtos.insert_urls_info import InsertURLsInfo
-from src.db.dtos.log_info import LogInfo, LogOutputInfo
-from src.db.dtos.url_error_info import URLErrorPydanticInfo
-from src.db.dtos.url_html_content_info import URLHTMLContentInfo, HTMLContentType
-from src.db.dtos.url_info import URLInfo
-from src.db.dtos.url_mapping import URLMapping
+from src.db.dtos.batch import BatchInfo
+from src.db.dtos.duplicate import DuplicateInsertInfo, DuplicateInfo
+from src.db.dtos.url.insert import InsertURLsInfo
+from src.db.dtos.log import LogInfo, LogOutputInfo
+from src.db.dtos.url.error import URLErrorPydanticInfo
+from src.db.dtos.url.html_content import URLHTMLContentInfo, HTMLContentType
+from src.db.dtos.url.core import URLInfo
+from src.db.dtos.url.mapping import URLMapping
+from src.db.dtos.url.raw_html import RawHTMLInfo
 from src.db.enums import TaskType
 from src.db.models.instantiations.agency import Agency
 from src.db.models.instantiations.backlog_snapshot import BacklogSnapshot
@@ -77,6 +78,7 @@ from src.db.models.instantiations.sync_state_agencies import AgenciesSyncState
 from src.db.models.instantiations.task.core import Task
 from src.db.models.instantiations.task.error import TaskError
 from src.db.models.instantiations.url.checked_for_duplicate import URLCheckedForDuplicate
+from src.db.models.instantiations.url.compressed_html import URLCompressedHTML
 from src.db.models.instantiations.url.core import URL
 from src.db.models.instantiations.url.data_source import URLDataSource
 from src.db.models.instantiations.url.error_info import URLErrorInfo
@@ -98,9 +100,8 @@ from src.db.queries.implementations.core.metrics.urls.aggregated.pending import 
 from src.db.queries.implementations.core.tasks.agency_sync.upsert import get_upsert_agencies_mappings
 from src.db.statement_composer import StatementComposer
 from src.db.types import UserSuggestionType
+from src.db.utils.compression import decompress_html, compress_html
 from src.pdap_api.dtos.agencies_sync import AgenciesSyncResponseInnerInfo
-
-import logging
 
 # Type Hints
 
@@ -2417,3 +2418,32 @@ class AsyncDatabaseClient:
             current_page=None
         )
         await self.execute(query)
+
+    @session_manager
+    async def get_html_for_url(
+        self,
+        session: AsyncSession,
+        url_id: int
+    ) -> str:
+        query = (
+            select(URLCompressedHTML.compressed_html)
+            .where(URLCompressedHTML.url_id == url_id)
+        )
+        execution_result = await session.execute(query)
+        row = execution_result.mappings().one_or_none()
+        if row is None:
+            return None
+        return decompress_html(row["compressed_html"])
+
+    @session_manager
+    async def add_raw_html(
+        self,
+        session: AsyncSession,
+        info_list: list[RawHTMLInfo]
+    ):
+        for info in info_list:
+            compressed_html = URLCompressedHTML(
+                url_id=info.url_id,
+                compressed_html=compress_html(info.html)
+            )
+            session.add(compressed_html)

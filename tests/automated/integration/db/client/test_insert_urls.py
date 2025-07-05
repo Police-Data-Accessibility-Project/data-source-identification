@@ -1,8 +1,8 @@
 import pytest
 
 from src.core.enums import BatchStatus
-from src.db.dtos.batch_info import BatchInfo
-from src.db.dtos.url_info import URLInfo
+from src.db.dtos.batch import BatchInfo
+from src.db.dtos.url.core import URLInfo
 
 
 @pytest.mark.asyncio

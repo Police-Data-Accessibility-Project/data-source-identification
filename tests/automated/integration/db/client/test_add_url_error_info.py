@@ -1,7 +1,7 @@
 import pytest
 
 from src.db.client.async_ import AsyncDatabaseClient
-from src.db.dtos.url_error_info import URLErrorPydanticInfo
+from src.db.dtos.url.error import URLErrorPydanticInfo
 from tests.helpers.db_data_creator import DBDataCreator
 
 

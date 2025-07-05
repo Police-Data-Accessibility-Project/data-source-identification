@@ -6,7 +6,7 @@ from openai import AsyncOpenAI
 
 from src.core.tasks.url.operators.record_type.llm_api.dtos.record_type_structured_output import \
     RecordTypeStructuredOutput
-from src.db.dtos.url_html_content_info import URLHTMLContentInfo
+from src.db.dtos.url.html_content import URLHTMLContentInfo
 from src.core.tasks.url.operators.record_type.llm_api.constants import RECORD_CLASSIFICATION_QUERY_CONTENT
 from src.core.tasks.url.operators.record_type.llm_api.helpers import dictify_html_info
 

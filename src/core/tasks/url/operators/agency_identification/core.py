@@ -2,7 +2,7 @@ from src.collectors.source_collectors.muckrock.api_interface.core import Muckroc
 from src.core.tasks.url.operators.agency_identification.dtos.suggestion import URLAgencySuggestionInfo
 from src.core.tasks.url.operators.agency_identification.dtos.tdo import AgencyIdentificationTDO
 from src.db.client.async_ import AsyncDatabaseClient
-from src.db.dtos.url_error_info import URLErrorPydanticInfo
+from src.db.dtos.url.error import URLErrorPydanticInfo
 from src.db.enums import TaskType
 from src.collectors.enums import CollectorType
 from src.core.tasks.url.operators.base import URLTaskOperatorBase

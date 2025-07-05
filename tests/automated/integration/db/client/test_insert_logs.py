@@ -1,6 +1,6 @@
 import pytest
 
-from src.db.dtos.log_info import LogInfo
+from src.db.dtos.log import LogInfo
 from tests.helpers.db_data_creator import DBDataCreator
 
 

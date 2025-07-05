@@ -1,7 +1,7 @@
 import pytest
 
 from src.api.endpoints.batch.dtos.get.summaries.summary import BatchSummary
-from src.db.dtos.batch_info import BatchInfo
+from src.db.dtos.batch import BatchInfo
 from src.collectors.source_collectors.example.dtos.input import ExampleInputDTO
 from tests.automated.integration.api.conftest import disable_task_trigger
 

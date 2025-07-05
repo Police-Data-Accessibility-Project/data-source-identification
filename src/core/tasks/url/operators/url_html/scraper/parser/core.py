@@ -12,6 +12,7 @@ from src.core.tasks.url.operators.url_html.scraper.parser.util import remove_exc
 
 
 class HTMLResponseParser:
+
     def __init__(self, root_url_cache: RootURLCache):
         self.root_url_cache = root_url_cache
 

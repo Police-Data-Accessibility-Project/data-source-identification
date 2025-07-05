@@ -3,13 +3,11 @@ from unittest.mock import MagicMock, call, AsyncMock
 
 import pytest
 
-from src.collectors.source_collectors.muckrock.collectors.all_foia.core import MuckrockAllFOIARequestsCollector
 from src.collectors.source_collectors.muckrock.collectors.county.core import MuckrockCountyLevelSearchCollector
 from src.collectors.source_collectors.muckrock.collectors.simple.core import MuckrockSimpleSearchCollector
 from src.db.client.async_ import AsyncDatabaseClient
-from src.db.dtos.url_info import URLInfo
+from src.db.dtos.url.core import URLInfo
 from src.core.logger import AsyncCoreLogger
-from src.collectors.source_collectors.muckrock.collectors.all_foia.dto import MuckrockAllFOIARequestsCollectorInputDTO
 from src.collectors.source_collectors.muckrock.collectors.county.dto import MuckrockCountySearchCollectorInputDTO
 from src.collectors.source_collectors.muckrock.collectors.simple.dto import MuckrockSimpleSearchCollectorInputDTO
 from src.collectors.source_collectors.muckrock.fetch_requests.foia import FOIAFetchRequest

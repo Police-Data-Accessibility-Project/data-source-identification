@@ -10,8 +10,8 @@ from src.api.endpoints.annotate.dtos.record_type.response import GetNextRecordTy
 from src.api.endpoints.annotate.dtos.relevance.post import RelevanceAnnotationPostInfo
 from src.api.endpoints.annotate.dtos.relevance.response import GetNextRelevanceAnnotationResponseOuterInfo
 from src.core.tasks.url.operators.url_html.scraper.parser.dtos.response_html import ResponseHTMLInfo
-from src.db.dtos.insert_urls_info import InsertURLsInfo
-from src.db.dtos.url_mapping import URLMapping
+from src.db.dtos.url.insert import InsertURLsInfo
+from src.db.dtos.url.mapping import URLMapping
 from src.db.models.instantiations.url.suggestion.agency.user import UserUrlAgencySuggestion
 from src.core.error_manager.enums import ErrorTypes
 from src.core.enums import RecordType, SuggestionType, SuggestedStatus

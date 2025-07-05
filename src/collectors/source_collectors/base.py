@@ -7,8 +7,8 @@ from typing import Type, Optional
 from pydantic import BaseModel
 
 from src.db.client.async_ import AsyncDatabaseClient
-from src.db.dtos.insert_urls_info import InsertURLsInfo
-from src.db.dtos.log_info import LogInfo
+from src.db.dtos.url.insert import InsertURLsInfo
+from src.db.dtos.log import LogInfo
 from src.collectors.enums import CollectorType
 from src.core.logger import AsyncCoreLogger
 from src.core.function_trigger import FunctionTrigger

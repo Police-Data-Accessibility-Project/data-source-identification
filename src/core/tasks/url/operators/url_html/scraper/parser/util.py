@@ -1,6 +1,6 @@
 from urllib.parse import urlparse
 
-from src.db.dtos.url_html_content_info import URLHTMLContentInfo
+from src.db.dtos.url.html_content import URLHTMLContentInfo
 from src.core.tasks.url.operators.url_html.scraper.parser.mapping import ENUM_TO_ATTRIBUTE_MAPPING
 from src.core.tasks.url.operators.url_html.scraper.parser.dtos.response_html import ResponseHTMLInfo
 

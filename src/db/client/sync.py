@@ -7,12 +7,12 @@ from sqlalchemy.orm import sessionmaker, scoped_session, Session
 
 from src.collectors.enums import URLStatus
 from src.db.config_manager import ConfigManager
-from src.db.dtos.batch_info import BatchInfo
-from src.db.dtos.duplicate_info import DuplicateInsertInfo
-from src.db.dtos.insert_urls_info import InsertURLsInfo
-from src.db.dtos.log_info import LogInfo
-from src.db.dtos.url_info import URLInfo
-from src.db.dtos.url_mapping import URLMapping
+from src.db.dtos.batch import BatchInfo
+from src.db.dtos.duplicate import DuplicateInsertInfo
+from src.db.dtos.url.insert import InsertURLsInfo
+from src.db.dtos.log import LogInfo
+from src.db.dtos.url.core import URLInfo
+from src.db.dtos.url.mapping import URLMapping
 from src.db.models.templates import Base
 from src.db.models.instantiations.duplicate import Duplicate
 from src.db.models.instantiations.log import Log

@@ -10,7 +10,7 @@ from src.collectors.enums import URLStatus
 from src.core.tasks.url.operators.url_html.scraper.parser.util import convert_to_response_html_info
 from src.db.constants import ALL_ANNOTATION_MODELS, USER_ANNOTATION_MODELS
 from src.db.dto_converter import DTOConverter
-from src.db.dtos.url_html_content_info import URLHTMLContentInfo
+from src.db.dtos.url.html_content import URLHTMLContentInfo
 from src.db.exceptions import FailedQueryException
 from src.db.models.instantiations.batch import Batch
 from src.db.models.instantiations.confirmed_url_agency import ConfirmedURLAgency

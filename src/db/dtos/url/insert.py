@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
-from src.db.dtos.url_mapping import URLMapping
+from src.db.dtos.url.mapping import URLMapping
 
 
 class InsertURLsInfo(BaseModel):

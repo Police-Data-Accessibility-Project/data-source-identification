@@ -6,9 +6,9 @@ from sqlalchemy import select
 from src.core.tasks.scheduled.operators.agency_sync.core import SyncAgenciesTaskOperator
 from src.core.tasks.scheduled.operators.agency_sync.dtos.parameters import AgencySyncParameters
 from src.db.models.instantiations.agency import Agency
-from tests.automated.integration.tasks.agency_sync.data import AGENCIES_SYNC_RESPONSES
-from tests.automated.integration.tasks.agency_sync.existence_checker import AgencyChecker
-from tests.automated.integration.tasks.agency_sync.helpers import check_sync_concluded, patch_sync_agencies
+from tests.automated.integration.tasks.scheduled.agency_sync.data import AGENCIES_SYNC_RESPONSES
+from tests.automated.integration.tasks.scheduled.agency_sync.existence_checker import AgencyChecker
+from tests.automated.integration.tasks.scheduled.agency_sync.helpers import check_sync_concluded, patch_sync_agencies
 from tests.helpers.assert_functions import assert_task_run_success
 
 
