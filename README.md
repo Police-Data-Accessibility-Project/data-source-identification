@@ -78,19 +78,16 @@ Be sure to inspect the `docker-compose.yml` file in the root directory -- some e
 
 ```mermaid
 flowchart TD
-    SourceCollectors["**Source Collectors:** batches of potentially useful URLs created with a variety of strategies"]
-    Logging["Logging source collection attempts"]
-    API["Submitting sources to the **Data Sources API** for approval"]
-    Identifier["**Data Source Identifier:** automatically collecting metadata and attempting to identify properties"]
-    SourceCollectorLabeling["Human labeling of missing or uncertain metadata in Source Collector"]
-
-    Identifier --> SourceCollectorLabeling
-    Identifier ---> API
-    SourceCollectorLabeling --> API
-    Identifier --> Logging
+    SourceCollectors["**Source Collectors:** scripts for creating batches of potentially useful URLs using different strategies"]
+    Identifier["Batches are prepared for labeling by automatically collecting metadata and identifying low-hanging fruit properties"]
+    SourceCollectorLabeling["Human labeling of missing or uncertain metadata takes place in Source Collector Retool app"]
+    SourceCollectorReview["Human Final Review of the labeled sources, for submission or discard, in Retool"]
+    API["Submitting sources to the Data Sources API when they are Relevant and have an **Agency, Record Type, and Name**"]
 
     SourceCollectors --> Identifier
-
+    Identifier --> SourceCollectorLabeling
+    SourceCollectorLabeling --> SourceCollectorReview
+    SourceCollectorReview --> API
     API --> Search["Allowing users to search for data and browse maps"]
     Search --> Sentiment["Capturing user sentiment and overall database utility"]
     API --> MLModels["Improving ML metadata labelers: relevance, agency, record type, etc"]
@@ -104,7 +101,6 @@ flowchart TD
     class API gold;
     class Search lightgold;
     class MLModels,Missingness lightergold;
-    class SourceCollectors,Identifier byzantium
 
     %% Define specific classes
     classDef gray fill:#bfc0c0
