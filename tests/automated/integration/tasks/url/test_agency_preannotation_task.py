@@ -11,7 +11,7 @@ from src.collectors.source_collectors.muckrock.enums import AgencyLookupResponse
 from src.core.tasks.url.operators.agency_identification.core import AgencyIdentificationTaskOperator
 from src.core.tasks.url.operators.agency_identification.dtos.suggestion import URLAgencySuggestionInfo
 from src.db.models.instantiations.url.suggestion.agency.auto import AutomatedUrlAgencySuggestion
-from src.pdap_api.enums import MatchAgencyResponseStatus
+from src.external.pdap.enums import MatchAgencyResponseStatus
 from tests.helpers.batch_creation_parameters.url_creation_parameters import TestURLCreationParameters
 from tests.helpers.batch_creation_parameters.core import TestBatchCreationParameters
 from src.db.models.instantiations.agency import Agency
@@ -23,9 +23,9 @@ from src.core.tasks.url.subtasks.agency_identification.common_crawler import Com
 from src.core.tasks.url.subtasks.agency_identification.muckrock import MuckrockAgencyIdentificationSubtask
 from src.core.enums import SuggestionType
 from pdap_access_manager import AccessManager
-from src.pdap_api.dtos.match_agency.response import MatchAgencyResponse
-from src.pdap_api.dtos.match_agency.post import MatchAgencyInfo
-from src.pdap_api.client import PDAPClient
+from src.external.pdap.dtos.match_agency.response import MatchAgencyResponse
+from src.external.pdap.dtos.match_agency.post import MatchAgencyInfo
+from src.external.pdap.client import PDAPClient
 from tests.helpers.db_data_creator import DBDataCreator, BatchURLCreationInfoV2
 
 sample_agency_suggestions = [

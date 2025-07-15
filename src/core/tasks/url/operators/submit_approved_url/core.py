@@ -3,7 +3,7 @@ from src.db.dtos.url.error import URLErrorPydanticInfo
 from src.db.enums import TaskType
 from src.core.tasks.url.operators.submit_approved_url.tdo import SubmitApprovedURLTDO
 from src.core.tasks.url.operators.base import URLTaskOperatorBase
-from src.pdap_api.client import PDAPClient
+from src.external.pdap.client import PDAPClient
 
 
 class SubmitApprovedURLTaskOperator(URLTaskOperatorBase):

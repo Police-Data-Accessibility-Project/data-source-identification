@@ -3,7 +3,7 @@ import pytest_asyncio
 from aiohttp import ClientSession
 from pdap_access_manager import AccessManager
 
-from src.pdap_api.client import PDAPClient
+from src.external.pdap.client import PDAPClient
 from src.util.helper_functions import get_from_env
 
 

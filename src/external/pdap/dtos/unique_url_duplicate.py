@@ -2,7 +2,7 @@ from typing import Optional
 
 from pydantic import BaseModel
 
-from src.pdap_api.enums import ApprovalStatus
+from src.external.pdap.enums import ApprovalStatus
 
 
 class UniqueURLDuplicateInfo(BaseModel):

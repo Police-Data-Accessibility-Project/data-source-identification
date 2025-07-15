@@ -82,3 +82,14 @@ def updated_at_column():
         server_onupdate=sa.text('now()'),
         nullable=False
     )
+
+def url_id_column():
+    sa.Column(
+        'url_id',
+        sa.Integer(),
+        sa.ForeignKey(
+            'urls.id',
+            ondelete='CASCADE'
+        ),
+        nullable=False
+    ),

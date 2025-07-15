@@ -1,6 +1,6 @@
 from src.core.tasks.scheduled.operators.agency_sync.core import SyncAgenciesTaskOperator
 from src.db.client.async_ import AsyncDatabaseClient
-from src.pdap_api.client import PDAPClient
+from src.external.pdap.client import PDAPClient
 
 
 class ScheduledTaskOperatorLoader:

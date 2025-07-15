@@ -15,7 +15,7 @@ from src.core.tasks.url.operators.url_html.scraper.parser.core import HTMLRespon
 from src.core.tasks.url.operators.url_html.scraper.request_interface.core import URLRequestInterface
 from src.core.tasks.url.operators.url_miscellaneous_metadata.core import URLMiscellaneousMetadataTaskOperator
 from src.db.client.async_ import AsyncDatabaseClient
-from src.pdap_api.client import PDAPClient
+from src.external.pdap.client import PDAPClient
 
 
 class URLTaskOperatorLoader:

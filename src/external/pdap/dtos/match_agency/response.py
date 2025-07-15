@@ -2,8 +2,8 @@ from typing import List
 
 from pydantic import BaseModel
 
-from src.pdap_api.dtos.match_agency.post import MatchAgencyInfo
-from src.pdap_api.enums import MatchAgencyResponseStatus
+from src.external.pdap.dtos.match_agency.post import MatchAgencyInfo
+from src.external.pdap.enums import MatchAgencyResponseStatus
 
 
 class MatchAgencyResponse(BaseModel):

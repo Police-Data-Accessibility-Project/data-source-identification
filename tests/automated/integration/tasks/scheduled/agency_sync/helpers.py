@@ -7,7 +7,7 @@ from sqlalchemy import select, func, TIMESTAMP, cast
 from src.db.client.async_ import AsyncDatabaseClient
 from src.db.models.instantiations.agency import Agency
 from src.db.models.instantiations.sync_state_agencies import AgenciesSyncState
-from src.pdap_api.client import PDAPClient
+from src.external.pdap.client import PDAPClient
 from tests.automated.integration.tasks.scheduled.agency_sync.data import PREEXISTING_AGENCIES
 
 

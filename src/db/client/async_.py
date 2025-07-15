@@ -4,7 +4,7 @@ from operator import or_
 from typing import Optional, Type, Any, List
 
 from fastapi import HTTPException
-from sqlalchemy import select, exists, func, case, Select, not_, and_, update, delete, literal, text, insert
+from sqlalchemy import select, exists, func, case, Select, not_, and_, update, delete, literal, text
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.exc import IntegrityError, NoResultFound
@@ -101,7 +101,7 @@ from src.db.queries.implementations.core.tasks.agency_sync.upsert import get_ups
 from src.db.statement_composer import StatementComposer
 from src.db.types import UserSuggestionType
 from src.db.utils.compression import decompress_html, compress_html
-from src.pdap_api.dtos.agencies_sync import AgenciesSyncResponseInnerInfo
+from src.external.pdap.dtos.agencies_sync import AgenciesSyncResponseInnerInfo
 
 # Type Hints
 

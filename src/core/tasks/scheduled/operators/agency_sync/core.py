@@ -2,10 +2,9 @@ from src.core.tasks.scheduled.operators.agency_sync.constants import MAX_SYNC_RE
 from src.core.tasks.scheduled.operators.agency_sync.dtos.parameters import AgencySyncParameters
 from src.core.tasks.scheduled.operators.agency_sync.exceptions import MaxRequestsExceededError
 from src.core.tasks.scheduled.operators.base import ScheduledTaskOperatorBase
-from src.core.tasks.url.operators.base import URLTaskOperatorBase
 from src.db.client.async_ import AsyncDatabaseClient
 from src.db.enums import TaskType
-from src.pdap_api.client import PDAPClient
+from src.external.pdap.client import PDAPClient
 
 
 class SyncAgenciesTaskOperator(ScheduledTaskOperatorBase):

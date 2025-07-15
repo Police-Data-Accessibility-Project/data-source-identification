@@ -15,7 +15,7 @@ from src.core.tasks.url.enums import TaskOperatorOutcome
 from src.core.enums import RecordType, SubmitResponseStatus
 from tests.helpers.db_data_creator import BatchURLCreationInfo, DBDataCreator
 from pdap_access_manager import RequestInfo, RequestType, ResponseInfo, DataSourcesNamespaces
-from src.pdap_api.client import PDAPClient
+from src.external.pdap.client import PDAPClient
 
 
 def mock_make_request(pdap_client: PDAPClient, urls: list[str]):

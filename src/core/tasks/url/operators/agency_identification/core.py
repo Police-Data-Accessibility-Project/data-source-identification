@@ -11,7 +11,7 @@ from src.core.tasks.url.subtasks.agency_identification.ckan import CKANAgencyIde
 from src.core.tasks.url.subtasks.agency_identification.common_crawler import CommonCrawlerAgencyIdentificationSubtask
 from src.core.tasks.url.subtasks.agency_identification.muckrock import MuckrockAgencyIdentificationSubtask
 from src.core.enums import SuggestionType
-from src.pdap_api.client import PDAPClient
+from src.external.pdap.client import PDAPClient
 
 
 # TODO: Validate with Manual Tests

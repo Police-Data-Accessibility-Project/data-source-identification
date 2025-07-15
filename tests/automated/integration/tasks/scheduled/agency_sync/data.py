@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from src.pdap_api.dtos.agencies_sync import AgenciesSyncResponseInfo, AgenciesSyncResponseInnerInfo
+from src.external.pdap.dtos.agencies_sync import AgenciesSyncResponseInfo, AgenciesSyncResponseInnerInfo
 
 PREEXISTING_AGENCY_1 = AgenciesSyncResponseInnerInfo(
     display_name="Preexisting Agency 1",

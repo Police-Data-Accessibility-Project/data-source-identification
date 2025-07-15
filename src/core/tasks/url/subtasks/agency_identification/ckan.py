@@ -2,8 +2,8 @@ from typing import Optional
 
 from src.core.helpers import process_match_agency_response_to_suggestions
 from src.core.tasks.url.operators.agency_identification.dtos.suggestion import URLAgencySuggestionInfo
-from src.pdap_api.client import PDAPClient
-from src.pdap_api.dtos.match_agency.response import MatchAgencyResponse
+from src.external.pdap.client import PDAPClient
+from src.external.pdap.dtos.match_agency.response import MatchAgencyResponse
 
 
 class CKANAgencyIdentificationSubtask:
