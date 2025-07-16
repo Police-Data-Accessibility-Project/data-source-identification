@@ -11,12 +11,14 @@ from src.core.tasks.url.operators.agency_identification.dtos.suggestion import U
 from src.db.client.async_ import AsyncDatabaseClient
 from src.db.dtos.batch import BatchInfo
 from src.db.dtos.duplicate import DuplicateInsertInfo
+from src.db.dtos.url.annotations.auto.relevancy import AutoRelevancyAnnotationInput
 from src.db.dtos.url.insert import InsertURLsInfo
 from src.db.dtos.url.error import URLErrorPydanticInfo
 from src.db.dtos.url.html_content import URLHTMLContentInfo, HTMLContentType
 from src.db.dtos.url.core import URLInfo
 from src.db.dtos.url.mapping import URLMapping
 from src.db.client.sync import DatabaseClient
+from src.db.dtos.url.raw_html import RawHTMLInfo
 from src.db.enums import TaskType
 from src.collectors.enums import CollectorType, URLStatus
 from src.core.tasks.url.operators.submit_approved_url.tdo import SubmittedURLInfo
@@ -32,9 +34,21 @@ class URLCreationInfo(BaseModel):
     outcome: URLStatus
     annotation_info: Optional[AnnotationInfo] = None
 
+    @property
+    def url_ids(self) -> list[int]:
+        return [url_mapping.url_id for url_mapping in self.url_mappings]
+
 class BatchURLCreationInfoV2(BaseModel):
     batch_id: int
     url_creation_infos: dict[URLStatus, URLCreationInfo]
+
+    @property
+    def url_ids(self) -> list[int]:
+        url_creation_infos = self.url_creation_infos.values()
+        url_ids = []
+        for url_creation_info in url_creation_infos:
+            url_ids.extend(url_creation_info.url_ids)
+        return url_ids
 
 class BatchURLCreationInfo(BaseModel):
     batch_id: int
@@ -90,6 +104,7 @@ class DBDataCreator:
             )
 
         d: dict[URLStatus, URLCreationInfo] = {}
+        # Create urls
         for url_parameters in parameters.urls:
             iui: InsertURLsInfo = self.urls(
                 batch_id=batch_id,
@@ -169,8 +184,12 @@ class DBDataCreator:
 
     async def auto_relevant_suggestions(self, url_id: int, relevant: bool = True):
         await self.adb_client.add_auto_relevant_suggestion(
-            url_id=url_id,
-            relevant=relevant
+            input_=AutoRelevancyAnnotationInput(
+                url_id=url_id,
+                is_relevant=relevant,
+                confidence=0.5,
+                model_name="test_model"
+            )
         )
 
     async def annotate(
@@ -397,6 +416,7 @@ class DBDataCreator:
 
     async def html_data(self, url_ids: list[int]):
         html_content_infos = []
+        raw_html_info_list = []
         for url_id in url_ids:
             html_content_infos.append(
                 URLHTMLContentInfo(
@@ -412,6 +432,13 @@ class DBDataCreator:
                     content="test description"
                 )
             )
+            raw_html_info = RawHTMLInfo(
+                url_id=url_id,
+                html="<html></html>"
+            )
+            raw_html_info_list.append(raw_html_info)
+
+        await self.adb_client.add_raw_html(raw_html_info_list)
         await self.adb_client.add_html_content_infos(html_content_infos)
 
     async def error_info(

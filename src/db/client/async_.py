@@ -1,10 +1,10 @@
 from datetime import datetime, timedelta
 from functools import wraps
 from operator import or_
-from typing import Optional, Type, Any, List
+from typing import Optional, Type, Any, List, Sequence
 
 from fastapi import HTTPException
-from sqlalchemy import select, exists, func, case, Select, not_, and_, update, delete, literal, text
+from sqlalchemy import select, exists, func, case, Select, not_, and_, update, delete, literal, text, Row
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.exc import IntegrityError, NoResultFound
@@ -48,6 +48,8 @@ from src.core.env_var_manager import EnvVarManager
 from src.core.tasks.scheduled.operators.agency_sync.dtos.parameters import AgencySyncParameters
 from src.core.tasks.url.operators.agency_identification.dtos.suggestion import URLAgencySuggestionInfo
 from src.core.tasks.url.operators.agency_identification.dtos.tdo import AgencyIdentificationTDO
+from src.core.tasks.url.operators.auto_relevant.models.tdo import URLRelevantTDO
+from src.core.tasks.url.operators.auto_relevant.queries.get_tdos import GetAutoRelevantTDOsQueryBuilder
 from src.core.tasks.url.operators.submit_approved_url.tdo import SubmitApprovedURLTDO, SubmittedURLInfo
 from src.core.tasks.url.operators.url_404_probe.tdo import URL404ProbeTDO
 from src.core.tasks.url.operators.url_duplicate.tdo import URLDuplicateTDO
@@ -58,6 +60,7 @@ from src.db.constants import PLACEHOLDER_AGENCY_NAME
 from src.db.dto_converter import DTOConverter
 from src.db.dtos.batch import BatchInfo
 from src.db.dtos.duplicate import DuplicateInsertInfo, DuplicateInfo
+from src.db.dtos.url.annotations.auto.relevancy import AutoRelevancyAnnotationInput
 from src.db.dtos.url.insert import InsertURLsInfo
 from src.db.dtos.log import LogInfo, LogOutputInfo
 from src.db.dtos.url.error import URLErrorPydanticInfo
@@ -93,6 +96,7 @@ from src.db.models.instantiations.url.suggestion.record_type.user import UserRec
 from src.db.models.instantiations.url.suggestion.relevant.auto import AutoRelevantSuggestion
 from src.db.models.instantiations.url.suggestion.relevant.user import UserRelevantSuggestion
 from src.db.models.templates import Base
+from src.db.queries.base.builder import QueryBuilderBase
 from src.db.queries.implementations.core.final_review.get import GetNextURLForFinalReviewQueryBuilder
 from src.db.queries.implementations.core.get_recent_batch_summaries.builder import GetRecentBatchSummariesQueryBuilder
 from src.db.queries.implementations.core.metrics.urls.aggregated.pending import \
@@ -217,22 +221,36 @@ class AsyncDatabaseClient:
     async def mapping(self, session: AsyncSession, statement):
         return (await session.execute(statement)).mappings().one()
 
-
-
+    @session_manager
+    async def run_query_builder(
+        self,
+        session: AsyncSession,
+        builder: QueryBuilderBase
+    ) -> Any:
+        return await builder.run(session)
 
     # region relevant
     @session_manager
     async def add_auto_relevant_suggestion(
         self,
-        session: AsyncSession,
-        url_id: int,
-        relevant: bool
+        input_: AutoRelevancyAnnotationInput
     ):
-        suggestion = AutoRelevantSuggestion(
-            url_id=url_id,
-            relevant=relevant
-        )
-        session.add(suggestion)
+        await self.add_user_relevant_suggestions([input_])
+
+    async def add_user_relevant_suggestions(
+        self,
+        inputs: list[AutoRelevancyAnnotationInput]
+    ):
+        models = [
+            AutoRelevantSuggestion(
+                url_id=input_.url_id,
+                relevant=input_.is_relevant,
+                confidence=input_.confidence,
+                model_name=input_.model_name
+            )
+            for input_ in inputs
+        ]
+        await self.add_all(models)
 
     @staticmethod
     async def get_user_suggestion(
@@ -293,6 +311,9 @@ class AsyncDatabaseClient:
         raw_result = await session.execute(url_query)
 
         return raw_result.unique().scalars().one_or_none()
+
+    async def get_tdos_for_auto_relevancy(self) -> list[URLRelevantTDO]:
+        return await self.run_query_builder(builder=GetAutoRelevantTDOsQueryBuilder())
 
     @session_manager
     async def add_user_relevant_suggestion(
@@ -595,7 +616,7 @@ class AsyncDatabaseClient:
         )
         statement = statement.limit(100).order_by(URL.id)
         raw_result = await session.execute(statement)
-        urls: list[URL] = raw_result.unique().scalars().all()
+        urls: Sequence[Row[URL]] = raw_result.unique().scalars().all()
         final_results = DTOConverter.url_list_to_url_with_html_list(urls)
 
         return final_results
@@ -627,6 +648,13 @@ class AsyncDatabaseClient:
         statement = statement.limit(1)
         scalar_result = await session.scalars(statement)
         return bool(scalar_result.first())
+
+    @session_manager
+    async def has_urls_with_html_data_and_without_auto_relevant_suggestion(self, session: AsyncSession) -> bool:
+        return await self.has_urls_with_html_data_and_without_models(
+            session=session,
+            model=AutoRelevantSuggestion
+        )
 
     @session_manager
     async def has_urls_with_html_data_and_without_auto_record_type_suggestion(self, session: AsyncSession) -> bool:

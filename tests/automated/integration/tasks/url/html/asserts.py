@@ -1,21 +1,7 @@
 from src.collectors.enums import URLStatus
-from src.core.tasks.url.enums import TaskOperatorOutcome
 from src.db.client.async_ import AsyncDatabaseClient
 from src.db.enums import TaskType
-from src.db.models.instantiations.url.compressed_html import URLCompressedHTML
-from src.db.utils.compression import decompress_html
 from tests.automated.integration.tasks.url.html.mocks.constants import MOCK_HTML_CONTENT
-
-
-async def assert_prereqs_not_met(operator):
-    # TODO: Look into using this function in other tests
-    meets_prereqs = await operator.meets_task_prerequisites()
-    assert not meets_prereqs
-
-
-def assert_task_has_expected_run_info(run_info, url_ids: list[int]):
-    assert run_info.outcome == TaskOperatorOutcome.SUCCESS
-    assert run_info.linked_url_ids == url_ids
 
 
 async def assert_success_url_has_two_html_content_entries(

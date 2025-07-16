@@ -23,7 +23,7 @@ class HuggingFaceInferenceClient:
         self, input_: BasicInput, attempts: int = 3
     ) -> BasicOutput:
 
-        for _ in range(attempts):
+        for i in range(attempts):
             try:
                 async with self.session.post(
                     RELEVANCY_ENDPOINT,
@@ -40,6 +40,7 @@ class HuggingFaceInferenceClient:
                     result = BasicOutput(**(await response.json()))
                     break
             except HTTPServiceUnavailable as e:
-                print(f"Service unavailable: {e}. Retrying after backoff...")
-                await asyncio.sleep(1)
+                backoff = 60 * (i + 1)
+                print(f"Service unavailable: {e}. Retrying after backoff of {backoff} seconds...")
+                await asyncio.sleep(backoff)
         return result

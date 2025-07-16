@@ -29,6 +29,7 @@ class EnvVarManager:
         self.discord_webhook_url = self.require_env("DISCORD_WEBHOOK_URL")
 
         self.openai_api_key = self.require_env("OPENAI_API_KEY")
+        self.hf_inference_api_key = self.require_env("HUGGINGFACE_INFERENCE_API_KEY")
 
         self.postgres_user = self.require_env("POSTGRES_USER")
         self.postgres_password = self.require_env("POSTGRES_PASSWORD")

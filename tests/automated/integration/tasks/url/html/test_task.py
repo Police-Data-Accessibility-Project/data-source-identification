@@ -1,10 +1,9 @@
 import pytest
 
 from src.db.enums import TaskType
-from tests.automated.integration.tasks.url.html.asserts import assert_prereqs_not_met, \
-    assert_task_has_expected_run_info, \
-    assert_success_url_has_two_html_content_entries, assert_404_url_has_404_status, assert_task_has_one_url_error, \
+from tests.automated.integration.tasks.url.html.asserts import assert_success_url_has_two_html_content_entries, assert_404_url_has_404_status, assert_task_has_one_url_error, \
     assert_task_type_is_html, assert_task_ran_without_error, assert_url_has_one_compressed_html_content_entry
+from tests.automated.integration.tasks.asserts import assert_prereqs_not_met, assert_task_has_expected_run_info
 from tests.automated.integration.tasks.url.html.setup import setup_urls, setup_operator
 from tests.helpers.db_data_creator import DBDataCreator
 
