@@ -4,8 +4,8 @@ from typing import List, Optional
 
 from pydantic import BaseModel
 
-from src.api.endpoints.annotate.dtos.agency.post import URLAgencyAnnotationPostInfo
-from src.api.endpoints.review.dtos.approve import FinalReviewApprovalInfo
+from src.api.endpoints.annotate.agency.post.dto import URLAgencyAnnotationPostInfo
+from src.api.endpoints.review.approve.dto import FinalReviewApprovalInfo
 from src.api.endpoints.review.enums import RejectionReason
 from src.core.tasks.url.operators.agency_identification.dtos.suggestion import URLAgencySuggestionInfo
 from src.db.client.async_ import AsyncDatabaseClient

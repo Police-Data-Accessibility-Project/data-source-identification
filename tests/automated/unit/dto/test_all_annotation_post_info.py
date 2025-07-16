@@ -1,6 +1,6 @@
 import pytest
 
-from src.api.endpoints.annotate.dtos.all.post import AllAnnotationPostInfo
+from src.api.endpoints.annotate.all.post.post import AllAnnotationPostInfo
 from src.core.enums import RecordType, SuggestedStatus
 from src.core.exceptions import FailedValidationException
 

@@ -9,7 +9,7 @@ from src.db.models.instantiations.url.core import URL
 from src.db.models.instantiations.batch import Batch
 from src.db.queries.base.builder import QueryBuilderBase
 from src.db.queries.helpers import add_page_offset
-from src.db.queries.implementations.core.get_recent_batch_summaries.url_counts.labels import URLCountsLabels
+from src.db.queries.implementations.core.get.recent_batch_summaries.url_counts.labels import URLCountsLabels
 
 
 class URLCountsCTEQueryBuilder(QueryBuilderBase):

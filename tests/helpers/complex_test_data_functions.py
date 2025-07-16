@@ -2,7 +2,7 @@ from typing import Optional
 
 from pydantic import BaseModel
 
-from src.api.endpoints.annotate.dtos.agency.post import URLAgencyAnnotationPostInfo
+from src.api.endpoints.annotate.agency.post.dto import URLAgencyAnnotationPostInfo
 from src.db.dtos.url.insert import InsertURLsInfo
 from src.db.dtos.url.mapping import URLMapping
 from src.collectors.enums import URLStatus

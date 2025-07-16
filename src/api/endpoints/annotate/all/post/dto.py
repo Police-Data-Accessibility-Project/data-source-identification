@@ -2,7 +2,7 @@ from typing import Optional
 
 from pydantic import BaseModel, model_validator
 
-from src.api.endpoints.annotate.dtos.agency.post import URLAgencyAnnotationPostInfo
+from src.api.endpoints.annotate.agency.post.dto import URLAgencyAnnotationPostInfo
 from src.core.enums import RecordType, SuggestedStatus
 from src.core.exceptions import FailedValidationException
 

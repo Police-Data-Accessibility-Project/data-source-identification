@@ -1,8 +1,9 @@
 from typing import Optional
 
-from src.api.endpoints.annotate.dtos.agency.response import GetNextURLForAgencyAgencyInfo
-from src.api.endpoints.review.dtos.get import FinalReviewAnnotationRelevantInfo, FinalReviewAnnotationAgencyAutoInfo, \
-    FinalReviewAnnotationRecordTypeInfo, FinalReviewAnnotationAgencyInfo
+from src.api.endpoints.annotate.agency.get.dto import GetNextURLForAgencyAgencyInfo
+from src.api.endpoints.annotate.relevance.get.dto import RelevanceAnnotationResponseInfo
+from src.api.endpoints.review.next.dto import FinalReviewAnnotationRelevantInfo, FinalReviewAnnotationRecordTypeInfo, \
+    FinalReviewAnnotationAgencyAutoInfo, FinalReviewAnnotationAgencyInfo
 from src.core.enums import RecordType, SuggestionType
 from src.core.tasks.url.operators.url_html.scraper.parser.dtos.response_html import ResponseHTMLInfo
 from src.core.tasks.url.operators.url_html.scraper.parser.mapping import ENUM_TO_ATTRIBUTE_MAPPING
@@ -32,7 +33,12 @@ class DTOConverter:
         auto_suggestion: AutoRelevantSuggestion
     ) -> FinalReviewAnnotationRelevantInfo:
 
-        auto_value = auto_suggestion.relevant if auto_suggestion else None
+        auto_value = RelevanceAnnotationResponseInfo(
+            is_relevant=auto_suggestion.relevant,
+            confidence=auto_suggestion.confidence,
+            model_name=auto_suggestion.model_name
+
+        ) if auto_suggestion else None
         user_value = user_suggestion.suggested_status if user_suggestion else None
         return FinalReviewAnnotationRelevantInfo(
             auto=auto_value,

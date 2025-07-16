@@ -41,7 +41,7 @@ async def test_review_next_source(api_test_helper):
 
     annotation_info = result.annotations
     relevant_info = annotation_info.relevant
-    assert relevant_info.auto == True
+    assert relevant_info.auto.is_relevant == True
     assert relevant_info.user == SuggestedStatus.NOT_RELEVANT
 
     record_type_info = annotation_info.record_type

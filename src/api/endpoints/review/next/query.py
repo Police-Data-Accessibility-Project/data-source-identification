@@ -1,14 +1,14 @@
 from typing import Optional, Type
 
-from sqlalchemy import select, func, Select, and_, desc, asc, FromClause
+from sqlalchemy import FromClause, select, and_, Select, desc, asc, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
-from src.api.endpoints.review.dtos.get import GetNextURLForFinalReviewResponse, FinalReviewOptionalMetadata, \
-    FinalReviewAnnotationInfo, FinalReviewBatchInfo, GetNextURLForFinalReviewOuterResponse
+from src.api.endpoints.review.next.dto import FinalReviewOptionalMetadata, FinalReviewBatchInfo, \
+    GetNextURLForFinalReviewOuterResponse, GetNextURLForFinalReviewResponse, FinalReviewAnnotationInfo
 from src.collectors.enums import URLStatus
 from src.core.tasks.url.operators.url_html.scraper.parser.util import convert_to_response_html_info
-from src.db.constants import ALL_ANNOTATION_MODELS, USER_ANNOTATION_MODELS
+from src.db.constants import USER_ANNOTATION_MODELS, ALL_ANNOTATION_MODELS
 from src.db.dto_converter import DTOConverter
 from src.db.dtos.url.html_content import URLHTMLContentInfo
 from src.db.exceptions import FailedQueryException
@@ -22,6 +22,7 @@ from src.db.queries.base.builder import QueryBuilderBase
 from src.db.queries.implementations.core.common.annotation_exists import AnnotationExistsCTEQueryBuilder
 
 TOTAL_DISTINCT_ANNOTATION_COUNT_LABEL = "total_distinct_annotation_count"
+
 
 class GetNextURLForFinalReviewQueryBuilder(QueryBuilderBase):
 
@@ -276,11 +277,3 @@ class GetNextURLForFinalReviewQueryBuilder(QueryBuilderBase):
         url_query = await self._apply_order_clause(url_query)
 
         return url_query
-
-
-
-
-
-
-
-

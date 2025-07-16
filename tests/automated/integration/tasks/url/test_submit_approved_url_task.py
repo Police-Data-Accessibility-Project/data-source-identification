@@ -4,7 +4,7 @@ from unittest.mock import AsyncMock
 import pytest
 from deepdiff import DeepDiff
 
-from src.api.endpoints.review.dtos.approve import FinalReviewApprovalInfo
+from src.api.endpoints.review.approve.dto import FinalReviewApprovalInfo
 from src.core.tasks.url.operators.submit_approved_url.core import SubmitApprovedURLTaskOperator
 from src.db.enums import TaskType
 from src.db.models.instantiations.url.error_info import URLErrorInfo

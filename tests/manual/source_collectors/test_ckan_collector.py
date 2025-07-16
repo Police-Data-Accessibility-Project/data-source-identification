@@ -3,10 +3,10 @@ from unittest.mock import AsyncMock
 import pytest
 from marshmallow import Schema, fields
 
+from src.collectors.source_collectors.ckan.collector import CKANCollector
 from src.core.logger import AsyncCoreLogger
 from src.collectors.source_collectors.ckan import collector
 from src.collectors.source_collectors.ckan.dtos.input import CKANInputDTO
-from src.collectors.source_collectors.ckan import package_search, group_search, organization_search
 
 
 class CKANSchema(Schema):

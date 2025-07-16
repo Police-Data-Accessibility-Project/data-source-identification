@@ -5,14 +5,14 @@ from fastapi import HTTPException
 from pydantic import BaseModel
 from starlette.testclient import TestClient
 
-from src.api.endpoints.annotate.dtos.agency.post import URLAgencyAnnotationPostInfo
-from src.api.endpoints.annotate.dtos.agency.response import GetNextURLForAgencyAnnotationResponse
-from src.api.endpoints.annotate.dtos.all.post import AllAnnotationPostInfo
-from src.api.endpoints.annotate.dtos.all.response import GetNextURLForAllAnnotationResponse
+from src.api.endpoints.annotate.agency.get.dto import GetNextURLForAgencyAnnotationResponse
+from src.api.endpoints.annotate.agency.post.dto import URLAgencyAnnotationPostInfo
+from src.api.endpoints.annotate.all.get.dto import GetNextURLForAllAnnotationResponse
+from src.api.endpoints.annotate.all.post.dto import AllAnnotationPostInfo
 from src.api.endpoints.annotate.dtos.record_type.post import RecordTypeAnnotationPostInfo
 from src.api.endpoints.annotate.dtos.record_type.response import GetNextRecordTypeAnnotationResponseOuterInfo
-from src.api.endpoints.annotate.dtos.relevance.post import RelevanceAnnotationPostInfo
-from src.api.endpoints.annotate.dtos.relevance.response import GetNextRelevanceAnnotationResponseOuterInfo
+from src.api.endpoints.annotate.relevance.get.dto import GetNextRelevanceAnnotationResponseOuterInfo
+from src.api.endpoints.annotate.relevance.post.dto import RelevanceAnnotationPostInfo
 from src.api.endpoints.batch.dtos.get.duplicates import GetDuplicatesByBatchResponse
 from src.api.endpoints.batch.dtos.get.logs import GetBatchLogsResponse
 from src.api.endpoints.batch.dtos.get.summaries.response import GetBatchSummariesResponse
@@ -28,9 +28,9 @@ from src.api.endpoints.metrics.dtos.get.urls.aggregated.core import GetMetricsUR
 from src.api.endpoints.metrics.dtos.get.urls.aggregated.pending import GetMetricsURLsAggregatedPendingResponseDTO
 from src.api.endpoints.metrics.dtos.get.urls.breakdown.pending import GetMetricsURLsBreakdownPendingResponseDTO
 from src.api.endpoints.metrics.dtos.get.urls.breakdown.submitted import GetMetricsURLsBreakdownSubmittedResponseDTO
-from src.api.endpoints.review.dtos.approve import FinalReviewApprovalInfo
-from src.api.endpoints.review.dtos.get import GetNextURLForFinalReviewOuterResponse
-from src.api.endpoints.review.dtos.reject import FinalReviewRejectionInfo
+from src.api.endpoints.review.approve.dto import FinalReviewApprovalInfo
+from src.api.endpoints.review.next.dto import GetNextURLForFinalReviewOuterResponse
+from src.api.endpoints.review.reject.dto import FinalReviewRejectionInfo
 from src.api.endpoints.search.dtos.response import SearchURLResponse
 from src.api.endpoints.task.dtos.get.tasks import GetTasksResponse
 from src.api.endpoints.url.dtos.response import GetURLsResponseInfo

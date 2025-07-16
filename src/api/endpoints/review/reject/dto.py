@@ -1,4 +1,4 @@
-from src.api.endpoints.review.dtos.base import FinalReviewBaseInfo
+from src.api.endpoints.review.shared.dtos.base import FinalReviewBaseInfo
 from src.api.endpoints.review.enums import RejectionReason
 
 

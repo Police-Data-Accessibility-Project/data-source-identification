@@ -2,7 +2,7 @@ from typing import Optional
 
 from pydantic import Field
 
-from src.api.endpoints.review.dtos.base import FinalReviewBaseInfo
+from src.api.endpoints.review.shared.dtos.base import FinalReviewBaseInfo
 from src.core.enums import RecordType
 
 

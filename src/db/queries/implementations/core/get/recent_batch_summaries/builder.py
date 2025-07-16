@@ -9,8 +9,8 @@ from src.collectors.enums import CollectorType
 from src.core.enums import BatchStatus
 from src.db.models.instantiations.batch import Batch
 from src.db.queries.base.builder import QueryBuilderBase
-from src.db.queries.implementations.core.get_recent_batch_summaries.url_counts.builder import URLCountsCTEQueryBuilder
-from src.db.queries.implementations.core.get_recent_batch_summaries.url_counts.labels import URLCountsLabels
+from src.db.queries.implementations.core.get.recent_batch_summaries.url_counts.builder import URLCountsCTEQueryBuilder
+from src.db.queries.implementations.core.get.recent_batch_summaries.url_counts.labels import URLCountsLabels
 
 
 class GetRecentBatchSummariesQueryBuilder(QueryBuilderBase):

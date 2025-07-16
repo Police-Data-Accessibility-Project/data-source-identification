@@ -3,12 +3,12 @@ from http import HTTPStatus
 import pytest
 from fastapi import HTTPException
 
-from src.api.endpoints.annotate.dtos.agency.post import URLAgencyAnnotationPostInfo
-from src.api.endpoints.annotate.dtos.all.post import AllAnnotationPostInfo
+from src.api.endpoints.annotate.agency.post.dto import URLAgencyAnnotationPostInfo
+from src.api.endpoints.annotate.all.post.dto import AllAnnotationPostInfo
 from src.api.endpoints.annotate.dtos.record_type.post import RecordTypeAnnotationPostInfo
 from src.api.endpoints.annotate.dtos.record_type.response import GetNextRecordTypeAnnotationResponseOuterInfo
-from src.api.endpoints.annotate.dtos.relevance.post import RelevanceAnnotationPostInfo
-from src.api.endpoints.annotate.dtos.relevance.response import GetNextRelevanceAnnotationResponseOuterInfo
+from src.api.endpoints.annotate.relevance.get.dto import GetNextRelevanceAnnotationResponseOuterInfo
+from src.api.endpoints.annotate.relevance.post.dto import RelevanceAnnotationPostInfo
 from src.core.tasks.url.operators.url_html.scraper.parser.dtos.response_html import ResponseHTMLInfo
 from src.db.dtos.url.insert import InsertURLsInfo
 from src.db.dtos.url.mapping import URLMapping
@@ -74,7 +74,7 @@ async def test_annotate_relevancy(api_test_helper):
     check_html_info_not_empty(inner_info_1.html_info)
 
     # Validate that the correct relevant value is returned
-    assert inner_info_1.suggested_relevant is True
+    assert inner_info_1.annotation.is_relevant is True
 
     # A second user should see the same URL
 
