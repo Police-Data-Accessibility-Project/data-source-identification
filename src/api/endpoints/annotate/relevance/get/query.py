@@ -41,7 +41,7 @@ class GetNextUrlForRelevanceAnnotationQueryBuilder(QueryBuilderBase):
         )
 
         if url.auto_relevant_suggestion is not None:
-            suggestion = url.auto_relevant_suggestion.relevant
+            suggestion = url.auto_relevant_suggestion
         else:
             suggestion = None
 
@@ -51,10 +51,10 @@ class GetNextUrlForRelevanceAnnotationQueryBuilder(QueryBuilderBase):
                 url_id=url.id
             ),
             annotation=RelevanceAnnotationResponseInfo(
-                is_relevant=suggestion.is_relevant,
+                is_relevant=suggestion.relevant,
                 confidence=suggestion.confidence,
                 model_name=suggestion.model_name
-            ),
+            ) if suggestion else None,
             html_info=html_response_info,
             batch_info=await GetAnnotationBatchInfoQueryBuilder(
                 batch_id=self.batch_id,
