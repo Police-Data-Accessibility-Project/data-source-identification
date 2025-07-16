@@ -12,7 +12,7 @@ from src.core.tasks.url.enums import TaskOperatorOutcome
 from tests.automated.integration.tasks.url.duplicate.constants import BATCH_CREATION_PARAMETERS
 from tests.helpers.db_data_creator import DBDataCreator
 from pdap_access_manager import ResponseInfo
-from src.pdap_api.client import PDAPClient
+from src.external.pdap.client import PDAPClient
 
 
 @pytest.mark.asyncio

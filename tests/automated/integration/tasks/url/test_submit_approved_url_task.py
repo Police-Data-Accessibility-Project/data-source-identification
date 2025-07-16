@@ -4,7 +4,7 @@ from unittest.mock import AsyncMock
 import pytest
 from deepdiff import DeepDiff
 
-from src.api.endpoints.review.dtos.approve import FinalReviewApprovalInfo
+from src.api.endpoints.review.approve.dto import FinalReviewApprovalInfo
 from src.core.tasks.url.operators.submit_approved_url.core import SubmitApprovedURLTaskOperator
 from src.db.enums import TaskType
 from src.db.models.instantiations.url.error_info import URLErrorInfo
@@ -15,7 +15,7 @@ from src.core.tasks.url.enums import TaskOperatorOutcome
 from src.core.enums import RecordType, SubmitResponseStatus
 from tests.helpers.db_data_creator import BatchURLCreationInfo, DBDataCreator
 from pdap_access_manager import RequestInfo, RequestType, ResponseInfo, DataSourcesNamespaces
-from src.pdap_api.client import PDAPClient
+from src.external.pdap.client import PDAPClient
 
 
 def mock_make_request(pdap_client: PDAPClient, urls: list[str]):

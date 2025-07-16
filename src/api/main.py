@@ -31,7 +31,8 @@ from src.core.tasks.url.operators.url_html.scraper.request_interface.core import
 from src.db.client.async_ import AsyncDatabaseClient
 from src.db.client.sync import DatabaseClient
 from src.core.tasks.url.operators.url_html.scraper.root_url_cache.core import RootURLCache
-from src.pdap_api.client import PDAPClient
+from src.external.huggingface.inference.client import HuggingFaceInferenceClient
+from src.external.pdap.client import PDAPClient
 
 
 @asynccontextmanager
@@ -77,6 +78,10 @@ async def lifespan(app: FastAPI):
             pdap_client=pdap_client,
             muckrock_api_interface=MuckrockAPIInterface(
                 session=session
+            ),
+            hf_inference_client=HuggingFaceInferenceClient(
+                session=session,
+                token=env_var_manager.hf_inference_api_key
             )
         ),
     )

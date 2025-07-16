@@ -1,10 +1,10 @@
 from datetime import datetime, timedelta
 from functools import wraps
 from operator import or_
-from typing import Optional, Type, Any, List
+from typing import Optional, Type, Any, List, Sequence
 
 from fastapi import HTTPException
-from sqlalchemy import select, exists, func, case, Select, not_, and_, update, delete, literal, text, insert
+from sqlalchemy import select, exists, func, case, Select, and_, update, delete, literal, text, Row
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.exc import IntegrityError, NoResultFound
@@ -13,14 +13,16 @@ from sqlalchemy.orm import selectinload, joinedload, QueryableAttribute, aliased
 from sqlalchemy.sql.functions import coalesce
 from starlette import status
 
-from src.api.endpoints.annotate.dtos.agency.response import GetNextURLForAgencyAnnotationResponse, \
-    GetNextURLForAgencyAnnotationInnerResponse, GetNextURLForAgencyAgencyInfo
-from src.api.endpoints.annotate.dtos.all.post import AllAnnotationPostInfo
-from src.api.endpoints.annotate.dtos.all.response import GetNextURLForAllAnnotationResponse, \
-    GetNextURLForAllAnnotationInnerResponse
+from src.api.endpoints.annotate._shared.queries.get_annotation_batch_info import GetAnnotationBatchInfoQueryBuilder
+from src.api.endpoints.annotate._shared.queries.get_next_url_for_user_annotation import \
+    GetNextURLForUserAnnotationQueryBuilder
+from src.api.endpoints.annotate.agency.get.dto import GetNextURLForAgencyAnnotationResponse
+from src.api.endpoints.annotate.agency.get.queries.next_for_annotation import GetNextURLAgencyForAnnotationQueryBuilder
+from src.api.endpoints.annotate.all.get.dto import GetNextURLForAllAnnotationResponse
+from src.api.endpoints.annotate.all.get.query import GetNextURLForAllAnnotationQueryBuilder
+from src.api.endpoints.annotate.all.post.dto import AllAnnotationPostInfo
 from src.api.endpoints.annotate.dtos.record_type.response import GetNextRecordTypeAnnotationResponseInfo
-from src.api.endpoints.annotate.dtos.relevance.response import GetNextRelevanceAnnotationResponseInfo
-from src.api.endpoints.annotate.dtos.shared.batch import AnnotationBatchInfo
+from src.api.endpoints.annotate.relevance.get.dto import GetNextRelevanceAnnotationResponseInfo
 from src.api.endpoints.batch.dtos.get.summaries.response import GetBatchSummariesResponse
 from src.api.endpoints.batch.dtos.get.summaries.summary import BatchSummary
 from src.api.endpoints.collector.dtos.manual_batch.post import ManualBatchInputDTO
@@ -35,9 +37,11 @@ from src.api.endpoints.metrics.dtos.get.urls.breakdown.pending import GetMetrics
     GetMetricsURLsBreakdownPendingResponseInnerDTO
 from src.api.endpoints.metrics.dtos.get.urls.breakdown.submitted import GetMetricsURLsBreakdownSubmittedResponseDTO, \
     GetMetricsURLsBreakdownSubmittedInnerDTO
-from src.api.endpoints.review.dtos.approve import FinalReviewApprovalInfo
-from src.api.endpoints.review.dtos.get import GetNextURLForFinalReviewOuterResponse
+from src.api.endpoints.review.approve.dto import FinalReviewApprovalInfo
+from src.api.endpoints.review.approve.query import ApproveURLQueryBuilder
 from src.api.endpoints.review.enums import RejectionReason
+from src.api.endpoints.review.next.dto import GetNextURLForFinalReviewOuterResponse
+from src.api.endpoints.review.reject.query import RejectURLQueryBuilder
 from src.api.endpoints.search.dtos.response import SearchURLResponse
 from src.api.endpoints.task.dtos.get.task import TaskInfo
 from src.api.endpoints.task.dtos.get.tasks import GetTasksResponse, GetTasksResponseTaskInfo
@@ -48,21 +52,25 @@ from src.core.env_var_manager import EnvVarManager
 from src.core.tasks.scheduled.operators.agency_sync.dtos.parameters import AgencySyncParameters
 from src.core.tasks.url.operators.agency_identification.dtos.suggestion import URLAgencySuggestionInfo
 from src.core.tasks.url.operators.agency_identification.dtos.tdo import AgencyIdentificationTDO
+from src.core.tasks.url.operators.auto_relevant.models.annotation import RelevanceAnnotationInfo
+from src.core.tasks.url.operators.auto_relevant.models.tdo import URLRelevantTDO
+from src.core.tasks.url.operators.auto_relevant.queries.get_tdos import GetAutoRelevantTDOsQueryBuilder
 from src.core.tasks.url.operators.submit_approved_url.tdo import SubmitApprovedURLTDO, SubmittedURLInfo
 from src.core.tasks.url.operators.url_404_probe.tdo import URL404ProbeTDO
 from src.core.tasks.url.operators.url_duplicate.tdo import URLDuplicateTDO
-from src.core.tasks.url.operators.url_html.scraper.parser.util import convert_to_response_html_info
 from src.core.tasks.url.operators.url_miscellaneous_metadata.tdo import URLMiscellaneousMetadataTDO, URLHTMLMetadataInfo
+from src.db.client.types import UserSuggestionModel
 from src.db.config_manager import ConfigManager
 from src.db.constants import PLACEHOLDER_AGENCY_NAME
 from src.db.dto_converter import DTOConverter
 from src.db.dtos.batch import BatchInfo
 from src.db.dtos.duplicate import DuplicateInsertInfo, DuplicateInfo
-from src.db.dtos.url.insert import InsertURLsInfo
 from src.db.dtos.log import LogInfo, LogOutputInfo
+from src.db.dtos.url.annotations.auto.relevancy import AutoRelevancyAnnotationInput
+from src.db.dtos.url.core import URLInfo
 from src.db.dtos.url.error import URLErrorPydanticInfo
 from src.db.dtos.url.html_content import URLHTMLContentInfo, HTMLContentType
-from src.db.dtos.url.core import URLInfo
+from src.db.dtos.url.insert import InsertURLsInfo
 from src.db.dtos.url.mapping import URLMapping
 from src.db.dtos.url.raw_html import RawHTMLInfo
 from src.db.enums import TaskType
@@ -93,20 +101,16 @@ from src.db.models.instantiations.url.suggestion.record_type.user import UserRec
 from src.db.models.instantiations.url.suggestion.relevant.auto import AutoRelevantSuggestion
 from src.db.models.instantiations.url.suggestion.relevant.user import UserRelevantSuggestion
 from src.db.models.templates import Base
-from src.db.queries.implementations.core.final_review.get import GetNextURLForFinalReviewQueryBuilder
-from src.db.queries.implementations.core.get_recent_batch_summaries.builder import GetRecentBatchSummariesQueryBuilder
+from src.db.queries.base.builder import QueryBuilderBase
+from src.api.endpoints.review.next.query import GetNextURLForFinalReviewQueryBuilder
+from src.db.queries.implementations.core.get.html_content_info import GetHTMLContentInfoQueryBuilder
+from src.db.queries.implementations.core.get.recent_batch_summaries.builder import GetRecentBatchSummariesQueryBuilder
 from src.db.queries.implementations.core.metrics.urls.aggregated.pending import \
     GetMetricsURLSAggregatedPendingQueryBuilder
 from src.db.queries.implementations.core.tasks.agency_sync.upsert import get_upsert_agencies_mappings
 from src.db.statement_composer import StatementComposer
-from src.db.types import UserSuggestionType
 from src.db.utils.compression import decompress_html, compress_html
-from src.pdap_api.dtos.agencies_sync import AgenciesSyncResponseInnerInfo
-
-# Type Hints
-
-UserSuggestionModel = UserRelevantSuggestion or UserRecordTypeSuggestion or UserUrlAgencySuggestion
-AutoSuggestionModel = AutoRelevantSuggestion or AutoRecordTypeSuggestion or AutomatedUrlAgencySuggestion
+from src.external.pdap.dtos.agencies_sync import AgenciesSyncResponseInnerInfo
 
 
 def add_standard_limit_and_offset(statement, page, limit=100):
@@ -217,22 +221,35 @@ class AsyncDatabaseClient:
     async def mapping(self, session: AsyncSession, statement):
         return (await session.execute(statement)).mappings().one()
 
-
-
-
-    # region relevant
     @session_manager
-    async def add_auto_relevant_suggestion(
+    async def run_query_builder(
         self,
         session: AsyncSession,
-        url_id: int,
-        relevant: bool
+        builder: QueryBuilderBase
+    ) -> Any:
+        return await builder.run(session)
+
+    # region relevant
+    async def add_auto_relevant_suggestion(
+        self,
+        input_: AutoRelevancyAnnotationInput
     ):
-        suggestion = AutoRelevantSuggestion(
-            url_id=url_id,
-            relevant=relevant
-        )
-        session.add(suggestion)
+        await self.add_user_relevant_suggestions(inputs=[input_])
+
+    async def add_user_relevant_suggestions(
+        self,
+        inputs: list[AutoRelevancyAnnotationInput]
+    ):
+        models = [
+            AutoRelevantSuggestion(
+                url_id=input_.url_id,
+                relevant=input_.is_relevant,
+                confidence=input_.confidence,
+                model_name=input_.model_name
+            )
+            for input_ in inputs
+        ]
+        await self.add_all(models)
 
     @staticmethod
     async def get_user_suggestion(
@@ -250,49 +267,24 @@ class AsyncDatabaseClient:
         result = await session.execute(statement)
         return result.unique().scalar_one_or_none()
 
-    @staticmethod
     async def get_next_url_for_user_annotation(
-        session: AsyncSession,
+        self,
         user_suggestion_model_to_exclude: UserSuggestionModel,
         auto_suggestion_relationship: QueryableAttribute,
         batch_id: Optional[int],
         check_if_annotated_not_relevant: bool = False
     ) -> URL:
-        url_query = (
-            select(
-                URL,
-            )
-            .where(URL.outcome == URLStatus.PENDING.value)
-            # URL must not have user suggestion
-            .where(
-                StatementComposer.user_suggestion_not_exists(user_suggestion_model_to_exclude)
+        return await self.run_query_builder(
+            builder=GetNextURLForUserAnnotationQueryBuilder(
+                user_suggestion_model_to_exclude=user_suggestion_model_to_exclude,
+                auto_suggestion_relationship=auto_suggestion_relationship,
+                batch_id=batch_id,
+                check_if_annotated_not_relevant=check_if_annotated_not_relevant
             )
         )
 
-        if check_if_annotated_not_relevant:
-            url_query = url_query.where(
-                not_(
-                    exists(
-                        select(UserRelevantSuggestion)
-                        .where(
-                            UserRelevantSuggestion.url_id == URL.id,
-                            UserRelevantSuggestion.suggested_status != SuggestedStatus.RELEVANT.value
-                        )
-                    )
-                )
-            )
-
-        if batch_id is not None:
-            url_query = url_query.where(URL.batch_id == batch_id)
-
-        url_query = url_query.options(
-            joinedload(auto_suggestion_relationship),
-            joinedload(URL.html_content)
-        ).limit(1)
-
-        raw_result = await session.execute(url_query)
-
-        return raw_result.unique().scalars().one_or_none()
+    async def get_tdos_for_auto_relevancy(self) -> list[URLRelevantTDO]:
+        return await self.run_query_builder(builder=GetAutoRelevantTDOsQueryBuilder())
 
     @session_manager
     async def add_user_relevant_suggestion(
@@ -325,14 +317,13 @@ class AsyncDatabaseClient:
         session: AsyncSession,
         user_id: int,
         batch_id: Optional[int]
-    ) -> Optional[GetNextRelevanceAnnotationResponseInfo]:
+    ) -> GetNextRelevanceAnnotationResponseInfo | None:
 
-        url = await self.get_next_url_for_user_annotation(
-            session,
+        url = await GetNextURLForUserAnnotationQueryBuilder(
             user_suggestion_model_to_exclude=UserRelevantSuggestion,
             auto_suggestion_relationship=URL.auto_relevant_suggestion,
             batch_id=batch_id
-        )
+        ).run(session)
         if url is None:
             return None
 
@@ -342,7 +333,7 @@ class AsyncDatabaseClient:
         )
 
         if url.auto_relevant_suggestion is not None:
-            suggestion = url.auto_relevant_suggestion.relevant
+            suggestion = url.auto_relevant_suggestion
         else:
             suggestion = None
 
@@ -351,15 +342,18 @@ class AsyncDatabaseClient:
                 url=url.url,
                 url_id=url.id
             ),
-            suggested_relevant=suggestion,
+            annotation=RelevanceAnnotationInfo(
+                is_relevant=suggestion.relevant,
+                confidence=suggestion.confidence,
+                model_name=suggestion.model_name
+            ) if suggestion is not None else None,
             html_info=html_response_info,
-            batch_info=await self.get_annotation_batch_info(
-                session,
+            batch_info=await GetAnnotationBatchInfoQueryBuilder(
                 batch_id=batch_id,
                 models=[
-                    UserRelevantSuggestion
+                    UserUrlAgencySuggestion,
                 ]
-            )
+            ).run(session)
         )
 
     # endregion relevant
@@ -374,13 +368,12 @@ class AsyncDatabaseClient:
         batch_id: Optional[int]
     ) -> Optional[GetNextRecordTypeAnnotationResponseInfo]:
 
-        url = await self.get_next_url_for_user_annotation(
-            session,
+        url = await GetNextURLForUserAnnotationQueryBuilder(
             user_suggestion_model_to_exclude=UserRecordTypeSuggestion,
             auto_suggestion_relationship=URL.auto_record_type_suggestion,
             batch_id=batch_id,
             check_if_annotated_not_relevant=True
-        )
+        ).run(session)
         if url is None:
             return None
 
@@ -401,13 +394,12 @@ class AsyncDatabaseClient:
             ),
             suggested_record_type=suggestion,
             html_info=html_response_info,
-            batch_info=await self.get_annotation_batch_info(
-                session,
+            batch_info=await GetAnnotationBatchInfoQueryBuilder(
                 batch_id=batch_id,
                 models=[
-                    UserRecordTypeSuggestion,
+                    UserUrlAgencySuggestion,
                 ]
-            )
+            ).run(session)
         )
 
     @session_manager
@@ -595,7 +587,7 @@ class AsyncDatabaseClient:
         )
         statement = statement.limit(100).order_by(URL.id)
         raw_result = await session.execute(statement)
-        urls: list[URL] = raw_result.unique().scalars().all()
+        urls: Sequence[Row[URL]] = raw_result.unique().scalars().all()
         final_results = DTOConverter.url_list_to_url_with_html_list(urls)
 
         return final_results
@@ -627,6 +619,13 @@ class AsyncDatabaseClient:
         statement = statement.limit(1)
         scalar_result = await session.scalars(statement)
         return bool(scalar_result.first())
+
+    @session_manager
+    async def has_urls_with_html_data_and_without_auto_relevant_suggestion(self, session: AsyncSession) -> bool:
+        return await self.has_urls_with_html_data_and_without_models(
+            session=session,
+            model=AutoRelevantSuggestion
+        )
 
     @session_manager
     async def has_urls_with_html_data_and_without_auto_record_type_suggestion(self, session: AsyncSession) -> bool:
@@ -785,14 +784,8 @@ class AsyncDatabaseClient:
             url_errors=errored_urls
         )
 
-    @session_manager
-    async def get_html_content_info(self, session: AsyncSession, url_id: int) -> list[URLHTMLContentInfo]:
-        session_result = await session.execute(
-            select(URLHTMLContent)
-            .where(URLHTMLContent.url_id == url_id)
-        )
-        results = session_result.scalars().all()
-        return [URLHTMLContentInfo(**result.__dict__) for result in results]
+    async def get_html_content_info(self, url_id: int) -> list[URLHTMLContentInfo]:
+        return await self.run_query_builder(GetHTMLContentInfoQueryBuilder(url_id))
 
     @session_manager
     async def link_urls_to_task(self, session: AsyncSession, task_id: int, url_ids: list[int]):
@@ -906,107 +899,16 @@ class AsyncDatabaseClient:
             for raw_result in raw_results
         ]
 
-    @session_manager
     async def get_next_url_agency_for_annotation(
         self,
-        session: AsyncSession,
         user_id: int,
-        batch_id: Optional[int]
+        batch_id: int | None
     ) -> GetNextURLForAgencyAnnotationResponse:
-        """
-        Retrieve URL for annotation
-        The URL must
-            not be a confirmed URL
-            not have been annotated by this user
-            have extant autosuggestions
-        """
-        # Select statement
-        statement = (
-            select(URL.id, URL.url)
-            # Must not have confirmed agencies
-            .where(
-                URL.outcome == URLStatus.PENDING.value
-            )
-        )
+        return await self.run_query_builder(builder=GetNextURLAgencyForAnnotationQueryBuilder(
+            user_id=user_id,
+            batch_id=batch_id
+        ))
 
-        if batch_id is not None:
-            statement = statement.where(URL.batch_id == batch_id)
-
-        # Must not have been annotated by a user
-        statement = (
-            statement.join(UserUrlAgencySuggestion, isouter=True)
-            .where(
-                ~exists(
-                    select(UserUrlAgencySuggestion).
-                    where(UserUrlAgencySuggestion.url_id == URL.id).
-                    correlate(URL)
-                )
-            )
-            # Must have extant autosuggestions
-            .join(AutomatedUrlAgencySuggestion, isouter=True)
-            .where(
-                exists(
-                    select(AutomatedUrlAgencySuggestion).
-                    where(AutomatedUrlAgencySuggestion.url_id == URL.id).
-                    correlate(URL)
-                )
-            )
-            # Must not have confirmed agencies
-            .join(ConfirmedURLAgency, isouter=True)
-            .where(
-                ~exists(
-                    select(ConfirmedURLAgency).
-                    where(ConfirmedURLAgency.url_id == URL.id).
-                    correlate(URL)
-                )
-            )
-            # Must not have been marked as "Not Relevant" by this user
-            .join(UserRelevantSuggestion, isouter=True)
-            .where(
-                ~exists(
-                    select(UserRelevantSuggestion).
-                    where(
-                        (UserRelevantSuggestion.user_id == user_id) &
-                        (UserRelevantSuggestion.url_id == URL.id) &
-                        (UserRelevantSuggestion.suggested_status != SuggestedStatus.RELEVANT.value)
-                    ).correlate(URL)
-                )
-            )
-        ).limit(1)
-        raw_result = await session.execute(statement)
-        results = raw_result.all()
-        if len(results) == 0:
-            return GetNextURLForAgencyAnnotationResponse(
-                next_annotation=None
-            )
-
-        result = results[0]
-        url_id = result[0]
-        url = result[1]
-
-        agency_suggestions = await self.get_agency_suggestions(session, url_id=url_id)
-
-        # Get HTML content info
-        html_content_infos = await self.get_html_content_info(url_id)
-        response_html_info = convert_to_response_html_info(html_content_infos)
-
-        return GetNextURLForAgencyAnnotationResponse(
-            next_annotation=GetNextURLForAgencyAnnotationInnerResponse(
-                url_info=URLMapping(
-                    url=url,
-                    url_id=url_id
-                ),
-                html_info=response_html_info,
-                agency_suggestions=agency_suggestions,
-                batch_info=await self.get_annotation_batch_info(
-                    session,
-                    batch_id=batch_id,
-                    models=[
-                        UserUrlAgencySuggestion,
-                    ]
-                )
-            )
-        )
 
     @session_manager
     async def upsert_new_agencies(
@@ -1104,170 +1006,28 @@ class AsyncDatabaseClient:
         result = await builder.run(session)
         return result
 
-    @session_manager
     async def approve_url(
         self,
-        session: AsyncSession,
         approval_info: FinalReviewApprovalInfo,
         user_id: int,
     ) -> None:
-
-        # Get URL
-        def update_if_not_none(
-            model,
-            field,
-            value: Optional[Any],
-            required: bool = False
-        ):
-            if value is not None:
-                setattr(model, field, value)
-                return
-            if not required:
-                return
-            model_value = getattr(model, field, None)
-            if model_value is None:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=f"Must specify {field} if it does not already exist"
-                )
-
-        query = (
-            Select(URL)
-            .where(URL.id == approval_info.url_id)
-            .options(
-                joinedload(URL.optional_data_source_metadata),
-                joinedload(URL.confirmed_agencies),
-            )
-        )
-
-        url = await session.execute(query)
-        url = url.scalars().first()
-
-        update_if_not_none(
-            url,
-            "record_type",
-            approval_info.record_type.value if approval_info.record_type is not None else None,
-            required=True
-        )
-
-        # Get existing agency ids
-        existing_agencies = url.confirmed_agencies or []
-        existing_agency_ids = [agency.agency_id for agency in existing_agencies]
-        new_agency_ids = approval_info.agency_ids or []
-        if len(existing_agency_ids) == 0 and len(new_agency_ids) == 0:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Must specify agency_id if URL does not already have a confirmed agency"
-            )
-
-        # Get any existing agency ids that are not in the new agency ids
-        # If new agency ids are specified, overwrite existing
-        if len(new_agency_ids) != 0:
-            for existing_agency in existing_agencies:
-                if existing_agency.id not in new_agency_ids:
-                    # If the existing agency id is not in the new agency ids, delete it
-                    await session.delete(existing_agency)
-        # Add any new agency ids that are not in the existing agency ids
-        for new_agency_id in new_agency_ids:
-            if new_agency_id not in existing_agency_ids:
-                # Check if the new agency exists in the database
-                query = (
-                    select(Agency)
-                    .where(Agency.agency_id == new_agency_id)
-                )
-                existing_agency = await session.execute(query)
-                existing_agency = existing_agency.scalars().first()
-                if existing_agency is None:
-                    # If not, create it
-                    agency = Agency(
-                        agency_id=new_agency_id,
-                        name=PLACEHOLDER_AGENCY_NAME,
-                    )
-                    session.add(agency)
-
-                # If the new agency id is not in the existing agency ids, add it
-                confirmed_url_agency = ConfirmedURLAgency(
-                    url_id=approval_info.url_id,
-                    agency_id=new_agency_id
-                )
-                session.add(confirmed_url_agency)
-
-        # If it does, do nothing
-
-        url.outcome = URLStatus.VALIDATED.value
-
-        update_if_not_none(url, "name", approval_info.name, required=True)
-        update_if_not_none(url, "description", approval_info.description, required=True)
-
-        optional_metadata = url.optional_data_source_metadata
-        if optional_metadata is None:
-            url.optional_data_source_metadata = URLOptionalDataSourceMetadata(
-                record_formats=approval_info.record_formats,
-                data_portal_type=approval_info.data_portal_type,
-                supplying_entity=approval_info.supplying_entity
-            )
-        else:
-            update_if_not_none(
-                optional_metadata,
-                "record_formats",
-                approval_info.record_formats
-            )
-            update_if_not_none(
-                optional_metadata,
-                "data_portal_type",
-                approval_info.data_portal_type
-            )
-            update_if_not_none(
-                optional_metadata,
-                "supplying_entity",
-                approval_info.supplying_entity
-            )
-
-        # Add approving user
-        approving_user_url = ReviewingUserURL(
+        await self.run_query_builder(ApproveURLQueryBuilder(
             user_id=user_id,
-            url_id=approval_info.url_id
-        )
+            approval_info=approval_info
+        ))
 
-        session.add(approving_user_url)
-
-    @session_manager
     async def reject_url(
         self,
-        session: AsyncSession,
         url_id: int,
         user_id: int,
         rejection_reason: RejectionReason
     ) -> None:
-
-        query = (
-            Select(URL)
-            .where(URL.id == url_id)
-        )
-
-        url = await session.execute(query)
-        url = url.scalars().first()
-
-        match rejection_reason:
-            case RejectionReason.INDIVIDUAL_RECORD:
-                url.outcome = URLStatus.INDIVIDUAL_RECORD.value
-            case RejectionReason.BROKEN_PAGE_404:
-                url.outcome = URLStatus.NOT_FOUND.value
-            case RejectionReason.NOT_RELEVANT:
-                url.outcome = URLStatus.NOT_RELEVANT.value
-            case _:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Invalid rejection reason"
-                )
-
-        # Add rejecting user
-        rejecting_user_url = ReviewingUserURL(
+        await self.run_query_builder(RejectURLQueryBuilder(
+            url_id=url_id,
             user_id=user_id,
-            url_id=url_id
-        )
+            rejection_reason=rejection_reason
+        ))
 
-        session.add(rejecting_user_url)
 
     @session_manager
     async def get_batch_by_id(self, session, batch_id: int) -> Optional[BatchSummary]:
@@ -1559,119 +1319,10 @@ class AsyncDatabaseClient:
         )
         await self.execute(statement)
 
-    async def get_agency_suggestions(self, session, url_id: int) -> List[GetNextURLForAgencyAgencyInfo]:
-        # Get relevant autosuggestions and agency info, if an associated agency exists
-
-        statement = (
-            select(
-                AutomatedUrlAgencySuggestion.agency_id,
-                AutomatedUrlAgencySuggestion.is_unknown,
-                Agency.name,
-                Agency.state,
-                Agency.county,
-                Agency.locality
-            )
-            .join(Agency, isouter=True)
-            .where(AutomatedUrlAgencySuggestion.url_id == url_id)
-        )
-        raw_autosuggestions = await session.execute(statement)
-        autosuggestions = raw_autosuggestions.all()
-        agency_suggestions = []
-        for autosuggestion in autosuggestions:
-            agency_id = autosuggestion[0]
-            is_unknown = autosuggestion[1]
-            name = autosuggestion[2]
-            state = autosuggestion[3]
-            county = autosuggestion[4]
-            locality = autosuggestion[5]
-            agency_suggestions.append(
-                GetNextURLForAgencyAgencyInfo(
-                    suggestion_type=SuggestionType.AUTO_SUGGESTION if not is_unknown else SuggestionType.UNKNOWN,
-                    pdap_agency_id=agency_id,
-                    agency_name=name,
-                    state=state,
-                    county=county,
-                    locality=locality
-                )
-            )
-        return agency_suggestions
-
-    @session_manager
     async def get_next_url_for_all_annotations(
-        self, session, batch_id: Optional[int] = None
+        self, batch_id: int | None = None
         ) -> GetNextURLForAllAnnotationResponse:
-        query = (
-            Select(URL)
-            .where(
-                and_(
-                    URL.outcome == URLStatus.PENDING.value,
-                    StatementComposer.user_suggestion_not_exists(UserUrlAgencySuggestion),
-                    StatementComposer.user_suggestion_not_exists(UserRecordTypeSuggestion),
-                    StatementComposer.user_suggestion_not_exists(UserRelevantSuggestion),
-                )
-            )
-        )
-        if batch_id is not None:
-            query = query.where(URL.batch_id == batch_id)
-
-        load_options = [
-            URL.html_content,
-            URL.automated_agency_suggestions,
-            URL.auto_relevant_suggestion,
-            URL.auto_record_type_suggestion
-        ]
-        select_in_loads = [selectinload(load_option) for load_option in load_options]
-
-        # Add load options
-        query = query.options(
-            *select_in_loads
-        )
-
-        query = query.order_by(URL.id.asc()).limit(1)
-        raw_results = await session.execute(query)
-        url = raw_results.scalars().one_or_none()
-        if url is None:
-            return GetNextURLForAllAnnotationResponse(
-                next_annotation=None
-            )
-
-        html_response_info = DTOConverter.html_content_list_to_html_response_info(
-            url.html_content
-        )
-
-        if url.auto_relevant_suggestion is not None:
-            auto_relevant = url.auto_relevant_suggestion.relevant
-        else:
-            auto_relevant = None
-
-        if url.auto_record_type_suggestion is not None:
-            auto_record_type = url.auto_record_type_suggestion.record_type
-        else:
-            auto_record_type = None
-
-        agency_suggestions = await self.get_agency_suggestions(session, url_id=url.id)
-
-        return GetNextURLForAllAnnotationResponse(
-            next_annotation=GetNextURLForAllAnnotationInnerResponse(
-                url_info=URLMapping(
-                    url_id=url.id,
-                    url=url.url
-                ),
-                html_info=html_response_info,
-                suggested_relevant=auto_relevant,
-                suggested_record_type=auto_record_type,
-                agency_suggestions=agency_suggestions,
-                batch_info=await self.get_annotation_batch_info(
-                    session,
-                    batch_id=batch_id,
-                    models=[
-                        UserUrlAgencySuggestion,
-                        UserRecordTypeSuggestion,
-                        UserRelevantSuggestion
-                    ]
-                )
-            )
-        )
+        return await self.run_query_builder(GetNextURLForAllAnnotationQueryBuilder(batch_id))
 
     @session_manager
     async def add_all_annotations_to_url(
@@ -2302,60 +1953,6 @@ class AsyncDatabaseClient:
         raw_result = await session.execute(query)
         urls = raw_result.scalars().all()
         return [URL404ProbeTDO(url=url.url, url_id=url.id) for url in urls]
-
-    @staticmethod
-    async def get_annotation_batch_info(
-        session: AsyncSession,
-        batch_id: Optional[int],
-        models: List[UserSuggestionType]
-    ) -> Optional[AnnotationBatchInfo]:
-        if batch_id is None:
-            return None
-
-        sc = StatementComposer
-        include_queries = [
-            sc.user_suggestion_exists(model)
-            for model in models
-        ]
-
-        select_url = select(func.count(URL.id))
-
-        common_where_clause = [
-            URL.outcome == URLStatus.PENDING.value,
-            URL.batch_id == batch_id,
-        ]
-
-        annotated_query = (
-            select_url
-            .where(
-                *common_where_clause,
-                *include_queries,
-            )
-        )
-
-        exclude_queries = [
-            sc.user_suggestion_not_exists(model)
-            for model in models
-        ]
-
-        not_annotated_query = (
-            select_url
-            .where(
-                *common_where_clause,
-                *exclude_queries,
-            )
-        )
-
-        annotated_result_raw = await session.execute(annotated_query)
-        annotated_result = annotated_result_raw.scalars().one_or_none()
-        not_annotated_result_raw = await session.execute(not_annotated_query)
-        not_annotated_result = not_annotated_result_raw.scalars().one_or_none()
-
-        return AnnotationBatchInfo(
-            count_annotated=annotated_result,
-            count_not_annotated=not_annotated_result,
-            total_urls=annotated_result + not_annotated_result
-        )
 
     @session_manager
     async def get_urls_aggregated_pending_metrics(

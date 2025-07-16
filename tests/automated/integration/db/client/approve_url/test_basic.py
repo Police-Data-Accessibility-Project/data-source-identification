@@ -1,6 +1,6 @@
 import pytest
 
-from src.api.endpoints.review.dtos.approve import FinalReviewApprovalInfo
+from src.api.endpoints.review.approve.dto import FinalReviewApprovalInfo
 from src.collectors.enums import URLStatus
 from src.core.enums import RecordType
 from src.db.models.instantiations.confirmed_url_agency import ConfirmedURLAgency

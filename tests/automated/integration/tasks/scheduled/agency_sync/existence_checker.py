@@ -1,5 +1,5 @@
 from src.db.models.instantiations.agency import Agency
-from src.pdap_api.dtos.agencies_sync import AgenciesSyncResponseInnerInfo
+from src.external.pdap.dtos.agencies_sync import AgenciesSyncResponseInnerInfo
 from tests.automated.integration.tasks.scheduled.agency_sync.data import FIRST_CALL_RESPONSE, SECOND_CALL_RESPONSE
 
 

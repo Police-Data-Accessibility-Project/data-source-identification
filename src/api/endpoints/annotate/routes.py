@@ -3,14 +3,14 @@ from typing import Optional
 from fastapi import APIRouter, Depends, Path, Query
 
 from src.api.dependencies import get_async_core
-from src.api.endpoints.annotate.dtos.agency.post import URLAgencyAnnotationPostInfo
-from src.api.endpoints.annotate.dtos.agency.response import GetNextURLForAgencyAnnotationResponse
-from src.api.endpoints.annotate.dtos.all.post import AllAnnotationPostInfo
-from src.api.endpoints.annotate.dtos.all.response import GetNextURLForAllAnnotationResponse
+from src.api.endpoints.annotate.agency.get.dto import GetNextURLForAgencyAnnotationResponse
+from src.api.endpoints.annotate.agency.post.dto import URLAgencyAnnotationPostInfo
+from src.api.endpoints.annotate.all.get.dto import GetNextURLForAllAnnotationResponse
+from src.api.endpoints.annotate.all.post.dto import AllAnnotationPostInfo
 from src.api.endpoints.annotate.dtos.record_type.post import RecordTypeAnnotationPostInfo
 from src.api.endpoints.annotate.dtos.record_type.response import GetNextRecordTypeAnnotationResponseOuterInfo
-from src.api.endpoints.annotate.dtos.relevance.post import RelevanceAnnotationPostInfo
-from src.api.endpoints.annotate.dtos.relevance.response import GetNextRelevanceAnnotationResponseOuterInfo
+from src.api.endpoints.annotate.relevance.get.dto import GetNextRelevanceAnnotationResponseOuterInfo
+from src.api.endpoints.annotate.relevance.post.dto import RelevanceAnnotationPostInfo
 from src.core.core import AsyncCore
 from src.security.manager import get_access_info
 from src.security.dtos.access_info import AccessInfo

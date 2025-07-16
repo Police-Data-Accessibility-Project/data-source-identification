@@ -1,4 +1,4 @@
-from src.pdap_api.dtos.agencies_sync import AgenciesSyncResponseInnerInfo
+from src.external.pdap.dtos.agencies_sync import AgenciesSyncResponseInnerInfo
 
 
 def get_upsert_agencies_mappings(

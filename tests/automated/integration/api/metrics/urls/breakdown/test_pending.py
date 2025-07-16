@@ -1,7 +1,7 @@
 import pendulum
 import pytest
 
-from src.api.endpoints.annotate.dtos.agency.post import URLAgencyAnnotationPostInfo
+from src.api.endpoints.annotate.agency.post.dto import URLAgencyAnnotationPostInfo
 from src.collectors.enums import CollectorType, URLStatus
 from src.core.enums import SuggestedStatus, RecordType
 from tests.helpers.batch_creation_parameters.annotation_info import AnnotationInfo

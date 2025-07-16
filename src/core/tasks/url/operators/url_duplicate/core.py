@@ -6,7 +6,7 @@ from src.db.client.async_ import AsyncDatabaseClient
 from src.db.enums import TaskType
 from src.core.tasks.url.operators.url_duplicate.tdo import URLDuplicateTDO
 from src.core.tasks.url.operators.base import URLTaskOperatorBase
-from src.pdap_api.client import PDAPClient
+from src.external.pdap.client import PDAPClient
 
 
 class URLDuplicateTaskOperator(URLTaskOperatorBase):

@@ -1,6 +1,6 @@
 from pydantic import BaseModel, model_validator
 
-from src.api.endpoints.annotate.dtos.agency.post import URLAgencyAnnotationPostInfo
+from src.api.endpoints.annotate.agency.post.dto import URLAgencyAnnotationPostInfo
 from src.collectors.enums import URLStatus
 from src.core.enums import RecordType
 from tests.helpers.batch_creation_parameters.annotation_info import AnnotationInfo

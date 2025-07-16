@@ -2,7 +2,7 @@ from typing import Optional
 
 from pydantic import BaseModel
 
-from src.api.endpoints.annotate.dtos.agency.post import URLAgencyAnnotationPostInfo
+from src.api.endpoints.annotate.agency.post.dto import URLAgencyAnnotationPostInfo
 from src.core.enums import SuggestedStatus, RecordType
 
 

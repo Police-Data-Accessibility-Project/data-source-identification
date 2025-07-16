@@ -1,7 +1,7 @@
 import pytest
 
-from src.api.endpoints.review.dtos.approve import FinalReviewApprovalInfo
-from src.api.endpoints.review.dtos.get import GetNextURLForFinalReviewOuterResponse
+from src.api.endpoints.review.approve.dto import FinalReviewApprovalInfo
+from src.api.endpoints.review.next.dto import GetNextURLForFinalReviewOuterResponse
 from src.collectors.enums import URLStatus
 from src.core.enums import RecordType
 from src.db.constants import PLACEHOLDER_AGENCY_NAME
