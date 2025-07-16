@@ -17,7 +17,7 @@ class RelevanceAnnotationResponseInfo(BaseModel):
     )
 
 class GetNextRelevanceAnnotationResponseInfo(AnnotationInnerResponseInfoBase):
-    annotation: RelevanceAnnotationInfo | None = Field(
+    annotation: RelevanceAnnotationResponseInfo | None = Field(
         title="The auto-labeler's annotation for relevance"
     )
 

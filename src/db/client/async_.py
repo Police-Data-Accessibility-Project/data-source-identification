@@ -22,7 +22,9 @@ from src.api.endpoints.annotate.all.get.dto import GetNextURLForAllAnnotationRes
 from src.api.endpoints.annotate.all.get.query import GetNextURLForAllAnnotationQueryBuilder
 from src.api.endpoints.annotate.all.post.dto import AllAnnotationPostInfo
 from src.api.endpoints.annotate.dtos.record_type.response import GetNextRecordTypeAnnotationResponseInfo
-from src.api.endpoints.annotate.relevance.get.dto import GetNextRelevanceAnnotationResponseInfo
+from src.api.endpoints.annotate.relevance.get.dto import GetNextRelevanceAnnotationResponseInfo, \
+    RelevanceAnnotationResponseInfo
+from src.api.endpoints.annotate.relevance.get.query import GetNextUrlForRelevanceAnnotationQueryBuilder
 from src.api.endpoints.batch.dtos.get.summaries.response import GetBatchSummariesResponse
 from src.api.endpoints.batch.dtos.get.summaries.summary import BatchSummary
 from src.api.endpoints.collector.dtos.manual_batch.post import ManualBatchInputDTO
@@ -311,50 +313,12 @@ class AsyncDatabaseClient:
         )
         session.add(suggestion)
 
-    @session_manager
     async def get_next_url_for_relevance_annotation(
         self,
-        session: AsyncSession,
-        user_id: int,
-        batch_id: Optional[int]
+        batch_id: int | None,
+        user_id: int | None = None,
     ) -> GetNextRelevanceAnnotationResponseInfo | None:
-
-        url = await GetNextURLForUserAnnotationQueryBuilder(
-            user_suggestion_model_to_exclude=UserRelevantSuggestion,
-            auto_suggestion_relationship=URL.auto_relevant_suggestion,
-            batch_id=batch_id
-        ).run(session)
-        if url is None:
-            return None
-
-        # Next, get all HTML content for the URL
-        html_response_info = DTOConverter.html_content_list_to_html_response_info(
-            url.html_content
-        )
-
-        if url.auto_relevant_suggestion is not None:
-            suggestion = url.auto_relevant_suggestion
-        else:
-            suggestion = None
-
-        return GetNextRelevanceAnnotationResponseInfo(
-            url_info=URLMapping(
-                url=url.url,
-                url_id=url.id
-            ),
-            annotation=RelevanceAnnotationInfo(
-                is_relevant=suggestion.relevant,
-                confidence=suggestion.confidence,
-                model_name=suggestion.model_name
-            ) if suggestion is not None else None,
-            html_info=html_response_info,
-            batch_info=await GetAnnotationBatchInfoQueryBuilder(
-                batch_id=batch_id,
-                models=[
-                    UserUrlAgencySuggestion,
-                ]
-            ).run(session)
-        )
+        return await self.run_query_builder(GetNextUrlForRelevanceAnnotationQueryBuilder(batch_id))
 
     # endregion relevant
 
@@ -609,7 +573,7 @@ class AsyncDatabaseClient:
         model: Type[Base]
     ) -> bool:
         statement = (select(URL)
-                     .join(URLHTMLContent)
+                     .join(URLCompressedHTML)
                      .where(URL.outcome == URLStatus.PENDING.value))
         # Exclude URLs with auto suggested record types
         statement = self.statement_composer.exclude_urls_with_extant_model(

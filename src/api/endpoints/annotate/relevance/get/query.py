@@ -3,7 +3,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.api.endpoints.annotate._shared.queries.get_annotation_batch_info import GetAnnotationBatchInfoQueryBuilder
 from src.api.endpoints.annotate._shared.queries.get_next_url_for_user_annotation import \
     GetNextURLForUserAnnotationQueryBuilder
-from src.api.endpoints.annotate.relevance.get.dto import GetNextRelevanceAnnotationResponseInfo
+from src.api.endpoints.annotate.relevance.get.dto import GetNextRelevanceAnnotationResponseInfo, \
+    RelevanceAnnotationResponseInfo
 from src.core.tasks.url.operators.auto_relevant.models.annotation import RelevanceAnnotationInfo
 from src.db.dto_converter import DTOConverter
 from src.db.dtos.url.mapping import URLMapping
@@ -40,7 +41,7 @@ class GetNextUrlForRelevanceAnnotationQueryBuilder(QueryBuilderBase):
         )
 
         if url.auto_relevant_suggestion is not None:
-            suggestion = url.auto_relevant_suggestion.relevant
+            suggestion = url.auto_relevant_suggestion
         else:
             suggestion = None
 
@@ -49,11 +50,11 @@ class GetNextUrlForRelevanceAnnotationQueryBuilder(QueryBuilderBase):
                 url=url.url,
                 url_id=url.id
             ),
-            annotation=RelevanceAnnotationInfo(
-                is_relevant=suggestion.is_relevant,
+            annotation=RelevanceAnnotationResponseInfo(
+                is_relevant=suggestion.relevant,
                 confidence=suggestion.confidence,
                 model_name=suggestion.model_name
-            ),
+            ) if suggestion else None,
             html_info=html_response_info,
             batch_info=await GetAnnotationBatchInfoQueryBuilder(
                 batch_id=self.batch_id,
