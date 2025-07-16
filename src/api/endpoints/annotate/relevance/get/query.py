@@ -3,7 +3,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.api.endpoints.annotate._shared.queries.get_annotation_batch_info import GetAnnotationBatchInfoQueryBuilder
 from src.api.endpoints.annotate._shared.queries.get_next_url_for_user_annotation import \
     GetNextURLForUserAnnotationQueryBuilder
-from src.api.endpoints.annotate.relevance.get.dto import GetNextRelevanceAnnotationResponseInfo
+from src.api.endpoints.annotate.relevance.get.dto import GetNextRelevanceAnnotationResponseInfo, \
+    RelevanceAnnotationResponseInfo
 from src.core.tasks.url.operators.auto_relevant.models.annotation import RelevanceAnnotationInfo
 from src.db.dto_converter import DTOConverter
 from src.db.dtos.url.mapping import URLMapping
@@ -49,7 +50,7 @@ class GetNextUrlForRelevanceAnnotationQueryBuilder(QueryBuilderBase):
                 url=url.url,
                 url_id=url.id
             ),
-            annotation=RelevanceAnnotationInfo(
+            annotation=RelevanceAnnotationResponseInfo(
                 is_relevant=suggestion.is_relevant,
                 confidence=suggestion.confidence,
                 model_name=suggestion.model_name

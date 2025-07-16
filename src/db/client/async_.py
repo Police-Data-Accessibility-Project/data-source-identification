@@ -609,7 +609,7 @@ class AsyncDatabaseClient:
         model: Type[Base]
     ) -> bool:
         statement = (select(URL)
-                     .join(URLHTMLContent)
+                     .join(URLCompressedHTML)
                      .where(URL.outcome == URLStatus.PENDING.value))
         # Exclude URLs with auto suggested record types
         statement = self.statement_composer.exclude_urls_with_extant_model(

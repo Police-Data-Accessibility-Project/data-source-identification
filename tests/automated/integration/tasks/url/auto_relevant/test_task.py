@@ -4,7 +4,8 @@ from src.db.enums import TaskType
 from src.db.models.instantiations.url.core import URL
 from src.db.models.instantiations.url.error_info import URLErrorInfo
 from src.db.models.instantiations.url.suggestion.relevant.auto import AutoRelevantSuggestion
-from tests.automated.integration.tasks.asserts import assert_prereqs_not_met, assert_task_has_expected_run_info
+from tests.automated.integration.tasks.asserts import assert_prereqs_not_met, assert_task_has_expected_run_info, \
+    assert_prereqs_met
 from tests.automated.integration.tasks.url.auto_relevant.setup import setup_operator, setup_urls
 
 
@@ -15,6 +16,7 @@ async def test_url_auto_relevant_task(db_data_creator):
     await assert_prereqs_not_met(operator)
 
     url_ids = await setup_urls(db_data_creator)
+    await assert_prereqs_met(operator)
 
     task_id = await db_data_creator.adb_client.initiate_task(task_type=TaskType.RELEVANCY)
 

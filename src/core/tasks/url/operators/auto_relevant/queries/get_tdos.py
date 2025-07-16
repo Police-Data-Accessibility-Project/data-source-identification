@@ -1,4 +1,4 @@
-from typing import Any, Sequence
+from typing import Sequence
 
 from sqlalchemy import select, Row
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -27,13 +27,9 @@ class GetAutoRelevantTDOsQueryBuilder(QueryBuilderBase):
             .options(
                 selectinload(URL.compressed_html)
             )
-            .outerjoin(
-                URLCompressedHTML,
-                URL.id == URLCompressedHTML.url_id
-            )
+            .join(URLCompressedHTML)
             .where(
                 URL.outcome == URLStatus.PENDING.value,
-                URLCompressedHTML.compressed_html.is_not(None)
             )
         )
         query = StatementComposer.exclude_urls_with_extant_model(
