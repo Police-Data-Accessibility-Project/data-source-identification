@@ -130,7 +130,7 @@ class TableTester:
             self.run_column_test(column)
 
 
-def test_batch(wipe_database):
+def test_batch(wiped_database):
     engine = create_engine(get_postgres_connection_string())
     table_tester = TableTester(
         table_name="batches",

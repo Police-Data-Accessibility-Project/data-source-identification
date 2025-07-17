@@ -14,6 +14,7 @@ from src.core.env_var_manager import EnvVarManager
 from src.util.helper_functions import load_from_environment
 from tests.helpers.alembic_runner import AlembicRunner
 from tests.helpers.db_data_creator import DBDataCreator
+from tests.helpers.setup.wipe import wipe_database
 
 
 @pytest.fixture(autouse=True, scope="session")
@@ -87,22 +88,13 @@ def setup_and_teardown():
         engine.dispose()
 
 @pytest.fixture
-def wipe_database():
-    """
-    Wipe all data from database
-    Returns:
-
-    """
-    conn = get_postgres_connection_string()
-    engine = create_engine(conn)
-    with engine.connect() as connection:
-        for table in reversed(Base.metadata.sorted_tables):
-            connection.execute(table.delete())
-        connection.commit()
+def wiped_database():
+    """Wipe all data from database."""
+    wipe_database(get_postgres_connection_string())
 
 
 @pytest.fixture
-def db_client_test(wipe_database) -> Generator[DatabaseClient, Any, None]:
+def db_client_test(wiped_database) -> Generator[DatabaseClient, Any, None]:
     # Drop pre-existing table
     conn = get_postgres_connection_string()
     db_client = DatabaseClient(db_url=conn)
@@ -110,7 +102,7 @@ def db_client_test(wipe_database) -> Generator[DatabaseClient, Any, None]:
     db_client.engine.dispose()
 
 @pytest.fixture
-def adb_client_test(wipe_database) -> Generator[AsyncDatabaseClient, Any, None]:
+def adb_client_test(wiped_database) -> Generator[AsyncDatabaseClient, Any, None]:
     conn = get_postgres_connection_string(is_async=True)
     adb_client = AsyncDatabaseClient(db_url=conn)
     yield adb_client

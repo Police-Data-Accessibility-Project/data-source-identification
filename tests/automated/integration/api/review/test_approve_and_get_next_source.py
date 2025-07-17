@@ -9,7 +9,7 @@ from src.db.models.instantiations.agency import Agency
 from src.db.models.instantiations.confirmed_url_agency import ConfirmedURLAgency
 from src.db.models.instantiations.url.core import URL
 from src.db.models.instantiations.url.optional_data_source_metadata import URLOptionalDataSourceMetadata
-from tests.helpers.complex_test_data_functions import setup_for_get_next_url_for_final_review
+from tests.helpers.setup.final_review.core import setup_for_get_next_url_for_final_review
 
 
 @pytest.mark.asyncio

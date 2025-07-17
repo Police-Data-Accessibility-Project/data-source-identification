@@ -9,7 +9,7 @@ from src.db.models.instantiations.agency import Agency
 from tests.automated.integration.tasks.scheduled.agency_sync.data import AGENCIES_SYNC_RESPONSES
 from tests.automated.integration.tasks.scheduled.agency_sync.existence_checker import AgencyChecker
 from tests.automated.integration.tasks.scheduled.agency_sync.helpers import check_sync_concluded, patch_sync_agencies
-from tests.helpers.assert_functions import assert_task_run_success
+from tests.helpers.asserts import assert_task_run_success
 
 
 @pytest.mark.asyncio

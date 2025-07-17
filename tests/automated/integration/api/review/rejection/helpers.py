@@ -3,7 +3,7 @@ from src.api.endpoints.review.next.dto import GetNextURLForFinalReviewOuterRespo
 from src.api.endpoints.review.reject.dto import FinalReviewRejectionInfo
 from src.collectors.enums import URLStatus
 from src.db.models.instantiations.url.core import URL
-from tests.helpers.complex_test_data_functions import setup_for_get_next_url_for_final_review
+from tests.helpers.setup.final_review.core import setup_for_get_next_url_for_final_review
 
 
 async def run_rejection_test(
