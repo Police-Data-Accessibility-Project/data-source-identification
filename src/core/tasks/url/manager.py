@@ -1,16 +1,11 @@
 import logging
 
-from src.api.endpoints.task.dtos.get.tasks import GetTasksResponse
 from src.core.tasks.handler import TaskHandler
 from src.core.tasks.url.loader import URLTaskOperatorLoader
-from src.db.client.async_ import AsyncDatabaseClient
-from src.api.endpoints.task.dtos.get.task import TaskInfo
 from src.db.enums import TaskType
 from src.core.tasks.dtos.run_info import URLTaskOperatorRunInfo
 from src.core.tasks.url.enums import TaskOperatorOutcome
 from src.core.function_trigger import FunctionTrigger
-from src.core.enums import BatchStatus
-from discord_poster import DiscordPoster
 
 TASK_REPEAT_THRESHOLD = 20
 

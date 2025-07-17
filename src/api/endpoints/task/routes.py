@@ -3,9 +3,9 @@ from typing import Optional
 from fastapi import APIRouter, Depends, Query, Path
 
 from src.api.dependencies import get_async_core
+from src.api.endpoints.task.by_id.dto import TaskInfo
 from src.api.endpoints.task.dtos.get.tasks import GetTasksResponse
 from src.api.endpoints.task.dtos.get.task_status import GetTaskStatusResponseInfo
-from src.api.endpoints.task.dtos.get.task import TaskInfo
 from src.db.enums import TaskType
 from src.core.core import AsyncCore
 from src.core.enums import BatchStatus

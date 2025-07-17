@@ -177,24 +177,6 @@ class DTOConverter:
         return [DTOConverter.url_to_url_with_html(url) for url in url_list]
 
     @staticmethod
-    def url_list_to_url_info_list(urls: list[URL]) -> list[URLInfo]:
-        results = []
-        for url in urls:
-            url_info = URLInfo(
-                id=url.id,
-                batch_id=url.batch_id,
-                url=url.url,
-                collector_metadata=url.collector_metadata,
-                outcome=url.outcome,
-                created_at=url.created_at,
-                updated_at=url.updated_at,
-                name=url.name
-            )
-            results.append(url_info)
-
-        return results
-
-    @staticmethod
     def url_to_url_with_html(url: URL) -> URLWithHTML:
         url_val = url.url
         url_id = url.id

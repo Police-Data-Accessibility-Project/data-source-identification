@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Query, Depends
 
 from src.api.dependencies import get_async_core
-from src.api.endpoints.url.dtos.response import GetURLsResponseInfo
+from src.api.endpoints.url.get.dto import GetURLsResponseInfo
 from src.core.core import AsyncCore
 from src.security.manager import get_access_info
 from src.security.dtos.access_info import AccessInfo

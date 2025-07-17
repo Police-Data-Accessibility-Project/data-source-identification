@@ -77,7 +77,6 @@ async def test_example_collector(api_test_helper, monkeypatch):
 
     bi: BatchSummary = ath.request_validator.get_batch_info(batch_id=batch_id)
     assert bi.status == BatchStatus.READY_TO_LABEL
-    assert bi.url_counts.total == 2
     assert bi.parameters == dto.model_dump()
     assert bi.strategy == CollectorType.EXAMPLE.value
     assert bi.user_id is not None

@@ -1,11 +1,9 @@
 import jwt
-import pytest
 from starlette.testclient import TestClient
 
 from src.api.main import app
 from src.security.constants import ALGORITHM
 from src.security.enums import Permissions
-
 
 SECRET_KEY = "test_secret_key"
 VALID_TOKEN = "valid_token"

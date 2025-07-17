@@ -10,6 +10,7 @@ from src.core.enums import SuggestedStatus
 from src.core.tasks.url.operators.url_html.scraper.parser.util import convert_to_response_html_info
 from src.db.dtos.url.mapping import URLMapping
 from src.db.models.instantiations.confirmed_url_agency import ConfirmedURLAgency
+from src.db.models.instantiations.link.link_batch_urls import LinkBatchURL
 from src.db.models.instantiations.url.core import URL
 from src.db.models.instantiations.url.suggestion.agency.auto import AutomatedUrlAgencySuggestion
 from src.db.models.instantiations.url.suggestion.agency.user import UserUrlAgencySuggestion
@@ -41,20 +42,19 @@ class GetNextURLAgencyForAnnotationQueryBuilder(QueryBuilderBase):
             have extant autosuggestions
         """
         # Select statement
-        statement = (
-            select(URL.id, URL.url)
-            # Must not have confirmed agencies
-            .where(
-                URL.outcome == URLStatus.PENDING.value
-            )
+        query = select(URL.id, URL.url)
+        if self.batch_id is not None:
+            query = query.join(LinkBatchURL).where(LinkBatchURL.batch_id == self.batch_id)
+
+        # Must not have confirmed agencies
+        query = query.where(
+            URL.outcome == URLStatus.PENDING.value
         )
 
-        if self.batch_id is not None:
-            statement = statement.where(URL.batch_id == self.batch_id)
 
         # Must not have been annotated by a user
-        statement = (
-            statement.join(UserUrlAgencySuggestion, isouter=True)
+        query = (
+            query.join(UserUrlAgencySuggestion, isouter=True)
             .where(
                 ~exists(
                     select(UserUrlAgencySuggestion).
@@ -93,7 +93,7 @@ class GetNextURLAgencyForAnnotationQueryBuilder(QueryBuilderBase):
                 )
             )
         ).limit(1)
-        raw_result = await session.execute(statement)
+        raw_result = await session.execute(query)
         results = raw_result.all()
         if len(results) == 0:
             return GetNextURLForAgencyAnnotationResponse(

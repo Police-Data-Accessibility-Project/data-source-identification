@@ -54,7 +54,7 @@ def alter_enum_value(
     """
     op.execute(f"ALTER TYPE {enum_name} RENAME VALUE '{old_value}' TO '{new_value}'")
 
-def id_column():
+def id_column() -> sa.Column:
     """Returns a standard `id` column."""
     return sa.Column(
         'id',
@@ -64,7 +64,7 @@ def id_column():
         nullable=False
     )
 
-def created_at_column():
+def created_at_column() -> sa.Column:
     """Returns a standard `created_at` column."""
     return sa.Column(
         'created_at',
@@ -73,7 +73,7 @@ def created_at_column():
         nullable=False
     )
 
-def updated_at_column():
+def updated_at_column() -> sa.Column:
     """Returns a standard `updated_at` column."""
     return sa.Column(
         'updated_at',
@@ -83,8 +83,8 @@ def updated_at_column():
         nullable=False
     )
 
-def url_id_column():
-    sa.Column(
+def url_id_column() -> sa.Column:
+    return sa.Column(
         'url_id',
         sa.Integer(),
         sa.ForeignKey(
@@ -92,4 +92,15 @@ def url_id_column():
             ondelete='CASCADE'
         ),
         nullable=False
-    ),
+    )
+
+def batch_id_column(nullable=False) -> sa.Column:
+    return sa.Column(
+        'batch_id',
+        sa.Integer(),
+        sa.ForeignKey(
+            'batches.id',
+            ondelete='CASCADE'
+        ),
+        nullable=nullable
+    )

@@ -46,7 +46,11 @@ class Batch(StandardModel):
     parameters = Column(JSON)
 
     # Relationships
-    urls = relationship("URL", back_populates="batch")
+    urls = relationship(
+        "URL",
+        secondary="link_batch_urls",
+        back_populates="batch"
+    )
     # missings = relationship("Missing", back_populates="batch")  # Not in active use
     logs = relationship("Log", back_populates="batch")
     duplicates = relationship("Duplicate", back_populates="batch")

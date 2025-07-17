@@ -1,6 +1,6 @@
 from typing import Optional, Type
 
-from sqlalchemy import FromClause, select, and_, Select, desc, asc, func
+from sqlalchemy import FromClause, select, and_, Select, desc, asc, func, join
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
@@ -14,6 +14,7 @@ from src.db.dtos.url.html_content import URLHTMLContentInfo
 from src.db.exceptions import FailedQueryException
 from src.db.models.instantiations.batch import Batch
 from src.db.models.instantiations.confirmed_url_agency import ConfirmedURLAgency
+from src.db.models.instantiations.link.link_batch_urls import LinkBatchURL
 from src.db.models.instantiations.url.core import URL
 from src.db.models.instantiations.url.suggestion.agency.auto import AutomatedUrlAgencySuggestion
 from src.db.models.instantiations.url.suggestion.agency.user import UserUrlAgencySuggestion
@@ -59,29 +60,46 @@ class GetNextURLForFinalReviewQueryBuilder(QueryBuilderBase):
             where_clauses.append(where_clause)
         return where_clauses
 
-    def _build_base_query(self, anno_exists_query: FromClause, ):
+    def _build_base_query(
+        self,
+        anno_exists_query: FromClause,
+    ) -> Select:
         builder = self.anno_exists_builder
         where_exist_clauses = self._get_where_exist_clauses(
             builder.query
         )
 
-        return (
+        query = (
             select(
                 URL,
-                self._sum_exists_query(anno_exists_query, ALL_ANNOTATION_MODELS)
+                self._sum_exists_query(anno_exists_query, USER_ANNOTATION_MODELS)
             )
             .select_from(anno_exists_query)
             .join(
                 URL,
                 URL.id == builder.url_id
             )
-            .where(
+        )
+        if self.batch_id is not None:
+            query = (
+                query.join(
+                    LinkBatchURL
+                )
+                .where(
+                    LinkBatchURL.batch_id == self.batch_id
+                )
+            )
+
+        query = (
+            query.where(
                 and_(
                     URL.outcome == URLStatus.PENDING.value,
                     *where_exist_clauses
                 )
             )
         )
+        return query
+
 
     def _sum_exists_query(self, query, models: list[Type[URLDependentMixin]]):
         return sum(
@@ -160,21 +178,23 @@ class GetNextURLForFinalReviewQueryBuilder(QueryBuilderBase):
         builder = self.anno_exists_builder
         count_ready_query = (
             select(
-                URL.batch_id,
+                LinkBatchURL.batch_id,
                 func.count(URL.id).label(self.count_label)
             )
+            .select_from(LinkBatchURL)
+            .join(URL)
             .join(
                 builder.query,
                 builder.url_id == URL.id
             )
             .where(
-                URL.batch_id == self.batch_id,
+                LinkBatchURL.batch_id == self.batch_id,
                 URL.outcome == URLStatus.PENDING.value,
                 *self._get_where_exist_clauses(
                     builder.query
                 )
             )
-            .group_by(URL.batch_id)
+            .group_by(LinkBatchURL.batch_id)
             .subquery("count_ready")
         )
         return count_ready_query
@@ -185,10 +205,9 @@ class GetNextURLForFinalReviewQueryBuilder(QueryBuilderBase):
                 Batch.id.label("batch_id"),
                 func.count(URL.id).label(self.count_label)
             )
-            .outerjoin(
-                URL,
-                URL.batch_id == Batch.id
-            )
+            .select_from(Batch)
+            .join(LinkBatchURL)
+            .outerjoin(URL, URL.id == LinkBatchURL.url_id)
             .where(
                 URL.outcome.in_(
                     [
@@ -198,7 +217,7 @@ class GetNextURLForFinalReviewQueryBuilder(QueryBuilderBase):
                         URLStatus.INDIVIDUAL_RECORD.value
                     ]
                 ),
-                URL.batch_id == self.batch_id
+                LinkBatchURL.batch_id == self.batch_id
             )
             .group_by(Batch.id)
             .subquery("count_reviewed")
@@ -272,7 +291,6 @@ class GetNextURLForFinalReviewQueryBuilder(QueryBuilderBase):
     async def build_url_query(self):
         anno_exists_query = self.anno_exists_builder.query
         url_query = self._build_base_query(anno_exists_query)
-        url_query = await self._apply_batch_id_filter(url_query, self.batch_id)
         url_query = await self._apply_options(url_query)
         url_query = await self._apply_order_clause(url_query)
 
