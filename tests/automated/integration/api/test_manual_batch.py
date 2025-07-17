@@ -2,6 +2,7 @@
 import pytest
 
 from src.api.endpoints.collector.dtos.manual_batch.post import ManualBatchInnerInputDTO, ManualBatchInputDTO
+from src.db.models.instantiations.link.link_batch_urls import LinkBatchURL
 from src.db.models.instantiations.url.optional_data_source_metadata import URLOptionalDataSourceMetadata
 from src.db.models.instantiations.url.core import URL
 from src.db.models.instantiations.batch import Batch
@@ -69,6 +70,7 @@ async def test_manual_batch(api_test_helper):
 
     # Get URLs from database
     urls: list[URL] = await adb_client.get_all(URL)
+    links: list[LinkBatchURL] = await adb_client.get_all(LinkBatchURL)
 
     # Confirm 100 URLs
     assert len(urls) == 100
@@ -87,8 +89,10 @@ async def test_manual_batch(api_test_helper):
                     return False
         return True
 
+    def check_link(link: LinkBatchURL):
+        assert link.batch_id == batch.id
+
     def check_url(url: URL, url_only: bool):
-        assert url.batch_id == batch.id
         assert url.url is not None
         other_attributes = ["name", "description", "collector_metadata", "record_type"]
         return check_attributes(url, other_attributes, url_only)
@@ -99,6 +103,8 @@ async def test_manual_batch(api_test_helper):
     for url in urls:
         if check_url(url, True):
             count_only_name += 1
+    for link in links:
+        check_link(link)
     assert count_only_name == 50
     # Confirm 50 have all optional fields
     count_all = 0

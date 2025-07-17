@@ -1,7 +1,7 @@
 import pytest
 
 from src.core.enums import RecordType
-from tests.helpers.complex_test_data_functions import setup_for_get_next_url_for_annotation
+from tests.helpers.setup.annotation.core import setup_for_get_next_url_for_annotation
 from tests.helpers.db_data_creator import DBDataCreator
 
 

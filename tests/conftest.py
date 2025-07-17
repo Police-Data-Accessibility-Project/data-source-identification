@@ -1,7 +1,8 @@
 import logging
-from typing import Any, Generator
+from typing import Any, Generator, AsyncGenerator, Coroutine
 
 import pytest
+import pytest_asyncio
 from alembic.config import Config
 from sqlalchemy import create_engine, inspect, MetaData
 from sqlalchemy.orm import scoped_session, sessionmaker
@@ -14,6 +15,8 @@ from src.core.env_var_manager import EnvVarManager
 from src.util.helper_functions import load_from_environment
 from tests.helpers.alembic_runner import AlembicRunner
 from tests.helpers.db_data_creator import DBDataCreator
+from tests.helpers.setup.populate import populate_database
+from tests.helpers.setup.wipe import wipe_database
 
 
 @pytest.fixture(autouse=True, scope="session")
@@ -87,36 +90,36 @@ def setup_and_teardown():
         engine.dispose()
 
 @pytest.fixture
-def wipe_database():
-    """
-    Wipe all data from database
-    Returns:
+def wiped_database():
+    """Wipe all data from database."""
+    wipe_database(get_postgres_connection_string())
 
-    """
-    conn = get_postgres_connection_string()
-    engine = create_engine(conn)
-    with engine.connect() as connection:
-        for table in reversed(Base.metadata.sorted_tables):
-            connection.execute(table.delete())
-        connection.commit()
 
 
 @pytest.fixture
-def db_client_test(wipe_database) -> Generator[DatabaseClient, Any, None]:
+def db_client_test(wiped_database) -> Generator[DatabaseClient, Any, None]:
     # Drop pre-existing table
     conn = get_postgres_connection_string()
     db_client = DatabaseClient(db_url=conn)
     yield db_client
     db_client.engine.dispose()
 
-@pytest.fixture
-def adb_client_test(wipe_database) -> Generator[AsyncDatabaseClient, Any, None]:
+@pytest_asyncio.fixture
+async def populated_database(wiped_database) -> None:
+    conn = get_postgres_connection_string(is_async=True)
+    adb_client = AsyncDatabaseClient(db_url=conn)
+    await populate_database(adb_client)
+
+@pytest_asyncio.fixture
+async def adb_client_test(wiped_database) -> AsyncGenerator[AsyncDatabaseClient, Any]:
     conn = get_postgres_connection_string(is_async=True)
     adb_client = AsyncDatabaseClient(db_url=conn)
     yield adb_client
     adb_client.engine.dispose()
 
 @pytest.fixture
-def db_data_creator(db_client_test):
+def db_data_creator(
+    db_client_test,
+):
     db_data_creator = DBDataCreator(db_client=db_client_test)
     yield db_data_creator

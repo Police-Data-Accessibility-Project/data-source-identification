@@ -11,7 +11,6 @@ class URL(UpdatedAtMixin, CreatedAtMixin, StandardModel):
     __tablename__ = 'urls'
 
     # The batch this URL is associated with
-    batch_id = Column(Integer, ForeignKey('batches.id', name='fk_url_batch_id'), nullable=False)
     url = Column(Text, unique=True)
     name = Column(String)
     description = Column(Text)
@@ -35,7 +34,12 @@ class URL(UpdatedAtMixin, CreatedAtMixin, StandardModel):
     record_type = Column(postgresql.ENUM(*record_type_values, name='record_type'), nullable=True)
 
     # Relationships
-    batch = relationship("Batch", back_populates="urls")
+    batch = relationship(
+        "Batch",
+        secondary="link_batch_urls",
+        back_populates="urls",
+        uselist=False
+    )
     duplicates = relationship("Duplicate", back_populates="original_url")
     html_content = relationship("URLHTMLContent", back_populates="url", cascade="all, delete-orphan")
     error_info = relationship("URLErrorInfo", back_populates="url", cascade="all, delete-orphan")

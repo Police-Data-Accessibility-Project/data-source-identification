@@ -1,14 +1,15 @@
 from typing import Any
 
 from sqlalchemy import Select, select, exists, func, Subquery, and_, not_, ColumnElement
-from sqlalchemy.orm import aliased
+from sqlalchemy.orm import aliased, selectinload
 
 from src.collectors.enums import URLStatus
 from src.core.enums import BatchStatus
 from src.db.constants import STANDARD_ROW_LIMIT
 from src.db.enums import TaskType
 from src.db.models.instantiations.confirmed_url_agency import ConfirmedURLAgency
-from src.db.models.instantiations.link_task_url import LinkTaskURL
+from src.db.models.instantiations.link.link_batch_urls import LinkBatchURL
+from src.db.models.instantiations.link.link_task_url import LinkTaskURL
 from src.db.models.instantiations.task.core import Task
 from src.db.models.instantiations.url.html_content import URLHTMLContent
 from src.db.models.instantiations.url.optional_data_source_metadata import URLOptionalDataSourceMetadata
@@ -39,6 +40,9 @@ class StatementComposer:
             where(URLHTMLContent.id == None).
             where(~exists(exclude_subquery)).
             where(URL.outcome == URLStatus.PENDING.value)
+            .options(
+                selectinload(URL.batch)
+            )
         )
         return query
 
@@ -92,6 +96,8 @@ class StatementComposer:
                 )
             ).outerjoin(
                 URLOptionalDataSourceMetadata
+            ).join(
+                LinkBatchURL
             ).join(
                 Batch
             )

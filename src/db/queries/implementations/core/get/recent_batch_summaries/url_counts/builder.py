@@ -5,6 +5,7 @@ from sqlalchemy.sql.functions import count, coalesce
 
 from src.collectors.enums import URLStatus, CollectorType
 from src.core.enums import BatchStatus
+from src.db.models.instantiations.link.link_batch_urls import LinkBatchURL
 from src.db.models.instantiations.url.core import URL
 from src.db.models.instantiations.batch import Batch
 from src.db.queries.base.builder import QueryBuilderBase
@@ -41,7 +42,10 @@ class URLCountsCTEQueryBuilder(QueryBuilderBase):
                 self.count_case_url_status(URLStatus.NOT_RELEVANT, labels.not_relevant),
                 self.count_case_url_status(URLStatus.ERROR, labels.error),
                 self.count_case_url_status(URLStatus.DUPLICATE, labels.duplicate),
-            ).outerjoin(
+            )
+            .select_from(Batch)
+            .outerjoin(LinkBatchURL)
+            .outerjoin(
                 URL
             )
         )
@@ -68,9 +72,9 @@ class URLCountsCTEQueryBuilder(QueryBuilderBase):
             return query
         pending_url_subquery = (
             exists(
-                Select(URL).where(
+                Select(URL).join(LinkBatchURL).where(
                     and_(
-                        URL.batch_id == Batch.id,
+                        LinkBatchURL.batch_id == Batch.id,
                         URL.outcome == URLStatus.PENDING.value
                     )
                 )

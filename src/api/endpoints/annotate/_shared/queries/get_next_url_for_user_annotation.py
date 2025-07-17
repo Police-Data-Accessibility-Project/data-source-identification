@@ -5,6 +5,7 @@ from sqlalchemy.orm import QueryableAttribute, joinedload
 from src.collectors.enums import URLStatus
 from src.core.enums import SuggestedStatus
 from src.db.client.types import UserSuggestionModel
+from src.db.models.instantiations.link.link_batch_urls import LinkBatchURL
 from src.db.models.instantiations.url.core import URL
 from src.db.models.instantiations.url.suggestion.relevant.user import UserRelevantSuggestion
 from src.db.queries.base.builder import QueryBuilderBase
@@ -27,10 +28,21 @@ class GetNextURLForUserAnnotationQueryBuilder(QueryBuilderBase):
         self.auto_suggestion_relationship = auto_suggestion_relationship
 
     async def run(self, session: AsyncSession):
-        url_query = (
+        query = (
             select(
                 URL,
             )
+        )
+
+        if self.batch_id is not None:
+            query = (
+                query
+                .join(LinkBatchURL)
+                .where(LinkBatchURL.batch_id == self.batch_id)
+            )
+
+        query = (
+            query
             .where(URL.outcome == URLStatus.PENDING.value)
             # URL must not have user suggestion
             .where(
@@ -39,7 +51,7 @@ class GetNextURLForUserAnnotationQueryBuilder(QueryBuilderBase):
         )
 
         if self.check_if_annotated_not_relevant:
-            url_query = url_query.where(
+            query = query.where(
                 not_(
                     exists(
                         select(UserRelevantSuggestion)
@@ -51,14 +63,13 @@ class GetNextURLForUserAnnotationQueryBuilder(QueryBuilderBase):
                 )
             )
 
-        if self.batch_id is not None:
-            url_query = url_query.where(URL.batch_id == self.batch_id)
 
-        url_query = url_query.options(
+
+        query = query.options(
             joinedload(self.auto_suggestion_relationship),
             joinedload(URL.html_content)
         ).limit(1)
 
-        raw_result = await session.execute(url_query)
+        raw_result = await session.execute(query)
 
         return raw_result.unique().scalars().one_or_none()

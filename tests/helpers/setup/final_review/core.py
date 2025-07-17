@@ -1,63 +1,10 @@
 from typing import Optional
 
-from pydantic import BaseModel
-
 from src.api.endpoints.annotate.agency.post.dto import URLAgencyAnnotationPostInfo
-from src.db.dtos.url.insert import InsertURLsInfo
-from src.db.dtos.url.mapping import URLMapping
-from src.collectors.enums import URLStatus
-from src.core.enums import RecordType, SuggestionType
-from tests.helpers.db_data_creator import BatchURLCreationInfo
+from src.core.enums import RecordType
 from tests.helpers.db_data_creator import DBDataCreator
+from tests.helpers.setup.final_review.model import FinalReviewSetupInfo
 
-class AnnotationSetupInfo(BaseModel):
-    batch_id: int
-    insert_urls_info: InsertURLsInfo
-
-async def setup_for_get_next_url_for_annotation(
-        db_data_creator: DBDataCreator,
-        url_count: int,
-        outcome: URLStatus = URLStatus.PENDING
-) -> AnnotationSetupInfo:
-    batch_id = db_data_creator.batch()
-    insert_urls_info = db_data_creator.urls(
-        batch_id=batch_id,
-        url_count=url_count,
-        outcome=outcome
-    )
-    await db_data_creator.html_data(
-        [
-            url.url_id for url in insert_urls_info.url_mappings
-        ]
-    )
-    return AnnotationSetupInfo(batch_id=batch_id, insert_urls_info=insert_urls_info)
-
-class AnnotateAgencySetupInfo(BaseModel):
-    batch_id: int
-    url_ids: list[int]
-
-async def setup_for_annotate_agency(
-        db_data_creator: DBDataCreator,
-        url_count: int,
-        suggestion_type: SuggestionType = SuggestionType.UNKNOWN,
-        with_html_content: bool = True
-):
-    buci: BatchURLCreationInfo = await db_data_creator.batch_and_urls(
-        url_count=url_count,
-        with_html_content=with_html_content
-    )
-    await db_data_creator.auto_suggestions(
-        url_ids=buci.url_ids,
-        num_suggestions=1,
-        suggestion_type=suggestion_type
-    )
-
-    return AnnotateAgencySetupInfo(batch_id=buci.batch_id, url_ids=buci.url_ids)
-
-class FinalReviewSetupInfo(BaseModel):
-    batch_id: int
-    url_mapping: URLMapping
-    user_agency_id: Optional[int]
 
 async def setup_for_get_next_url_for_final_review(
         db_data_creator: DBDataCreator,
@@ -124,4 +71,3 @@ async def setup_for_get_next_url_for_final_review(
         url_mapping=url_mapping,
         user_agency_id=user_agency_id
     )
-

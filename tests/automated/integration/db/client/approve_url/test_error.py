@@ -3,7 +3,7 @@ from starlette.exceptions import HTTPException
 
 from src.api.endpoints.review.approve.dto import FinalReviewApprovalInfo
 from src.core.enums import RecordType
-from tests.helpers.complex_test_data_functions import setup_for_get_next_url_for_final_review
+from tests.helpers.setup.final_review.core import setup_for_get_next_url_for_final_review
 from tests.helpers.db_data_creator import DBDataCreator
 
 

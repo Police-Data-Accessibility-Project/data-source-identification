@@ -1,7 +1,7 @@
 from functools import wraps
 from typing import Optional, List
 
-from sqlalchemy import create_engine, update
+from sqlalchemy import create_engine, update, Select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import sessionmaker, scoped_session, Session
 
@@ -13,6 +13,7 @@ from src.db.dtos.url.insert import InsertURLsInfo
 from src.db.dtos.log import LogInfo
 from src.db.dtos.url.core import URLInfo
 from src.db.dtos.url.mapping import URLMapping
+from src.db.models.instantiations.link.link_batch_urls import LinkBatchURL
 from src.db.models.templates import Base
 from src.db.models.instantiations.duplicate import Duplicate
 from src.db.models.instantiations.log import Log
@@ -58,7 +59,7 @@ class DatabaseClient:
         return wrapper
 
     @session_manager
-    def insert_batch(self, session, batch_info: BatchInfo) -> int:
+    def insert_batch(self, session: Session, batch_info: BatchInfo) -> int:
         """Insert a new batch into the database and return its ID."""
         batch = Batch(
             strategy=batch_info.strategy,
@@ -80,14 +81,22 @@ class DatabaseClient:
         return batch.id
 
     @session_manager
-    def get_batch_by_id(self, session, batch_id: int) -> Optional[BatchInfo]:
+    def get_batch_by_id(
+        self,
+        session: Session,
+        batch_id: int
+    ) -> BatchInfo | None:
         """Retrieve a batch by ID."""
         batch = session.query(Batch).filter_by(id=batch_id).first()
         return BatchInfo(**batch.__dict__)
 
 
     @session_manager
-    def insert_duplicates(self, session, duplicate_infos: list[DuplicateInsertInfo]):
+    def insert_duplicates(
+        self,
+        session: Session,
+        duplicate_infos: list[DuplicateInsertInfo]
+    ):
         for duplicate_info in duplicate_infos:
             duplicate = Duplicate(
                 batch_id=duplicate_info.duplicate_batch_id,
@@ -97,7 +106,10 @@ class DatabaseClient:
 
 
     @session_manager
-    def get_url_info_by_url(self, session, url: str) -> Optional[URLInfo]:
+    def get_url_info_by_url(
+        self,
+        session: Session, url: str
+    ) -> URLInfo | None:
         url = session.query(URL).filter_by(url=url).first()
         return URLInfo(**url.__dict__)
 
@@ -105,7 +117,6 @@ class DatabaseClient:
     def insert_url(self, session, url_info: URLInfo) -> int:
         """Insert a new URL into the database."""
         url_entry = URL(
-            batch_id=url_info.batch_id,
             url=url_info.url,
             collector_metadata=url_info.collector_metadata,
             outcome=url_info.outcome.value,
@@ -116,6 +127,11 @@ class DatabaseClient:
         session.add(url_entry)
         session.commit()
         session.refresh(url_entry)
+        link = LinkBatchURL(
+            batch_id=url_info.batch_id,
+            url_id=url_entry.id
+        )
+        session.add(link)
         return url_entry.id
 
     def insert_urls(self, url_infos: List[URLInfo], batch_id: int) -> InsertURLsInfo:
@@ -144,14 +160,31 @@ class DatabaseClient:
         )
 
     @session_manager
-    def get_urls_by_batch(self, session, batch_id: int, page: int = 1) -> List[URLInfo]:
+    def get_urls_by_batch(
+        self,
+        session: Session,
+        batch_id: int,
+        page: int = 1
+    ) -> list[URLInfo]:
         """Retrieve all URLs associated with a batch."""
-        urls = (session.query(URL).filter_by(batch_id=batch_id)
-                .order_by(URL.id).limit(100).offset((page - 1) * 100).all())
+        query = (
+            Select(URL)
+            .join(LinkBatchURL)
+            .where(LinkBatchURL.batch_id == batch_id)
+            .order_by(URL.id)
+            .limit(100)
+            .offset((page - 1) * 100)
+        )
+        urls = session.scalars(query).all()
+
         return ([URLInfo(**url.__dict__) for url in urls])
 
     @session_manager
-    def insert_logs(self, session, log_infos: List[LogInfo]):
+    def insert_logs(
+        self,
+        session: Session,
+        log_infos: List[LogInfo]
+    ):
         for log_info in log_infos:
             log = Log(log=log_info.log, batch_id=log_info.batch_id)
             if log_info.created_at is not None:
@@ -159,12 +192,20 @@ class DatabaseClient:
             session.add(log)
 
     @session_manager
-    def get_batch_status(self, session, batch_id: int) -> BatchStatus:
+    def get_batch_status(
+        self,
+        session: Session,
+        batch_id: int
+    ) -> BatchStatus:
         batch = session.query(Batch).filter_by(id=batch_id).first()
         return BatchStatus(batch.status)
 
     @session_manager
-    def update_url(self, session, url_info: URLInfo):
+    def update_url(
+        self,
+        session: Session,
+        url_info: URLInfo
+    ):
         url = session.query(URL).filter_by(id=url_info.id).first()
         url.collector_metadata = url_info.collector_metadata
 

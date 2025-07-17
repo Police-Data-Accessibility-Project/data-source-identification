@@ -8,7 +8,7 @@ async def mock_get_request(url: str) -> RootURLCacheResponseInfo:
     return RootURLCacheResponseInfo(text="<html><head><title>Test Title</title></head></html>")
 
 @pytest.mark.asyncio
-async def test_root_url_cache_happy_path(wipe_database):
+async def test_root_url_cache_happy_path(wiped_database):
     cache = RootURLCache()
     cache.get_request = mock_get_request
     title = await cache.get_title("https://example.com")

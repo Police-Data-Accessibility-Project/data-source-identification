@@ -1,6 +1,6 @@
 import pytest
 
-from src.api.endpoints.url.dtos.response import GetURLsResponseInfo
+from src.api.endpoints.url.get.dto import GetURLsResponseInfo
 from src.db.dtos.url.insert import InsertURLsInfo
 
 

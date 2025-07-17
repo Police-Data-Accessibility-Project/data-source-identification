@@ -22,7 +22,7 @@ class GetURLsResponseMetadataInfo(BaseModel):
 
 class GetURLsResponseInnerInfo(BaseModel):
     id: int
-    batch_id: int
+    batch_id: int | None
     url: str
     status: URLStatus
     collector_metadata: Optional[dict]

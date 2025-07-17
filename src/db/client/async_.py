@@ -3,15 +3,12 @@ from functools import wraps
 from operator import or_
 from typing import Optional, Type, Any, List, Sequence
 
-from fastapi import HTTPException
 from sqlalchemy import select, exists, func, case, Select, and_, update, delete, literal, text, Row
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.exc import IntegrityError, NoResultFound
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
-from sqlalchemy.orm import selectinload, joinedload, QueryableAttribute, aliased
-from sqlalchemy.sql.functions import coalesce
-from starlette import status
+from sqlalchemy.orm import selectinload, QueryableAttribute
 
 from src.api.endpoints.annotate._shared.queries.get_annotation_batch_info import GetAnnotationBatchInfoQueryBuilder
 from src.api.endpoints.annotate._shared.queries.get_next_url_for_user_annotation import \
@@ -22,18 +19,20 @@ from src.api.endpoints.annotate.all.get.dto import GetNextURLForAllAnnotationRes
 from src.api.endpoints.annotate.all.get.query import GetNextURLForAllAnnotationQueryBuilder
 from src.api.endpoints.annotate.all.post.dto import AllAnnotationPostInfo
 from src.api.endpoints.annotate.dtos.record_type.response import GetNextRecordTypeAnnotationResponseInfo
-from src.api.endpoints.annotate.relevance.get.dto import GetNextRelevanceAnnotationResponseInfo, \
-    RelevanceAnnotationResponseInfo
+from src.api.endpoints.annotate.relevance.get.dto import GetNextRelevanceAnnotationResponseInfo
 from src.api.endpoints.annotate.relevance.get.query import GetNextUrlForRelevanceAnnotationQueryBuilder
 from src.api.endpoints.batch.dtos.get.summaries.response import GetBatchSummariesResponse
 from src.api.endpoints.batch.dtos.get.summaries.summary import BatchSummary
+from src.api.endpoints.batch.duplicates.query import GetDuplicatesByBatchIDQueryBuilder
+from src.api.endpoints.batch.urls.query import GetURLsByBatchQueryBuilder
 from src.api.endpoints.collector.dtos.manual_batch.post import ManualBatchInputDTO
 from src.api.endpoints.collector.dtos.manual_batch.response import ManualBatchResponseDTO
+from src.api.endpoints.collector.manual.query import UploadManualBatchQueryBuilder
+from src.api.endpoints.metrics.batches.aggregated.dto import GetMetricsBatchesAggregatedResponseDTO
+from src.api.endpoints.metrics.batches.aggregated.query import GetBatchesAggregatedMetricsQueryBuilder
+from src.api.endpoints.metrics.batches.breakdown.dto import GetMetricsBatchesBreakdownResponseDTO
+from src.api.endpoints.metrics.batches.breakdown.query import GetBatchesBreakdownMetricsQueryBuilder
 from src.api.endpoints.metrics.dtos.get.backlog import GetMetricsBacklogResponseDTO, GetMetricsBacklogResponseInnerDTO
-from src.api.endpoints.metrics.dtos.get.batches.aggregated import GetMetricsBatchesAggregatedResponseDTO, \
-    GetMetricsBatchesAggregatedInnerResponseDTO
-from src.api.endpoints.metrics.dtos.get.batches.breakdown import GetMetricsBatchesBreakdownInnerResponseDTO, \
-    GetMetricsBatchesBreakdownResponseDTO
 from src.api.endpoints.metrics.dtos.get.urls.aggregated.core import GetMetricsURLsAggregatedResponseDTO
 from src.api.endpoints.metrics.dtos.get.urls.breakdown.pending import GetMetricsURLsBreakdownPendingResponseDTO, \
     GetMetricsURLsBreakdownPendingResponseInnerDTO
@@ -45,22 +44,34 @@ from src.api.endpoints.review.enums import RejectionReason
 from src.api.endpoints.review.next.dto import GetNextURLForFinalReviewOuterResponse
 from src.api.endpoints.review.reject.query import RejectURLQueryBuilder
 from src.api.endpoints.search.dtos.response import SearchURLResponse
-from src.api.endpoints.task.dtos.get.task import TaskInfo
+from src.api.endpoints.task.by_id.dto import TaskInfo
+
+from src.api.endpoints.task.by_id.query import GetTaskInfoQueryBuilder
 from src.api.endpoints.task.dtos.get.tasks import GetTasksResponse, GetTasksResponseTaskInfo
-from src.api.endpoints.url.dtos.response import GetURLsResponseInfo, GetURLsResponseErrorInfo, GetURLsResponseInnerInfo
+from src.api.endpoints.url.get.dto import GetURLsResponseInfo
+
+from src.api.endpoints.url.get.query import GetURLsQueryBuilder
 from src.collectors.enums import URLStatus, CollectorType
 from src.core.enums import BatchStatus, SuggestionType, RecordType, SuggestedStatus
 from src.core.env_var_manager import EnvVarManager
 from src.core.tasks.scheduled.operators.agency_sync.dtos.parameters import AgencySyncParameters
 from src.core.tasks.url.operators.agency_identification.dtos.suggestion import URLAgencySuggestionInfo
 from src.core.tasks.url.operators.agency_identification.dtos.tdo import AgencyIdentificationTDO
-from src.core.tasks.url.operators.auto_relevant.models.annotation import RelevanceAnnotationInfo
+from src.core.tasks.url.operators.agency_identification.queries.get_pending_urls_without_agency_suggestions import \
+    GetPendingURLsWithoutAgencySuggestionsQueryBuilder
 from src.core.tasks.url.operators.auto_relevant.models.tdo import URLRelevantTDO
 from src.core.tasks.url.operators.auto_relevant.queries.get_tdos import GetAutoRelevantTDOsQueryBuilder
 from src.core.tasks.url.operators.submit_approved_url.tdo import SubmitApprovedURLTDO, SubmittedURLInfo
 from src.core.tasks.url.operators.url_404_probe.tdo import URL404ProbeTDO
 from src.core.tasks.url.operators.url_duplicate.tdo import URLDuplicateTDO
-from src.core.tasks.url.operators.url_miscellaneous_metadata.tdo import URLMiscellaneousMetadataTDO, URLHTMLMetadataInfo
+from src.core.tasks.url.operators.url_html.queries.get_pending_urls_without_html_data import \
+    GetPendingURLsWithoutHTMLDataQueryBuilder
+from src.core.tasks.url.operators.url_miscellaneous_metadata.queries.get_pending_urls_missing_miscellaneous_data import \
+    GetPendingURLsMissingMiscellaneousDataQueryBuilder
+from src.core.tasks.url.operators.url_miscellaneous_metadata.queries.has_pending_urls_missing_miscellaneous_data import \
+    HasPendingURsMissingMiscellaneousDataQueryBuilder
+from src.core.tasks.url.operators.url_miscellaneous_metadata.tdo import URLMiscellaneousMetadataTDO
+from src.db.client.helpers import add_standard_limit_and_offset
 from src.db.client.types import UserSuggestionModel
 from src.db.config_manager import ConfigManager
 from src.db.constants import PLACEHOLDER_AGENCY_NAME
@@ -71,7 +82,7 @@ from src.db.dtos.log import LogInfo, LogOutputInfo
 from src.db.dtos.url.annotations.auto.relevancy import AutoRelevancyAnnotationInput
 from src.db.dtos.url.core import URLInfo
 from src.db.dtos.url.error import URLErrorPydanticInfo
-from src.db.dtos.url.html_content import URLHTMLContentInfo, HTMLContentType
+from src.db.dtos.url.html_content import URLHTMLContentInfo
 from src.db.dtos.url.insert import InsertURLsInfo
 from src.db.dtos.url.mapping import URLMapping
 from src.db.dtos.url.raw_html import RawHTMLInfo
@@ -81,7 +92,8 @@ from src.db.models.instantiations.backlog_snapshot import BacklogSnapshot
 from src.db.models.instantiations.batch import Batch
 from src.db.models.instantiations.confirmed_url_agency import ConfirmedURLAgency
 from src.db.models.instantiations.duplicate import Duplicate
-from src.db.models.instantiations.link_task_url import LinkTaskURL
+from src.db.models.instantiations.link.link_batch_urls import LinkBatchURL
+from src.db.models.instantiations.link.link_task_url import LinkTaskURL
 from src.db.models.instantiations.log import Log
 from src.db.models.instantiations.root_url_cache import RootURL
 from src.db.models.instantiations.sync_state_agencies import AgenciesSyncState
@@ -95,7 +107,6 @@ from src.db.models.instantiations.url.error_info import URLErrorInfo
 from src.db.models.instantiations.url.html_content import URLHTMLContent
 from src.db.models.instantiations.url.optional_data_source_metadata import URLOptionalDataSourceMetadata
 from src.db.models.instantiations.url.probed_for_404 import URLProbedFor404
-from src.db.models.instantiations.url.reviewing_user import ReviewingUserURL
 from src.db.models.instantiations.url.suggestion.agency.auto import AutomatedUrlAgencySuggestion
 from src.db.models.instantiations.url.suggestion.agency.user import UserUrlAgencySuggestion
 from src.db.models.instantiations.url.suggestion.record_type.auto import AutoRecordTypeSuggestion
@@ -113,11 +124,6 @@ from src.db.queries.implementations.core.tasks.agency_sync.upsert import get_ups
 from src.db.statement_composer import StatementComposer
 from src.db.utils.compression import decompress_html, compress_html
 from src.external.pdap.dtos.agencies_sync import AgenciesSyncResponseInnerInfo
-
-
-def add_standard_limit_and_offset(statement, page, limit=100):
-    offset = (page - 1) * limit
-    return statement.limit(limit).offset(offset)
 
 
 class AsyncDatabaseClient:
@@ -229,7 +235,7 @@ class AsyncDatabaseClient:
         session: AsyncSession,
         builder: QueryBuilderBase
     ) -> Any:
-        return await builder.run(session)
+        return await builder.run(session=session)
 
     # region relevant
     async def add_auto_relevant_suggestion(
@@ -460,45 +466,13 @@ class AsyncDatabaseClient:
         scalar_result = await session.scalars(statement)
         return bool(scalar_result.first())
 
-    @session_manager
-    async def has_pending_urls_missing_miscellaneous_metadata(self, session: AsyncSession) -> bool:
-        query = StatementComposer.pending_urls_missing_miscellaneous_metadata_query()
-        query = query.limit(1)
+    async def has_pending_urls_missing_miscellaneous_metadata(self) -> bool:
+        return await self.run_query_builder(HasPendingURsMissingMiscellaneousDataQueryBuilder())
 
-        scalar_result = await session.scalars(query)
-        return bool(scalar_result.first())
-
-    @session_manager
     async def get_pending_urls_missing_miscellaneous_metadata(
         self,
-        session: AsyncSession
     ) -> list[URLMiscellaneousMetadataTDO]:
-        query = StatementComposer.pending_urls_missing_miscellaneous_metadata_query()
-        query = (
-            query.options(
-                selectinload(URL.batch),
-                selectinload(URL.html_content)
-            ).limit(100).order_by(URL.id)
-        )
-
-        scalar_result = await session.scalars(query)
-        all_results = scalar_result.all()
-        final_results = []
-        for result in all_results:
-            tdo = URLMiscellaneousMetadataTDO(
-                url_id=result.id,
-                collector_metadata=result.collector_metadata or {},
-                collector_type=CollectorType(result.batch.strategy),
-            )
-            html_info = URLHTMLMetadataInfo()
-            for html_content in result.html_content:
-                if html_content.content_type == HTMLContentType.TITLE.value:
-                    html_info.title = html_content.content
-                elif html_content.content_type == HTMLContentType.DESCRIPTION.value:
-                    html_info.description = html_content.content
-            tdo.html_metadata_info = html_info
-            final_results.append(tdo)
-        return final_results
+        return await self.run_query_builder(GetPendingURLsMissingMiscellaneousDataQueryBuilder())
 
     @session_manager
     async def add_miscellaneous_metadata(self, session: AsyncSession, tdos: list[URLMiscellaneousMetadataTDO]):
@@ -528,14 +502,8 @@ class AsyncDatabaseClient:
             )
             session.add(metadata_object)
 
-    @session_manager
-    async def get_pending_urls_without_html_data(self, session: AsyncSession) -> list[URLInfo]:
-        # TODO: Add test that includes some urls WITH html data. Check they're not returned
-        statement = self.statement_composer.pending_urls_without_html_data()
-        statement = statement.limit(100).order_by(URL.id)
-        scalar_result = await session.scalars(statement)
-        results: list[URL] = scalar_result.all()
-        return DTOConverter.url_list_to_url_info_list(results)
+    async def get_pending_urls_without_html_data(self) -> list[URLInfo]:
+        return await self.run_query_builder(GetPendingURLsWithoutHTMLDataQueryBuilder())
 
     async def get_urls_with_html_data_and_without_models(
         self,
@@ -629,48 +597,15 @@ class AsyncDatabaseClient:
         cache = RootURL(url=url, page_title=page_title)
         await self.add(cache)
 
-    @session_manager
-    async def get_urls(self, session: AsyncSession, page: int, errors: bool) -> GetURLsResponseInfo:
-        statement = select(URL).options(
-            selectinload(URL.error_info)
-        ).order_by(URL.id)
-        if errors:
-            # Only return URLs with errors
-            statement = statement.where(
-                exists(
-                    select(URLErrorInfo).where(URLErrorInfo.url_id == URL.id)
-                )
-            )
-        add_standard_limit_and_offset(statement, page)
-        execute_result = await session.execute(statement)
-        all_results = execute_result.scalars().all()
-        final_results = []
-        for result in all_results:
-            error_results = []
-            for error in result.error_info:
-                error_result = GetURLsResponseErrorInfo(
-                    id=error.id,
-                    error=error.error,
-                    updated_at=error.updated_at
-                )
-                error_results.append(error_result)
-            final_results.append(
-                GetURLsResponseInnerInfo(
-                    id=result.id,
-                    batch_id=result.batch_id,
-                    url=result.url,
-                    status=URLStatus(result.outcome),
-                    collector_metadata=result.collector_metadata,
-                    updated_at=result.updated_at,
-                    created_at=result.created_at,
-                    errors=error_results,
-                )
-            )
+    async def get_urls(
+        self,
+        page: int,
+        errors: bool
+    ) -> GetURLsResponseInfo:
+        return await self.run_query_builder(GetURLsQueryBuilder(
+            page=page, errors=errors
+        ))
 
-        return GetURLsResponseInfo(
-            urls=final_results,
-            count=len(final_results)
-        )
 
     @session_manager
     async def initiate_task(
@@ -701,52 +636,11 @@ class AsyncDatabaseClient:
         )
         await self.add(task_error)
 
-    @session_manager
-    async def get_task_info(self, session: AsyncSession, task_id: int) -> TaskInfo:
-        # Get Task
-        result = await session.execute(
-            select(Task)
-            .where(Task.id == task_id)
-            .options(
-                selectinload(Task.urls),
-                selectinload(Task.error),
-                selectinload(Task.errored_urls)
-            )
-        )
-        task = result.scalars().first()
-        error = task.error[0].error if len(task.error) > 0 else None
-        # Get error info if any
-        # Get URLs
-        urls = task.urls
-        url_infos = []
-        for url in urls:
-            url_info = URLInfo(
-                id=url.id,
-                batch_id=url.batch_id,
-                url=url.url,
-                collector_metadata=url.collector_metadata,
-                outcome=URLStatus(url.outcome),
-                updated_at=url.updated_at
-            )
-            url_infos.append(url_info)
-
-        errored_urls = []
-        for url in task.errored_urls:
-            url_error_info = URLErrorPydanticInfo(
-                task_id=url.task_id,
-                url_id=url.url_id,
-                error=url.error,
-                updated_at=url.updated_at
-            )
-            errored_urls.append(url_error_info)
-        return TaskInfo(
-            task_type=TaskType(task.task_type),
-            task_status=BatchStatus(task.task_status),
-            error_info=error,
-            updated_at=task.updated_at,
-            urls=url_infos,
-            url_errors=errored_urls
-        )
+    async def get_task_info(
+        self,
+        task_id: int
+    ) -> TaskInfo:
+        return await self.run_query_builder(GetTaskInfoQueryBuilder(task_id))
 
     async def get_html_content_info(self, url_id: int) -> list[URLHTMLContentInfo]:
         return await self.run_query_builder(GetHTMLContentInfoQueryBuilder(url_id))
@@ -833,35 +727,12 @@ class AsyncDatabaseClient:
         result = raw_result.all()
         return len(result) != 0
 
-    @session_manager
     async def get_urls_without_agency_suggestions(
-        self, session: AsyncSession
+        self
     ) -> list[AgencyIdentificationTDO]:
-        """
-        Retrieve URLs without confirmed or suggested agencies
-        Args:
-            session:
+        """Retrieve URLs without confirmed or suggested agencies."""
+        return await self.run_query_builder(GetPendingURLsWithoutAgencySuggestionsQueryBuilder())
 
-        Returns:
-
-        """
-
-        statement = (
-            select(URL.id, URL.collector_metadata, Batch.strategy)
-            .where(URL.outcome == URLStatus.PENDING.value)
-            .join(Batch)
-        )
-        statement = self.statement_composer.exclude_urls_with_agency_suggestions(statement)
-        statement = statement.limit(100)
-        raw_results = await session.execute(statement)
-        return [
-            AgencyIdentificationTDO(
-                url_id=raw_result[0],
-                collector_metadata=raw_result[1],
-                collector_type=CollectorType(raw_result[2])
-            )
-            for raw_result in raw_results
-        ]
 
     async def get_next_url_agency_for_annotation(
         self,
@@ -1005,19 +876,17 @@ class AsyncDatabaseClient:
         batch_summary = summaries[0]
         return batch_summary
 
-    @session_manager
-    async def get_urls_by_batch(self, session, batch_id: int, page: int = 1) -> List[URLInfo]:
+    async def get_urls_by_batch(self, batch_id: int, page: int = 1) -> list[URLInfo]:
         """Retrieve all URLs associated with a batch."""
-        query = Select(URL).where(URL.batch_id == batch_id).order_by(URL.id).limit(100).offset((page - 1) * 100)
-        result = await session.execute(query)
-        urls = result.scalars().all()
-        return ([URLInfo(**url.__dict__) for url in urls])
+        return await self.run_query_builder(GetURLsByBatchQueryBuilder(
+            batch_id=batch_id,
+            page=page
+        ))
 
     @session_manager
     async def insert_url(self, session: AsyncSession, url_info: URLInfo) -> int:
         """Insert a new URL into the database."""
         url_entry = URL(
-            batch_id=url_info.batch_id,
             url=url_info.url,
             collector_metadata=url_info.collector_metadata,
             outcome=url_info.outcome.value
@@ -1026,6 +895,10 @@ class AsyncDatabaseClient:
             url_entry.created_at = url_info.created_at
         session.add(url_entry)
         await session.flush()
+        link = LinkBatchURL(
+            batch_id=url_info.batch_id,
+            url_id=url_entry.id
+        )
         return url_entry.id
 
     @session_manager
@@ -1208,43 +1081,11 @@ class AsyncDatabaseClient:
 
             await session.execute(query)
 
-    @session_manager
-    async def get_duplicates_by_batch_id(self, session, batch_id: int, page: int) -> List[DuplicateInfo]:
-        original_batch = aliased(Batch)
-        duplicate_batch = aliased(Batch)
-
-        query = (
-            Select(
-                URL.url.label("source_url"),
-                URL.id.label("original_url_id"),
-                duplicate_batch.id.label("duplicate_batch_id"),
-                duplicate_batch.parameters.label("duplicate_batch_parameters"),
-                original_batch.id.label("original_batch_id"),
-                original_batch.parameters.label("original_batch_parameters"),
-            )
-            .select_from(Duplicate)
-            .join(URL, Duplicate.original_url_id == URL.id)
-            .join(duplicate_batch, Duplicate.batch_id == duplicate_batch.id)
-            .join(original_batch, URL.batch_id == original_batch.id)
-            .filter(duplicate_batch.id == batch_id)
-            .limit(100)
-            .offset((page - 1) * 100)
-        )
-        raw_results = await session.execute(query)
-        results = raw_results.all()
-        final_results = []
-        for result in results:
-            final_results.append(
-                DuplicateInfo(
-                    source_url=result.source_url,
-                    duplicate_batch_id=result.duplicate_batch_id,
-                    duplicate_metadata=result.duplicate_batch_parameters,
-                    original_batch_id=result.original_batch_id,
-                    original_metadata=result.original_batch_parameters,
-                    original_url_id=result.original_url_id
-                )
-            )
-        return final_results
+    async def get_duplicates_by_batch_id(self, batch_id: int, page: int) -> list[DuplicateInfo]:
+        return await self.run_query_builder(GetDuplicatesByBatchIDQueryBuilder(
+            batch_id=batch_id,
+            page=page
+        ))
 
     @session_manager
     async def get_batch_summaries(
@@ -1324,61 +1165,16 @@ class AsyncDatabaseClient:
         )
         session.add(agency_suggestion)
 
-    @session_manager
     async def upload_manual_batch(
         self,
-        session: AsyncSession,
         user_id: int,
         dto: ManualBatchInputDTO
     ) -> ManualBatchResponseDTO:
-        batch = Batch(
-            strategy=CollectorType.MANUAL.value,
-            status=BatchStatus.READY_TO_LABEL.value,
-            parameters={
-                "name": dto.name
-            },
-            user_id=user_id
-        )
-        session.add(batch)
-        await session.flush()
+        return await self.run_query_builder(UploadManualBatchQueryBuilder(
+            user_id=user_id,
+            dto=dto
+        ))
 
-        batch_id = batch.id
-        url_ids = []
-        duplicate_urls = []
-
-        for entry in dto.entries:
-            url = URL(
-                url=entry.url,
-                name=entry.name,
-                description=entry.description,
-                batch_id=batch_id,
-                collector_metadata=entry.collector_metadata,
-                outcome=URLStatus.PENDING.value,
-                record_type=entry.record_type.value if entry.record_type is not None else None,
-            )
-
-            async with session.begin_nested():
-                try:
-                    session.add(url)
-                    await session.flush()
-                except IntegrityError:
-                    duplicate_urls.append(entry.url)
-                    continue
-            await session.flush()
-            optional_metadata = URLOptionalDataSourceMetadata(
-                url_id=url.id,
-                record_formats=entry.record_formats,
-                data_portal_type=entry.data_portal_type,
-                supplying_entity=entry.supplying_entity,
-            )
-            session.add(optional_metadata)
-            url_ids.append(url.id)
-
-        return ManualBatchResponseDTO(
-            batch_id=batch_id,
-            urls=url_ids,
-            duplicate_urls=duplicate_urls
-        )
 
     @session_manager
     async def search_for_url(self, session: AsyncSession, url: str) -> SearchURLResponse:
@@ -1395,179 +1191,20 @@ class AsyncDatabaseClient:
             url_id=url.id
         )
 
-    @session_manager
-    async def get_batches_aggregated_metrics(self, session: AsyncSession) -> GetMetricsBatchesAggregatedResponseDTO:
-        sc = StatementComposer
-
-        # First, get all batches broken down by collector type and status
-        def batch_column(status: BatchStatus, label):
-            return sc.count_distinct(
-                case(
-                    (
-                        Batch.status == status.value,
-                        Batch.id
-                    )
-                ),
-                label=label
-            )
-
-        batch_count_subquery = select(
-            batch_column(BatchStatus.READY_TO_LABEL, label="done_count"),
-            batch_column(BatchStatus.ERROR, label="error_count"),
-            Batch.strategy,
-        ).group_by(Batch.strategy).subquery("batch_count")
-
-        def url_column(status: URLStatus, label):
-            return sc.count_distinct(
-                case(
-                    (
-                        URL.outcome == status.value,
-                        URL.id
-                    )
-                ),
-                label=label
-            )
-
-        # Next, count urls
-        url_count_subquery = select(
-            Batch.strategy,
-            url_column(URLStatus.PENDING, label="pending_count"),
-            url_column(URLStatus.ERROR, label="error_count"),
-            url_column(URLStatus.VALIDATED, label="validated_count"),
-            url_column(URLStatus.SUBMITTED, label="submitted_count"),
-            url_column(URLStatus.NOT_RELEVANT, label="rejected_count"),
-
-        ).outerjoin(
-            Batch, Batch.id == URL.batch_id
-        ).group_by(
-            Batch.strategy
-        ).subquery("url_count")
-
-        # Combine
-        query = select(
-            Batch.strategy,
-            batch_count_subquery.c.done_count.label("batch_done_count"),
-            batch_count_subquery.c.error_count.label("batch_error_count"),
-            coalesce(url_count_subquery.c.pending_count, 0).label("pending_count"),
-            coalesce(url_count_subquery.c.error_count, 0).label("error_count"),
-            coalesce(url_count_subquery.c.submitted_count, 0).label("submitted_count"),
-            coalesce(url_count_subquery.c.rejected_count, 0).label("rejected_count"),
-            coalesce(url_count_subquery.c.validated_count, 0).label("validated_count")
-        ).join(
-            batch_count_subquery,
-            Batch.strategy == batch_count_subquery.c.strategy
-        ).outerjoin(
-            url_count_subquery,
-            Batch.strategy == url_count_subquery.c.strategy
-        )
-        raw_results = await session.execute(query)
-        results = raw_results.all()
-        d: dict[CollectorType, GetMetricsBatchesAggregatedInnerResponseDTO] = {}
-        for result in results:
-            d[CollectorType(result.strategy)] = GetMetricsBatchesAggregatedInnerResponseDTO(
-                count_successful_batches=result.batch_done_count,
-                count_failed_batches=result.batch_error_count,
-                count_urls=result.pending_count + result.submitted_count +
-                           result.rejected_count + result.error_count +
-                           result.validated_count,
-                count_urls_pending=result.pending_count,
-                count_urls_validated=result.validated_count,
-                count_urls_submitted=result.submitted_count,
-                count_urls_rejected=result.rejected_count,
-                count_urls_errors=result.error_count
-            )
-
-        total_batch_query = await session.execute(
-            select(
-                sc.count_distinct(Batch.id, label="count")
-            )
-        )
-        total_batch_count = total_batch_query.scalars().one_or_none()
-        if total_batch_count is None:
-            total_batch_count = 0
-
-        return GetMetricsBatchesAggregatedResponseDTO(
-            total_batches=total_batch_count,
-            by_strategy=d
+    async def get_batches_aggregated_metrics(self) -> GetMetricsBatchesAggregatedResponseDTO:
+        return await self.run_query_builder(
+            GetBatchesAggregatedMetricsQueryBuilder()
         )
 
-    @session_manager
+
     async def get_batches_breakdown_metrics(
         self,
-        session: AsyncSession,
         page: int
     ) -> GetMetricsBatchesBreakdownResponseDTO:
-        sc = StatementComposer
-
-        main_query = select(
-            Batch.strategy,
-            Batch.id,
-            Batch.status,
-            Batch.date_generated.label("created_at"),
-        )
-
-        def url_column(status: URLStatus, label):
-            return sc.count_distinct(
-                case(
-                    (
-                        URL.outcome == status.value,
-                        URL.id
-                    )
-                ),
-                label=label
+        return await self.run_query_builder(
+            GetBatchesBreakdownMetricsQueryBuilder(
+                page=page
             )
-
-        count_query = select(
-            URL.batch_id,
-            sc.count_distinct(URL.id, label="count_total"),
-            url_column(URLStatus.PENDING, label="count_pending"),
-            url_column(URLStatus.SUBMITTED, label="count_submitted"),
-            url_column(URLStatus.NOT_RELEVANT, label="count_rejected"),
-            url_column(URLStatus.ERROR, label="count_error"),
-            url_column(URLStatus.VALIDATED, label="count_validated"),
-        ).group_by(
-            URL.batch_id
-        ).subquery("url_count")
-
-        query = (select(
-            main_query.c.strategy,
-            main_query.c.id,
-            main_query.c.created_at,
-            main_query.c.status,
-            coalesce(count_query.c.count_total, 0).label("count_total"),
-            coalesce(count_query.c.count_pending, 0).label("count_pending"),
-            coalesce(count_query.c.count_submitted, 0).label("count_submitted"),
-            coalesce(count_query.c.count_rejected, 0).label("count_rejected"),
-            coalesce(count_query.c.count_error, 0).label("count_error"),
-            coalesce(count_query.c.count_validated, 0).label("count_validated"),
-        ).outerjoin(
-            count_query,
-            main_query.c.id == count_query.c.batch_id
-        ).offset(
-            (page - 1) * 100
-        ).order_by(
-            main_query.c.created_at.asc()
-        ))
-
-        raw_results = await session.execute(query)
-        results = raw_results.all()
-        batches: list[GetMetricsBatchesBreakdownInnerResponseDTO] = []
-        for result in results:
-            dto = GetMetricsBatchesBreakdownInnerResponseDTO(
-                batch_id=result.id,
-                strategy=CollectorType(result.strategy),
-                status=BatchStatus(result.status),
-                created_at=result.created_at,
-                count_url_total=result.count_total,
-                count_url_pending=result.count_pending,
-                count_url_submitted=result.count_submitted,
-                count_url_rejected=result.count_rejected,
-                count_url_error=result.count_error,
-                count_url_validated=result.count_validated
-            )
-            batches.append(dto)
-        return GetMetricsBatchesBreakdownResponseDTO(
-            batches=batches,
         )
 
     @session_manager

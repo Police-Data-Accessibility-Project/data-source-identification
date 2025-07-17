@@ -11,7 +11,7 @@ from src.db.models.instantiations.sync_state_agencies import AgenciesSyncState
 from tests.automated.integration.tasks.scheduled.agency_sync.data import THIRD_CALL_RESPONSE
 from tests.automated.integration.tasks.scheduled.agency_sync.existence_checker import AgencyChecker
 from tests.automated.integration.tasks.scheduled.agency_sync.helpers import patch_sync_agencies, check_sync_concluded
-from tests.helpers.assert_functions import assert_task_run_success
+from tests.helpers.asserts import assert_task_run_success
 
 
 @pytest.mark.asyncio

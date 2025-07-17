@@ -18,8 +18,9 @@ from src.core.enums import RecordType, SuggestionType, SuggestedStatus
 from src.core.exceptions import FailedValidationException
 from src.db.models.instantiations.url.suggestion.record_type.user import UserRecordTypeSuggestion
 from src.db.models.instantiations.url.suggestion.relevant.user import UserRelevantSuggestion
-from tests.helpers.complex_test_data_functions import AnnotateAgencySetupInfo, setup_for_annotate_agency, \
-    setup_for_get_next_url_for_final_review
+from tests.helpers.setup.annotate_agency.model import AnnotateAgencySetupInfo
+from tests.helpers.setup.final_review.core import setup_for_get_next_url_for_final_review
+from tests.helpers.setup.annotate_agency.core import setup_for_annotate_agency
 from tests.helpers.db_data_creator import BatchURLCreationInfo
 from tests.automated.integration.api.conftest import MOCK_USER_ID
 

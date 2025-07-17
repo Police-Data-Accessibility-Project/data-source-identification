@@ -11,6 +11,7 @@ from src.api.endpoints.annotate.relevance.get.dto import RelevanceAnnotationResp
 from src.collectors.enums import URLStatus
 from src.db.dto_converter import DTOConverter
 from src.db.dtos.url.mapping import URLMapping
+from src.db.models.instantiations.link.link_batch_urls import LinkBatchURL
 from src.db.models.instantiations.url.core import URL
 from src.db.models.instantiations.url.suggestion.agency.user import UserUrlAgencySuggestion
 from src.db.models.instantiations.url.suggestion.record_type.user import UserRecordTypeSuggestion
@@ -32,8 +33,11 @@ class GetNextURLForAllAnnotationQueryBuilder(QueryBuilderBase):
         self,
         session: AsyncSession
     ) -> GetNextURLForAllAnnotationResponse:
+        query = Select(URL)
+        if self.batch_id is not None:
+            query = query.join(LinkBatchURL).where(LinkBatchURL.batch_id == self.batch_id)
         query = (
-            Select(URL)
+            query
             .where(
                 and_(
                     URL.outcome == URLStatus.PENDING.value,
@@ -43,8 +47,7 @@ class GetNextURLForAllAnnotationQueryBuilder(QueryBuilderBase):
                 )
             )
         )
-        if self.batch_id is not None:
-            query = query.where(URL.batch_id == self.batch_id)
+
 
         load_options = [
             URL.html_content,

@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.api.endpoints.annotate.dtos.shared.batch import AnnotationBatchInfo
 from src.collectors.enums import URLStatus
+from src.db.models.instantiations.link.link_batch_urls import LinkBatchURL
 from src.db.models.instantiations.url.core import URL
 from src.db.queries.base.builder import QueryBuilderBase
 from src.db.statement_composer import StatementComposer
@@ -35,11 +36,14 @@ class GetAnnotationBatchInfoQueryBuilder(QueryBuilderBase):
             for model in self.models
         ]
 
-        select_url = select(func.count(URL.id))
+        select_url = (
+            select(func.count(URL.id))
+            .join(LinkBatchURL)
+        )
 
         common_where_clause = [
             URL.outcome == URLStatus.PENDING.value,
-            URL.batch_id == self.batch_id,
+            LinkBatchURL.batch_id == self.batch_id,
         ]
 
         annotated_query = (

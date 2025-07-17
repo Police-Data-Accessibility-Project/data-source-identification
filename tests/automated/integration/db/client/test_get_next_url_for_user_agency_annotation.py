@@ -1,6 +1,6 @@
 import pytest
 
-from tests.helpers.complex_test_data_functions import setup_for_annotate_agency
+from tests.helpers.setup.annotate_agency.core import setup_for_annotate_agency
 from tests.helpers.db_data_creator import DBDataCreator
 
 
