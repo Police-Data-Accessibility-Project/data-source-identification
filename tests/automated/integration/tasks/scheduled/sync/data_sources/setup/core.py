@@ -2,14 +2,19 @@ from contextlib import contextmanager
 from datetime import datetime
 from unittest.mock import patch
 
+from pydantic import BaseModel
+
 from src.collectors.enums import URLStatus
 from src.core.enums import RecordType
+from src.db.client.async_ import AsyncDatabaseClient
 from src.db.models.instantiations.confirmed_url_agency import ConfirmedURLAgency
 from src.db.models.instantiations.url.core.sqlalchemy import URL
 from src.db.models.instantiations.url.data_source import URLDataSource
 from src.external.pdap.client import PDAPClient
 from src.external.pdap.dtos.sync.data_sources import DataSourcesSyncResponseInfo, DataSourcesSyncResponseInnerInfo
-from src.external.pdap.enums import ApprovalStatus
+from src.external.pdap.enums import ApprovalStatus, DataSourcesURLStatus
+from tests.automated.integration.tasks.scheduled.sync.data_sources.setup.data import TestURLSetupEntry, \
+    SyncResponseOrder, TestURLPostSetupRecord, AgencyAssigned
 from tests.automated.integration.tasks.scheduled.sync.data_sources.setup.info import TestDataSourcesSyncSetupInfo
 from tests.helpers.db_data_creator import DBDataCreator
 
@@ -70,8 +75,9 @@ async def setup_data(
                 description="New URL 1 Description",
                 approval_status=ApprovalStatus.APPROVED,
                 updated_at=datetime(2023, 1, 1, 0, 0, 0),
-                record_type=RecordType.ACCIDENT_REPORTS.value,
+                record_type=RecordType.ACCIDENT_REPORTS,
                 agency_ids=[agency_id_new_urls],
+                url_status=DataSourcesURLStatus.OK
             ),
             DataSourcesSyncResponseInnerInfo(
                 id=121,
@@ -80,45 +86,101 @@ async def setup_data(
                 description="New URL 2 Description",
                 approval_status=ApprovalStatus.APPROVED,
                 updated_at=datetime(2023, 1, 1, 0, 0, 0),
-                record_type=RecordType.ACCIDENT_REPORTS.value,
+                record_type=RecordType.FIELD_CONTACTS,
                 agency_ids=[agency_id_new_urls],
+                url_status=DataSourcesURLStatus.BROKEN
             ),
             DataSourcesSyncResponseInnerInfo(
                 id=122,
                 url="https://newurl.com/3",
                 name="New URL 3",
                 description="New URL 3 Description",
-                approval_status=ApprovalStatus.APPROVED,
+                approval_status=ApprovalStatus.PENDING,
                 updated_at=datetime(2023, 1, 1, 0, 0, 0),
-                record_type=RecordType.ACCIDENT_REPORTS.value,
+                record_type=RecordType.WANTED_PERSONS,
                 agency_ids=[agency_id_new_urls],
+                url_status=DataSourcesURLStatus.OK
             ),
             DataSourcesSyncResponseInnerInfo(
                 id=123,
                 url="https://newurl.com/4",
                 name="New URL 4",
                 description="New URL 4 Description",
-                approval_status=ApprovalStatus.APPROVED,
+                approval_status=ApprovalStatus.NEEDS_IDENTIFICATION,
                 updated_at=datetime(2023, 1, 1, 0, 0, 0),
-                record_type=RecordType.ACCIDENT_REPORTS.value,
+                record_type=RecordType.STOPS,
                 agency_ids=[agency_id_new_urls],
+                url_status=DataSourcesURLStatus.OK
             ),
             DataSourcesSyncResponseInnerInfo(
                 id=preexisting_url_ids[0],
                 url="https://newurl.com/5",
                 name="Updated Preexisting URL 1",
                 description="Updated Preexisting URL 1 Description",
-                approval_status=ApprovalStatus.APPROVED,
+                approval_status=ApprovalStatus.REJECTED,  # Status should update to rejected.
                 updated_at=datetime(2023, 1, 1, 0, 0, 0),
-                record_type=RecordType.ACCIDENT_REPORTS.value,
+                record_type=RecordType.BOOKING_REPORTS,
                 agency_ids=[agency_id_preexisting_urls, agency_id_new_urls],
+                url_status=DataSourcesURLStatus.OK
+            )
         ]
-
     )
+    second_call_response = DataSourcesSyncResponseInfo(
+        data_sources=[
+            DataSourcesSyncResponseInnerInfo(
+                id=preexisting_url_ids[1],
+                url="https://newurl.com/6",
+                name="Updated Preexisting URL 2",
+                description="Updated Preexisting URL 2 Description",
+                approval_status=ApprovalStatus.APPROVED,  # SC should stay validated
+                updated_at=datetime(2023, 1, 1, 0, 0, 0),
+                record_type=RecordType.PERSONNEL_RECORDS,
+                agency_ids=[agency_id_new_urls],
+                url_status=DataSourcesURLStatus.OK
+            ),
+        ]
+    )
+    third_call_response = DataSourcesSyncResponseInfo(data_sources=[])
 
 
 
 
+class DataSourcesSyncTestSetupManager:
+
+    def __init__(
+        self,
+        adb_client: AsyncDatabaseClient,
+        entries: list[TestURLSetupEntry]
+    ):
+        self.adb_client = adb_client
+        self.entries = entries
+
+        self.response_dict: dict[
+            SyncResponseOrder, list[DataSourcesSyncResponseInfo]
+        ] = {
+            e: [] for e in SyncResponseOrder
+        }
+        self.test_agency_dict: dict[
+            AgencyAssigned, int
+        ] = {}
+
+    async def setup(self):
+        await self.setup_agencies()
+
+    async def setup_entries(self):
+        for entry in self.entries:
+            await self.setup_entry(entry)
+
+    async def setup_entry(
+        self,
+        entry: TestURLSetupEntry
+    ) -> TestURLPostSetupRecord:
+        if entry.sc_info is not None:
+            # TODO: Add SC entry
+            raise NotImplementedError()
+        if entry.ds_info is not None:
+            # TODO: Add DS entry
+            raise NotImplementedError()
 
 
 @contextmanager
