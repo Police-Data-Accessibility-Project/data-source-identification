@@ -1,12 +1,12 @@
-from unittest.mock import MagicMock
+from unittest.mock import AsyncMock
 
+import pytest
 from marshmallow import Schema, fields
 
-from collector_db.DatabaseClient import DatabaseClient
-from core.CoreLogger import CoreLogger
-from source_collectors.ckan.CKANCollector import CKANCollector
-from source_collectors.ckan.DTOs import CKANInputDTO
-from source_collectors.ckan.search_terms import package_search, group_search, organization_search
+from src.collectors.source_collectors.ckan.collector import CKANCollector
+from src.core.logger import AsyncCoreLogger
+from src.collectors.source_collectors.ckan import collector
+from src.collectors.source_collectors.ckan.dtos.input import CKANInputDTO
 
 
 class CKANSchema(Schema):
@@ -18,8 +18,8 @@ class CKANSchema(Schema):
     data_portal_type = fields.String()
     source_last_updated = fields.String()
 
-
-def test_ckan_collector_default():
+@pytest.mark.asyncio
+async def test_ckan_collector_default():
     collector = CKANCollector(
         batch_id=1,
         dto=CKANInputDTO(
@@ -29,16 +29,22 @@ def test_ckan_collector_default():
                 "organization_search": organization_search
             }
         ),
-        logger=MagicMock(spec=CoreLogger),
-        db_client=MagicMock(spec=DatabaseClient),
+        logger=AsyncMock(spec=AsyncCoreLogger),
+        adb_client=AsyncMock(spec=AsyncDatabaseClient),
         raise_error=True
-
     )
-    collector.run()
+    await collector.run()
     schema = CKANSchema(many=True)
     schema.load(collector.data["results"])
+    print("Printing results")
+    print(collector.data["results"])
 
-def test_ckan_collector_custom():
+@pytest.mark.asyncio
+async def test_ckan_collector_custom():
+    """
+    Use this to test how CKAN behaves when using
+    something other than the default options provided
+    """
     collector = CKANCollector(
         batch_id=1,
         dto=CKANInputDTO(
@@ -72,10 +78,10 @@ def test_ckan_collector_custom():
               ]
             }
         ),
-        logger=MagicMock(spec=CoreLogger),
-        db_client=MagicMock(spec=DatabaseClient),
+        logger=AsyncMock(spec=AsyncCoreLogger),
+        adb_client=AsyncMock(spec=AsyncDatabaseClient),
         raise_error=True
     )
-    collector.run()
+    await collector.run()
     schema = CKANSchema(many=True)
     schema.load(collector.data["results"])

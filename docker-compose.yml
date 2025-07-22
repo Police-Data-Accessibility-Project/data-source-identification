@@ -6,7 +6,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    command: pytest /app/tests/test_automated
+    command: pytest /app/tests/automated
     ports:
       - "8000:80"
     environment:

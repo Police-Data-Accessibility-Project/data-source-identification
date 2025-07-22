@@ -1,0 +1,1 @@
+The HTML Response Parser extracts information from the HTML response and stores it in the database.

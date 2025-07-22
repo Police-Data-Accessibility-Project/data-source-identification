@@ -1,20 +1,20 @@
-import polars as pl
 import pytest
 
-from collector_db.AsyncDatabaseClient import AsyncDatabaseClient
-from collector_db.DTOs.URLInfo import URLInfo
-from core.classes.URLHTMLCycler import URLHTMLCycler
-from helpers.DBDataCreator import DBDataCreator
-from html_tag_collector.ResponseParser import HTMLResponseParser
-from html_tag_collector.RootURLCache import RootURLCache
-from html_tag_collector.URLRequestInterface import URLRequestInterface
+from src.core.tasks.url.operators.url_html.core import URLHTMLTaskOperator
+from src.core.tasks.url.operators.url_html.scraper.parser.core import HTMLResponseParser
+from src.core.tasks.url.operators.url_html.scraper.request_interface.core import URLRequestInterface
+from src.core.tasks.url.operators.url_html.scraper.root_url_cache.core import RootURLCache
+from src.db.client.async_ import AsyncDatabaseClient
+from src.db.dtos.url.core import URLInfo
+from tests.helpers.db_data_creator import DBDataCreator
 
 URLS = [
     "https://pdap.io",
     "https://pdapio.io",
     "https://pdap.dev",
     "https://pdap.io/404test",
-    "https://books.toscrape.com/catalogue/category/books/womens-fiction_9/index.html"
+    "https://books.toscrape.com/catalogue/category/books/womens-fiction_9/index.html",
+
 ]
 
 sample_json_data = [
@@ -28,13 +28,24 @@ sample_json_data = [
 @pytest.mark.asyncio
 async def test_get_response():
     uri = URLRequestInterface()
-    results = await uri.make_requests(URLS)
+    results = await uri.make_requests_with_html(URLS)
     print(results)
 
 @pytest.mark.asyncio
 async def test_get_response_with_javascript():
     uri = URLRequestInterface()
-    results = await uri.make_requests(URLS)
+    results = await uri.make_requests_with_html(URLS)
+    print(results)
+
+
+@pytest.mark.asyncio
+async def test_get_response_with_javascript_404():
+    uri = URLRequestInterface()
+    results = await uri.make_requests_with_html(
+        [
+            'https://data.tempe.gov/apps/tempegov::1-05-feeling-of-safety-in-your-neighborhood-dashboard'
+        ]
+    )
     print(results)
 
 @pytest.mark.asyncio
@@ -43,32 +54,31 @@ async def test_url_html_cycle_live_data(
     """
     Tests the cycle on whatever exists in the DB
     """
-    cycler = URLHTMLCycler(
+    operator = URLHTMLTaskOperator(
         adb_client=AsyncDatabaseClient(),
         url_request_interface=URLRequestInterface(),
         html_parser=HTMLResponseParser(
             root_url_cache=RootURLCache()
         )
     )
-    await cycler.cycle()
+    await operator.run_task()
 
 @pytest.mark.asyncio
 async def test_url_html_cycle(
     db_data_creator: DBDataCreator
 ):
     batch_id = db_data_creator.batch()
-    db_client = db_data_creator.db_client
+    adb_client: AsyncDatabaseClient = db_data_creator.adb_client
     url_infos = []
     for url in URLS:
         url_infos.append(URLInfo(url=url))
-    db_client.insert_urls(url_infos=url_infos, batch_id=batch_id)
+    await adb_client.insert_urls(url_infos=url_infos, batch_id=batch_id)
 
-
-    cycler = URLHTMLCycler(
-        adb_client=AsyncDatabaseClient(),
+    operator = URLHTMLTaskOperator(
+        adb_client=adb_client,
         url_request_interface=URLRequestInterface(),
         html_parser=HTMLResponseParser(
             root_url_cache=RootURLCache()
         )
     )
-    await cycler.cycle()
+    await operator.run_task()
