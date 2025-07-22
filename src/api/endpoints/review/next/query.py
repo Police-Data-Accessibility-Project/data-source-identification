@@ -1,6 +1,6 @@
 from typing import Optional, Type
 
-from sqlalchemy import FromClause, select, and_, Select, desc, asc, func, join
+from sqlalchemy import FromClause, select, and_, Select, desc, asc, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
@@ -8,14 +8,14 @@ from src.api.endpoints.review.next.dto import FinalReviewOptionalMetadata, Final
     GetNextURLForFinalReviewOuterResponse, GetNextURLForFinalReviewResponse, FinalReviewAnnotationInfo
 from src.collectors.enums import URLStatus
 from src.core.tasks.url.operators.url_html.scraper.parser.util import convert_to_response_html_info
-from src.db.constants import USER_ANNOTATION_MODELS, ALL_ANNOTATION_MODELS
+from src.db.constants import USER_ANNOTATION_MODELS
 from src.db.dto_converter import DTOConverter
 from src.db.dtos.url.html_content import URLHTMLContentInfo
 from src.db.exceptions import FailedQueryException
-from src.db.models.instantiations.batch import Batch
+from src.db.models.instantiations.batch.sqlalchemy import Batch
 from src.db.models.instantiations.confirmed_url_agency import ConfirmedURLAgency
 from src.db.models.instantiations.link.link_batch_urls import LinkBatchURL
-from src.db.models.instantiations.url.core import URL
+from src.db.models.instantiations.url.core.sqlalchemy import URL
 from src.db.models.instantiations.url.suggestion.agency.auto import AutomatedUrlAgencySuggestion
 from src.db.models.instantiations.url.suggestion.agency.user import UserUrlAgencySuggestion
 from src.db.models.mixins import URLDependentMixin

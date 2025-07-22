@@ -20,7 +20,7 @@ from src.core.tasks.url.operators.agency_identification.dtos.suggestion import U
 from src.db.dtos.url.insert import InsertURLsInfo
 from src.db.enums import URLHTMLContentType
 from src.db.helpers import get_postgres_connection_string
-from src.db.models.instantiations.agency import Agency
+from src.db.models.instantiations.agency.sqlalchemy import Agency
 from src.collectors.enums import CollectorType, URLStatus
 from src.core.enums import BatchStatus, SuggestionType
 from src.db.models.templates import Base

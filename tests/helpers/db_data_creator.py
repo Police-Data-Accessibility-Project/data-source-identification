@@ -9,13 +9,13 @@ from src.api.endpoints.review.approve.dto import FinalReviewApprovalInfo
 from src.api.endpoints.review.enums import RejectionReason
 from src.core.tasks.url.operators.agency_identification.dtos.suggestion import URLAgencySuggestionInfo
 from src.db.client.async_ import AsyncDatabaseClient
-from src.db.dtos.batch import BatchInfo
-from src.db.dtos.duplicate import DuplicateInsertInfo
-from src.db.dtos.url.annotations.auto.relevancy import AutoRelevancyAnnotationInput
+from src.db.models.instantiations.batch.pydantic import BatchInfo
+from src.db.models.instantiations.duplicate.pydantic.insert import DuplicateInsertInfo
+from src.db.models.instantiations.url.suggestion.relevant.auto.pydantic.input import AutoRelevancyAnnotationInput
 from src.db.dtos.url.insert import InsertURLsInfo
-from src.db.dtos.url.error import URLErrorPydanticInfo
+from src.db.models.instantiations.url.error_info.pydantic import URLErrorPydanticInfo
 from src.db.dtos.url.html_content import URLHTMLContentInfo, HTMLContentType
-from src.db.dtos.url.core import URLInfo
+from src.db.models.instantiations.url.core.pydantic.info import URLInfo
 from src.db.dtos.url.mapping import URLMapping
 from src.db.client.sync import DatabaseClient
 from src.db.dtos.url.raw_html import RawHTMLInfo

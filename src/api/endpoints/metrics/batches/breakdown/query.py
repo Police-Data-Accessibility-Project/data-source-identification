@@ -6,9 +6,9 @@ from src.api.endpoints.metrics.batches.breakdown.dto import GetMetricsBatchesBre
     GetMetricsBatchesBreakdownInnerResponseDTO
 from src.collectors.enums import URLStatus, CollectorType
 from src.core.enums import BatchStatus
-from src.db.models.instantiations.batch import Batch
+from src.db.models.instantiations.batch.sqlalchemy import Batch
 from src.db.models.instantiations.link.link_batch_urls import LinkBatchURL
-from src.db.models.instantiations.url.core import URL
+from src.db.models.instantiations.url.core.sqlalchemy import URL
 from src.db.queries.base.builder import QueryBuilderBase
 from src.db.statement_composer import StatementComposer
 

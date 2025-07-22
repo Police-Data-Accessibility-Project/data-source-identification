@@ -42,6 +42,7 @@ class TaskType(PyEnum):
     IDLE = "Idle"
     PROBE_404 = "404 Probe"
     SYNC_AGENCIES = "Sync Agencies"
+    SYNC_DATA_SOURCES = "Sync Data Sources"
 
 class PGEnum(TypeDecorator):
     impl = postgresql.ENUM

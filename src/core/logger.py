@@ -1,7 +1,7 @@
 import asyncio
 
 from src.db.client.async_ import AsyncDatabaseClient
-from src.db.dtos.log import LogInfo
+from src.db.models.instantiations.log.pydantic.info import LogInfo
 
 
 class AsyncCoreLogger:

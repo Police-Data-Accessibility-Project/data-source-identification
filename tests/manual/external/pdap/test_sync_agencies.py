@@ -1,7 +1,7 @@
 import pytest
 import time
 
-from src.core.tasks.scheduled.operators.agency_sync.dtos.parameters import AgencySyncParameters
+from src.core.tasks.scheduled.sync.agency.dtos.parameters import AgencySyncParameters
 
 
 @pytest.mark.asyncio

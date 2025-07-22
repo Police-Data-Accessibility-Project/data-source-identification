@@ -18,7 +18,7 @@ from sqlalchemy import case, func, Select, select
 
 from src.collectors.enums import URLStatus
 from src.db.constants import ALL_ANNOTATION_MODELS
-from src.db.models.instantiations.url.core import URL
+from src.db.models.instantiations.url.core.sqlalchemy import URL
 from src.db.models.mixins import URLDependentMixin
 from src.db.queries.base.builder import QueryBuilderBase
 

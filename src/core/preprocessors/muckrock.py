@@ -1,6 +1,6 @@
 from typing import List
 
-from src.db.dtos.url.core import URLInfo
+from src.db.models.instantiations.url.core.pydantic.info import URLInfo
 from src.core.preprocessors.base import PreprocessorBase
 
 

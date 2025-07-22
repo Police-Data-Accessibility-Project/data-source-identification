@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.api.endpoints.annotate.agency.get.dto import GetNextURLForAgencyAgencyInfo
 from src.core.enums import SuggestionType
-from src.db.models.instantiations.agency import Agency
+from src.db.models.instantiations.agency.sqlalchemy import Agency
 from src.db.models.instantiations.url.suggestion.agency.auto import AutomatedUrlAgencySuggestion
 from src.db.queries.base.builder import QueryBuilderBase
 

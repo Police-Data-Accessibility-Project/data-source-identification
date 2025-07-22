@@ -6,7 +6,7 @@ from typing import Optional, Type, Any, List, Sequence
 from sqlalchemy import select, exists, func, case, Select, and_, update, delete, literal, text, Row
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.dialects.postgresql import insert as pg_insert
-from sqlalchemy.exc import IntegrityError, NoResultFound
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.orm import selectinload, QueryableAttribute
 
@@ -42,19 +42,29 @@ from src.api.endpoints.review.approve.dto import FinalReviewApprovalInfo
 from src.api.endpoints.review.approve.query import ApproveURLQueryBuilder
 from src.api.endpoints.review.enums import RejectionReason
 from src.api.endpoints.review.next.dto import GetNextURLForFinalReviewOuterResponse
+from src.api.endpoints.review.next.query import GetNextURLForFinalReviewQueryBuilder
 from src.api.endpoints.review.reject.query import RejectURLQueryBuilder
 from src.api.endpoints.search.dtos.response import SearchURLResponse
 from src.api.endpoints.task.by_id.dto import TaskInfo
-
 from src.api.endpoints.task.by_id.query import GetTaskInfoQueryBuilder
 from src.api.endpoints.task.dtos.get.tasks import GetTasksResponse, GetTasksResponseTaskInfo
 from src.api.endpoints.url.get.dto import GetURLsResponseInfo
-
 from src.api.endpoints.url.get.query import GetURLsQueryBuilder
 from src.collectors.enums import URLStatus, CollectorType
 from src.core.enums import BatchStatus, SuggestionType, RecordType, SuggestedStatus
 from src.core.env_var_manager import EnvVarManager
-from src.core.tasks.scheduled.operators.agency_sync.dtos.parameters import AgencySyncParameters
+from src.core.tasks.scheduled.sync.agency.dtos.parameters import AgencySyncParameters
+from src.core.tasks.scheduled.sync.agency.queries.get_sync_params import GetAgenciesSyncParametersQueryBuilder
+from src.core.tasks.scheduled.sync.agency.queries.mark_full_sync import get_mark_full_agencies_sync_query
+from src.core.tasks.scheduled.sync.agency.queries.update_sync_progress import get_update_agencies_sync_progress_query
+from src.core.tasks.scheduled.sync.agency.queries.upsert import \
+    convert_agencies_sync_response_to_agencies_upsert
+from src.core.tasks.scheduled.sync.data_sources.dtos.parameters import DataSourcesSyncParameters
+from src.core.tasks.scheduled.sync.data_sources.queries.get_sync_params import GetDataSourcesSyncParametersQueryBuilder
+from src.core.tasks.scheduled.sync.data_sources.queries.mark_full_sync import get_mark_full_data_sources_sync_query
+from src.core.tasks.scheduled.sync.data_sources.queries.update_sync_progress import \
+    get_update_data_sources_sync_progress_query
+from src.core.tasks.scheduled.sync.data_sources.queries.upsert import convert_data_sources_sync_response_to_url_upsert
 from src.core.tasks.url.operators.agency_identification.dtos.suggestion import URLAgencySuggestionInfo
 from src.core.tasks.url.operators.agency_identification.dtos.tdo import AgencyIdentificationTDO
 from src.core.tasks.url.operators.agency_identification.queries.get_pending_urls_without_agency_suggestions import \
@@ -76,34 +86,36 @@ from src.db.client.types import UserSuggestionModel
 from src.db.config_manager import ConfigManager
 from src.db.constants import PLACEHOLDER_AGENCY_NAME
 from src.db.dto_converter import DTOConverter
-from src.db.dtos.batch import BatchInfo
-from src.db.dtos.duplicate import DuplicateInsertInfo, DuplicateInfo
-from src.db.dtos.log import LogInfo, LogOutputInfo
-from src.db.dtos.url.annotations.auto.relevancy import AutoRelevancyAnnotationInput
-from src.db.dtos.url.core import URLInfo
-from src.db.dtos.url.error import URLErrorPydanticInfo
+from src.db.models.instantiations.batch.pydantic import BatchInfo
+from src.db.models.instantiations.duplicate.pydantic.insert import DuplicateInsertInfo
+from src.db.models.instantiations.duplicate.pydantic.info import DuplicateInfo
+from src.db.models.instantiations.log.pydantic.info import LogInfo
+from src.db.models.instantiations.log.pydantic.output import LogOutputInfo
+from src.db.models.instantiations.url.suggestion.relevant.auto.pydantic.input import AutoRelevancyAnnotationInput
+from src.db.models.instantiations.url.core.pydantic.info import URLInfo
+from src.db.models.instantiations.url.error_info.pydantic import URLErrorPydanticInfo
 from src.db.dtos.url.html_content import URLHTMLContentInfo
 from src.db.dtos.url.insert import InsertURLsInfo
 from src.db.dtos.url.mapping import URLMapping
 from src.db.dtos.url.raw_html import RawHTMLInfo
 from src.db.enums import TaskType
-from src.db.models.instantiations.agency import Agency
+from src.db.models.instantiations.agency.sqlalchemy import Agency
 from src.db.models.instantiations.backlog_snapshot import BacklogSnapshot
-from src.db.models.instantiations.batch import Batch
+from src.db.models.instantiations.batch.sqlalchemy import Batch
 from src.db.models.instantiations.confirmed_url_agency import ConfirmedURLAgency
-from src.db.models.instantiations.duplicate import Duplicate
+from src.db.models.instantiations.duplicate.sqlalchemy import Duplicate
 from src.db.models.instantiations.link.link_batch_urls import LinkBatchURL
 from src.db.models.instantiations.link.link_task_url import LinkTaskURL
-from src.db.models.instantiations.log import Log
+from src.db.models.instantiations.log.sqlalchemy import Log
 from src.db.models.instantiations.root_url_cache import RootURL
-from src.db.models.instantiations.sync_state_agencies import AgenciesSyncState
+from src.db.models.instantiations.sync_state.agencies import AgenciesSyncState
 from src.db.models.instantiations.task.core import Task
 from src.db.models.instantiations.task.error import TaskError
 from src.db.models.instantiations.url.checked_for_duplicate import URLCheckedForDuplicate
 from src.db.models.instantiations.url.compressed_html import URLCompressedHTML
-from src.db.models.instantiations.url.core import URL
+from src.db.models.instantiations.url.core.sqlalchemy import URL
 from src.db.models.instantiations.url.data_source import URLDataSource
-from src.db.models.instantiations.url.error_info import URLErrorInfo
+from src.db.models.instantiations.url.error_info.sqlalchemy import URLErrorInfo
 from src.db.models.instantiations.url.html_content import URLHTMLContent
 from src.db.models.instantiations.url.optional_data_source_metadata import URLOptionalDataSourceMetadata
 from src.db.models.instantiations.url.probed_for_404 import URLProbedFor404
@@ -111,19 +123,19 @@ from src.db.models.instantiations.url.suggestion.agency.auto import AutomatedUrl
 from src.db.models.instantiations.url.suggestion.agency.user import UserUrlAgencySuggestion
 from src.db.models.instantiations.url.suggestion.record_type.auto import AutoRecordTypeSuggestion
 from src.db.models.instantiations.url.suggestion.record_type.user import UserRecordTypeSuggestion
-from src.db.models.instantiations.url.suggestion.relevant.auto import AutoRelevantSuggestion
+from src.db.models.instantiations.url.suggestion.relevant.auto.sqlalchemy import AutoRelevantSuggestion
 from src.db.models.instantiations.url.suggestion.relevant.user import UserRelevantSuggestion
 from src.db.models.templates import Base
 from src.db.queries.base.builder import QueryBuilderBase
-from src.api.endpoints.review.next.query import GetNextURLForFinalReviewQueryBuilder
 from src.db.queries.implementations.core.get.html_content_info import GetHTMLContentInfoQueryBuilder
 from src.db.queries.implementations.core.get.recent_batch_summaries.builder import GetRecentBatchSummariesQueryBuilder
 from src.db.queries.implementations.core.metrics.urls.aggregated.pending import \
     GetMetricsURLSAggregatedPendingQueryBuilder
-from src.db.queries.implementations.core.tasks.agency_sync.upsert import get_upsert_agencies_mappings
 from src.db.statement_composer import StatementComposer
+from src.db.templates.upsert import UpsertModel
 from src.db.utils.compression import decompress_html, compress_html
-from src.external.pdap.dtos.agencies_sync import AgenciesSyncResponseInnerInfo
+from src.external.pdap.dtos.sync.agencies import AgenciesSyncResponseInnerInfo
+from src.external.pdap.dtos.sync.data_sources import DataSourcesSyncResponseInnerInfo
 
 
 class AsyncDatabaseClient:
@@ -172,8 +184,22 @@ class AsyncDatabaseClient:
         session.add(model)
 
     @session_manager
-    async def add_all(self, session: AsyncSession, models: list[Base]):
+    async def add_all(
+        self,
+        session: AsyncSession,
+        models: list[Base],
+        return_ids: bool = False
+    ) -> list[int] | None:
         session.add_all(models)
+        if return_ids:
+            if not hasattr(models[0], "id"):
+                raise AttributeError("Models must have an id attribute")
+            await session.flush()
+            return [
+                model.id  # pyright: ignore [reportAttributeAccessIssue]
+                for model in models
+            ]
+        return None
 
     @session_manager
     async def bulk_update(
@@ -192,21 +218,25 @@ class AsyncDatabaseClient:
     async def bulk_upsert(
         self,
         session: AsyncSession,
-        model: Base,
-        mappings: list[dict],
-        id_value: str = "id"
+        models: list[UpsertModel],
     ):
+        if len(models) == 0:
+            return
 
-        query = pg_insert(model)
+        first_model = models[0]
+
+        query = pg_insert(first_model.sa_model)
+
+        mappings = [upsert_model.model_dump() for upsert_model in models]
 
         set_ = {}
         for k, v in mappings[0].items():
-            if k == id_value:
+            if k == first_model.id_field:
                 continue
             set_[k] = getattr(query.excluded, k)
 
         query = query.on_conflict_do_update(
-            index_elements=[id_value],
+            index_elements=[first_model.id_field],
             set_=set_
         )
 
@@ -1566,56 +1596,43 @@ class AsyncDatabaseClient:
         )
         return result
 
-    @session_manager
-    async def get_agencies_sync_parameters(
-        self,
-        session: AsyncSession
-    ) -> AgencySyncParameters:
-        query = select(
-            AgenciesSyncState.current_page,
-            AgenciesSyncState.current_cutoff_date
+    async def get_agencies_sync_parameters(self) -> AgencySyncParameters:
+        return await self.run_query_builder(
+            GetAgenciesSyncParametersQueryBuilder()
         )
-        try:
-            result = (await session.execute(query)).mappings().one()
-            return AgencySyncParameters(
-                page=result['current_page'],
-                cutoff_date=result['current_cutoff_date']
-            )
-        except NoResultFound:
-            # Add value
-            state = AgenciesSyncState()
-            session.add(state)
-            return AgencySyncParameters(page=None, cutoff_date=None)
 
-
+    async def get_data_sources_sync_parameters(self) -> DataSourcesSyncParameters:
+        return await self.run_query_builder(
+            GetDataSourcesSyncParametersQueryBuilder()
+        )
 
     async def upsert_agencies(
         self,
         agencies: list[AgenciesSyncResponseInnerInfo]
     ):
         await self.bulk_upsert(
-            model=Agency,
-            mappings=get_upsert_agencies_mappings(agencies),
-            id_value="agency_id",
+            models=convert_agencies_sync_response_to_agencies_upsert(agencies)
+        )
+
+    async def upsert_urls_from_data_sources(
+        self,
+        data_sources: list[DataSourcesSyncResponseInnerInfo]
+    ):
+        await self.bulk_upsert(
+            models=convert_data_sources_sync_response_to_url_upsert(data_sources)
         )
 
     async def update_agencies_sync_progress(self, page: int):
-        query = update(
-            AgenciesSyncState
-        ).values(
-            current_page=page
-        )
-        await self.execute(query)
+        await self.execute(get_update_agencies_sync_progress_query(page))
+
+    async def update_data_sources_sync_progress(self, page: int):
+        await self.execute(get_update_data_sources_sync_progress_query(page))
+
+    async def mark_full_data_sources_sync(self):
+        await self.execute(get_mark_full_data_sources_sync_query())
 
     async def mark_full_agencies_sync(self):
-        query = update(
-            AgenciesSyncState
-        ).values(
-            last_full_sync_at=func.now(),
-            current_cutoff_date=func.now() - text('interval \'1 day\''),
-            current_page=None
-        )
-        await self.execute(query)
+        await self.execute(get_mark_full_agencies_sync_query())
 
     @session_manager
     async def get_html_for_url(

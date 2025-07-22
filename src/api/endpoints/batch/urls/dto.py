@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
-from src.db.dtos.url.core import URLInfo
+from src.db.models.instantiations.url.core.pydantic.info import URLInfo
 
 
 class GetURLsByBatchResponse(BaseModel):

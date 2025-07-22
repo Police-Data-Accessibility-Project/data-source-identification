@@ -2,11 +2,13 @@ from typing import Optional
 
 from pdap_access_manager import AccessManager, DataSourcesNamespaces, RequestInfo, RequestType
 
-from src.core.tasks.scheduled.operators.agency_sync.dtos.parameters import AgencySyncParameters
+from src.core.tasks.scheduled.sync.agency.dtos.parameters import AgencySyncParameters
+from src.core.tasks.scheduled.sync.data_sources.dtos.parameters import DataSourcesSyncParameters
 from src.core.tasks.url.operators.submit_approved_url.tdo import SubmitApprovedURLTDO, SubmittedURLInfo
-from src.external.pdap.dtos.agencies_sync import AgenciesSyncResponseInnerInfo, AgenciesSyncResponseInfo
+from src.external.pdap.dtos.sync.agencies import AgenciesSyncResponseInnerInfo, AgenciesSyncResponseInfo
 from src.external.pdap.dtos.match_agency.post import MatchAgencyInfo
 from src.external.pdap.dtos.match_agency.response import MatchAgencyResponse
+from src.external.pdap.dtos.sync.data_sources import DataSourcesSyncResponseInfo, DataSourcesSyncResponseInnerInfo
 from src.external.pdap.dtos.unique_url_duplicate import UniqueURLDuplicateInfo
 from src.external.pdap.enums import MatchAgencyResponseStatus
 
@@ -174,5 +176,35 @@ class PDAPClient:
             agencies=[
                 AgenciesSyncResponseInnerInfo(**entry)
                 for entry in response_info.data["agencies"]
+            ]
+        )
+
+    async def sync_data_sources(
+        self,
+        params: DataSourcesSyncParameters
+    ) -> DataSourcesSyncResponseInfo:
+        url = self.access_manager.build_url(
+            namespace=DataSourcesNamespaces.SOURCE_COLLECTOR,
+            subdomains=[
+                "data-sources",
+                "sync"
+            ]
+        )
+        headers = await self.access_manager.jwt_header()
+        headers['Content-Type'] = "application/json"
+        request_info = RequestInfo(
+            type_=RequestType.GET,
+            url=url,
+            headers=headers,
+            params={
+                "page": params.page,
+                "update_at": params.cutoff_date
+            }
+        )
+        response_info = await self.access_manager.make_request(request_info)
+        return DataSourcesSyncResponseInfo(
+            data_sources=[
+                DataSourcesSyncResponseInnerInfo(**entry)
+                for entry in response_info.data["data_sources"]
             ]
         )

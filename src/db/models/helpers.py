@@ -7,7 +7,7 @@ def get_created_at_column():
 
 def get_agency_id_foreign_column(
     nullable: bool = False
-):
+) -> Column:
     return Column(
         'agency_id',
         Integer(),

@@ -11,7 +11,7 @@ from src.core.tasks.url.operators.url_html.scraper.parser.util import convert_to
 from src.db.dtos.url.mapping import URLMapping
 from src.db.models.instantiations.confirmed_url_agency import ConfirmedURLAgency
 from src.db.models.instantiations.link.link_batch_urls import LinkBatchURL
-from src.db.models.instantiations.url.core import URL
+from src.db.models.instantiations.url.core.sqlalchemy import URL
 from src.db.models.instantiations.url.suggestion.agency.auto import AutomatedUrlAgencySuggestion
 from src.db.models.instantiations.url.suggestion.agency.user import UserUrlAgencySuggestion
 from src.db.models.instantiations.url.suggestion.relevant.user import UserRelevantSuggestion

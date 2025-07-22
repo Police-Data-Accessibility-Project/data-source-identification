@@ -1,7 +1,7 @@
 import pytest
 
 from src.db.constants import PLACEHOLDER_AGENCY_NAME
-from src.db.models.instantiations.agency import Agency
+from src.db.models.instantiations.agency.sqlalchemy import Agency
 from tests.helpers.setup.annotate_agency.core import setup_for_annotate_agency
 from tests.helpers.db_data_creator import DBDataCreator
 

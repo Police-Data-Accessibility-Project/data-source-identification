@@ -5,9 +5,9 @@ from src.api.endpoints.collector.dtos.manual_batch.post import ManualBatchInputD
 from src.api.endpoints.collector.dtos.manual_batch.response import ManualBatchResponseDTO
 from src.collectors.enums import CollectorType, URLStatus
 from src.core.enums import BatchStatus
-from src.db.models.instantiations.batch import Batch
+from src.db.models.instantiations.batch.sqlalchemy import Batch
 from src.db.models.instantiations.link.link_batch_urls import LinkBatchURL
-from src.db.models.instantiations.url.core import URL
+from src.db.models.instantiations.url.core.sqlalchemy import URL
 from src.db.models.instantiations.url.optional_data_source_metadata import URLOptionalDataSourceMetadata
 from src.db.queries.base.builder import QueryBuilderBase
 

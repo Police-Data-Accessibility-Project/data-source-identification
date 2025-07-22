@@ -5,10 +5,9 @@ from src.api.endpoints.annotate._shared.queries.get_next_url_for_user_annotation
     GetNextURLForUserAnnotationQueryBuilder
 from src.api.endpoints.annotate.relevance.get.dto import GetNextRelevanceAnnotationResponseInfo, \
     RelevanceAnnotationResponseInfo
-from src.core.tasks.url.operators.auto_relevant.models.annotation import RelevanceAnnotationInfo
 from src.db.dto_converter import DTOConverter
 from src.db.dtos.url.mapping import URLMapping
-from src.db.models.instantiations.url.core import URL
+from src.db.models.instantiations.url.core.sqlalchemy import URL
 from src.db.models.instantiations.url.suggestion.agency.user import UserUrlAgencySuggestion
 from src.db.models.instantiations.url.suggestion.relevant.user import UserRelevantSuggestion
 from src.db.queries.base.builder import QueryBuilderBase

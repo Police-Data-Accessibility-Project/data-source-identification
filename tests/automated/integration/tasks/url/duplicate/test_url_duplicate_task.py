@@ -6,7 +6,7 @@ import pytest
 from src.core.tasks.url.operators.url_duplicate.core import URLDuplicateTaskOperator
 from src.db.dtos.url.mapping import URLMapping
 from src.db.models.instantiations.url.checked_for_duplicate import URLCheckedForDuplicate
-from src.db.models.instantiations.url.core import URL
+from src.db.models.instantiations.url.core.sqlalchemy import URL
 from src.collectors.enums import URLStatus
 from src.core.tasks.url.enums import TaskOperatorOutcome
 from tests.automated.integration.tasks.url.duplicate.constants import BATCH_CREATION_PARAMETERS

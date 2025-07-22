@@ -13,8 +13,8 @@ from src.db.models.instantiations.link.link_task_url import LinkTaskURL
 from src.db.models.instantiations.task.core import Task
 from src.db.models.instantiations.url.html_content import URLHTMLContent
 from src.db.models.instantiations.url.optional_data_source_metadata import URLOptionalDataSourceMetadata
-from src.db.models.instantiations.url.core import URL
-from src.db.models.instantiations.batch import Batch
+from src.db.models.instantiations.url.core.sqlalchemy import URL
+from src.db.models.instantiations.batch.sqlalchemy import Batch
 from src.db.models.instantiations.url.suggestion.agency.auto import AutomatedUrlAgencySuggestion
 from src.db.types import UserSuggestionType
 

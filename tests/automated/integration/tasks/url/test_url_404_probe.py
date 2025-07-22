@@ -8,7 +8,7 @@ from aiohttp import ClientResponseError, RequestInfo
 from src.core.tasks.url.operators.url_404_probe.core import URL404ProbeTaskOperator
 from src.core.tasks.url.operators.url_html.scraper.request_interface.core import URLRequestInterface
 from src.db.models.instantiations.url.probed_for_404 import URLProbedFor404
-from src.db.models.instantiations.url.core import URL
+from src.db.models.instantiations.url.core.sqlalchemy import URL
 from src.collectors.enums import URLStatus
 from src.core.tasks.url.enums import TaskOperatorOutcome
 from src.core.tasks.url.operators.url_html.scraper.request_interface.dtos.url_response import URLResponseInfo

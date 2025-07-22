@@ -1,4 +1,4 @@
-from src.db.dtos.batch import BatchInfo
+from src.db.models.instantiations.batch.pydantic import BatchInfo
 from src.collectors import CollectorType
 from src.core.enums import BatchStatus
 from src.collectors.source_collectors.ckan import group_search, package_search, organization_search
