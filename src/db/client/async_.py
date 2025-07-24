@@ -3,8 +3,7 @@ from functools import wraps
 from operator import or_
 from typing import Optional, Type, Any, List, Sequence
 
-from sqlalchemy import select, exists, func, case, Select, and_, update, delete, literal, text, Row
-from sqlalchemy.dialects import postgresql
+from sqlalchemy import select, exists, func, case, Select, and_, update, delete, literal, Row
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
@@ -64,7 +63,7 @@ from src.core.tasks.scheduled.sync.data_sources.queries.get_sync_params import G
 from src.core.tasks.scheduled.sync.data_sources.queries.mark_full_sync import get_mark_full_data_sources_sync_query
 from src.core.tasks.scheduled.sync.data_sources.queries.update_sync_progress import \
     get_update_data_sources_sync_progress_query
-from src.core.tasks.scheduled.sync.data_sources.queries.upsert import convert_data_sources_sync_response_to_url_upsert
+from src.core.tasks.scheduled.sync.data_sources.queries.upsert_.core import convert_data_sources_sync_response_to_url_upsert
 from src.core.tasks.url.operators.agency_identification.dtos.suggestion import URLAgencySuggestionInfo
 from src.core.tasks.url.operators.agency_identification.dtos.tdo import AgencyIdentificationTDO
 from src.core.tasks.url.operators.agency_identification.queries.get_pending_urls_without_agency_suggestions import \
@@ -81,19 +80,12 @@ from src.core.tasks.url.operators.url_miscellaneous_metadata.queries.get_pending
 from src.core.tasks.url.operators.url_miscellaneous_metadata.queries.has_pending_urls_missing_miscellaneous_data import \
     HasPendingURsMissingMiscellaneousDataQueryBuilder
 from src.core.tasks.url.operators.url_miscellaneous_metadata.tdo import URLMiscellaneousMetadataTDO
+from src.db import session_helper as sh
 from src.db.client.helpers import add_standard_limit_and_offset
 from src.db.client.types import UserSuggestionModel
 from src.db.config_manager import ConfigManager
 from src.db.constants import PLACEHOLDER_AGENCY_NAME
 from src.db.dto_converter import DTOConverter
-from src.db.models.instantiations.batch.pydantic import BatchInfo
-from src.db.models.instantiations.duplicate.pydantic.insert import DuplicateInsertInfo
-from src.db.models.instantiations.duplicate.pydantic.info import DuplicateInfo
-from src.db.models.instantiations.log.pydantic.info import LogInfo
-from src.db.models.instantiations.log.pydantic.output import LogOutputInfo
-from src.db.models.instantiations.url.suggestion.relevant.auto.pydantic.input import AutoRelevancyAnnotationInput
-from src.db.models.instantiations.url.core.pydantic.info import URLInfo
-from src.db.models.instantiations.url.error_info.pydantic import URLErrorPydanticInfo
 from src.db.dtos.url.html_content import URLHTMLContentInfo
 from src.db.dtos.url.insert import InsertURLsInfo
 from src.db.dtos.url.mapping import URLMapping
@@ -101,20 +93,26 @@ from src.db.dtos.url.raw_html import RawHTMLInfo
 from src.db.enums import TaskType
 from src.db.models.instantiations.agency.sqlalchemy import Agency
 from src.db.models.instantiations.backlog_snapshot import BacklogSnapshot
+from src.db.models.instantiations.batch.pydantic import BatchInfo
 from src.db.models.instantiations.batch.sqlalchemy import Batch
-from src.db.models.instantiations.confirmed_url_agency import LinkURLAgency
+from src.db.models.instantiations.link.url_agency_.sqlalchemy import LinkURLAgency
+from src.db.models.instantiations.duplicate.pydantic.info import DuplicateInfo
+from src.db.models.instantiations.duplicate.pydantic.insert import DuplicateInsertInfo
 from src.db.models.instantiations.duplicate.sqlalchemy import Duplicate
-from src.db.models.instantiations.link.link_batch_urls import LinkBatchURL
-from src.db.models.instantiations.link.link_task_url import LinkTaskURL
+from src.db.models.instantiations.link.batch_url import LinkBatchURL
+from src.db.models.instantiations.link.task_url import LinkTaskURL
+from src.db.models.instantiations.log.pydantic.info import LogInfo
+from src.db.models.instantiations.log.pydantic.output import LogOutputInfo
 from src.db.models.instantiations.log.sqlalchemy import Log
 from src.db.models.instantiations.root_url_cache import RootURL
-from src.db.models.instantiations.sync_state.agencies import AgenciesSyncState
 from src.db.models.instantiations.task.core import Task
 from src.db.models.instantiations.task.error import TaskError
 from src.db.models.instantiations.url.checked_for_duplicate import URLCheckedForDuplicate
 from src.db.models.instantiations.url.compressed_html import URLCompressedHTML
+from src.db.models.instantiations.url.core.pydantic.info import URLInfo
 from src.db.models.instantiations.url.core.sqlalchemy import URL
 from src.db.models.instantiations.url.data_source import URLDataSource
+from src.db.models.instantiations.url.error_info.pydantic import URLErrorPydanticInfo
 from src.db.models.instantiations.url.error_info.sqlalchemy import URLErrorInfo
 from src.db.models.instantiations.url.html_content import URLHTMLContent
 from src.db.models.instantiations.url.optional_data_source_metadata import URLOptionalDataSourceMetadata
@@ -123,6 +121,7 @@ from src.db.models.instantiations.url.suggestion.agency.auto import AutomatedUrl
 from src.db.models.instantiations.url.suggestion.agency.user import UserUrlAgencySuggestion
 from src.db.models.instantiations.url.suggestion.record_type.auto import AutoRecordTypeSuggestion
 from src.db.models.instantiations.url.suggestion.record_type.user import UserRecordTypeSuggestion
+from src.db.models.instantiations.url.suggestion.relevant.auto.pydantic.input import AutoRelevancyAnnotationInput
 from src.db.models.instantiations.url.suggestion.relevant.auto.sqlalchemy import AutoRelevantSuggestion
 from src.db.models.instantiations.url.suggestion.relevant.user import UserRelevantSuggestion
 from src.db.models.templates import Base
@@ -186,13 +185,7 @@ class AsyncDatabaseClient:
         model: Base,
         return_id: bool = False
     ) -> int | None:
-        session.add(model)
-        if return_id:
-            if not hasattr(model, "id"):
-                raise AttributeError("Models must have an id attribute")
-            await session.flush()
-            return model.id
-        return None
+        return await sh.add(session=session, model=model, return_id=return_id)
 
     @session_manager
     async def add_all(
@@ -201,16 +194,7 @@ class AsyncDatabaseClient:
         models: list[Base],
         return_ids: bool = False
     ) -> list[int] | None:
-        session.add_all(models)
-        if return_ids:
-            if not hasattr(models[0], "id"):
-                raise AttributeError("Models must have an id attribute")
-            await session.flush()
-            return [
-                model.id  # pyright: ignore [reportAttributeAccessIssue]
-                for model in models
-            ]
-        return None
+        return await sh.add_all(session=session, models=models, return_ids=return_ids)
 
     @session_manager
     async def bulk_update(
@@ -231,45 +215,20 @@ class AsyncDatabaseClient:
         session: AsyncSession,
         models: list[UpsertModel],
     ):
-        if len(models) == 0:
-            return
-
-        first_model = models[0]
-
-        query = pg_insert(first_model.sa_model)
-
-        mappings = [upsert_model.model_dump() for upsert_model in models]
-
-        set_ = {}
-        for k, v in mappings[0].items():
-            if k == first_model.id_field:
-                continue
-            set_[k] = getattr(query.excluded, k)
-
-        query = query.on_conflict_do_update(
-            index_elements=[first_model.id_field],
-            set_=set_
-        )
-
-
-        # Note, mapping must include primary key
-        await session.execute(
-            query,
-            mappings
-        )
+        return await sh.bulk_upsert(session, models)
 
     @session_manager
     async def scalar(self, session: AsyncSession, statement):
         """Fetch the first column of the first row."""
-        return (await session.execute(statement)).scalar()
+        return await sh.scalar(session, statement)
 
     @session_manager
     async def scalars(self, session: AsyncSession, statement):
-        return (await session.execute(statement)).scalars().all()
+        return await sh.scalars(session, statement)
 
     @session_manager
     async def mapping(self, session: AsyncSession, statement):
-        return (await session.execute(statement)).mappings().one()
+        return await sh.mapping(session, statement)
 
     @session_manager
     async def run_query_builder(
@@ -615,15 +574,9 @@ class AsyncDatabaseClient:
         model: Base,
         order_by_attribute: Optional[str] = None
     ) -> list[Base]:
-        """
-        Get all records of a model
-        Used primarily in testing
-        """
-        statement = select(model)
-        if order_by_attribute:
-            statement = statement.order_by(getattr(model, order_by_attribute))
-        result = await session.execute(statement)
-        return result.scalars().all()
+        """Get all records of a model. Used primarily in testing."""
+        return await sh.get_all(session=session, model=model, order_by_attribute=order_by_attribute)
+
 
     @session_manager
     async def load_root_url_cache(self, session: AsyncSession) -> dict[str, str]:
@@ -1340,10 +1293,6 @@ class AsyncDatabaseClient:
             oldest_pending_url_id=oldest_pending_url_id,
             oldest_pending_url_created_at=oldest_pending_created_at,
         )
-
-    def compile(self, statement):
-        compiled_sql = statement.compile(dialect=postgresql.dialect(), compile_kwargs={"literal_binds": True})
-        return compiled_sql
 
     @session_manager
     async def get_urls_breakdown_pending_metrics(

@@ -1,9 +1,9 @@
 from typing import Any, Generic, Optional
 
 from sqlalchemy import FromClause, ColumnClause
-from sqlalchemy.dialects import postgresql
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.db import session_helper as sh
 from src.db.types import LabelsType
 
 
@@ -33,9 +33,4 @@ class QueryBuilderBase(Generic[LabelsType]):
 
     @staticmethod
     def compile(query) -> Any:
-        return query.compile(
-            dialect=postgresql.dialect(),
-            compile_kwargs={
-                "literal_binds": True
-            }
-        )
+        return sh.compile_to_sql(query)

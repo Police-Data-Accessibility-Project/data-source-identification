@@ -14,6 +14,7 @@ from tests.helpers.asserts import assert_task_run_success
 
 @pytest.mark.asyncio
 async def test_agency_sync_happy_path(
+    wiped_database,
     setup: SyncAgenciesTaskOperator
 ):
     operator = setup

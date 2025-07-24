@@ -10,7 +10,7 @@ from src.api.endpoints.annotate.relevance.get.dto import RelevanceAnnotationResp
 from src.collectors.enums import URLStatus
 from src.db.dto_converter import DTOConverter
 from src.db.dtos.url.mapping import URLMapping
-from src.db.models.instantiations.link.link_batch_urls import LinkBatchURL
+from src.db.models.instantiations.link.batch_url import LinkBatchURL
 from src.db.models.instantiations.url.core.sqlalchemy import URL
 from src.db.models.instantiations.url.suggestion.agency.user import UserUrlAgencySuggestion
 from src.db.models.instantiations.url.suggestion.record_type.user import UserRecordTypeSuggestion

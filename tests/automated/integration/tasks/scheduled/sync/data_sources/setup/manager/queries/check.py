@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from src.db.models.instantiations.agency.sqlalchemy import Agency
-from src.db.models.instantiations.confirmed_url_agency import LinkURLAgency
+from src.db.models.instantiations.link.url_agency_.sqlalchemy import LinkURLAgency
 from src.db.models.instantiations.url.core.sqlalchemy import URL
 from src.db.models.instantiations.url.data_source import URLDataSource
 from src.db.queries.base.builder import QueryBuilderBase

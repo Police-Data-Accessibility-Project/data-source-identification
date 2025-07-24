@@ -13,7 +13,7 @@ from src.db.dtos.url.insert import InsertURLsInfo
 from src.db.models.instantiations.log.pydantic.info import LogInfo
 from src.db.models.instantiations.url.core.pydantic.info import URLInfo
 from src.db.dtos.url.mapping import URLMapping
-from src.db.models.instantiations.link.link_batch_urls import LinkBatchURL
+from src.db.models.instantiations.link.batch_url import LinkBatchURL
 from src.db.models.templates import Base
 from src.db.models.instantiations.duplicate.sqlalchemy import Duplicate
 from src.db.models.instantiations.log.sqlalchemy import Log

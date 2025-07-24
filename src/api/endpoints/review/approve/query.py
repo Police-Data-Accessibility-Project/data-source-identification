@@ -10,7 +10,7 @@ from src.api.endpoints.review.approve.dto import FinalReviewApprovalInfo
 from src.collectors.enums import URLStatus
 from src.db.constants import PLACEHOLDER_AGENCY_NAME
 from src.db.models.instantiations.agency.sqlalchemy import Agency
-from src.db.models.instantiations.confirmed_url_agency import LinkURLAgency
+from src.db.models.instantiations.link.url_agency_.sqlalchemy import LinkURLAgency
 from src.db.models.instantiations.url.core.sqlalchemy import URL
 from src.db.models.instantiations.url.optional_data_source_metadata import URLOptionalDataSourceMetadata
 from src.db.models.instantiations.url.reviewing_user import ReviewingUserURL

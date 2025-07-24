@@ -21,7 +21,7 @@ async def check_sync_concluded(
         )
     )
 
-    sync_state_results = await db_client.mapping(
+    sync_state_results = await db_client.scalar(
         select(
             AgenciesSyncState
         )
