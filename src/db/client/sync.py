@@ -119,7 +119,7 @@ class DatabaseClient:
         url_entry = URL(
             url=url_info.url,
             collector_metadata=url_info.collector_metadata,
-            outcome=url_info.outcome.value,
+            outcome=url_info.outcome,
             name=url_info.name
         )
         if url_info.created_at is not None:

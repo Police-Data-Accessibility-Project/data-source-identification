@@ -13,7 +13,7 @@ from src.db.dto_converter import DTOConverter
 from src.db.dtos.url.html_content import URLHTMLContentInfo
 from src.db.exceptions import FailedQueryException
 from src.db.models.instantiations.batch.sqlalchemy import Batch
-from src.db.models.instantiations.confirmed_url_agency import ConfirmedURLAgency
+from src.db.models.instantiations.confirmed_url_agency import LinkURLAgency
 from src.db.models.instantiations.link.link_batch_urls import LinkBatchURL
 from src.db.models.instantiations.url.core.sqlalchemy import URL
 from src.db.models.instantiations.url.suggestion.agency.auto import AutomatedUrlAgencySuggestion
@@ -44,7 +44,7 @@ class GetNextURLForFinalReviewQueryBuilder(QueryBuilderBase):
         self.double_join_relationships = [
             (URL.automated_agency_suggestions, AutomatedUrlAgencySuggestion.agency),
             (URL.user_agency_suggestion, UserUrlAgencySuggestion.agency),
-            (URL.confirmed_agencies, ConfirmedURLAgency.agency)
+            (URL.confirmed_agencies, LinkURLAgency.agency)
         ]
 
         self.count_label = "count"

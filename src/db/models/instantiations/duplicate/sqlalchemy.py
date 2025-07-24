@@ -2,10 +2,10 @@ from sqlalchemy import Column, Integer, ForeignKey
 from sqlalchemy.orm import relationship
 
 from src.db.models.mixins import BatchDependentMixin
-from src.db.models.templates import StandardModel
+from src.db.models.templates import StandardBase
 
 
-class Duplicate(BatchDependentMixin, StandardModel):
+class Duplicate(BatchDependentMixin, StandardBase):
     """
     Identifies duplicates which occur within a batch
     """

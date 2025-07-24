@@ -6,15 +6,17 @@ from sqlalchemy import Column, Integer, String, DateTime
 from sqlalchemy.orm import relationship
 
 from src.db.models.mixins import UpdatedAtMixin, CreatedAtMixin
-from src.db.models.templates import Base
+from src.db.models.templates import Base, StandardBase
 
 
 class Agency(
     CreatedAtMixin, # When agency was added to database
     UpdatedAtMixin, # When agency was last updated in database
-    Base
+    StandardBase
 ):
     __tablename__ = "agencies"
+
+    # TODO: Rename agency_id to ds_agency_id
 
     agency_id = Column(Integer, primary_key=True)
     name = Column(String, nullable=False)
@@ -30,4 +32,4 @@ class Agency(
     # Relationships
     automated_suggestions = relationship("AutomatedUrlAgencySuggestion", back_populates="agency")
     user_suggestions = relationship("UserUrlAgencySuggestion", back_populates="agency")
-    confirmed_urls = relationship("ConfirmedURLAgency", back_populates="agency")
+    confirmed_urls = relationship("LinkURLAgency", back_populates="agency")

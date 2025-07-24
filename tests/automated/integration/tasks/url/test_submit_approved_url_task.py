@@ -139,9 +139,9 @@ async def test_submit_approved_url_task(
     url_3 = urls[2]
 
     # Check URLs have been marked as 'submitted'
-    assert url_1.outcome == URLStatus.SUBMITTED.value
-    assert url_2.outcome == URLStatus.SUBMITTED.value
-    assert url_3.outcome == URLStatus.ERROR.value
+    assert url_1.outcome == URLStatus.SUBMITTED
+    assert url_2.outcome == URLStatus.SUBMITTED
+    assert url_3.outcome == URLStatus.ERROR
 
     # Get URL Data Source Links
     url_data_sources = await db_data_creator.adb_client.get_all(URLDataSource)

@@ -44,6 +44,11 @@ class TaskType(PyEnum):
     SYNC_AGENCIES = "Sync Agencies"
     SYNC_DATA_SOURCES = "Sync Data Sources"
 
+class ChangeLogOperationType(PyEnum):
+    INSERT = "INSERT"
+    UPDATE = "UPDATE"
+    DELETE = "DELETE"
+
 class PGEnum(TypeDecorator):
     impl = postgresql.ENUM
 
@@ -52,3 +57,4 @@ class PGEnum(TypeDecorator):
         if isinstance(value, PyEnum):
             return value.value
         return value
+

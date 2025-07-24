@@ -1,5 +1,8 @@
+from collections import Counter
+
 import pytest
 
+from src.collectors.enums import URLStatus
 from src.db.enums import TaskType
 from src.db.models.instantiations.url.core.sqlalchemy import URL
 from src.db.models.instantiations.url.error_info.sqlalchemy import URLErrorInfo
@@ -28,8 +31,9 @@ async def test_url_auto_relevant_task(db_data_creator):
     # Get URLs, confirm one is marked as error
     urls: list[URL] = await adb_client.get_all(URL)
     assert len(urls) == 3
-    statuses = [url.outcome for url in urls]
-    assert sorted(statuses) == sorted(["pending", "pending", "error"])
+    counter = Counter([url.outcome for url in urls])
+    assert counter[URLStatus.ERROR] == 1
+    assert counter[URLStatus.PENDING] == 2
 
     # Confirm two annotations were created
     suggestions: list[AutoRelevantSuggestion] = await adb_client.get_all(AutoRelevantSuggestion)

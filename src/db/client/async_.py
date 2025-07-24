@@ -102,7 +102,7 @@ from src.db.enums import TaskType
 from src.db.models.instantiations.agency.sqlalchemy import Agency
 from src.db.models.instantiations.backlog_snapshot import BacklogSnapshot
 from src.db.models.instantiations.batch.sqlalchemy import Batch
-from src.db.models.instantiations.confirmed_url_agency import ConfirmedURLAgency
+from src.db.models.instantiations.confirmed_url_agency import LinkURLAgency
 from src.db.models.instantiations.duplicate.sqlalchemy import Duplicate
 from src.db.models.instantiations.link.link_batch_urls import LinkBatchURL
 from src.db.models.instantiations.link.link_task_url import LinkTaskURL
@@ -180,8 +180,19 @@ class AsyncDatabaseClient:
         await session.execute(statement)
 
     @session_manager
-    async def add(self, session: AsyncSession, model: Base):
+    async def add(
+        self,
+        session: AsyncSession,
+        model: Base,
+        return_id: bool = False
+    ) -> int | None:
         session.add(model)
+        if return_id:
+            if not hasattr(model, "id"):
+                raise AttributeError("Models must have an id attribute")
+            await session.flush()
+            return model.id
+        return None
 
     @session_manager
     async def add_all(
@@ -249,6 +260,7 @@ class AsyncDatabaseClient:
 
     @session_manager
     async def scalar(self, session: AsyncSession, statement):
+        """Fetch the first column of the first row."""
         return (await session.execute(statement)).scalar()
 
     @session_manager
@@ -785,14 +797,17 @@ class AsyncDatabaseClient:
         Add or update agencies in the database
         """
         for suggestion in suggestions:
-            agency = Agency(
-                agency_id=suggestion.pdap_agency_id,
-                name=suggestion.agency_name,
-                state=suggestion.state,
-                county=suggestion.county,
-                locality=suggestion.locality
-            )
-            await session.merge(agency)
+            query = select(Agency).where(Agency.agency_id == suggestion.pdap_agency_id)
+            result = await session.execute(query)
+            agency = result.scalars().one_or_none()
+            if agency is None:
+                agency = Agency(agency_id=suggestion.pdap_agency_id)
+            agency.name = suggestion.agency_name
+            agency.state = suggestion.state
+            agency.county = suggestion.county
+            agency.locality = suggestion.locality
+            session.add(agency)
+
 
     @session_manager
     async def add_confirmed_agency_url_links(
@@ -801,7 +816,7 @@ class AsyncDatabaseClient:
         suggestions: list[URLAgencySuggestionInfo]
     ):
         for suggestion in suggestions:
-            confirmed_agency = ConfirmedURLAgency(
+            confirmed_agency = LinkURLAgency(
                 url_id=suggestion.url_id,
                 agency_id=suggestion.pdap_agency_id
             )
@@ -854,7 +869,7 @@ class AsyncDatabaseClient:
 
     @session_manager
     async def get_urls_with_confirmed_agencies(self, session: AsyncSession) -> list[URL]:
-        statement = select(URL).where(exists().where(ConfirmedURLAgency.url_id == URL.id))
+        statement = select(URL).where(exists().where(LinkURLAgency.url_id == URL.id))
         results = await session.execute(statement)
         return list(results.scalars().all())
 

@@ -2,10 +2,10 @@ from sqlalchemy import UniqueConstraint, Column, Text
 from sqlalchemy.orm import relationship
 
 from src.db.models.mixins import UpdatedAtMixin, TaskDependentMixin, URLDependentMixin
-from src.db.models.templates import StandardModel
+from src.db.models.templates import StandardBase
 
 
-class URLErrorInfo(UpdatedAtMixin, TaskDependentMixin, URLDependentMixin, StandardModel):
+class URLErrorInfo(UpdatedAtMixin, TaskDependentMixin, URLDependentMixin, StandardBase):
     __tablename__ = 'url_error_info'
     __table_args__ = (UniqueConstraint(
         "url_id",

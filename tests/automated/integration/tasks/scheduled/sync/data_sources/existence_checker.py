@@ -1,6 +1,6 @@
 from collections import defaultdict
 
-from src.db.models.instantiations.confirmed_url_agency import ConfirmedURLAgency
+from src.db.models.instantiations.confirmed_url_agency import LinkURLAgency
 from src.db.models.instantiations.url.core.sqlalchemy import URL
 from src.db.models.instantiations.url.data_source import URLDataSource
 from src.external.pdap.dtos.sync.data_sources import DataSourcesSyncResponseInfo, DataSourcesSyncResponseInnerInfo
@@ -12,7 +12,7 @@ class URLExistenceChecker:
         self,
         responses: list[DataSourcesSyncResponseInfo],
         url_ds_links: list[URLDataSource],
-        url_agency_links: list[ConfirmedURLAgency]
+        url_agency_links: list[LinkURLAgency]
     ):
         self._ds_id_response_dict: dict[int, DataSourcesSyncResponseInnerInfo] = {}
         for response in responses:

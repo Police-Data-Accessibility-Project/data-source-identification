@@ -2,10 +2,10 @@ from sqlalchemy import Column, Boolean, UniqueConstraint, String, Float
 from sqlalchemy.orm import relationship
 
 from src.db.models.mixins import UpdatedAtMixin, CreatedAtMixin, URLDependentMixin
-from src.db.models.templates import StandardModel
+from src.db.models.templates import StandardBase
 
 
-class AutoRelevantSuggestion(UpdatedAtMixin, CreatedAtMixin, URLDependentMixin, StandardModel):
+class AutoRelevantSuggestion(UpdatedAtMixin, CreatedAtMixin, URLDependentMixin, StandardBase):
     __tablename__ = "auto_relevant_suggestions"
 
     relevant = Column(Boolean, nullable=True)

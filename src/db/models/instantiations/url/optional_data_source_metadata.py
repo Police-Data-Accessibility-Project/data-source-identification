@@ -2,10 +2,10 @@ from sqlalchemy import Column, ARRAY, String
 from sqlalchemy.orm import relationship
 
 from src.db.models.mixins import URLDependentMixin
-from src.db.models.templates import StandardModel
+from src.db.models.templates import StandardBase
 
 
-class URLOptionalDataSourceMetadata(URLDependentMixin, StandardModel):
+class URLOptionalDataSourceMetadata(URLDependentMixin, StandardBase):
     __tablename__ = 'url_optional_data_source_metadata'
 
     record_formats = Column(ARRAY(String), nullable=True)

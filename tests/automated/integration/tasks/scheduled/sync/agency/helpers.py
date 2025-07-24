@@ -2,7 +2,7 @@ from contextlib import contextmanager
 from datetime import timedelta
 from unittest.mock import patch
 
-from sqlalchemy import select, func, TIMESTAMP, cast
+from sqlalchemy import select, func, TIMESTAMP, cast, update
 
 from src.db.client.async_ import AsyncDatabaseClient
 from src.db.models.instantiations.agency.sqlalchemy import Agency
@@ -21,7 +21,7 @@ async def check_sync_concluded(
         )
     )
 
-    sync_state_results = await db_client.scalar(
+    sync_state_results = await db_client.mapping(
         select(
             AgenciesSyncState
         )
@@ -45,18 +45,13 @@ async def check_sync_concluded(
 
 
 async def update_existing_agencies_updated_at(db_data_creator):
-    update_mappings = []
     for preexisting_agency in PREEXISTING_AGENCIES:
-        update_mapping = {
-            "agency_id": preexisting_agency.agency_id,
-            "updated_at": preexisting_agency.updated_at
-        }
-        update_mappings.append(update_mapping)
-    await db_data_creator.adb_client.bulk_update(
-        model=Agency,
-        mappings=update_mappings,
-    )
-
+        query = (
+            update(Agency)
+            .where(Agency.agency_id == preexisting_agency.agency_id)
+            .values(updated_at=preexisting_agency.updated_at)
+        )
+        await db_data_creator.adb_client.execute(query)
 
 async def add_existing_agencies(db_data_creator):
     agencies_to_add = []

@@ -3,11 +3,11 @@ from sqlalchemy.orm import relationship
 
 from src.db.enums import PGEnum, TaskType
 from src.db.models.mixins import UpdatedAtMixin
-from src.db.models.templates import StandardModel
+from src.db.models.templates import StandardBase
 from src.db.models.types import batch_status_enum
 
 
-class Task(UpdatedAtMixin, StandardModel):
+class Task(UpdatedAtMixin, StandardBase):
     __tablename__ = 'tasks'
 
     task_type = Column(

@@ -36,4 +36,4 @@ async def run_rejection_test(
     assert len(urls) == 1
     url = urls[0]
     assert url.id == url_mapping.url_id
-    assert url.outcome == url_status.value
+    assert url.outcome == url_status

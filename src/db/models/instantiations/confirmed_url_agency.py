@@ -3,11 +3,11 @@ from sqlalchemy.orm import relationship, Mapped
 
 from src.db.models.helpers import get_agency_id_foreign_column
 from src.db.models.mixins import URLDependentMixin
-from src.db.models.templates import StandardModel
+from src.db.models.templates import StandardBase
 
 
-class ConfirmedURLAgency(URLDependentMixin, StandardModel):
-    __tablename__ = "confirmed_url_agency"
+class LinkURLAgency(URLDependentMixin, StandardBase):
+    __tablename__ = "link_urls_agencies"
 
     agency_id: Mapped[int] = get_agency_id_foreign_column()
 

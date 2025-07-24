@@ -2,13 +2,13 @@ from sqlalchemy import Column, LargeBinary
 from sqlalchemy.orm import relationship
 
 from src.db.models.mixins import CreatedAtMixin, URLDependentMixin
-from src.db.models.templates import StandardModel
+from src.db.models.templates import StandardBase
 
 
 class URLCompressedHTML(
     CreatedAtMixin,
     URLDependentMixin,
-    StandardModel
+    StandardBase
 ):
     __tablename__ = 'url_compressed_html'
 

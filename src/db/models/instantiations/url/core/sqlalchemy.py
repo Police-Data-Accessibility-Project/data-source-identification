@@ -1,13 +1,16 @@
-from sqlalchemy import Column, Integer, ForeignKey, Text, String, JSON
+from sqlalchemy import Column, Integer, ForeignKey, Text, String, JSON, Enum
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.orm import relationship
 
+from src.collectors.enums import URLStatus
+from src.core.enums import RecordType
+from src.db.models.helpers import enum_column
 from src.db.models.mixins import UpdatedAtMixin, CreatedAtMixin
-from src.db.models.templates import StandardModel
+from src.db.models.templates import StandardBase
 from src.db.models.types import record_type_values
 
 
-class URL(UpdatedAtMixin, CreatedAtMixin, StandardModel):
+class URL(UpdatedAtMixin, CreatedAtMixin, StandardBase):
     __tablename__ = 'urls'
 
     # The batch this URL is associated with
@@ -17,21 +20,16 @@ class URL(UpdatedAtMixin, CreatedAtMixin, StandardModel):
     # The metadata from the collector
     collector_metadata = Column(JSON)
     # The outcome of the URL: submitted, human_labeling, rejected, duplicate, etc.
-    outcome = Column(
-        postgresql.ENUM(
-            'pending',
-            'submitted',
-            'validated',
-            'not relevant',
-            'duplicate',
-            'error',
-            '404 not found',
-            'individual record',
-            name='url_status'
-        ),
-        nullable=False
+    outcome = enum_column(
+            URLStatus,
+            name='url_status',
+            nullable=False
     )
-    record_type = Column(postgresql.ENUM(*record_type_values, name='record_type'), nullable=True)
+    record_type = enum_column(
+        RecordType,
+        name='record_type',
+        nullable=True
+    )
 
     # Relationships
     batch = relationship(
@@ -65,7 +63,7 @@ class URL(UpdatedAtMixin, CreatedAtMixin, StandardModel):
     optional_data_source_metadata = relationship(
         "URLOptionalDataSourceMetadata", uselist=False, back_populates="url")
     confirmed_agencies = relationship(
-        "ConfirmedURLAgency",
+        "LinkURLAgency",
     )
     data_source = relationship(
         "URLDataSource",

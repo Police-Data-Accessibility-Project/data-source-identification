@@ -1,9 +1,15 @@
 from src.collectors.enums import URLStatus
 from src.db.models.instantiations.url.core.pydantic.upsert import URLUpsertModel
+from src.db.queries.base.builder import QueryBuilderBase
 from src.external.pdap.dtos.sync.data_sources import DataSourcesSyncResponseInnerInfo
 from src.external.pdap.enums import DataSourcesURLStatus, ApprovalStatus
 
+# upsert_urls_from_data_sources
 
+class UpsertURLsFromDataSourcesQueryBuilder(QueryBuilderBase):
+
+    def __init__(self):
+        super().__init__()
 
 def convert_data_sources_sync_response_to_url_upsert(
     data_sources: list[DataSourcesSyncResponseInnerInfo]
@@ -13,7 +19,6 @@ def convert_data_sources_sync_response_to_url_upsert(
         results.append(
             URLUpsertModel(
                 id=data_source.id,
-                url=data_source.url,
                 name=data_source.name,
                 description=data_source.description,
                 outcome=_convert_to_source_collector_url_status(

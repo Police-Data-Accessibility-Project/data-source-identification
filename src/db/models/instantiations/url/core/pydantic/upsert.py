@@ -16,7 +16,6 @@ class URLUpsertModel(UpsertModel):
         return URL
 
     id: int
-    url: str
     name: str
     description: str
     collector_metadata: dict | None = None

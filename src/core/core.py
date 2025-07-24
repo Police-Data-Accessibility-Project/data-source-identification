@@ -297,7 +297,6 @@ class AsyncCore:
             user_id=access_info.user_id
         )
 
-
     async def reject_url(
             self,
             url_id: int,

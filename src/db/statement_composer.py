@@ -7,7 +7,7 @@ from src.collectors.enums import URLStatus
 from src.core.enums import BatchStatus
 from src.db.constants import STANDARD_ROW_LIMIT
 from src.db.enums import TaskType
-from src.db.models.instantiations.confirmed_url_agency import ConfirmedURLAgency
+from src.db.models.instantiations.confirmed_url_agency import LinkURLAgency
 from src.db.models.instantiations.link.link_batch_urls import LinkBatchURL
 from src.db.models.instantiations.link.link_task_url import LinkTaskURL
 from src.db.models.instantiations.task.core import Task
@@ -81,7 +81,7 @@ class StatementComposer:
         )
         # Exclude if confirmed agencies exist
         statement = statement.where(
-            ~exists().where(ConfirmedURLAgency.url_id == URL.id)
+            ~exists().where(LinkURLAgency.url_id == URL.id)
         )
         return statement
 
