@@ -38,7 +38,7 @@ from src.api.endpoints.metrics.dtos.get.urls.breakdown.pending import GetMetrics
 from src.api.endpoints.metrics.dtos.get.urls.breakdown.submitted import GetMetricsURLsBreakdownSubmittedResponseDTO, \
     GetMetricsURLsBreakdownSubmittedInnerDTO
 from src.api.endpoints.review.approve.dto import FinalReviewApprovalInfo
-from src.api.endpoints.review.approve.query import ApproveURLQueryBuilder
+from src.api.endpoints.review.approve.query_.core import ApproveURLQueryBuilder
 from src.api.endpoints.review.enums import RejectionReason
 from src.api.endpoints.review.next.dto import GetNextURLForFinalReviewOuterResponse
 from src.api.endpoints.review.next.query import GetNextURLForFinalReviewQueryBuilder

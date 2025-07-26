@@ -4,7 +4,7 @@ from unittest.mock import AsyncMock
 from pdap_access_manager import ResponseInfo
 
 from src.core.enums import SubmitResponseStatus
-from src.pdap_api.client import PDAPClient
+from src.external.pdap.client import PDAPClient
 
 
 def mock_make_request(pdap_client: PDAPClient, urls: list[str]):

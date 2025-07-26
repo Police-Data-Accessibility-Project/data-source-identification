@@ -1,4 +1,4 @@
-from src.api.endpoints.review.dtos.approve import FinalReviewApprovalInfo
+from src.api.endpoints.review.approve.dto import FinalReviewApprovalInfo
 from src.core.enums import RecordType
 from tests.helpers.db_data_creator import DBDataCreator, BatchURLCreationInfo
 
