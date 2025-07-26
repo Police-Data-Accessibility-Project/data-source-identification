@@ -33,7 +33,6 @@ async def test_approval_url_error(db_data_creator: DBDataCreator):
         "record_type": RecordType.ARREST_RECORDS,
         "agency_ids": [await db_data_creator.agency()],
         "name": "Test Name",
-        "description": "Test Description",
     }
     # For each keyword, create a copy of the kwargs and set that one to none
     # Confirm it produces the correct error

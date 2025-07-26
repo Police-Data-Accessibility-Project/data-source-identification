@@ -1,5 +1,3 @@
-from typing import Any
-
 from sqlalchemy import Select, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
@@ -7,6 +5,7 @@ from starlette.exceptions import HTTPException
 from starlette.status import HTTP_400_BAD_REQUEST
 
 from src.api.endpoints.review.approve.dto import FinalReviewApprovalInfo
+from src.api.endpoints.review.approve.query_.util import update_if_not_none
 from src.collectors.enums import URLStatus
 from src.db.constants import PLACEHOLDER_AGENCY_NAME
 from src.db.models.instantiations.agency.sqlalchemy import Agency
@@ -30,23 +29,7 @@ class ApproveURLQueryBuilder(QueryBuilderBase):
 
     async def run(self, session: AsyncSession) -> None:
         # Get URL
-        def update_if_not_none(
-            model,
-            field,
-            value: Any,
-            required: bool = False
-        ):
-            if value is not None:
-                setattr(model, field, value)
-                return
-            if not required:
-                return
-            model_value = getattr(model, field, None)
-            if model_value is None:
-                raise HTTPException(
-                    status_code=HTTP_400_BAD_REQUEST,
-                    detail=f"Must specify {field} if it does not already exist"
-                )
+
 
         query = (
             Select(URL)
@@ -115,7 +98,7 @@ class ApproveURLQueryBuilder(QueryBuilderBase):
         url.outcome = URLStatus.VALIDATED.value
 
         update_if_not_none(url, "name", self.approval_info.name, required=True)
-        update_if_not_none(url, "description", self.approval_info.description, required=True)
+        update_if_not_none(url, "description", self.approval_info.description, required=False)
 
         optional_metadata = url.optional_data_source_metadata
         if optional_metadata is None:

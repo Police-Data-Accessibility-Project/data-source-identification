@@ -1,10 +1,6 @@
-from http import HTTPStatus
-from unittest.mock import AsyncMock
-
 import pytest
 from deepdiff import DeepDiff
 
-from src.api.endpoints.review.approve.dto import FinalReviewApprovalInfo
 from src.core.tasks.url.operators.submit_approved_url.core import SubmitApprovedURLTaskOperator
 from src.db.enums import TaskType
 from src.db.models.instantiations.url.error_info.sqlalchemy import URLErrorInfo
@@ -12,87 +8,11 @@ from src.db.models.instantiations.url.data_source.sqlalchemy import URLDataSourc
 from src.db.models.instantiations.url.core.sqlalchemy import URL
 from src.collectors.enums import URLStatus
 from src.core.tasks.url.enums import TaskOperatorOutcome
-from src.core.enums import RecordType, SubmitResponseStatus
-from tests.helpers.db_data_creator import BatchURLCreationInfo, DBDataCreator
-from pdap_access_manager import RequestInfo, RequestType, ResponseInfo, DataSourcesNamespaces
+from tests.automated.integration.tasks.url.submit_approved.mock import mock_make_request
+from tests.automated.integration.tasks.url.submit_approved.setup import setup_validated_urls
+from pdap_access_manager import RequestInfo, RequestType, DataSourcesNamespaces
 from src.external.pdap.client import PDAPClient
 
-
-def mock_make_request(pdap_client: PDAPClient, urls: list[str]):
-    assert len(urls) == 3, "Expected 3 urls"
-    pdap_client.access_manager.make_request = AsyncMock(
-        return_value=ResponseInfo(
-            status_code=HTTPStatus.OK,
-            data={
-                "data_sources": [
-                    {
-                        "url": urls[0],
-                        "status": SubmitResponseStatus.SUCCESS,
-                        "error": None,
-                        "data_source_id": 21,
-                    },
-                    {
-                        "url": urls[1],
-                        "status": SubmitResponseStatus.SUCCESS,
-                        "error": None,
-                        "data_source_id": 34,
-                    },
-                    {
-                        "url": urls[2],
-                        "status": SubmitResponseStatus.FAILURE,
-                        "error": "Test Error",
-                        "data_source_id": None
-                    }
-                ]
-            }
-        )
-    )
-
-
-
-async def setup_validated_urls(db_data_creator: DBDataCreator) -> list[str]:
-    creation_info: BatchURLCreationInfo = await db_data_creator.batch_and_urls(
-        url_count=3,
-        with_html_content=True
-    )
-
-    url_1 = creation_info.url_ids[0]
-    url_2 = creation_info.url_ids[1]
-    url_3 = creation_info.url_ids[2]
-    await db_data_creator.adb_client.approve_url(
-        approval_info=FinalReviewApprovalInfo(
-            url_id=url_1,
-            record_type=RecordType.ACCIDENT_REPORTS,
-            agency_ids=[1, 2],
-            name="URL 1 Name",
-            description="URL 1 Description",
-            record_formats=["Record Format 1", "Record Format 2"],
-            data_portal_type="Data Portal Type 1",
-            supplying_entity="Supplying Entity 1"
-        ),
-        user_id=1
-    )
-    await db_data_creator.adb_client.approve_url(
-        approval_info=FinalReviewApprovalInfo(
-            url_id=url_2,
-            record_type=RecordType.INCARCERATION_RECORDS,
-            agency_ids=[3, 4],
-            name="URL 2 Name",
-            description="URL 2 Description",
-        ),
-        user_id=2
-    )
-    await db_data_creator.adb_client.approve_url(
-        approval_info=FinalReviewApprovalInfo(
-            url_id=url_3,
-            record_type=RecordType.ACCIDENT_REPORTS,
-            agency_ids=[5, 6],
-            name="URL 3 Name",
-            description="URL 3 Description",
-        ),
-        user_id=3
-    )
-    return creation_info.urls
 
 @pytest.mark.asyncio
 async def test_submit_approved_url_task(
@@ -182,7 +102,7 @@ async def test_submit_approved_url_task(
                     "name": "URL 1 Name",
                     "source_url": url_1.url,
                     "record_type": "Accident Reports",
-                    "description": "URL 1 Description",
+                    "description": None,
                     "record_formats": ["Record Format 1", "Record Format 2"],
                     "data_portal_type": "Data Portal Type 1",
                     "last_approval_editor": 1,

@@ -13,5 +13,5 @@ class LinkBatchURL(
 ):
     __tablename__ = "link_batch_urls"
 
-    url = relationship('URL')
-    batch = relationship('Batch')
+    url = relationship('URL', overlaps="batch")
+    batch = relationship('Batch', overlaps="url")
