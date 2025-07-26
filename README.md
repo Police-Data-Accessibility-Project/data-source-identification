@@ -39,6 +39,7 @@ Note that to access API endpoints, you will need to have a valid Bearer Token fr
 
 Thank you for your interest in contributing to this project! Please follow these guidelines:
 
+- [These Design Principles](https://github.com/Police-Data-Accessibility-Project/meta/blob/main/DESIGN-PRINCIPLES.md) may be used to make decisions or guide your work.
 - If you want to work on something, create an issue first so the broader community can discuss it.
 - If you make a utility, script, app, or other useful bit of code: put it in a top-level directory with an appropriate name and dedicated README and add it to the index.
 
