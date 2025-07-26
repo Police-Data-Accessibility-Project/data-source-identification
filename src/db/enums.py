@@ -52,6 +52,8 @@ class ChangeLogOperationType(PyEnum):
 class PGEnum(TypeDecorator):
     impl = postgresql.ENUM
 
+    cache_ok = True
+
     def process_bind_param(self, value: PyEnum, dialect):
         # Convert Python Enum to its value before binding to the DB
         if isinstance(value, PyEnum):
