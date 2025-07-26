@@ -1,8 +1,8 @@
 from http import HTTPStatus
 
 from src.db.client.async_ import AsyncDatabaseClient
-from src.db.dtos.url.error import URLErrorPydanticInfo
-from src.db.dtos.url.core import URLInfo
+from src.db.models.instantiations.url.error_info.pydantic import URLErrorPydanticInfo
+from src.db.models.instantiations.url.core.pydantic import URLInfo
 from src.db.dtos.url.raw_html import RawHTMLInfo
 from src.db.enums import TaskType
 from src.core.tasks.url.operators.url_html.tdo import UrlHtmlTDO

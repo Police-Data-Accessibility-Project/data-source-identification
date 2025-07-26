@@ -12,3 +12,9 @@ class ApprovalStatus(Enum):
     REJECTED = "rejected"
     PENDING = "pending"
     NEEDS_IDENTIFICATION = "needs identification"
+
+class DataSourcesURLStatus(Enum):
+    AVAILABLE = "available"
+    BROKEN = "broken"
+    OK = "ok"
+    NONE_FOUND = "none found"

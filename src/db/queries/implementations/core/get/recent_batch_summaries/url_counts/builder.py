@@ -5,9 +5,9 @@ from sqlalchemy.sql.functions import count, coalesce
 
 from src.collectors.enums import URLStatus, CollectorType
 from src.core.enums import BatchStatus
-from src.db.models.instantiations.link.link_batch_urls import LinkBatchURL
-from src.db.models.instantiations.url.core import URL
-from src.db.models.instantiations.batch import Batch
+from src.db.models.instantiations.link.batch_url import LinkBatchURL
+from src.db.models.instantiations.url.core.sqlalchemy import URL
+from src.db.models.instantiations.batch.sqlalchemy import Batch
 from src.db.queries.base.builder import QueryBuilderBase
 from src.db.queries.helpers import add_page_offset
 from src.db.queries.implementations.core.get.recent_batch_summaries.url_counts.labels import URLCountsLabels

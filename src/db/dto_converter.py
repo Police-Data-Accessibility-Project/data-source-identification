@@ -8,16 +8,15 @@ from src.core.enums import RecordType, SuggestionType
 from src.core.tasks.url.operators.url_html.scraper.parser.dtos.response_html import ResponseHTMLInfo
 from src.core.tasks.url.operators.url_html.scraper.parser.mapping import ENUM_TO_ATTRIBUTE_MAPPING
 from src.db.dtos.url.html_content import HTMLContentType, URLHTMLContentInfo
-from src.db.dtos.url.core import URLInfo
 from src.db.dtos.url.with_html import URLWithHTML
-from src.db.models.instantiations.confirmed_url_agency import ConfirmedURLAgency
+from src.db.models.instantiations.link.url_agency.sqlalchemy import LinkURLAgency
 from src.db.models.instantiations.url.suggestion.agency.auto import AutomatedUrlAgencySuggestion
 from src.db.models.instantiations.url.suggestion.record_type.auto import AutoRecordTypeSuggestion
 from src.db.models.instantiations.url.suggestion.agency.user import UserUrlAgencySuggestion
 from src.db.models.instantiations.url.html_content import URLHTMLContent
-from src.db.models.instantiations.url.core import URL
+from src.db.models.instantiations.url.core.sqlalchemy import URL
 from src.db.models.instantiations.url.suggestion.record_type.user import UserRecordTypeSuggestion
-from src.db.models.instantiations.url.suggestion.relevant.auto import AutoRelevantSuggestion
+from src.db.models.instantiations.url.suggestion.relevant.auto.sqlalchemy import AutoRelevantSuggestion
 from src.db.models.instantiations.url.suggestion.relevant.user import UserRelevantSuggestion
 
 
@@ -129,7 +128,7 @@ class DTOConverter:
 
     @staticmethod
     def confirmed_agencies_to_final_review_annotation_agency_info(
-        confirmed_agencies: list[ConfirmedURLAgency]
+        confirmed_agencies: list[LinkURLAgency]
     ) -> list[GetNextURLForAgencyAgencyInfo]:
         results = []
         for confirmed_agency in confirmed_agencies:
@@ -149,7 +148,7 @@ class DTOConverter:
     @staticmethod
     def final_review_annotation_agency_info(
         automated_agency_suggestions: list[AutomatedUrlAgencySuggestion],
-        confirmed_agencies: list[ConfirmedURLAgency],
+        confirmed_agencies: list[LinkURLAgency],
         user_agency_suggestion: UserUrlAgencySuggestion
     ):
 

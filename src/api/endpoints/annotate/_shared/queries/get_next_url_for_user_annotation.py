@@ -5,8 +5,8 @@ from sqlalchemy.orm import QueryableAttribute, joinedload
 from src.collectors.enums import URLStatus
 from src.core.enums import SuggestedStatus
 from src.db.client.types import UserSuggestionModel
-from src.db.models.instantiations.link.link_batch_urls import LinkBatchURL
-from src.db.models.instantiations.url.core import URL
+from src.db.models.instantiations.link.batch_url import LinkBatchURL
+from src.db.models.instantiations.url.core.sqlalchemy import URL
 from src.db.models.instantiations.url.suggestion.relevant.user import UserRelevantSuggestion
 from src.db.queries.base.builder import QueryBuilderBase
 from src.db.statement_composer import StatementComposer

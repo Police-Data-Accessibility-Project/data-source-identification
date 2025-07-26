@@ -6,7 +6,7 @@ from src.core.core import AsyncCore
 from src.core.tasks.base.run_info import TaskOperatorRunInfo
 from src.core.tasks.handler import TaskHandler
 from src.core.tasks.scheduled.loader import ScheduledTaskOperatorLoader
-from src.core.tasks.scheduled.operators.base import ScheduledTaskOperatorBase
+from src.core.tasks.scheduled.templates.operator import ScheduledTaskOperatorBase
 
 
 class AsyncScheduledTaskManager:
@@ -30,6 +30,7 @@ class AsyncScheduledTaskManager:
         self.delete_logs_job = None
         self.populate_backlog_snapshot_job = None
         self.sync_agencies_job = None
+        self.sync_data_sources_job = None
 
     async def setup(self):
         self.scheduler.start()
@@ -66,6 +67,16 @@ class AsyncScheduledTaskManager:
             ),
             kwargs={
                 "operator": await self.loader.get_sync_agencies_task_operator()
+            }
+        )
+        self.sync_data_sources_job = self.scheduler.add_job(
+            self.run_task,
+            trigger=IntervalTrigger(
+                days=1,
+                start_date=datetime.now() + timedelta(minutes=3)
+            ),
+            kwargs={
+                "operator": await self.loader.get_sync_data_sources_task_operator()
             }
         )
 

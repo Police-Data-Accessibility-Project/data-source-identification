@@ -3,11 +3,11 @@ from sqlalchemy.dialects import postgresql
 from sqlalchemy.orm import relationship
 
 from src.db.models.mixins import UpdatedAtMixin, CreatedAtMixin, URLDependentMixin
-from src.db.models.templates import StandardModel
+from src.db.models.templates import StandardBase
 from src.db.models.types import record_type_values
 
 
-class UserRecordTypeSuggestion(UpdatedAtMixin, CreatedAtMixin, URLDependentMixin, StandardModel):
+class UserRecordTypeSuggestion(UpdatedAtMixin, CreatedAtMixin, URLDependentMixin, StandardBase):
     __tablename__ = "user_record_type_suggestions"
 
     user_id = Column(Integer, nullable=False)

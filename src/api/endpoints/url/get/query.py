@@ -5,8 +5,8 @@ from sqlalchemy.orm import selectinload
 from src.api.endpoints.url.get.dto import GetURLsResponseInfo, GetURLsResponseErrorInfo, GetURLsResponseInnerInfo
 from src.collectors.enums import URLStatus
 from src.db.client.helpers import add_standard_limit_and_offset
-from src.db.models.instantiations.url.core import URL
-from src.db.models.instantiations.url.error_info import URLErrorInfo
+from src.db.models.instantiations.url.core.sqlalchemy import URL
+from src.db.models.instantiations.url.error_info.sqlalchemy import URLErrorInfo
 from src.db.queries.base.builder import QueryBuilderBase
 
 

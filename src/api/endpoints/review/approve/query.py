@@ -9,9 +9,9 @@ from starlette.status import HTTP_400_BAD_REQUEST
 from src.api.endpoints.review.approve.dto import FinalReviewApprovalInfo
 from src.collectors.enums import URLStatus
 from src.db.constants import PLACEHOLDER_AGENCY_NAME
-from src.db.models.instantiations.agency import Agency
-from src.db.models.instantiations.confirmed_url_agency import ConfirmedURLAgency
-from src.db.models.instantiations.url.core import URL
+from src.db.models.instantiations.agency.sqlalchemy import Agency
+from src.db.models.instantiations.link.url_agency.sqlalchemy import LinkURLAgency
+from src.db.models.instantiations.url.core.sqlalchemy import URL
 from src.db.models.instantiations.url.optional_data_source_metadata import URLOptionalDataSourceMetadata
 from src.db.models.instantiations.url.reviewing_user import ReviewingUserURL
 from src.db.queries.base.builder import QueryBuilderBase
@@ -104,7 +104,7 @@ class ApproveURLQueryBuilder(QueryBuilderBase):
                     session.add(agency)
 
                 # If the new agency id is not in the existing agency ids, add it
-                confirmed_url_agency = ConfirmedURLAgency(
+                confirmed_url_agency = LinkURLAgency(
                     url_id=self.approval_info.url_id,
                     agency_id=new_agency_id
                 )

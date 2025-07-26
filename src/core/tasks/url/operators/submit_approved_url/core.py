@@ -1,5 +1,5 @@
 from src.db.client.async_ import AsyncDatabaseClient
-from src.db.dtos.url.error import URLErrorPydanticInfo
+from src.db.models.instantiations.url.error_info.pydantic import URLErrorPydanticInfo
 from src.db.enums import TaskType
 from src.core.tasks.url.operators.submit_approved_url.tdo import SubmitApprovedURLTDO
 from src.core.tasks.url.operators.base import URLTaskOperatorBase

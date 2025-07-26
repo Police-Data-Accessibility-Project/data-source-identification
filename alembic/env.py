@@ -6,7 +6,7 @@ from alembic import context
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 
-from src.db.helpers import get_postgres_connection_string
+from src.db.helpers.connect import get_postgres_connection_string
 from src.db.models.templates import Base
 
 # this is the Alembic Config object, which provides

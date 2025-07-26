@@ -3,7 +3,7 @@ from typing import Optional
 from pydantic import BaseModel
 
 from src.core.tasks.url.operators.url_html.scraper.parser.dtos.response_html import ResponseHTMLInfo
-from src.db.dtos.url.core import URLInfo
+from src.db.models.instantiations.url.core.pydantic import URLInfo
 from src.core.tasks.url.operators.url_html.scraper.request_interface.dtos.url_response import URLResponseInfo
 
 

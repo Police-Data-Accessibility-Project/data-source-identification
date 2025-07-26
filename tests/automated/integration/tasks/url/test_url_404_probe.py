@@ -8,7 +8,7 @@ from aiohttp import ClientResponseError, RequestInfo
 from src.core.tasks.url.operators.url_404_probe.core import URL404ProbeTaskOperator
 from src.core.tasks.url.operators.url_html.scraper.request_interface.core import URLRequestInterface
 from src.db.models.instantiations.url.probed_for_404 import URLProbedFor404
-from src.db.models.instantiations.url.core import URL
+from src.db.models.instantiations.url.core.sqlalchemy import URL
 from src.collectors.enums import URLStatus
 from src.core.tasks.url.enums import TaskOperatorOutcome
 from src.core.tasks.url.operators.url_html.scraper.request_interface.dtos.url_response import URLResponseInfo
@@ -126,10 +126,10 @@ async def test_url_404_probe_task(db_data_creator: DBDataCreator):
                 return url
         raise Exception(f"URL with id {url_id} not found")
 
-    assert find_url(url_id_success).outcome == URLStatus.PENDING.value
-    assert find_url(url_id_404).outcome == URLStatus.NOT_FOUND.value
-    assert find_url(url_id_error).outcome == URLStatus.PENDING.value
-    assert find_url(url_id_initial_error).outcome == URLStatus.ERROR.value
+    assert find_url(url_id_success).outcome == URLStatus.PENDING
+    assert find_url(url_id_404).outcome == URLStatus.NOT_FOUND
+    assert find_url(url_id_error).outcome == URLStatus.PENDING
+    assert find_url(url_id_initial_error).outcome == URLStatus.ERROR
 
     # Check that meets_task_prerequisites now returns False
     meets_prereqs = await operator.meets_task_prerequisites()

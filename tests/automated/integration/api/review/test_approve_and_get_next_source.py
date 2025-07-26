@@ -5,9 +5,9 @@ from src.api.endpoints.review.next.dto import GetNextURLForFinalReviewOuterRespo
 from src.collectors.enums import URLStatus
 from src.core.enums import RecordType
 from src.db.constants import PLACEHOLDER_AGENCY_NAME
-from src.db.models.instantiations.agency import Agency
-from src.db.models.instantiations.confirmed_url_agency import ConfirmedURLAgency
-from src.db.models.instantiations.url.core import URL
+from src.db.models.instantiations.agency.sqlalchemy import Agency
+from src.db.models.instantiations.link.url_agency.sqlalchemy import LinkURLAgency
+from src.db.models.instantiations.url.core.sqlalchemy import URL
 from src.db.models.instantiations.url.optional_data_source_metadata import URLOptionalDataSourceMetadata
 from tests.helpers.setup.final_review.core import setup_for_get_next_url_for_final_review
 
@@ -54,8 +54,8 @@ async def test_approve_and_get_next_source_for_review(api_test_helper):
     assert len(urls) == 1
     url = urls[0]
     assert url.id == url_mapping.url_id
-    assert url.record_type == RecordType.ARREST_RECORDS.value
-    assert url.outcome == URLStatus.VALIDATED.value
+    assert url.record_type == RecordType.ARREST_RECORDS
+    assert url.outcome == URLStatus.VALIDATED
     assert url.name == "New Test Name"
     assert url.description == "New Test Description"
 
@@ -66,7 +66,7 @@ async def test_approve_and_get_next_source_for_review(api_test_helper):
     assert optional_metadata[0].record_formats == ["New Test Record Format", "New Test Record Format 2"]
 
     # Get agencies
-    confirmed_agencies = await adb_client.get_all(ConfirmedURLAgency)
+    confirmed_agencies = await adb_client.get_all(LinkURLAgency)
     assert len(confirmed_agencies) == 4
     for agency in confirmed_agencies:
         assert agency.agency_id in agency_ids

@@ -1,10 +1,10 @@
 from sqlalchemy.orm import relationship
 
 from src.db.models.mixins import CreatedAtMixin, URLDependentMixin
-from src.db.models.templates import StandardModel
+from src.db.models.templates import StandardBase
 
 
-class URLCheckedForDuplicate(CreatedAtMixin, URLDependentMixin, StandardModel):
+class URLCheckedForDuplicate(CreatedAtMixin, URLDependentMixin, StandardBase):
     __tablename__ = 'url_checked_for_duplicate'
 
     # Relationships

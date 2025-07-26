@@ -3,10 +3,10 @@ from sqlalchemy.orm import relationship
 
 from src.db.enums import PGEnum
 from src.db.models.mixins import UpdatedAtMixin, URLDependentMixin
-from src.db.models.templates import StandardModel
+from src.db.models.templates import StandardBase
 
 
-class URLHTMLContent(UpdatedAtMixin, URLDependentMixin, StandardModel):
+class URLHTMLContent(UpdatedAtMixin, URLDependentMixin, StandardBase):
     __tablename__ = 'url_html_content'
     __table_args__ = (UniqueConstraint(
         "url_id",

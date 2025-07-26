@@ -2,10 +2,10 @@ from sqlalchemy import Column, Text, UniqueConstraint
 from sqlalchemy.orm import relationship
 
 from src.db.models.mixins import UpdatedAtMixin, TaskDependentMixin
-from src.db.models.templates import StandardModel
+from src.db.models.templates import StandardBase
 
 
-class TaskError(UpdatedAtMixin, TaskDependentMixin, StandardModel):
+class TaskError(UpdatedAtMixin, TaskDependentMixin, StandardBase):
     __tablename__ = 'task_errors'
 
     error = Column(Text, nullable=False)

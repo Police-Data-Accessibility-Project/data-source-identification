@@ -1,5 +1,5 @@
 from src.db.client.async_ import AsyncDatabaseClient
-from src.db.models.instantiations.url.core import URL
+from src.db.models.instantiations.url.core.sqlalchemy import URL
 
 
 async def populate_database(adb_client: AsyncDatabaseClient) -> None:

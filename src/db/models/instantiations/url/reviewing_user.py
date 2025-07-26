@@ -2,10 +2,10 @@ from sqlalchemy import UniqueConstraint, Column, Integer
 from sqlalchemy.orm import relationship
 
 from src.db.models.mixins import CreatedAtMixin, URLDependentMixin
-from src.db.models.templates import StandardModel
+from src.db.models.templates import StandardBase
 
 
-class ReviewingUserURL(CreatedAtMixin, URLDependentMixin, StandardModel):
+class ReviewingUserURL(CreatedAtMixin, URLDependentMixin, StandardBase):
     __tablename__ = 'reviewing_user_url'
     __table_args__ = (
         UniqueConstraint(

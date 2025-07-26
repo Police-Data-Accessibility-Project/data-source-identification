@@ -2,7 +2,7 @@ from src.api.endpoints.review.enums import RejectionReason
 from src.api.endpoints.review.next.dto import GetNextURLForFinalReviewOuterResponse
 from src.api.endpoints.review.reject.dto import FinalReviewRejectionInfo
 from src.collectors.enums import URLStatus
-from src.db.models.instantiations.url.core import URL
+from src.db.models.instantiations.url.core.sqlalchemy import URL
 from tests.helpers.setup.final_review.core import setup_for_get_next_url_for_final_review
 
 
@@ -36,4 +36,4 @@ async def run_rejection_test(
     assert len(urls) == 1
     url = urls[0]
     assert url.id == url_mapping.url_id
-    assert url.outcome == url_status.value
+    assert url.outcome == url_status

@@ -3,8 +3,8 @@ import pytest
 from src.api.endpoints.review.approve.dto import FinalReviewApprovalInfo
 from src.collectors.enums import URLStatus
 from src.core.enums import RecordType
-from src.db.models.instantiations.confirmed_url_agency import ConfirmedURLAgency
-from src.db.models.instantiations.url.core import URL
+from src.db.models.instantiations.link.url_agency.sqlalchemy import LinkURLAgency
+from src.db.models.instantiations.url.core.sqlalchemy import URL
 from src.db.models.instantiations.url.optional_data_source_metadata import URLOptionalDataSourceMetadata
 from src.db.models.instantiations.url.reviewing_user import ReviewingUserURL
 from tests.helpers.setup.final_review.core import setup_for_get_next_url_for_final_review
@@ -41,12 +41,12 @@ async def test_approve_url_basic(db_data_creator: DBDataCreator):
     assert len(urls) == 1
     url = urls[0]
     assert url.id == url_mapping.url_id
-    assert url.record_type == RecordType.ARREST_RECORDS.value
-    assert url.outcome == URLStatus.VALIDATED.value
+    assert url.record_type == RecordType.ARREST_RECORDS
+    assert url.outcome == URLStatus.VALIDATED
     assert url.name == "Test Name"
     assert url.description == "Test Description"
 
-    confirmed_agency: list[ConfirmedURLAgency] = await adb_client.get_all(ConfirmedURLAgency)
+    confirmed_agency: list[LinkURLAgency] = await adb_client.get_all(LinkURLAgency)
     assert len(confirmed_agency) == 1
     assert confirmed_agency[0].url_id == url_mapping.url_id
     assert confirmed_agency[0].agency_id == agency_id

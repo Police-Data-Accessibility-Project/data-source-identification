@@ -7,7 +7,7 @@ from src.api.endpoints.batch.dtos.get.summaries.counts import BatchSummaryURLCou
 from src.api.endpoints.batch.dtos.get.summaries.summary import BatchSummary
 from src.collectors.enums import CollectorType
 from src.core.enums import BatchStatus
-from src.db.models.instantiations.batch import Batch
+from src.db.models.instantiations.batch.sqlalchemy import Batch
 from src.db.queries.base.builder import QueryBuilderBase
 from src.db.queries.implementations.core.get.recent_batch_summaries.url_counts.builder import URLCountsCTEQueryBuilder
 from src.db.queries.implementations.core.get.recent_batch_summaries.url_counts.labels import URLCountsLabels

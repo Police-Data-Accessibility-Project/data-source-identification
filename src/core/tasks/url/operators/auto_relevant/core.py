@@ -3,8 +3,8 @@ from src.core.tasks.url.operators.auto_relevant.models.tdo import URLRelevantTDO
 from src.core.tasks.url.operators.auto_relevant.sort import separate_success_and_error_subsets
 from src.core.tasks.url.operators.base import URLTaskOperatorBase
 from src.db.client.async_ import AsyncDatabaseClient
-from src.db.dtos.url.annotations.auto.relevancy import AutoRelevancyAnnotationInput
-from src.db.dtos.url.error import URLErrorPydanticInfo
+from src.db.models.instantiations.url.suggestion.relevant.auto.pydantic.input import AutoRelevancyAnnotationInput
+from src.db.models.instantiations.url.error_info.pydantic import URLErrorPydanticInfo
 from src.db.enums import TaskType
 from src.external.huggingface.inference.client import HuggingFaceInferenceClient
 from src.external.huggingface.inference.models.input import BasicInput

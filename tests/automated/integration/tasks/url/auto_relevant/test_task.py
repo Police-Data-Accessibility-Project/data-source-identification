@@ -1,9 +1,12 @@
+from collections import Counter
+
 import pytest
 
+from src.collectors.enums import URLStatus
 from src.db.enums import TaskType
-from src.db.models.instantiations.url.core import URL
-from src.db.models.instantiations.url.error_info import URLErrorInfo
-from src.db.models.instantiations.url.suggestion.relevant.auto import AutoRelevantSuggestion
+from src.db.models.instantiations.url.core.sqlalchemy import URL
+from src.db.models.instantiations.url.error_info.sqlalchemy import URLErrorInfo
+from src.db.models.instantiations.url.suggestion.relevant.auto.sqlalchemy import AutoRelevantSuggestion
 from tests.automated.integration.tasks.asserts import assert_prereqs_not_met, assert_task_has_expected_run_info, \
     assert_prereqs_met
 from tests.automated.integration.tasks.url.auto_relevant.setup import setup_operator, setup_urls
@@ -28,8 +31,9 @@ async def test_url_auto_relevant_task(db_data_creator):
     # Get URLs, confirm one is marked as error
     urls: list[URL] = await adb_client.get_all(URL)
     assert len(urls) == 3
-    statuses = [url.outcome for url in urls]
-    assert sorted(statuses) == sorted(["pending", "pending", "error"])
+    counter = Counter([url.outcome for url in urls])
+    assert counter[URLStatus.ERROR] == 1
+    assert counter[URLStatus.PENDING] == 2
 
     # Confirm two annotations were created
     suggestions: list[AutoRelevantSuggestion] = await adb_client.get_all(AutoRelevantSuggestion)

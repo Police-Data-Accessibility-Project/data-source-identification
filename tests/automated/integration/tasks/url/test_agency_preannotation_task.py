@@ -14,7 +14,7 @@ from src.db.models.instantiations.url.suggestion.agency.auto import AutomatedUrl
 from src.external.pdap.enums import MatchAgencyResponseStatus
 from tests.helpers.batch_creation_parameters.url_creation_parameters import TestURLCreationParameters
 from tests.helpers.batch_creation_parameters.core import TestBatchCreationParameters
-from src.db.models.instantiations.agency import Agency
+from src.db.models.instantiations.agency.sqlalchemy import Agency
 from src.collectors.enums import CollectorType, URLStatus
 from src.core.tasks.url.enums import TaskOperatorOutcome
 from src.core.tasks.url.subtasks.agency_identification.auto_googler import AutoGooglerAgencyIdentificationSubtask

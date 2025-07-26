@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 
 import pytest
 
-from src.db.dtos.log import LogInfo
+from src.db.models.instantiations.log.pydantic.info import LogInfo
 from tests.helpers.db_data_creator import DBDataCreator
 
 

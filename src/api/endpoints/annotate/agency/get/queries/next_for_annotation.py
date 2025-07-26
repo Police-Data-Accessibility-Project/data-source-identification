@@ -9,9 +9,9 @@ from src.collectors.enums import URLStatus
 from src.core.enums import SuggestedStatus
 from src.core.tasks.url.operators.url_html.scraper.parser.util import convert_to_response_html_info
 from src.db.dtos.url.mapping import URLMapping
-from src.db.models.instantiations.confirmed_url_agency import ConfirmedURLAgency
-from src.db.models.instantiations.link.link_batch_urls import LinkBatchURL
-from src.db.models.instantiations.url.core import URL
+from src.db.models.instantiations.link.batch_url import LinkBatchURL
+from src.db.models.instantiations.link.url_agency.sqlalchemy import LinkURLAgency
+from src.db.models.instantiations.url.core.sqlalchemy import URL
 from src.db.models.instantiations.url.suggestion.agency.auto import AutomatedUrlAgencySuggestion
 from src.db.models.instantiations.url.suggestion.agency.user import UserUrlAgencySuggestion
 from src.db.models.instantiations.url.suggestion.relevant.user import UserRelevantSuggestion
@@ -72,11 +72,11 @@ class GetNextURLAgencyForAnnotationQueryBuilder(QueryBuilderBase):
                 )
             )
             # Must not have confirmed agencies
-            .join(ConfirmedURLAgency, isouter=True)
+            .join(LinkURLAgency, isouter=True)
             .where(
                 ~exists(
-                    select(ConfirmedURLAgency).
-                    where(ConfirmedURLAgency.url_id == URL.id).
+                    select(LinkURLAgency).
+                    where(LinkURLAgency.url_id == URL.id).
                     correlate(URL)
                 )
             )

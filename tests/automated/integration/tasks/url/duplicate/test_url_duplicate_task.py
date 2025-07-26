@@ -6,7 +6,7 @@ import pytest
 from src.core.tasks.url.operators.url_duplicate.core import URLDuplicateTaskOperator
 from src.db.dtos.url.mapping import URLMapping
 from src.db.models.instantiations.url.checked_for_duplicate import URLCheckedForDuplicate
-from src.db.models.instantiations.url.core import URL
+from src.db.models.instantiations.url.core.sqlalchemy import URL
 from src.collectors.enums import URLStatus
 from src.core.tasks.url.enums import TaskOperatorOutcome
 from tests.automated.integration.tasks.url.duplicate.constants import BATCH_CREATION_PARAMETERS
@@ -68,7 +68,7 @@ async def test_url_duplicate_task(
     assert duplicate_url.url_id in url_ids
     for url in urls:
         if url.id == duplicate_url.url_id:
-            assert url.outcome == URLStatus.DUPLICATE.value
+            assert url.outcome == URLStatus.DUPLICATE
 
     checked_for_duplicates: list[URLCheckedForDuplicate] = await adb_client.get_all(URLCheckedForDuplicate)
     assert len(checked_for_duplicates) == 2
