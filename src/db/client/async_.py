@@ -52,6 +52,9 @@ from src.api.endpoints.url.get.query import GetURLsQueryBuilder
 from src.collectors.enums import URLStatus, CollectorType
 from src.core.enums import BatchStatus, SuggestionType, RecordType, SuggestedStatus
 from src.core.env_var_manager import EnvVarManager
+from src.core.tasks.scheduled.huggingface.queries.check.core import CheckValidURLsUpdatedQueryBuilder
+from src.core.tasks.scheduled.huggingface.queries.get import GET_FOR_LOADING_TO_HUGGINGFACE_QUERY
+from src.core.tasks.scheduled.huggingface.queries.state import SetHuggingFaceUploadStateQueryBuilder
 from src.core.tasks.scheduled.sync.agency.dtos.parameters import AgencySyncParameters
 from src.core.tasks.scheduled.sync.agency.queries.get_sync_params import GetAgenciesSyncParametersQueryBuilder
 from src.core.tasks.scheduled.sync.agency.queries.mark_full_sync import get_mark_full_agencies_sync_query
@@ -137,12 +140,13 @@ from src.db.templates.markers.bulk.upsert import BulkUpsertableModel
 from src.db.utils.compression import decompress_html, compress_html
 from src.external.pdap.dtos.sync.agencies import AgenciesSyncResponseInnerInfo
 from src.external.pdap.dtos.sync.data_sources import DataSourcesSyncResponseInnerInfo
-
+import polars as pl
 
 class AsyncDatabaseClient:
     def __init__(self, db_url: Optional[str] = None):
         if db_url is None:
             db_url = EnvVarManager.get().get_postgres_connection_string(is_async=True)
+        self.db_url = db_url
         echo = ConfigManager.get_sqlalchemy_echo()
         self.engine = create_async_engine(
             url=db_url,
@@ -1638,3 +1642,19 @@ class AsyncDatabaseClient:
                 compressed_html=compress_html(info.html)
             )
             session.add(compressed_html)
+
+    async def get_data_sources_raw_for_huggingface(self) -> pl.DataFrame:
+        return pl.read_database(
+            query=GET_FOR_LOADING_TO_HUGGINGFACE_QUERY,
+            connection=self.db_url
+        )
+
+    async def set_hugging_face_upload_state(self, dt: datetime):
+        await self.run_query_builder(
+            SetHuggingFaceUploadStateQueryBuilder(dt=dt)
+        )
+
+    async def check_valid_urls_updated(self):
+        return await self.run_query_builder(
+            CheckValidURLsUpdatedQueryBuilder()
+        )

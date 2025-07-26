@@ -42,7 +42,8 @@ def setup_and_teardown():
         "PDAP_API_URL",
         "DISCORD_WEBHOOK_URL",
         "OPENAI_API_KEY",
-        "HUGGINGFACE_INFERENCE_API_KEY"
+        "HUGGINGFACE_INFERENCE_API_KEY",
+        "HUGGINGFACE_HUB_TOKEN"
     ]
     all_env_vars = required_env_vars.copy()
     for env_var in test_env_vars:

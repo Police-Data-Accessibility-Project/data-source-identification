@@ -23,7 +23,7 @@ def convert_to_source_collector_url_status(
 
     match ds_approval_status:
         case ApprovalStatus.APPROVED:
-            return URLStatus.VALIDATED
+            return URLStatus.SUBMITTED
         case ApprovalStatus.REJECTED:
             return URLStatus.NOT_RELEVANT
         case ApprovalStatus.NEEDS_IDENTIFICATION:

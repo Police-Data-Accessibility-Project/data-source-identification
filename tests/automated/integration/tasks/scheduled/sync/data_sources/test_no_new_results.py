@@ -5,7 +5,7 @@ import pytest
 
 from src.core.tasks.scheduled.sync.data_sources.operator import SyncDataSourcesTaskOperator
 from src.core.tasks.scheduled.sync.data_sources.params import DataSourcesSyncParameters
-from src.db.models.instantiations.sync_state.data_sources import DataSourcesSyncState
+from src.db.models.instantiations.state.sync.data_sources import DataSourcesSyncState
 from tests.automated.integration.tasks.scheduled.sync.data_sources.check import check_sync_concluded
 from tests.automated.integration.tasks.scheduled.sync.data_sources.setup.core import patch_sync_data_sources
 from tests.automated.integration.tasks.scheduled.sync.data_sources.setup.data import ENTRIES

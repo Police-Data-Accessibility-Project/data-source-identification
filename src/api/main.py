@@ -31,6 +31,7 @@ from src.core.tasks.url.operators.url_html.scraper.request_interface.core import
 from src.db.client.async_ import AsyncDatabaseClient
 from src.db.client.sync import DatabaseClient
 from src.core.tasks.url.operators.url_html.scraper.root_url_cache.core import RootURLCache
+from src.external.huggingface.hub.client import HuggingFaceHubClient
 from src.external.huggingface.inference.client import HuggingFaceInferenceClient
 from src.external.pdap.client import PDAPClient
 
@@ -101,7 +102,10 @@ async def lifespan(app: FastAPI):
         handler=task_handler,
         loader=ScheduledTaskOperatorLoader(
             adb_client=adb_client,
-            pdap_client=pdap_client
+            pdap_client=pdap_client,
+            hf_client=HuggingFaceHubClient(
+                token=env_var_manager.hf_hub_token
+            )
         )
     )
     await async_scheduled_task_manager.setup()

@@ -27,7 +27,7 @@ ENTRIES = [
             url_status=URLStatus.PENDING,
             agencies_assigned=[AgencyAssigned.ONE, AgencyAssigned.THREE]
         ),
-        final_url_status=URLStatus.VALIDATED
+        final_url_status=URLStatus.SUBMITTED
     ),
     TestURLSetupEntry(
         # A DS-only approved but broken URL
@@ -94,7 +94,7 @@ ENTRIES = [
             url_status=URLStatus.PENDING,
             agencies_assigned=[]
         ),
-        final_url_status=URLStatus.VALIDATED
+        final_url_status=URLStatus.SUBMITTED
     )
 ]
 

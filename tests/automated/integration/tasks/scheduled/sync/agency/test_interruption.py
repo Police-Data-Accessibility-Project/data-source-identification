@@ -4,7 +4,7 @@ from sqlalchemy import select
 from src.core.tasks.scheduled.sync.agency.operator import SyncAgenciesTaskOperator
 from src.core.tasks.url.enums import TaskOperatorOutcome
 from src.db.models.instantiations.agency.sqlalchemy import Agency
-from src.db.models.instantiations.sync_state.agencies import AgenciesSyncState
+from src.db.models.instantiations.state.sync.agencies import AgenciesSyncState
 from tests.automated.integration.tasks.scheduled.sync.agency.data import FIRST_CALL_RESPONSE, \
     THIRD_CALL_RESPONSE, SECOND_CALL_RESPONSE
 from tests.automated.integration.tasks.scheduled.sync.agency.existence_checker import AgencyChecker
