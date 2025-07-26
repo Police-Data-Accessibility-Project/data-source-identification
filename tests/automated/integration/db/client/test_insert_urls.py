@@ -2,7 +2,7 @@ import pytest
 
 from src.core.enums import BatchStatus
 from src.db.models.instantiations.batch.pydantic import BatchInfo
-from src.db.models.instantiations.url.core.pydantic.info import URLInfo
+from src.db.models.instantiations.url.core.pydantic import URLInfo
 
 
 @pytest.mark.asyncio

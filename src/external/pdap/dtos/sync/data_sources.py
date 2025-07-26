@@ -10,7 +10,7 @@ class DataSourcesSyncResponseInnerInfo(BaseModel):
     id: int
     url: str
     name: str
-    description: str
+    description: str | None
     record_type: RecordType
     agency_ids: list[int]
     approval_status: ApprovalStatus

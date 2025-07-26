@@ -2,12 +2,11 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from src.db.models.instantiations.agency.sqlalchemy import Agency
-from src.db.models.instantiations.link.url_agency_.sqlalchemy import LinkURLAgency
 from src.db.models.instantiations.url.core.sqlalchemy import URL
-from src.db.models.instantiations.url.data_source import URLDataSource
+from src.db.models.instantiations.url.data_source.sqlalchemy import URLDataSource
 from src.db.queries.base.builder import QueryBuilderBase
 from tests.automated.integration.tasks.scheduled.sync.data_sources.setup.models.url.post import TestURLPostSetupRecord
+from src.db.helpers.session import session_helper as sh
 
 
 class CheckURLQueryBuilder(QueryBuilderBase):
@@ -27,18 +26,15 @@ class CheckURLQueryBuilder(QueryBuilderBase):
                 selectinload(URL.data_source),
                 selectinload(URL.confirmed_agencies),
             )
-            .join(URLDataSource, URL.id == URLDataSource.data_source_id)
-            .outerjoin(LinkURLAgency, URL.id == LinkURLAgency.url_id)
-            .join(Agency, LinkURLAgency.agency_id == Agency.agency_id)
+            .outerjoin(URLDataSource, URL.id == URLDataSource.url_id)
         )
         if self.record.url_id is not None:
             query = query.where(URL.id == self.record.url_id)
         if self.record.data_sources_id is not None:
-            query = query.where(URLDataSource.id == self.record.data_sources_id)
+            query = query.where(URLDataSource.data_source_id == self.record.data_sources_id)
 
-        raw_result = await session.execute(query)
-        result = raw_result.scalars().one_or_none()
-        assert result is not None
+        result = await sh.one_or_none(session=session, query=query)
+        assert result is not None, f"URL not found for {self.record}"
         await self.check_results(result)
 
     async def check_results(self, url: URL):

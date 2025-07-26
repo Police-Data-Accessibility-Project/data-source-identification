@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import List
 
-from src.db.models.instantiations.url.core.pydantic.info import URLInfo
+from src.db.models.instantiations.url.core.pydantic import URLInfo
 
 
 class CKANPreprocessor:

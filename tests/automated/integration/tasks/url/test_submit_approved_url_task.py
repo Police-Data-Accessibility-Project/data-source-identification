@@ -8,7 +8,7 @@ from src.api.endpoints.review.approve.dto import FinalReviewApprovalInfo
 from src.core.tasks.url.operators.submit_approved_url.core import SubmitApprovedURLTaskOperator
 from src.db.enums import TaskType
 from src.db.models.instantiations.url.error_info.sqlalchemy import URLErrorInfo
-from src.db.models.instantiations.url.data_source import URLDataSource
+from src.db.models.instantiations.url.data_source.sqlalchemy import URLDataSource
 from src.db.models.instantiations.url.core.sqlalchemy import URL
 from src.collectors.enums import URLStatus
 from src.core.tasks.url.enums import TaskOperatorOutcome

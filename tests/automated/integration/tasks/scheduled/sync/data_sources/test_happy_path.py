@@ -2,7 +2,7 @@ from unittest.mock import MagicMock, call
 
 import pytest
 
-from src.core.tasks.scheduled.sync.data_sources.dtos.parameters import DataSourcesSyncParameters
+from src.core.tasks.scheduled.sync.data_sources.params import DataSourcesSyncParameters
 from src.core.tasks.scheduled.sync.data_sources.operator import SyncDataSourcesTaskOperator
 from tests.automated.integration.tasks.scheduled.sync.data_sources.check import check_sync_concluded
 from tests.automated.integration.tasks.scheduled.sync.data_sources.setup.core import patch_sync_data_sources
@@ -55,8 +55,6 @@ async def test_data_sources_sync_happy_path(
             ]
         )
         await check_sync_concluded(adb_client, check_updated_at=False)
-
-        # TODO: Fill in additional components
 
     # Check results according to expectations.
     await manager.check_results()

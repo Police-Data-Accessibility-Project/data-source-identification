@@ -12,7 +12,7 @@ class TestDSURLSetupEntry(BaseModel):
     """
     id: int  # ID of URL in DS App
     name: str
-    description: str
+    description: str | None
     url_status: DataSourcesURLStatus
     approval_status: ApprovalStatus
     record_type: RecordType

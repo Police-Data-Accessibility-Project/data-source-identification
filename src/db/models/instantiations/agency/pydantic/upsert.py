@@ -2,17 +2,17 @@ from datetime import datetime
 
 from src.db.models.instantiations.agency.sqlalchemy import Agency
 from src.db.models.templates import Base
-from src.db.templates.upsert import UpsertModel
+from src.db.templates.markers.bulk.upsert import BulkUpsertableModel
 
 
-class AgencyUpsertModel(UpsertModel):
+class AgencyUpsertModel(BulkUpsertableModel):
 
-    @property
-    def id_field(self) -> str:
+    @classmethod
+    def id_field(cls) -> str:
         return "agency_id"
 
-    @property
-    def sa_model(self) -> type[Base]:
+    @classmethod
+    def sa_model(cls) -> type[Base]:
         return Agency
 
     agency_id: int

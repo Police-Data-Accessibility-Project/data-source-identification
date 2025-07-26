@@ -4,7 +4,7 @@ from sqlalchemy.dialects import postgresql
 
 from src.collectors.enums import CollectorType
 from src.core.enums import BatchStatus
-from src.db.helpers import get_postgres_connection_string
+from src.db.helpers.connect import get_postgres_connection_string
 from src.util.helper_functions import get_enum_values
 from tests.automated.integration.db.structure.testers.models.column import ColumnTester
 from tests.automated.integration.db.structure.testers.table import TableTester

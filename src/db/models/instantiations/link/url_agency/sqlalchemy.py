@@ -1,4 +1,4 @@
-from sqlalchemy import UniqueConstraint, Column
+from sqlalchemy import UniqueConstraint
 from sqlalchemy.orm import relationship, Mapped
 
 from src.db.models.helpers import get_agency_id_foreign_column

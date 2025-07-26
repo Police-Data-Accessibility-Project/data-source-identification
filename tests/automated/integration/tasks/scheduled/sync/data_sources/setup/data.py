@@ -21,7 +21,7 @@ ENTRIES = [
             sync_response_order=SyncResponseOrder.FIRST
         ),
         sc_info=TestSCURLSetupEntry(
-            name='Pre-existing URL 1',
+            name='Pre-existing URL 1 Name',
             description='Pre-existing URL 1 Description',
             record_type=RecordType.ACCIDENT_REPORTS,
             url_status=URLStatus.PENDING,
@@ -64,7 +64,7 @@ ENTRIES = [
         ds_info=TestDSURLSetupEntry(
             id=102,
             name='New URL 4 Name',
-            description='New URL 4 Description',
+            description=None,
             url_status=DataSourcesURLStatus.OK,
             approval_status=ApprovalStatus.REJECTED,
             record_type=RecordType.ACCIDENT_REPORTS,
@@ -80,7 +80,7 @@ ENTRIES = [
         ds_info=TestDSURLSetupEntry(
             id=103,
             name='New URL 5 Name',
-            description='New URL 5 Description',
+            description=None,
             url_status=DataSourcesURLStatus.OK,
             approval_status=ApprovalStatus.APPROVED,
             record_type=RecordType.INCARCERATION_RECORDS,
@@ -95,7 +95,6 @@ ENTRIES = [
             agencies_assigned=[]
         ),
         final_url_status=URLStatus.VALIDATED
-
     )
 ]
 

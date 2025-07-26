@@ -1,7 +1,7 @@
 from sqlalchemy import Select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.db.models.instantiations.url.core.pydantic.info import URLInfo
+from src.db.models.instantiations.url.core.pydantic import URLInfo
 from src.db.models.instantiations.link.batch_url import LinkBatchURL
 from src.db.models.instantiations.url.core.sqlalchemy import URL
 from src.db.queries.base.builder import QueryBuilderBase

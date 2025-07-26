@@ -1,6 +1,6 @@
 from src.core.tasks.scheduled.templates.operator import ScheduledTaskOperatorBase
 from src.core.tasks.scheduled.sync.check import check_max_sync_requests_not_exceeded
-from src.core.tasks.scheduled.sync.data_sources.dtos.parameters import DataSourcesSyncParameters
+from src.core.tasks.scheduled.sync.data_sources.params import DataSourcesSyncParameters
 from src.db.client.async_ import AsyncDatabaseClient
 from src.db.enums import TaskType
 from src.external.pdap.client import PDAPClient

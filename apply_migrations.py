@@ -1,7 +1,8 @@
 from alembic import command
 from alembic.config import Config
 
-from src.db.helpers import get_postgres_connection_string
+from src.db.helpers.connect import get_postgres_connection_string
+
 
 def apply_migrations():
     print("Applying migrations...")

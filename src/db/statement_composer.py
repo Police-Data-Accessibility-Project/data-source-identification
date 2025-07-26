@@ -7,9 +7,9 @@ from src.collectors.enums import URLStatus
 from src.core.enums import BatchStatus
 from src.db.constants import STANDARD_ROW_LIMIT
 from src.db.enums import TaskType
-from src.db.models.instantiations.link.url_agency_.sqlalchemy import LinkURLAgency
 from src.db.models.instantiations.link.batch_url import LinkBatchURL
 from src.db.models.instantiations.link.task_url import LinkTaskURL
+from src.db.models.instantiations.link.url_agency.sqlalchemy import LinkURLAgency
 from src.db.models.instantiations.task.core import Task
 from src.db.models.instantiations.url.html_content import URLHTMLContent
 from src.db.models.instantiations.url.optional_data_source_metadata import URLOptionalDataSourceMetadata

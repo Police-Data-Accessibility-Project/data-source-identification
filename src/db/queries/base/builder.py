@@ -3,7 +3,7 @@ from typing import Any, Generic, Optional
 from sqlalchemy import FromClause, ColumnClause
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.db import session_helper as sh
+from src.db.helpers.session import session_helper as sh
 from src.db.types import LabelsType
 
 

@@ -9,7 +9,7 @@ from src.core.tasks.url.operators.url_html.scraper.parser.dtos.response_html imp
 from src.core.tasks.url.operators.url_html.scraper.parser.mapping import ENUM_TO_ATTRIBUTE_MAPPING
 from src.db.dtos.url.html_content import HTMLContentType, URLHTMLContentInfo
 from src.db.dtos.url.with_html import URLWithHTML
-from src.db.models.instantiations.link.url_agency_.sqlalchemy import LinkURLAgency
+from src.db.models.instantiations.link.url_agency.sqlalchemy import LinkURLAgency
 from src.db.models.instantiations.url.suggestion.agency.auto import AutomatedUrlAgencySuggestion
 from src.db.models.instantiations.url.suggestion.record_type.auto import AutoRecordTypeSuggestion
 from src.db.models.instantiations.url.suggestion.agency.user import UserUrlAgencySuggestion

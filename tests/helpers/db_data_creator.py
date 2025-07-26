@@ -15,7 +15,7 @@ from src.db.models.instantiations.url.suggestion.relevant.auto.pydantic.input im
 from src.db.dtos.url.insert import InsertURLsInfo
 from src.db.models.instantiations.url.error_info.pydantic import URLErrorPydanticInfo
 from src.db.dtos.url.html_content import URLHTMLContentInfo, HTMLContentType
-from src.db.models.instantiations.url.core.pydantic.info import URLInfo
+from src.db.models.instantiations.url.core.pydantic import URLInfo
 from src.db.dtos.url.mapping import URLMapping
 from src.db.client.sync import DatabaseClient
 from src.db.dtos.url.raw_html import RawHTMLInfo

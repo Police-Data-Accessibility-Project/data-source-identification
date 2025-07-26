@@ -13,8 +13,8 @@ from src.db.dto_converter import DTOConverter
 from src.db.dtos.url.html_content import URLHTMLContentInfo
 from src.db.exceptions import FailedQueryException
 from src.db.models.instantiations.batch.sqlalchemy import Batch
-from src.db.models.instantiations.link.url_agency_.sqlalchemy import LinkURLAgency
 from src.db.models.instantiations.link.batch_url import LinkBatchURL
+from src.db.models.instantiations.link.url_agency.sqlalchemy import LinkURLAgency
 from src.db.models.instantiations.url.core.sqlalchemy import URL
 from src.db.models.instantiations.url.suggestion.agency.auto import AutomatedUrlAgencySuggestion
 from src.db.models.instantiations.url.suggestion.agency.user import UserUrlAgencySuggestion

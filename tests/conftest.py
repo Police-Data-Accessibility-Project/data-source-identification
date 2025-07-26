@@ -1,5 +1,5 @@
 import logging
-from typing import Any, Generator, AsyncGenerator, Coroutine
+from typing import Any, Generator, AsyncGenerator
 
 import pytest
 import pytest_asyncio
@@ -7,11 +7,10 @@ from alembic.config import Config
 from sqlalchemy import create_engine, inspect, MetaData
 from sqlalchemy.orm import scoped_session, sessionmaker
 
+from src.core.env_var_manager import EnvVarManager
 from src.db.client.async_ import AsyncDatabaseClient
 from src.db.client.sync import DatabaseClient
-from src.db.helpers import get_postgres_connection_string
-from src.db.models.templates import Base
-from src.core.env_var_manager import EnvVarManager
+from src.db.helpers.connect import get_postgres_connection_string
 from src.util.helper_functions import load_from_environment
 from tests.helpers.alembic_runner import AlembicRunner
 from tests.helpers.db_data_creator import DBDataCreator

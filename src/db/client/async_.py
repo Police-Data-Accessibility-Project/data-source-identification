@@ -58,12 +58,13 @@ from src.core.tasks.scheduled.sync.agency.queries.mark_full_sync import get_mark
 from src.core.tasks.scheduled.sync.agency.queries.update_sync_progress import get_update_agencies_sync_progress_query
 from src.core.tasks.scheduled.sync.agency.queries.upsert import \
     convert_agencies_sync_response_to_agencies_upsert
-from src.core.tasks.scheduled.sync.data_sources.dtos.parameters import DataSourcesSyncParameters
+from src.core.tasks.scheduled.sync.data_sources.params import DataSourcesSyncParameters
 from src.core.tasks.scheduled.sync.data_sources.queries.get_sync_params import GetDataSourcesSyncParametersQueryBuilder
 from src.core.tasks.scheduled.sync.data_sources.queries.mark_full_sync import get_mark_full_data_sources_sync_query
 from src.core.tasks.scheduled.sync.data_sources.queries.update_sync_progress import \
     get_update_data_sources_sync_progress_query
-from src.core.tasks.scheduled.sync.data_sources.queries.upsert_.core import convert_data_sources_sync_response_to_url_upsert
+from src.core.tasks.scheduled.sync.data_sources.queries.upsert.core import \
+    UpsertURLsFromDataSourcesQueryBuilder
 from src.core.tasks.url.operators.agency_identification.dtos.suggestion import URLAgencySuggestionInfo
 from src.core.tasks.url.operators.agency_identification.dtos.tdo import AgencyIdentificationTDO
 from src.core.tasks.url.operators.agency_identification.queries.get_pending_urls_without_agency_suggestions import \
@@ -80,7 +81,7 @@ from src.core.tasks.url.operators.url_miscellaneous_metadata.queries.get_pending
 from src.core.tasks.url.operators.url_miscellaneous_metadata.queries.has_pending_urls_missing_miscellaneous_data import \
     HasPendingURsMissingMiscellaneousDataQueryBuilder
 from src.core.tasks.url.operators.url_miscellaneous_metadata.tdo import URLMiscellaneousMetadataTDO
-from src.db import session_helper as sh
+from src.db.helpers.session import session_helper as sh
 from src.db.client.helpers import add_standard_limit_and_offset
 from src.db.client.types import UserSuggestionModel
 from src.db.config_manager import ConfigManager
@@ -95,12 +96,12 @@ from src.db.models.instantiations.agency.sqlalchemy import Agency
 from src.db.models.instantiations.backlog_snapshot import BacklogSnapshot
 from src.db.models.instantiations.batch.pydantic import BatchInfo
 from src.db.models.instantiations.batch.sqlalchemy import Batch
-from src.db.models.instantiations.link.url_agency_.sqlalchemy import LinkURLAgency
 from src.db.models.instantiations.duplicate.pydantic.info import DuplicateInfo
 from src.db.models.instantiations.duplicate.pydantic.insert import DuplicateInsertInfo
 from src.db.models.instantiations.duplicate.sqlalchemy import Duplicate
 from src.db.models.instantiations.link.batch_url import LinkBatchURL
 from src.db.models.instantiations.link.task_url import LinkTaskURL
+from src.db.models.instantiations.link.url_agency.sqlalchemy import LinkURLAgency
 from src.db.models.instantiations.log.pydantic.info import LogInfo
 from src.db.models.instantiations.log.pydantic.output import LogOutputInfo
 from src.db.models.instantiations.log.sqlalchemy import Log
@@ -109,9 +110,9 @@ from src.db.models.instantiations.task.core import Task
 from src.db.models.instantiations.task.error import TaskError
 from src.db.models.instantiations.url.checked_for_duplicate import URLCheckedForDuplicate
 from src.db.models.instantiations.url.compressed_html import URLCompressedHTML
-from src.db.models.instantiations.url.core.pydantic.info import URLInfo
+from src.db.models.instantiations.url.core.pydantic import URLInfo
 from src.db.models.instantiations.url.core.sqlalchemy import URL
-from src.db.models.instantiations.url.data_source import URLDataSource
+from src.db.models.instantiations.url.data_source.sqlalchemy import URLDataSource
 from src.db.models.instantiations.url.error_info.pydantic import URLErrorPydanticInfo
 from src.db.models.instantiations.url.error_info.sqlalchemy import URLErrorInfo
 from src.db.models.instantiations.url.html_content import URLHTMLContent
@@ -131,7 +132,8 @@ from src.db.queries.implementations.core.get.recent_batch_summaries.builder impo
 from src.db.queries.implementations.core.metrics.urls.aggregated.pending import \
     GetMetricsURLSAggregatedPendingQueryBuilder
 from src.db.statement_composer import StatementComposer
-from src.db.templates.upsert import UpsertModel
+from src.db.templates.markers.bulk.delete import BulkDeletableModel
+from src.db.templates.markers.bulk.upsert import BulkUpsertableModel
 from src.db.utils.compression import decompress_html, compress_html
 from src.external.pdap.dtos.sync.agencies import AgenciesSyncResponseInnerInfo
 from src.external.pdap.dtos.sync.data_sources import DataSourcesSyncResponseInnerInfo
@@ -213,9 +215,17 @@ class AsyncDatabaseClient:
     async def bulk_upsert(
         self,
         session: AsyncSession,
-        models: list[UpsertModel],
+        models: list[BulkUpsertableModel],
     ):
         return await sh.bulk_upsert(session, models)
+
+    @session_manager
+    async def bulk_delete(
+        self,
+        session: AsyncSession,
+        models: list[BulkDeletableModel],
+    ):
+        return await sh.bulk_delete(session, models)
 
     @session_manager
     async def scalar(self, session: AsyncSession, statement):
@@ -1582,8 +1592,10 @@ class AsyncDatabaseClient:
         self,
         data_sources: list[DataSourcesSyncResponseInnerInfo]
     ):
-        await self.bulk_upsert(
-            models=convert_data_sources_sync_response_to_url_upsert(data_sources)
+        await self.run_query_builder(
+            UpsertURLsFromDataSourcesQueryBuilder(
+                sync_infos=data_sources
+            )
         )
 
     async def update_agencies_sync_progress(self, page: int):

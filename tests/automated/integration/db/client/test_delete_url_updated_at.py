@@ -1,4 +1,4 @@
-from src.db.models.instantiations.url.core.pydantic.info import URLInfo
+from src.db.models.instantiations.url.core.pydantic import URLInfo
 from tests.helpers.db_data_creator import DBDataCreator
 
 
