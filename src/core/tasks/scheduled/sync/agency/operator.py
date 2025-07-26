@@ -44,5 +44,5 @@ class SyncAgenciesTaskOperator(ScheduledTaskOperatorBase):
             request_count += 1
 
         await self.adb_client.mark_full_agencies_sync()
-        print(f"Sync completeSynced {count_agencies_synced} agencies")
+        print(f"Sync complete. Synced {count_agencies_synced} agencies")
 
