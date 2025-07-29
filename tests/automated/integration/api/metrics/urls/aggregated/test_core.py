@@ -22,7 +22,7 @@ async def test_get_urls_aggregated_metrics(api_test_helper):
         ]
     )
     batch_0 = await ath.db_data_creator.batch_v2(batch_0_params)
-    oldest_url_id = batch_0.url_creation_infos[URLStatus.PENDING].url_mappings[0].url_id
+    oldest_url_id = batch_0.urls_by_status[URLStatus.PENDING].url_mappings[0].url_id
 
 
     batch_1_params = TestBatchCreationParameters(

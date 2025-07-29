@@ -5,7 +5,7 @@ from src.api.endpoints.batch.dtos.get.summaries.response import GetBatchSummarie
 from src.core.core import AsyncCore
 from src.core.enums import BatchStatus
 from tests.automated.integration.api._helpers.RequestValidator import RequestValidator
-from tests.helpers.db_data_creator import DBDataCreator
+from tests.helpers.data_creator.core import DBDataCreator
 
 
 @dataclass

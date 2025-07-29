@@ -7,7 +7,7 @@ from src.db.models.instantiations.url.optional_data_source_metadata import URLOp
 from src.db.models.instantiations.url.core.sqlalchemy import URL
 from src.collectors.enums import CollectorType
 from src.core.tasks.url.enums import TaskOperatorOutcome
-from tests.helpers.db_data_creator import DBDataCreator
+from tests.helpers.data_creator.core import DBDataCreator
 
 
 def batch_and_url(

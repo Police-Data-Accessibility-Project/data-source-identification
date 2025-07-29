@@ -9,7 +9,7 @@ from src.core.tasks.url.enums import TaskOperatorOutcome
 from src.db.enums import TaskType
 from src.db.models.instantiations.task.core import Task
 from tests.automated.integration.core.async_.helpers import setup_async_core
-from tests.helpers.db_data_creator import DBDataCreator
+from tests.helpers.data_creator.core import DBDataCreator
 
 
 @pytest.mark.asyncio

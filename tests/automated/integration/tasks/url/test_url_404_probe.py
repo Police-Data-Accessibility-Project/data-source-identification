@@ -12,7 +12,7 @@ from src.db.models.instantiations.url.core.sqlalchemy import URL
 from src.collectors.enums import URLStatus
 from src.core.tasks.url.enums import TaskOperatorOutcome
 from src.core.tasks.url.operators.url_html.scraper.request_interface.dtos.url_response import URLResponseInfo
-from tests.helpers.db_data_creator import DBDataCreator
+from tests.helpers.data_creator.core import DBDataCreator
 from tests.helpers.batch_creation_parameters.url_creation_parameters import TestURLCreationParameters
 from tests.helpers.batch_creation_parameters.core import TestBatchCreationParameters
 
@@ -102,12 +102,12 @@ async def test_url_404_probe_task(db_data_creator: DBDataCreator):
     assert run_info.outcome == TaskOperatorOutcome.SUCCESS, run_info.message
 
 
-    pending_url_mappings = creation_info.url_creation_infos[URLStatus.PENDING].url_mappings
+    pending_url_mappings = creation_info.urls_by_status[URLStatus.PENDING].url_mappings
     url_id_success = pending_url_mappings[0].url_id
     url_id_404 = pending_url_mappings[1].url_id
     url_id_error = pending_url_mappings[2].url_id
 
-    url_id_initial_error = creation_info.url_creation_infos[URLStatus.ERROR].url_mappings[0].url_id
+    url_id_initial_error = creation_info.urls_by_status[URLStatus.ERROR].url_mappings[0].url_id
 
     # Check that URLProbedFor404 has been appropriately populated
     probed_for_404_objects: list[URLProbedFor404] = await db_data_creator.adb_client.get_all(URLProbedFor404)

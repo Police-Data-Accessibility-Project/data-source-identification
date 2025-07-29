@@ -5,7 +5,7 @@ import pytest
 from src.db.enums import TaskType
 from src.core.tasks.url.enums import TaskOperatorOutcome
 from src.core.tasks.url.operators.base import URLTaskOperatorBase
-from tests.helpers.db_data_creator import DBDataCreator
+from tests.helpers.data_creator.core import DBDataCreator
 
 class ExampleTaskOperator(URLTaskOperatorBase):
 

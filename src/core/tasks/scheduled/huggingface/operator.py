@@ -26,7 +26,6 @@ class PushToHuggingFaceTaskOperator(ScheduledTaskOperatorBase):
 
         df = await self.adb_client.get_data_sources_raw_for_huggingface()
 
-
         dataset = format_as_huggingface_dataset(df)
 
         self.hf_client.push_dataset_to_hub(

@@ -6,7 +6,7 @@ from src.core.tasks.url.operators.url_html.scraper.request_interface.core import
 from src.core.tasks.url.operators.url_html.scraper.root_url_cache.core import RootURLCache
 from src.db.client.async_ import AsyncDatabaseClient
 from src.db.models.instantiations.url.core.pydantic import URLInfo
-from tests.helpers.db_data_creator import DBDataCreator
+from tests.helpers.data_creator.core import DBDataCreator
 
 URLS = [
     "https://pdap.io",

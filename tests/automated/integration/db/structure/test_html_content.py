@@ -6,7 +6,7 @@ from src.db.enums import URLHTMLContentType
 from src.util.helper_functions import get_enum_values
 from tests.automated.integration.db.structure.testers.models.column import ColumnTester
 from tests.automated.integration.db.structure.testers.table import TableTester
-from tests.helpers.db_data_creator import DBDataCreator
+from tests.helpers.data_creator.core import DBDataCreator
 
 
 def test_html_content(db_data_creator: DBDataCreator):

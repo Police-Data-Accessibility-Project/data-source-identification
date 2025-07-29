@@ -5,7 +5,7 @@ from src.db.client.async_ import AsyncDatabaseClient
 from src.external.huggingface.inference.models.output import BasicOutput
 from tests.helpers.batch_creation_parameters.core import TestBatchCreationParameters
 from tests.helpers.batch_creation_parameters.url_creation_parameters import TestURLCreationParameters
-from tests.helpers.db_data_creator import DBDataCreator, BatchURLCreationInfoV2
+from tests.helpers.data_creator.core import DBDataCreator
 
 
 async def setup_operator(adb_client: AsyncDatabaseClient) -> URLAutoRelevantTaskOperator:

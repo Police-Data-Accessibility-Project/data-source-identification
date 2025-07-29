@@ -10,7 +10,7 @@ from src.db.models.instantiations.url.core.sqlalchemy import URL
 from src.collectors.enums import URLStatus
 from src.core.tasks.url.enums import TaskOperatorOutcome
 from tests.automated.integration.tasks.url.duplicate.constants import BATCH_CREATION_PARAMETERS
-from tests.helpers.db_data_creator import DBDataCreator
+from tests.helpers.data_creator.core import DBDataCreator
 from pdap_access_manager import ResponseInfo
 from src.external.pdap.client import PDAPClient
 
@@ -32,7 +32,7 @@ async def test_url_duplicate_task(
 
     # Add three URLs to the database, one of which is in error, the other two pending
     creation_info = await db_data_creator.batch_v2(BATCH_CREATION_PARAMETERS)
-    pending_urls: list[URLMapping] = creation_info.url_creation_infos[URLStatus.PENDING].url_mappings
+    pending_urls: list[URLMapping] = creation_info.urls_by_status[URLStatus.PENDING].url_mappings
     duplicate_url = pending_urls[0]
     non_duplicate_url = pending_urls[1]
     assert await operator.meets_task_prerequisites()

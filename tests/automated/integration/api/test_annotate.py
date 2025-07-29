@@ -21,7 +21,7 @@ from src.db.models.instantiations.url.suggestion.relevant.user import UserReleva
 from tests.helpers.setup.annotate_agency.model import AnnotateAgencySetupInfo
 from tests.helpers.setup.final_review.core import setup_for_get_next_url_for_final_review
 from tests.helpers.setup.annotate_agency.core import setup_for_annotate_agency
-from tests.helpers.db_data_creator import BatchURLCreationInfo
+from tests.helpers.data_creator.models.creation_info.batch.v1 import BatchURLCreationInfo
 from tests.automated.integration.api.conftest import MOCK_USER_ID
 
 def check_url_mappings_match(

@@ -2,7 +2,7 @@ import pytest
 
 from src.db.client.async_ import AsyncDatabaseClient
 from src.db.models.instantiations.url.error_info.pydantic import URLErrorPydanticInfo
-from tests.helpers.db_data_creator import DBDataCreator
+from tests.helpers.data_creator.core import DBDataCreator
 
 
 @pytest.mark.asyncio

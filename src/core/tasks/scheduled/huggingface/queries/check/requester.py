@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.collectors.enums import URLStatus
 from src.db.helpers.session import session_helper as sh
 from src.db.models.instantiations.state.huggingface import HuggingFaceUploadState
+from src.db.models.instantiations.url.compressed_html import URLCompressedHTML
 from src.db.models.instantiations.url.core.sqlalchemy import URL
 
 
@@ -29,6 +30,10 @@ class CheckValidURLsUpdatedRequester:
         query = (
             select(
                 func.count(URL) > 0
+            )
+            .join(
+                URLCompressedHTML,
+                URL.id == URLCompressedHTML.url_id
             )
             .where(
                 URL.outcome.in_(

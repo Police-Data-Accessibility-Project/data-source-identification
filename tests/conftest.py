@@ -13,7 +13,7 @@ from src.db.client.sync import DatabaseClient
 from src.db.helpers.connect import get_postgres_connection_string
 from src.util.helper_functions import load_from_environment
 from tests.helpers.alembic_runner import AlembicRunner
-from tests.helpers.db_data_creator import DBDataCreator
+from tests.helpers.data_creator.core import DBDataCreator
 from tests.helpers.setup.populate import populate_database
 from tests.helpers.setup.wipe import wipe_database
 
