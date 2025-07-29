@@ -1,9 +1,12 @@
 from pydantic import BaseModel
 
-from tests.helpers.batch_creation_parameters.url_creation_parameters import TestURLCreationParameters
+from tests.automated.integration.tasks.scheduled.huggingface.setup.models.input import \
+    TestPushToHuggingFaceURLSetupEntryInput
+from tests.automated.integration.tasks.scheduled.huggingface.setup.models.output import \
+    TestPushToHuggingFaceURLSetupExpectedOutput
 
 
-class TestURLSetupEntry(BaseModel):
-    creation_parameters: TestURLCreationParameters
-    picked_up: bool
+class TestPushToHuggingFaceURLSetupEntry(BaseModel):
+    input: TestPushToHuggingFaceURLSetupEntryInput
+    expected_output: TestPushToHuggingFaceURLSetupExpectedOutput
 

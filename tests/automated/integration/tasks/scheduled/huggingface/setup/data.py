@@ -1,45 +1,68 @@
 from src.collectors.enums import URLStatus
-from tests.automated.integration.tasks.scheduled.huggingface.setup.models.entry import TestURLSetupEntry
-from tests.helpers.batch_creation_parameters.core import TestBatchCreationParameters
-from tests.helpers.batch_creation_parameters.url_creation_parameters import TestURLCreationParameters
+from src.core.enums import RecordType
+from src.core.tasks.scheduled.huggingface.queries.get.enums import RecordTypeCoarse
+from tests.automated.integration.tasks.scheduled.huggingface.setup.models.entry \
+    import TestPushToHuggingFaceURLSetupEntry as Entry
+from tests.automated.integration.tasks.scheduled.huggingface.setup.models.output import \
+    TestPushToHuggingFaceURLSetupExpectedOutput as Output
+from tests.automated.integration.tasks.scheduled.huggingface.setup.models.input import \
+    TestPushToHuggingFaceURLSetupEntryInput as Input
 
 ENTRIES = [
         # Because pending, should not be picked up
-        TestURLSetupEntry(
-            creation_parameters=TestURLCreationParameters(
-                status=URLStatus.PENDING,
-                with_html_content=True
+        Entry(
+            input=Input(
+                outcome=URLStatus.PENDING,
+                has_html_content=True,
+                record_type=RecordType.INCARCERATION_RECORDS
             ),
-            picked_up=False
+            expected_output=Output(
+                picked_up=False,
+            )
         ),
         # Because no html content, should not be picked up
-        TestURLSetupEntry(
-            creation_parameters=TestURLCreationParameters(
-                status=URLStatus.SUBMITTED,
-                with_html_content=False
+        Entry(
+            input=Input(
+                outcome=URLStatus.SUBMITTED,
+                has_html_content=False,
+                record_type=RecordType.RECORDS_REQUEST_INFO
             ),
-            picked_up=False
+            expected_output=Output(
+                picked_up=False,
+            )
         ),
         # Remainder should be picked up
-        TestURLSetupEntry(
-            creation_parameters=TestURLCreationParameters(
-                status=URLStatus.SUBMITTED,
-                with_html_content=True
+        Entry(
+            input=Input(
+                outcome=URLStatus.VALIDATED,
+                has_html_content=True,
+                record_type=RecordType.RECORDS_REQUEST_INFO
             ),
-            picked_up=True
+            expected_output=Output(
+                picked_up=True,
+                coarse_record_type=RecordTypeCoarse.AGENCY_PUBLISHED_RESOURCES
+            )
         ),
-        TestURLSetupEntry(
-            creation_parameters=TestURLCreationParameters(
-                status=URLStatus.VALIDATED,
-                with_html_content=True
+        Entry(
+            input=Input(
+                outcome=URLStatus.SUBMITTED,
+                has_html_content=True,
+                record_type=RecordType.INCARCERATION_RECORDS
             ),
-            picked_up=True
+            expected_output=Output(
+                picked_up=True,
+                coarse_record_type=RecordTypeCoarse.JAILS_AND_COURTS
+            )
         ),
-        TestURLSetupEntry(
-            creation_parameters=TestURLCreationParameters(
-                status=URLStatus.NOT_RELEVANT,
-                with_html_content=True
+        Entry(
+            input=Input(
+                outcome=URLStatus.NOT_RELEVANT,
+                has_html_content=True,
+                record_type=None
             ),
-            picked_up=True
+            expected_output=Output(
+                picked_up=True,
+                coarse_record_type=RecordTypeCoarse.NOT_CRIMINAL_JUSTICE_RELATED
+            )
         ),
 ]

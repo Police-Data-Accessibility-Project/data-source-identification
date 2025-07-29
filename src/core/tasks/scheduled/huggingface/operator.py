@@ -1,5 +1,3 @@
-from src.core.tasks.scheduled.huggingface.constants import REPO_ID
-from src.core.tasks.scheduled.huggingface.format import format_as_huggingface_dataset
 from src.core.tasks.scheduled.templates.operator import ScheduledTaskOperatorBase
 from src.db.client.async_ import AsyncDatabaseClient
 from src.external.huggingface.hub.client import HuggingFaceHubClient
@@ -24,11 +22,5 @@ class PushToHuggingFaceTaskOperator(ScheduledTaskOperatorBase):
 
         # Otherwise, push to huggingface
 
-        df = await self.adb_client.get_data_sources_raw_for_huggingface()
-
-        dataset = format_as_huggingface_dataset(df)
-
-        self.hf_client.push_dataset_to_hub(
-            repo_id=REPO_ID,
-            dataset=dataset
-        )
+        outputs = await self.adb_client.get_data_sources_raw_for_huggingface()
+        self.hf_client.push_data_sources_raw_to_hub(outputs)

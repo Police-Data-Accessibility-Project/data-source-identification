@@ -79,7 +79,7 @@ class DBDataCreator:
                 batch_id=batch_id,
             )
 
-        urls_by_status: dict[URLStatus, list[URLCreationInfo]] = defaultdict(list)
+        urls_by_status: dict[URLStatus, URLCreationInfo] = {}
         urls_by_order: list[URLCreationInfo] = []
         # Create urls
         for url_parameters in parameters.urls:
@@ -110,7 +110,6 @@ class DBDataCreator:
         return BatchURLCreationInfoV2(
             batch_id=batch_id,
             urls_by_status=urls_by_status,
-            urls_by_order=urls_by_order
         )
 
     async def batch_and_urls(
