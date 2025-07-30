@@ -26,6 +26,7 @@ from tests.helpers.batch_creation_parameters.annotation_info import AnnotationIn
 from tests.helpers.batch_creation_parameters.core import TestBatchCreationParameters
 from tests.helpers.data_creator.commands.base import DBDataCreatorCommandBase
 from tests.helpers.data_creator.commands.impl.agency import AgencyCommand
+from tests.helpers.data_creator.commands.impl.annotate import AnnotateCommand
 from tests.helpers.data_creator.commands.impl.batch import DBDataCreatorBatchCommand
 from tests.helpers.data_creator.commands.impl.html_data import HTMLDataCreatorCommand
 from tests.helpers.data_creator.commands.impl.suggestion.agency_confirmed import AgencyConfirmedSuggestionCommand
@@ -182,79 +183,13 @@ class DBDataCreator:
         self,
         url_id: int,
         annotation_info: AnnotationInfo
-    ):
-        info = annotation_info
-        if info.user_relevant is not None:
-            await self.run_command(
-                UserRelevantSuggestionCommand(
-                    url_id=url_id,
-                    suggested_status=info.user_relevant
-                )
+    ) -> None:
+        await self.run_command(
+            AnnotateCommand(
+                url_id=url_id,
+                annotation_info=annotation_info
             )
-        if info.auto_relevant is not None:
-            await self.run_command(
-                AutoRelevantSuggestionCommand(
-                    url_id=url_id,
-                    relevant=info.auto_relevant
-                )
-            )
-        if info.user_record_type is not None:
-            await self.run_command(
-                UserRecordTypeSuggestionCommand(
-                    url_id=url_id,
-                    record_type=info.user_record_type,
-                )
-            )
-        if info.auto_record_type is not None:
-            await self.run_command(
-                AutoRecordTypeSuggestionCommand(
-                    url_id=url_id,
-                    record_type=info.auto_record_type
-                )
-            )
-        if info.user_agency is not None:
-            await self.run_command(
-                AgencyUserSuggestionsCommand(
-                    url_id=url_id,
-                    agency_annotation_info=info.user_agency
-                )
-            )
-        if info.auto_agency is not None:
-            await self.run_command(
-                AgencyAutoSuggestionsCommand(
-                    url_id=url_id,
-                    count=1,
-                    suggestion_type=SuggestionType.AUTO_SUGGESTION
-                )
-            )
-        if info.confirmed_agency is not None:
-            await self.run_command(
-                AgencyAutoSuggestionsCommand(
-                    url_id=url_id,
-                    count=1,
-                    suggestion_type=SuggestionType.CONFIRMED
-                )
-            )
-        if info.final_review_approved is not None:
-            if info.final_review_approved:
-                final_review_approval_info = FinalReviewApprovalInfo(
-                    url_id=url_id,
-                    record_type=annotation_info.user_record_type,
-                    agency_ids=[annotation_info.user_agency.suggested_agency]
-                    if annotation_info.user_agency is not None else None,
-                    description="Test Description",
-                )
-                await self.adb_client.approve_url(
-                    approval_info=final_review_approval_info,
-                    user_id=1
-                )
-            else:
-                await self.adb_client.reject_url(
-                    url_id=url_id,
-                    user_id=1,
-                    rejection_reason=RejectionReason.NOT_RELEVANT
-                )
-
+        )
 
     async def user_relevant_suggestion(
             self,
