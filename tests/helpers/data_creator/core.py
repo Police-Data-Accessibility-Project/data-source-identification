@@ -28,6 +28,7 @@ from tests.helpers.data_creator.commands.base import DBDataCreatorCommandBase
 from tests.helpers.data_creator.commands.impl.agency import AgencyCommand
 from tests.helpers.data_creator.commands.impl.annotate import AnnotateCommand
 from tests.helpers.data_creator.commands.impl.batch import DBDataCreatorBatchCommand
+from tests.helpers.data_creator.commands.impl.batch_v2 import BatchV2Command
 from tests.helpers.data_creator.commands.impl.html_data import HTMLDataCreatorCommand
 from tests.helpers.data_creator.commands.impl.suggestion.agency_confirmed import AgencyConfirmedSuggestionCommand
 from tests.helpers.data_creator.commands.impl.suggestion.auto.agency import AgencyAutoSuggestionsCommand
@@ -90,57 +91,7 @@ class DBDataCreator:
         self,
         parameters: TestBatchCreationParameters
     ) -> BatchURLCreationInfoV2:
-        # Create batch
-        command = DBDataCreatorBatchCommand(
-            strategy=parameters.strategy,
-            batch_status=parameters.outcome,
-            created_at=parameters.created_at
-        )
-        batch_id = self.run_command_sync(command)
-        # Return early if batch would not involve URL creation
-        if parameters.outcome in (BatchStatus.ERROR, BatchStatus.ABORTED):
-            return BatchURLCreationInfoV2(
-                batch_id=batch_id,
-            )
-
-        urls_by_status: dict[URLStatus, URLCreationInfo] = {}
-        urls_by_order: list[URLCreationInfo] = []
-        # Create urls
-        for url_parameters in parameters.urls:
-            command = URLsDBDataCreatorCommand(
-                batch_id=batch_id,
-                url_count=url_parameters.count,
-                outcome=url_parameters.status,
-                created_at=parameters.created_at
-            )
-            iui: InsertURLsInfo = self.run_command_sync(command)
-            url_ids = [iui.url_id for iui in iui.url_mappings]
-            if url_parameters.with_html_content:
-                command = HTMLDataCreatorCommand(
-                    url_ids=url_ids
-                )
-                await self.run_command(command)
-            if url_parameters.annotation_info.has_annotations():
-                for url_id in url_ids:
-                    await self.run_command(
-                        AnnotateCommand(
-                            url_id=url_id,
-                            annotation_info=url_parameters.annotation_info
-                        )
-                    )
-
-            creation_info = URLCreationInfo(
-                url_mappings=iui.url_mappings,
-                outcome=url_parameters.status,
-                annotation_info=url_parameters.annotation_info if url_parameters.annotation_info.has_annotations() else None
-            )
-            urls_by_order.append(creation_info)
-            urls_by_status[url_parameters.status] = creation_info
-
-        return BatchURLCreationInfoV2(
-            batch_id=batch_id,
-            urls_by_status=urls_by_status,
-        )
+        return await self.run_command(BatchV2Command(parameters))
 
     async def batch_and_urls(
             self,
