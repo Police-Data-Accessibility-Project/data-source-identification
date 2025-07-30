@@ -1,7 +1,7 @@
 from collections import defaultdict
 from datetime import datetime
 from random import randint
-from typing import List, Optional
+from typing import List, Optional, Any
 
 from src.api.endpoints.annotate.agency.post.dto import URLAgencyAnnotationPostInfo
 from src.api.endpoints.review.approve.dto import FinalReviewApprovalInfo
@@ -24,6 +24,11 @@ from src.core.tasks.url.operators.url_miscellaneous_metadata.tdo import URLMisce
 from src.core.enums import BatchStatus, SuggestionType, RecordType, SuggestedStatus
 from tests.helpers.batch_creation_parameters.annotation_info import AnnotationInfo
 from tests.helpers.batch_creation_parameters.core import TestBatchCreationParameters
+from tests.helpers.data_creator.commands.base import DBDataCreatorCommandBase
+from tests.helpers.data_creator.commands.impl.batch import DBDataCreatorBatchCommand
+from tests.helpers.data_creator.commands.impl.html_data import HTMLDataCreatorCommand
+from tests.helpers.data_creator.commands.impl.urls import URLsDBDataCreatorCommand
+from tests.helpers.data_creator.models.clients import DBDataCreatorClientContainer
 from tests.helpers.data_creator.models.creation_info.batch.v1 import BatchURLCreationInfo
 from tests.helpers.data_creator.models.creation_info.batch.v2 import BatchURLCreationInfoV2
 from tests.helpers.data_creator.models.creation_info.url import URLCreationInfo
@@ -40,6 +45,18 @@ class DBDataCreator:
         else:
             self.db_client = DatabaseClient()
         self.adb_client: AsyncDatabaseClient = AsyncDatabaseClient()
+        self.clients = DBDataCreatorClientContainer(
+            adb=self.adb_client,
+            db=self.db_client
+        )
+
+    def run_command_sync(self, command: DBDataCreatorCommandBase) -> Any:
+        command.load_clients(self.clients)
+        return command.run_sync()
+
+    async def run_command(self, command: DBDataCreatorCommandBase) -> Any:
+        command.load_clients(self.clients)
+        return await command.run()
 
     def batch(
         self,
@@ -47,15 +64,12 @@ class DBDataCreator:
         batch_status: BatchStatus = BatchStatus.IN_PROCESS,
         created_at: Optional[datetime] = None
     ) -> int:
-        return self.db_client.insert_batch(
-            BatchInfo(
-                strategy=strategy.value,
-                status=batch_status,
-                parameters={"test_key": "test_value"},
-                user_id=1,
-                date_generated=created_at
-            )
+        command = DBDataCreatorBatchCommand(
+            strategy=strategy,
+            batch_status=batch_status,
+            created_at=created_at
         )
+        return self.run_command_sync(command)
 
     async def task(self, url_ids: Optional[list[int]] = None) -> int:
         task_id = await self.adb_client.initiate_task(task_type=TaskType.HTML)
@@ -179,7 +193,7 @@ class DBDataCreator:
     ):
         info = annotation_info
         if info.user_relevant is not None:
-            await self.user_relevant_suggestion_v2(url_id=url_id, suggested_status=info.user_relevant)
+            await self.user_relevant_suggestion(url_id=url_id, suggested_status=info.user_relevant)
         if info.auto_relevant is not None:
             await self.auto_relevant_suggestions(url_id=url_id, relevant=info.auto_relevant)
         if info.user_record_type is not None:
@@ -216,19 +230,7 @@ class DBDataCreator:
     async def user_relevant_suggestion(
             self,
             url_id: int,
-            user_id: Optional[int] = None,
-            relevant: bool = True
-    ):
-        await self.user_relevant_suggestion_v2(
-            url_id=url_id,
-            user_id=user_id,
-            suggested_status=SuggestedStatus.RELEVANT if relevant else SuggestedStatus.NOT_RELEVANT
-        )
-
-    async def user_relevant_suggestion_v2(
-            self,
-            url_id: int,
-            user_id: Optional[int] = None,
+            user_id: int | None = None,
             suggested_status: SuggestedStatus = SuggestedStatus.RELEVANT
     ):
         if user_id is None:
@@ -253,7 +255,11 @@ class DBDataCreator:
             record_type=record_type
         )
 
-    async def auto_record_type_suggestions(self, url_id: int, record_type: RecordType):
+    async def auto_record_type_suggestions(
+        self,
+        url_id: int,
+        record_type: RecordType
+    ):
         await self.adb_client.add_auto_record_type_suggestion(
             url_id=url_id,
             record_type=record_type
@@ -315,43 +321,18 @@ class DBDataCreator:
             self,
             batch_id: int,
             url_count: int,
-            collector_metadata: Optional[dict] = None,
+            collector_metadata: dict | None = None,
             outcome: URLStatus = URLStatus.PENDING,
-            created_at: Optional[datetime] = None
+            created_at: datetime | None = None
     ) -> InsertURLsInfo:
-        raw_urls = generate_test_urls(url_count)
-        url_infos: List[URLInfo] = []
-        for url in raw_urls:
-            url_infos.append(
-                URLInfo(
-                    url=url,
-                    outcome=outcome,
-                    name="Test Name" if outcome == URLStatus.VALIDATED else None,
-                    collector_metadata=collector_metadata,
-                    created_at=created_at
-                )
-            )
-
-        url_insert_info = self.db_client.insert_urls(
-            url_infos=url_infos,
+        command = URLsDBDataCreatorCommand(
             batch_id=batch_id,
+            url_count=url_count,
+            collector_metadata=collector_metadata,
+            outcome=outcome,
+            created_at=created_at
         )
-
-        # If outcome is submitted, also add entry to DataSourceURL
-        if outcome == URLStatus.SUBMITTED:
-            submitted_url_infos = []
-            for url_id in url_insert_info.url_ids:
-                submitted_url_info = SubmittedURLInfo(
-                    url_id=url_id,
-                    data_source_id=url_id, # Use same ID for convenience,
-                    request_error=None,
-                    submitted_at=created_at
-                )
-                submitted_url_infos.append(submitted_url_info)
-            self.db_client.mark_urls_as_submitted(submitted_url_infos)
-
-
-        return url_insert_info
+        return self.run_command_sync(command)
 
     async def url_miscellaneous_metadata(
             self,
@@ -394,32 +375,11 @@ class DBDataCreator:
 
         self.db_client.insert_duplicates(duplicate_infos)
 
-    async def html_data(self, url_ids: list[int]):
-        html_content_infos = []
-        raw_html_info_list = []
-        for url_id in url_ids:
-            html_content_infos.append(
-                URLHTMLContentInfo(
-                    url_id=url_id,
-                    content_type=HTMLContentType.TITLE,
-                    content="test html content"
-                )
-            )
-            html_content_infos.append(
-                URLHTMLContentInfo(
-                    url_id=url_id,
-                    content_type=HTMLContentType.DESCRIPTION,
-                    content="test description"
-                )
-            )
-            raw_html_info = RawHTMLInfo(
-                url_id=url_id,
-                html="<html></html>"
-            )
-            raw_html_info_list.append(raw_html_info)
-
-        await self.adb_client.add_raw_html(raw_html_info_list)
-        await self.adb_client.add_html_content_infos(html_content_infos)
+    async def html_data(self, url_ids: list[int]) -> None:
+        command = HTMLDataCreatorCommand(
+            url_ids=url_ids
+        )
+        await self.run_command(command)
 
     async def error_info(
             self,

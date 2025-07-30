@@ -1,14 +1,20 @@
-from typing import Optional
+from typing import Optional, final
+
+from typing_extensions import override
 
 from src.core.enums import SuggestionType
 from src.core.tasks.url.operators.agency_identification.dtos.suggestion import URLAgencySuggestionInfo
+from src.core.tasks.url.operators.agency_identification.subtasks.base import AgencyIdentificationSubtaskBase
 
 
-class CommonCrawlerAgencyIdentificationSubtask:
+@final
+class CommonCrawlerAgencyIdentificationSubtask(AgencyIdentificationSubtaskBase):
+
+    @override
     async def run(
             self,
             url_id: int,
-            collector_metadata: Optional[dict]
+            collector_metadata: dict | None = None
     ) -> list[URLAgencySuggestionInfo]:
         return [
             URLAgencySuggestionInfo(

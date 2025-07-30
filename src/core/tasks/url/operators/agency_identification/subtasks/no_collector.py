@@ -1,17 +1,19 @@
-from typing import Optional
+from typing import final
+
+from typing_extensions import override
 
 from src.core.enums import SuggestionType
 from src.core.tasks.url.operators.agency_identification.dtos.suggestion import URLAgencySuggestionInfo
-from src.core.tasks.url.subtasks.agency_identification.base import AgencyIdentificationSubtaskBase
+from src.core.tasks.url.operators.agency_identification.subtasks.base import AgencyIdentificationSubtaskBase
 
+@final
+class NoCollectorAgencyIdentificationSubtask(AgencyIdentificationSubtaskBase):
 
-class AutoGooglerAgencyIdentificationSubtask(AgencyIdentificationSubtaskBase):
-
+    @override
     async def run(
-            self,
-            url_id: int,
-            collector_metadata: Optional[dict] = None
-    ) -> list[URLAgencySuggestionInfo]:
+        self,
+        url_id: int,
+        collector_metadata: dict | None = None):
         return [
             URLAgencySuggestionInfo(
                 url_id=url_id,

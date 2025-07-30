@@ -1,20 +1,21 @@
 from src.collectors.source_collectors.muckrock.api_interface.core import MuckrockAPIInterface
 from src.core.tasks.url.operators.agency_identification.dtos.suggestion import URLAgencySuggestionInfo
 from src.core.tasks.url.operators.agency_identification.dtos.tdo import AgencyIdentificationTDO
+from src.core.tasks.url.operators.agency_identification.subtasks.base import AgencyIdentificationSubtaskBase
+from src.core.tasks.url.operators.agency_identification.subtasks.no_collector import \
+    NoCollectorAgencyIdentificationSubtask
 from src.db.client.async_ import AsyncDatabaseClient
 from src.db.models.instantiations.url.error_info.pydantic import URLErrorPydanticInfo
 from src.db.enums import TaskType
 from src.collectors.enums import CollectorType
 from src.core.tasks.url.operators.base import URLTaskOperatorBase
-from src.core.tasks.url.subtasks.agency_identification.auto_googler import AutoGooglerAgencyIdentificationSubtask
-from src.core.tasks.url.subtasks.agency_identification.ckan import CKANAgencyIdentificationSubtask
-from src.core.tasks.url.subtasks.agency_identification.common_crawler import CommonCrawlerAgencyIdentificationSubtask
-from src.core.tasks.url.subtasks.agency_identification.muckrock import MuckrockAgencyIdentificationSubtask
+from src.core.tasks.url.operators.agency_identification.subtasks.auto_googler import AutoGooglerAgencyIdentificationSubtask
+from src.core.tasks.url.operators.agency_identification.subtasks.ckan import CKANAgencyIdentificationSubtask
+from src.core.tasks.url.operators.agency_identification.subtasks.common_crawler import CommonCrawlerAgencyIdentificationSubtask
+from src.core.tasks.url.operators.agency_identification.subtasks.muckrock import MuckrockAgencyIdentificationSubtask
 from src.core.enums import SuggestionType
 from src.external.pdap.client import PDAPClient
 
-
-# TODO: Validate with Manual Tests
 
 class AgencyIdentificationTaskOperator(URLTaskOperatorBase):
 
@@ -29,23 +30,26 @@ class AgencyIdentificationTaskOperator(URLTaskOperatorBase):
         self.muckrock_api_interface = muckrock_api_interface
 
     @property
-    def task_type(self):
+    def task_type(self) -> TaskType:
         return TaskType.AGENCY_IDENTIFICATION
 
-    async def meets_task_prerequisites(self):
+    async def meets_task_prerequisites(self) -> bool:
         has_urls_without_agency_suggestions = await self.adb_client.has_urls_without_agency_suggestions()
         return has_urls_without_agency_suggestions
 
-    async def get_pending_urls_without_agency_identification(self):
+    async def get_pending_urls_without_agency_identification(self) -> list[AgencyIdentificationTDO]:
         return await self.adb_client.get_urls_without_agency_suggestions()
 
-    async def get_muckrock_subtask(self):
+    async def get_muckrock_subtask(self) -> MuckrockAgencyIdentificationSubtask:
         return MuckrockAgencyIdentificationSubtask(
             muckrock_api_interface=self.muckrock_api_interface,
             pdap_client=self.pdap_client
         )
 
-    async def get_subtask(self, collector_type: CollectorType):
+    async def get_subtask(
+        self,
+        collector_type: CollectorType
+    ) -> AgencyIdentificationSubtaskBase:
         match collector_type:
             case CollectorType.MUCKROCK_SIMPLE_SEARCH:
                 return await self.get_muckrock_subtask()
@@ -61,13 +65,13 @@ class AgencyIdentificationTaskOperator(URLTaskOperatorBase):
                 return CKANAgencyIdentificationSubtask(
                     pdap_client=self.pdap_client
                 )
-        return None
+        return NoCollectorAgencyIdentificationSubtask()
 
     @staticmethod
     async def run_subtask(subtask, url_id, collector_metadata) -> list[URLAgencySuggestionInfo]:
         return await subtask.run(url_id=url_id, collector_metadata=collector_metadata)
 
-    async def inner_task_logic(self):
+    async def inner_task_logic(self) -> None:
         tdos: list[AgencyIdentificationTDO] = await self.get_pending_urls_without_agency_identification()
         await self.link_urls_to_task(url_ids=[tdo.url_id for tdo in tdos])
         error_infos = []
