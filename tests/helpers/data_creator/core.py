@@ -91,11 +91,12 @@ class DBDataCreator:
         parameters: TestBatchCreationParameters
     ) -> BatchURLCreationInfoV2:
         # Create batch
-        batch_id = self.batch(
+        command = DBDataCreatorBatchCommand(
             strategy=parameters.strategy,
             batch_status=parameters.outcome,
             created_at=parameters.created_at
         )
+        batch_id = self.run_command_sync(command)
         # Return early if batch would not involve URL creation
         if parameters.outcome in (BatchStatus.ERROR, BatchStatus.ABORTED):
             return BatchURLCreationInfoV2(
@@ -115,7 +116,10 @@ class DBDataCreator:
             iui: InsertURLsInfo = self.run_command_sync(command)
             url_ids = [iui.url_id for iui in iui.url_mappings]
             if url_parameters.with_html_content:
-                await self.html_data(url_ids)
+                command = HTMLDataCreatorCommand(
+                    url_ids=url_ids
+                )
+                await self.run_command(command)
             if url_parameters.annotation_info.has_annotations():
                 for url_id in url_ids:
                     await self.run_command(
