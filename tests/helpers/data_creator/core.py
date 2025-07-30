@@ -106,12 +106,13 @@ class DBDataCreator:
         urls_by_order: list[URLCreationInfo] = []
         # Create urls
         for url_parameters in parameters.urls:
-            iui: InsertURLsInfo = self.urls(
+            command = URLsDBDataCreatorCommand(
                 batch_id=batch_id,
                 url_count=url_parameters.count,
                 outcome=url_parameters.status,
                 created_at=parameters.created_at
             )
+            iui: InsertURLsInfo = self.run_command_sync(command)
             url_ids = [iui.url_id for iui in iui.url_mappings]
             if url_parameters.with_html_content:
                 await self.html_data(url_ids)
