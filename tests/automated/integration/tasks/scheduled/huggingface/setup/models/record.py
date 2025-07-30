@@ -7,5 +7,5 @@ from tests.automated.integration.tasks.scheduled.huggingface.setup.models.output
 
 class TestPushToHuggingFaceRecordSetupRecord(BaseModel):
     expected_output: TestPushToHuggingFaceURLSetupExpectedOutput
-    record_type_fine: RecordType
+    record_type_fine: RecordType | None
     url_id: int

@@ -40,7 +40,8 @@ ENTRIES = [
             ),
             expected_output=Output(
                 picked_up=True,
-                coarse_record_type=RecordTypeCoarse.AGENCY_PUBLISHED_RESOURCES
+                coarse_record_type=RecordTypeCoarse.AGENCY_PUBLISHED_RESOURCES,
+                relevant=True
             )
         ),
         Entry(
@@ -51,7 +52,8 @@ ENTRIES = [
             ),
             expected_output=Output(
                 picked_up=True,
-                coarse_record_type=RecordTypeCoarse.JAILS_AND_COURTS
+                coarse_record_type=RecordTypeCoarse.JAILS_AND_COURTS,
+                relevant=True
             )
         ),
         Entry(
@@ -62,7 +64,8 @@ ENTRIES = [
             ),
             expected_output=Output(
                 picked_up=True,
-                coarse_record_type=RecordTypeCoarse.NOT_CRIMINAL_JUSTICE_RELATED
+                coarse_record_type=RecordTypeCoarse.NOT_RELEVANT,
+                relevant=False
             )
         ),
 ]

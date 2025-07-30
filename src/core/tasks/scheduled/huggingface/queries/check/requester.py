@@ -1,7 +1,8 @@
 from datetime import datetime
 
-from sqlalchemy import select, func
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.sql.functions import count
 
 from src.collectors.enums import URLStatus
 from src.db.helpers.session import session_helper as sh
@@ -28,9 +29,7 @@ class CheckValidURLsUpdatedRequester:
 
     async def has_valid_urls(self, last_upload_at: datetime | None) -> bool:
         query = (
-            select(
-                func.count(URL) > 0
-            )
+            select(count(URL.id))
             .join(
                 URLCompressedHTML,
                 URL.id == URLCompressedHTML.url_id
@@ -43,10 +42,12 @@ class CheckValidURLsUpdatedRequester:
                         URLStatus.SUBMITTED.value,
                     ]
                 ),
-                URL.updated_at > last_upload_at
             )
         )
-        return await sh.scalar(
+        if last_upload_at is not None:
+            query = query.where(URL.updated_at > last_upload_at)
+        url_count = await sh.scalar(
             session=self.session,
             query=query
         )
+        return url_count > 0

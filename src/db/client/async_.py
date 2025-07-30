@@ -1494,16 +1494,8 @@ class AsyncDatabaseClient:
         urls = raw_result.scalars().all()
         return [URL404ProbeTDO(url=url.url, url_id=url.id) for url in urls]
 
-    @session_manager
-    async def get_urls_aggregated_pending_metrics(
-        self,
-        session: AsyncSession
-    ):
-        builder = GetMetricsURLSAggregatedPendingQueryBuilder()
-        result = await builder.run(
-            session=session
-        )
-        return result
+    async def get_urls_aggregated_pending_metrics(self):
+        return await self.run_query_builder(GetMetricsURLSAggregatedPendingQueryBuilder())
 
     async def get_agencies_sync_parameters(self) -> AgencySyncParameters:
         return await self.run_query_builder(
@@ -1518,7 +1510,7 @@ class AsyncDatabaseClient:
     async def upsert_agencies(
         self,
         agencies: list[AgenciesSyncResponseInnerInfo]
-    ):
+    ) -> None:
         await self.bulk_upsert(
             models=convert_agencies_sync_response_to_agencies_upsert(agencies)
         )
@@ -1526,23 +1518,23 @@ class AsyncDatabaseClient:
     async def upsert_urls_from_data_sources(
         self,
         data_sources: list[DataSourcesSyncResponseInnerInfo]
-    ):
+    ) -> None:
         await self.run_query_builder(
             UpsertURLsFromDataSourcesQueryBuilder(
                 sync_infos=data_sources
             )
         )
 
-    async def update_agencies_sync_progress(self, page: int):
+    async def update_agencies_sync_progress(self, page: int) -> None:
         await self.execute(get_update_agencies_sync_progress_query(page))
 
-    async def update_data_sources_sync_progress(self, page: int):
+    async def update_data_sources_sync_progress(self, page: int) -> None:
         await self.execute(get_update_data_sources_sync_progress_query(page))
 
-    async def mark_full_data_sources_sync(self):
+    async def mark_full_data_sources_sync(self) -> None:
         await self.execute(get_mark_full_data_sources_sync_query())
 
-    async def mark_full_agencies_sync(self):
+    async def mark_full_agencies_sync(self) -> None:
         await self.execute(get_mark_full_agencies_sync_query())
 
     @session_manager
@@ -1566,7 +1558,7 @@ class AsyncDatabaseClient:
         self,
         session: AsyncSession,
         info_list: list[RawHTMLInfo]
-    ):
+    ) -> None:
         for info in info_list:
             compressed_html = URLCompressedHTML(
                 url_id=info.url_id,
@@ -1579,12 +1571,15 @@ class AsyncDatabaseClient:
             GetForLoadingToHuggingFaceQueryBuilder()
         )
 
-    async def set_hugging_face_upload_state(self, dt: datetime):
+    async def set_hugging_face_upload_state(self, dt: datetime) -> None:
         await self.run_query_builder(
             SetHuggingFaceUploadStateQueryBuilder(dt=dt)
         )
 
-    async def check_valid_urls_updated(self):
+    async def check_valid_urls_updated(self) -> bool:
         return await self.run_query_builder(
             CheckValidURLsUpdatedQueryBuilder()
         )
+
+    async def get_current_database_time(self) -> datetime:
+        return await self.scalar(select(func.now()))

@@ -1,4 +1,5 @@
 from src.core.tasks.scheduled.huggingface.queries.get.model import GetForLoadingToHuggingFaceOutput
+from src.db.client.async_ import AsyncDatabaseClient
 from tests.automated.integration.tasks.scheduled.huggingface.setup.data import ENTRIES
 from tests.automated.integration.tasks.scheduled.huggingface.setup.models.output import \
     TestPushToHuggingFaceURLSetupExpectedOutput
@@ -11,39 +12,26 @@ from tests.helpers.data_creator.core import DBDataCreator
 
 class PushToHuggingFaceTestSetupManager:
 
-    def __init__(self, db_data_creator: DBDataCreator):
-        self.db_data_creator = db_data_creator
+    def __init__(self, adb_client: AsyncDatabaseClient):
+        self.adb_client = adb_client
         self.entries = ENTRIES
         # Connects a URL ID to the expectation that it will be picked up
         self._id_to_record: dict[int, TestPushToHuggingFaceRecordSetupRecord] = {}
-        self._url_ids_not_picked_up = []
 
     async def setup(self) -> None:
-        records: list[Record] = await self.db_data_creator.adb_client.run_query_builder(
+        records: list[Record] = await self.adb_client.run_query_builder(
             SetupTestPushToHuggingFaceEntryQueryBuilder(self.entries)
         )
         for record in records:
-
-            if record.expected_output.picked_up:
-                self._id_to_record[record.url_id] = record
-            else:
-                self._url_ids_not_picked_up.append(record.url_id)
-
-
+            if not record.expected_output.picked_up:
+                continue
+            self._id_to_record[record.url_id] = record
 
     def check_results(self, outputs: list[GetForLoadingToHuggingFaceOutput]) -> None:
-
-
-        for output in outputs:
-            url_id = output.url_id
-            expected_output = self._id_to_record[url_id]
-            assert expected_output.picked_up
-
-    def _check_expected_picked_up_results(self, outputs: list[GetForLoadingToHuggingFaceOutput]):
         # Check that both expected and actual results are same length
         length_expected = len(self._id_to_record.keys())
         length_actual = len(outputs)
-        assert length_expected == length_actual
+        assert length_expected == length_actual, f"Expected {length_expected} results, got {length_actual}"
 
         # Check attributes of each URL match what is expected
         for output in outputs:
@@ -52,12 +40,7 @@ class PushToHuggingFaceTestSetupManager:
 
             expected_output = record.expected_output
             assert output.relevant == expected_output.relevant
-            assert output.record_type_coarse == expected_output.coarse_record_type
+            assert output.record_type_coarse == expected_output.coarse_record_type, \
+                f"Expected {expected_output.coarse_record_type} but got {output.record_type_coarse}"
             assert output.record_type_fine == record.record_type_fine
-
-    def check_for_results_not_picked_up(self):
-        """Check that the expected URLs NOT picked up aren't picked up."""
-
-
-
 

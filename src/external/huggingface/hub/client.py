@@ -16,4 +16,5 @@ class HuggingFaceHubClient:
 
     def push_data_sources_raw_to_hub(self, outputs: list[GetForLoadingToHuggingFaceOutput]):
         dataset = format_as_huggingface_dataset(outputs)
+        print(dataset)
         self._push_dataset_to_hub(repo_id=DATA_SOURCES_RAW_REPO_ID, dataset=dataset)

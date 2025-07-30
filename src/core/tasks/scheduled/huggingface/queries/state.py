@@ -13,7 +13,7 @@ class SetHuggingFaceUploadStateQueryBuilder(QueryBuilderBase):
         super().__init__()
         self.dt = dt
 
-    async def run(self, session: AsyncSession):
+    async def run(self, session: AsyncSession) -> None:
         # Delete entry if any exists
         await session.execute(
             delete(HuggingFaceUploadState)

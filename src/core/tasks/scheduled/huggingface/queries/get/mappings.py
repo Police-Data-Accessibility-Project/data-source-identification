@@ -44,7 +44,7 @@ FINE_COARSE_RECORD_TYPE_MAPPING = {
     RecordType.COURT_CASES: RecordTypeCoarse.JAILS_AND_COURTS,
     RecordType.INCARCERATION_RECORDS: RecordTypeCoarse.JAILS_AND_COURTS,
     # Other
-    None: None
+    None: RecordTypeCoarse.NOT_RELEVANT
 }
 
 OUTCOME_RELEVANCY_MAPPING = {

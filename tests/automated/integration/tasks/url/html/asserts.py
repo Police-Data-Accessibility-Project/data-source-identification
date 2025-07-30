@@ -1,4 +1,6 @@
+from src.api.endpoints.task.by_id.dto import TaskInfo
 from src.collectors.enums import URLStatus
+from src.core.tasks.base.run_info import TaskOperatorRunInfo
 from src.db.client.async_ import AsyncDatabaseClient
 from src.db.enums import TaskType
 from tests.automated.integration.tasks.url.html.mocks.constants import MOCK_HTML_CONTENT
@@ -46,5 +48,5 @@ def assert_task_type_is_html(task_info):
     assert task_info.task_type == TaskType.HTML
 
 
-def assert_task_ran_without_error(task_info):
+def assert_html_task_ran_without_error(task_info: TaskInfo):
     assert task_info.error_info is None

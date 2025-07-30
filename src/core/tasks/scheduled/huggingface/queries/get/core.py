@@ -17,14 +17,20 @@ class GetForLoadingToHuggingFaceQueryBuilder(QueryBuilderBase):
 
 
     async def run(self, session: AsyncSession) -> list[GetForLoadingToHuggingFaceOutput]:
+        label_url_id = 'url_id'
+        label_url = 'url'
+        label_url_status = 'url_status'
+        label_record_type_fine = 'record_type_fine'
+        label_html = 'html'
+
 
         query = (
             select(
-                URL.id.label('url_id'),
-                URL.url,
-                convert_url_status_to_relevant(URL.outcome),
-                convert_fine_to_coarse_record_type(URL.outcome),
-                URLCompressedHTML.compressed_html.label('html')
+                URL.id.label(label_url_id),
+                URL.url.label(label_url),
+                URL.outcome.label(label_url_status),
+                URL.record_type.label(label_record_type_fine),
+                URLCompressedHTML.compressed_html.label(label_html)
             )
             .join(
                 URLCompressedHTML,
@@ -38,19 +44,21 @@ class GetForLoadingToHuggingFaceQueryBuilder(QueryBuilderBase):
                 ])
             )
         )
-        db_results = await sh.scalars(
+        db_results = await sh.mappings(
             session=session,
             query=query
         )
         final_results = []
         for result in db_results:
             output = GetForLoadingToHuggingFaceOutput(
-                url_id=result.url_id,
-                url=result.url,
-                relevant=convert_url_status_to_relevant(result.outcome),
-                record_type_fine=result.record_type,
-                record_type_coarse=convert_fine_to_coarse_record_type(result.record_type),
-                html=decompress_html(result.html)
+                url_id=result[label_url_id],
+                url=result[label_url],
+                relevant=convert_url_status_to_relevant(result[label_url_status]),
+                record_type_fine=result[label_record_type_fine],
+                record_type_coarse=convert_fine_to_coarse_record_type(
+                    result[label_record_type_fine]
+                ),
+                html=decompress_html(result[label_html])
             )
             final_results.append(output)
 

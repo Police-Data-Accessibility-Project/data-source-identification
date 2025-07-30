@@ -7,6 +7,6 @@ class RecordTypeCoarse(Enum):
     AGENCY_PUBLISHED_RESOURCES = "Agency-Published Resources"
     POLICE_AND_PUBLIC = "Police & Public Interactions"
     POOR_DATA_SOURCE = "Poor Data Source"
-    NOT_CRIMINAL_JUSTICE_RELATED = "Not Criminal Justice Related"
+    NOT_RELEVANT = "Not Relevant"
     JAILS_AND_COURTS = "Jails & Courts Specific"
     OTHER = "Other"

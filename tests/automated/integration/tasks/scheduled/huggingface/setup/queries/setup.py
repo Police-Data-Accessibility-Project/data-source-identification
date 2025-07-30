@@ -26,7 +26,7 @@ class SetupTestPushToHuggingFaceEntryQueryBuilder(QueryBuilderBase):
                 name = "Test Push to Hugging Face URL Setup Entry"
                 description = "This is a test push to Hugging Face URL setup entry"
             else:
-                name = None,
+                name = None
                 description = None
             inp = entry.input
             url = URL(
@@ -38,14 +38,16 @@ class SetupTestPushToHuggingFaceEntryQueryBuilder(QueryBuilderBase):
             )
             session.add(url)
             await session.flush()
-            compressed_html = URLCompressedHTML(
-                url_id=url.id,
-                compressed_html=compress_html(f"<html><div>Test Push to Hugging Face URL Setup Entry {idx}</div></html>"),
-            )
-            session.add(compressed_html)
+            if entry.input.has_html_content:
+                compressed_html = URLCompressedHTML(
+                    url_id=url.id,
+                    compressed_html=compress_html(f"<html><div>Test Push to Hugging Face URL Setup Entry {idx}</div></html>"),
+                )
+                session.add(compressed_html)
             record = Record(
                 url_id=url.id,
                 expected_output=entry.expected_output,
+                record_type_fine=inp.record_type
             )
             records.append(record)
 

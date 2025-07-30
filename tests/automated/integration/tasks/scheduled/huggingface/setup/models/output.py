@@ -8,11 +8,15 @@ from src.core.tasks.scheduled.huggingface.queries.get.enums import RecordTypeCoa
 
 class TestPushToHuggingFaceURLSetupExpectedOutput(BaseModel):
     picked_up: bool
-    relevant: bool
+    relevant: bool | None = None
     coarse_record_type: RecordTypeCoarse | None = None
 
     @model_validator(mode='after')
-    def validate_coarse_record_type(self) -> Self:
-        if self.picked_up and self.coarse_record_type is None:
+    def validate_coarse_record_type_and_relevant(self) -> Self:
+        if not self.picked_up:
+            return self
+        if self.coarse_record_type is None:
             raise ValueError('Coarse record type should be provided if picked up')
+        if self.relevant is None:
+            raise ValueError('Relevant should be provided if picked up')
         return self

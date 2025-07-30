@@ -7,7 +7,7 @@ from src.db.enums import TaskType
 from src.db.models.instantiations.url.core.sqlalchemy import URL
 from src.db.models.instantiations.url.error_info.sqlalchemy import URLErrorInfo
 from src.db.models.instantiations.url.suggestion.relevant.auto.sqlalchemy import AutoRelevantSuggestion
-from tests.automated.integration.tasks.asserts import assert_prereqs_not_met, assert_task_has_expected_run_info, \
+from tests.automated.integration.tasks.asserts import assert_prereqs_not_met, assert_url_task_has_expected_run_info, \
     assert_prereqs_met
 from tests.automated.integration.tasks.url.auto_relevant.setup import setup_operator, setup_urls
 
@@ -25,7 +25,7 @@ async def test_url_auto_relevant_task(db_data_creator):
 
     run_info = await operator.run_task(task_id)
 
-    assert_task_has_expected_run_info(run_info, url_ids)
+    assert_url_task_has_expected_run_info(run_info, url_ids)
 
     adb_client = db_data_creator.adb_client
     # Get URLs, confirm one is marked as error

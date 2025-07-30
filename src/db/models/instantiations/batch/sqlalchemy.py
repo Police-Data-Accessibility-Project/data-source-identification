@@ -49,7 +49,8 @@ class Batch(StandardBase):
     urls = relationship(
         "URL",
         secondary="link_batch_urls",
-        back_populates="batch"
+        back_populates="batch",
+        overlaps="url"
     )
     # missings = relationship("Missing", back_populates="batch")  # Not in active use
     logs = relationship("Log", back_populates="batch")

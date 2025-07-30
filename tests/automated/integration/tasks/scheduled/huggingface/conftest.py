@@ -1,4 +1,4 @@
-from unittest.mock import MagicMock
+from unittest.mock import AsyncMock
 
 import pytest
 
@@ -10,5 +10,5 @@ from src.external.huggingface.hub.client import HuggingFaceHubClient
 def operator(adb_client_test):
     yield PushToHuggingFaceTaskOperator(
         adb_client=adb_client_test,
-        hf_client=MagicMock(spec=HuggingFaceHubClient)
+        hf_client=AsyncMock(spec=HuggingFaceHubClient)
     )

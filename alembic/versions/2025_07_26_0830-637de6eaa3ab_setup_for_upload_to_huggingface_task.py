@@ -10,7 +10,7 @@ from typing import Sequence, Union
 from alembic import op
 import sqlalchemy as sa
 
-from src.util.alembic_helpers import id_column
+from src.util.alembic_helpers import id_column, switch_enum_type
 
 # revision identifiers, used by Alembic.
 revision: str = '637de6eaa3ab'
@@ -32,6 +32,43 @@ def upgrade() -> None:
         ),
     )
 
+    switch_enum_type(
+        table_name='tasks',
+        column_name='task_type',
+        enum_name='task_type',
+        new_enum_values=[
+            'HTML',
+            'Relevancy',
+            'Record Type',
+            'Agency Identification',
+            'Misc Metadata',
+            'Submit Approved URLs',
+            'Duplicate Detection',
+            '404 Probe',
+            'Sync Agencies',
+            'Sync Data Sources',
+            'Push to Hugging Face'
+        ]
+    )
+
 
 def downgrade() -> None:
     op.drop_table(TABLE_NAME)
+
+    switch_enum_type(
+        table_name='tasks',
+        column_name='task_type',
+        enum_name='task_type',
+        new_enum_values=[
+            'HTML',
+            'Relevancy',
+            'Record Type',
+            'Agency Identification',
+            'Misc Metadata',
+            'Submit Approved URLs',
+            'Duplicate Detection',
+            '404 Probe',
+            'Sync Agencies',
+            'Sync Data Sources'
+        ]
+    )
