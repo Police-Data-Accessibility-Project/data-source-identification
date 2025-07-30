@@ -21,11 +21,14 @@ class SyncDataSourcesTaskOperator(ScheduledTaskOperatorBase):
         return TaskType.SYNC_DATA_SOURCES
 
     async def inner_task_logic(self):
+        count_sources_synced = 0
+
         params = await self.adb_client.get_data_sources_sync_parameters()
         if params.page is None:
             params.page = 1
 
         response = await self.pdap_client.sync_data_sources(params)
+        count_sources_synced += len(response.data_sources)
         request_count = 1
         while len(response.data_sources) > 0:
             check_max_sync_requests_not_exceeded(request_count)
@@ -38,6 +41,8 @@ class SyncDataSourcesTaskOperator(ScheduledTaskOperatorBase):
             await self.adb_client.update_data_sources_sync_progress(params.page)
 
             response = await self.pdap_client.sync_data_sources(params)
+            count_sources_synced += len(response.data_sources)
             request_count += 1
 
         await self.adb_client.mark_full_data_sources_sync()
+        print(f"Sync complete. Synced {count_sources_synced} data sources")

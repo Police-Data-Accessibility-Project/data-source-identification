@@ -168,7 +168,7 @@ class PDAPClient:
             headers=headers,
             params={
                 "page": params.page,
-                "update_at": params.cutoff_date
+                "updated_at": params.cutoff_date
             }
         )
         response_info = await self.access_manager.make_request(request_info)
@@ -198,7 +198,7 @@ class PDAPClient:
             headers=headers,
             params={
                 "page": params.page,
-                "update_at": params.cutoff_date
+                "updated_at": params.cutoff_date
             }
         )
         response_info = await self.access_manager.make_request(request_info)

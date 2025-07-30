@@ -75,6 +75,9 @@ from src.core.tasks.url.operators.agency_identification.queries.get_pending_urls
     GetPendingURLsWithoutAgencySuggestionsQueryBuilder
 from src.core.tasks.url.operators.auto_relevant.models.tdo import URLRelevantTDO
 from src.core.tasks.url.operators.auto_relevant.queries.get_tdos import GetAutoRelevantTDOsQueryBuilder
+from src.core.tasks.url.operators.submit_approved_url.queries.get import GetValidatedURLsQueryBuilder
+from src.core.tasks.url.operators.submit_approved_url.queries.has_validated import HasValidatedURLsQueryBuilder
+from src.core.tasks.url.operators.submit_approved_url.queries.mark_submitted import MarkURLsAsSubmittedQueryBuilder
 from src.core.tasks.url.operators.submit_approved_url.tdo import SubmitApprovedURLTDO, SubmittedURLInfo
 from src.core.tasks.url.operators.url_404_probe.tdo import URL404ProbeTDO
 from src.core.tasks.url.operators.url_duplicate.tdo import URLDuplicateTDO
@@ -85,7 +88,6 @@ from src.core.tasks.url.operators.url_miscellaneous_metadata.queries.get_pending
 from src.core.tasks.url.operators.url_miscellaneous_metadata.queries.has_pending_urls_missing_miscellaneous_data import \
     HasPendingURsMissingMiscellaneousDataQueryBuilder
 from src.core.tasks.url.operators.url_miscellaneous_metadata.tdo import URLMiscellaneousMetadataTDO
-from src.db.helpers.session import session_helper as sh
 from src.db.client.helpers import add_standard_limit_and_offset
 from src.db.client.types import UserSuggestionModel
 from src.db.config_manager import ConfigManager
@@ -96,6 +98,7 @@ from src.db.dtos.url.insert import InsertURLsInfo
 from src.db.dtos.url.mapping import URLMapping
 from src.db.dtos.url.raw_html import RawHTMLInfo
 from src.db.enums import TaskType
+from src.db.helpers.session import session_helper as sh
 from src.db.models.instantiations.agency.sqlalchemy import Agency
 from src.db.models.instantiations.backlog_snapshot import BacklogSnapshot
 from src.db.models.instantiations.batch.pydantic import BatchInfo
@@ -1012,86 +1015,14 @@ class AsyncDatabaseClient:
         batch.status = batch_status.value
         batch.compute_time = compute_time
 
-    @session_manager
-    async def has_validated_urls(self, session: AsyncSession) -> bool:
-        query = (
-            select(URL)
-            .where(URL.outcome == URLStatus.VALIDATED.value)
-        )
-        urls = await session.execute(query)
-        urls = urls.scalars().all()
-        return len(urls) > 0
+    async def has_validated_urls(self) -> bool:
+        return await self.run_query_builder(HasValidatedURLsQueryBuilder())
 
-    @session_manager
-    async def get_validated_urls(
-        self,
-        session: AsyncSession
-    ) -> list[SubmitApprovedURLTDO]:
-        query = (
-            select(URL)
-            .where(URL.outcome == URLStatus.VALIDATED.value)
-            .options(
-                selectinload(URL.optional_data_source_metadata),
-                selectinload(URL.confirmed_agencies),
-                selectinload(URL.reviewing_user)
-            ).limit(100)
-        )
-        urls = await session.execute(query)
-        urls = urls.scalars().all()
-        results: list[SubmitApprovedURLTDO] = []
-        for url in urls:
-            agency_ids = []
-            for agency in url.confirmed_agencies:
-                agency_ids.append(agency.agency_id)
-            optional_metadata = url.optional_data_source_metadata
+    async def get_validated_urls(self) -> list[SubmitApprovedURLTDO]:
+        return await self.run_query_builder(GetValidatedURLsQueryBuilder())
 
-            if optional_metadata is None:
-                record_formats = None
-                data_portal_type = None
-                supplying_entity = None
-            else:
-                record_formats = optional_metadata.record_formats
-                data_portal_type = optional_metadata.data_portal_type
-                supplying_entity = optional_metadata.supplying_entity
-
-            tdo = SubmitApprovedURLTDO(
-                url_id=url.id,
-                url=url.url,
-                name=url.name,
-                agency_ids=agency_ids,
-                description=url.description,
-                record_type=url.record_type,
-                record_formats=record_formats,
-                data_portal_type=data_portal_type,
-                supplying_entity=supplying_entity,
-                approving_user_id=url.reviewing_user.user_id
-            )
-            results.append(tdo)
-        return results
-
-    @session_manager
-    async def mark_urls_as_submitted(self, session: AsyncSession, infos: list[SubmittedURLInfo]):
-        for info in infos:
-            url_id = info.url_id
-            data_source_id = info.data_source_id
-
-            query = (
-                update(URL)
-                .where(URL.id == url_id)
-                .values(
-                    outcome=URLStatus.SUBMITTED.value
-                )
-            )
-
-            url_data_source_object = URLDataSource(
-                url_id=url_id,
-                data_source_id=data_source_id
-            )
-            if info.submitted_at is not None:
-                url_data_source_object.created_at = info.submitted_at
-            session.add(url_data_source_object)
-
-            await session.execute(query)
+    async def mark_urls_as_submitted(self, infos: list[SubmittedURLInfo]):
+        await self.run_query_builder(MarkURLsAsSubmittedQueryBuilder(infos))
 
     async def get_duplicates_by_batch_id(self, batch_id: int, page: int) -> list[DuplicateInfo]:
         return await self.run_query_builder(GetDuplicatesByBatchIDQueryBuilder(
