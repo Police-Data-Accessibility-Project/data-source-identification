@@ -2,7 +2,7 @@ from typing import Optional
 
 from src.api.endpoints.annotate.agency.post.dto import URLAgencyAnnotationPostInfo
 from src.core.enums import RecordType
-from tests.helpers.db_data_creator import DBDataCreator
+from tests.helpers.data_creator.core import DBDataCreator
 from tests.helpers.setup.final_review.model import FinalReviewSetupInfo
 
 

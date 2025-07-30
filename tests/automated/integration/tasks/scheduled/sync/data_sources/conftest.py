@@ -2,7 +2,7 @@ import pytest_asyncio
 
 from src.core.tasks.scheduled.sync.data_sources.operator import SyncDataSourcesTaskOperator
 from src.external.pdap.client import PDAPClient
-from tests.helpers.db_data_creator import DBDataCreator
+from tests.helpers.data_creator.core import DBDataCreator
 
 
 @pytest_asyncio.fixture

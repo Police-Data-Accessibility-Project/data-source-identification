@@ -13,7 +13,7 @@ from src.db.client.sync import DatabaseClient
 from src.db.helpers.connect import get_postgres_connection_string
 from src.util.helper_functions import load_from_environment
 from tests.helpers.alembic_runner import AlembicRunner
-from tests.helpers.db_data_creator import DBDataCreator
+from tests.helpers.data_creator.core import DBDataCreator
 from tests.helpers.setup.populate import populate_database
 from tests.helpers.setup.wipe import wipe_database
 
@@ -42,7 +42,8 @@ def setup_and_teardown():
         "PDAP_API_URL",
         "DISCORD_WEBHOOK_URL",
         "OPENAI_API_KEY",
-        "HUGGINGFACE_INFERENCE_API_KEY"
+        "HUGGINGFACE_INFERENCE_API_KEY",
+        "HUGGINGFACE_HUB_TOKEN"
     ]
     all_env_vars = required_env_vars.copy()
     for env_var in test_env_vars:

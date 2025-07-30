@@ -1,5 +1,5 @@
 from src.collectors.enums import URLStatus
-from tests.helpers.db_data_creator import DBDataCreator
+from tests.helpers.data_creator.core import DBDataCreator
 from tests.helpers.setup.annotation.model import AnnotationSetupInfo
 
 

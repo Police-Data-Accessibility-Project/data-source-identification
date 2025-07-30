@@ -20,7 +20,7 @@ class URL(UpdatedAtMixin, CreatedAtMixin, StandardBase):
     # The metadata from the collector
     collector_metadata = Column(JSON)
     # The outcome of the URL: submitted, human_labeling, rejected, duplicate, etc.
-    outcome = enum_column(
+    outcome: Column = enum_column(
             URLStatus,
             name='url_status',
             nullable=False

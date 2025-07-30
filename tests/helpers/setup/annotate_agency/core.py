@@ -1,5 +1,6 @@
 from src.core.enums import SuggestionType
-from tests.helpers.db_data_creator import DBDataCreator, BatchURLCreationInfo
+from tests.helpers.data_creator.core import DBDataCreator
+from tests.helpers.data_creator.models.creation_info.batch.v1 import BatchURLCreationInfo
 from tests.helpers.setup.annotate_agency.model import AnnotateAgencySetupInfo
 
 

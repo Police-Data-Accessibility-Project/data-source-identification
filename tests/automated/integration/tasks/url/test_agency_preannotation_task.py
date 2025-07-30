@@ -26,7 +26,8 @@ from pdap_access_manager import AccessManager
 from src.external.pdap.dtos.match_agency.response import MatchAgencyResponse
 from src.external.pdap.dtos.match_agency.post import MatchAgencyInfo
 from src.external.pdap.client import PDAPClient
-from tests.helpers.db_data_creator import DBDataCreator, BatchURLCreationInfoV2
+from tests.helpers.data_creator.core import DBDataCreator
+from tests.helpers.data_creator.models.creation_info.batch.v2 import BatchURLCreationInfoV2
 
 sample_agency_suggestions = [
     URLAgencySuggestionInfo(
@@ -127,7 +128,7 @@ async def test_agency_preannotation_task(db_data_creator: DBDataCreator):
                         ]
                     )
                 )
-                d[strategy] = creation_info.url_creation_infos[URLStatus.PENDING].url_mappings[0].url_id
+                d[strategy] = creation_info.urls_by_status[URLStatus.PENDING].url_mappings[0].url_id
 
 
             # Confirm meets prerequisites

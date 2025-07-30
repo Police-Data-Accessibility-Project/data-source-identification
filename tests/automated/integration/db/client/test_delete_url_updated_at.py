@@ -1,5 +1,5 @@
 from src.db.models.instantiations.url.core.pydantic import URLInfo
-from tests.helpers.db_data_creator import DBDataCreator
+from tests.helpers.data_creator.core import DBDataCreator
 
 
 def test_delete_url_updated_at(db_data_creator: DBDataCreator):

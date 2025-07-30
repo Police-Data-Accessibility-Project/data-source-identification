@@ -1,5 +1,5 @@
 from sqlalchemy import Column, LargeBinary
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, Mapped
 
 from src.db.models.mixins import CreatedAtMixin, URLDependentMixin
 from src.db.models.templates import StandardBase
@@ -12,7 +12,7 @@ class URLCompressedHTML(
 ):
     __tablename__ = 'url_compressed_html'
 
-    compressed_html = Column(LargeBinary, nullable=False)
+    compressed_html: Mapped[bytes] = Column(LargeBinary, nullable=False)
 
     url = relationship(
         "URL",

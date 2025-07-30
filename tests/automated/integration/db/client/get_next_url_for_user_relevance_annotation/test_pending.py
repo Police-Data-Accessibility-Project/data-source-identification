@@ -2,7 +2,7 @@ import pytest
 
 from src.core.enums import SuggestedStatus
 from tests.helpers.setup.annotation.core import setup_for_get_next_url_for_annotation
-from tests.helpers.db_data_creator import DBDataCreator
+from tests.helpers.data_creator.core import DBDataCreator
 
 
 @pytest.mark.asyncio

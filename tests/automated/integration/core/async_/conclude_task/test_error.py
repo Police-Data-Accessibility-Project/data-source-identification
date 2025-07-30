@@ -1,13 +1,11 @@
 import pytest
 
 from src.core.enums import BatchStatus
-from src.core.tasks.dtos.run_info import URLTaskOperatorRunInfo
 from src.core.tasks.url.enums import TaskOperatorOutcome
-from src.db.enums import TaskType
 from tests.automated.integration.core.async_.conclude_task.helpers import setup_run_info
 from tests.automated.integration.core.async_.conclude_task.setup_info import TestAsyncCoreSetupInfo
 from tests.automated.integration.core.async_.helpers import setup_async_core
-from tests.helpers.db_data_creator import DBDataCreator
+from tests.helpers.data_creator.core import DBDataCreator
 
 
 @pytest.mark.asyncio

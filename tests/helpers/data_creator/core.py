@@ -1,8 +1,7 @@
+from collections import defaultdict
 from datetime import datetime
 from random import randint
 from typing import List, Optional
-
-from pydantic import BaseModel
 
 from src.api.endpoints.annotate.agency.post.dto import URLAgencyAnnotationPostInfo
 from src.api.endpoints.review.approve.dto import FinalReviewApprovalInfo
@@ -16,7 +15,6 @@ from src.db.dtos.url.insert import InsertURLsInfo
 from src.db.models.instantiations.url.error_info.pydantic import URLErrorPydanticInfo
 from src.db.dtos.url.html_content import URLHTMLContentInfo, HTMLContentType
 from src.db.models.instantiations.url.core.pydantic import URLInfo
-from src.db.dtos.url.mapping import URLMapping
 from src.db.client.sync import DatabaseClient
 from src.db.dtos.url.raw_html import RawHTMLInfo
 from src.db.enums import TaskType
@@ -26,34 +24,11 @@ from src.core.tasks.url.operators.url_miscellaneous_metadata.tdo import URLMisce
 from src.core.enums import BatchStatus, SuggestionType, RecordType, SuggestedStatus
 from tests.helpers.batch_creation_parameters.annotation_info import AnnotationInfo
 from tests.helpers.batch_creation_parameters.core import TestBatchCreationParameters
+from tests.helpers.data_creator.models.creation_info.batch.v1 import BatchURLCreationInfo
+from tests.helpers.data_creator.models.creation_info.batch.v2 import BatchURLCreationInfoV2
+from tests.helpers.data_creator.models.creation_info.url import URLCreationInfo
 from tests.helpers.simple_test_data_functions import generate_test_urls
 
-
-class URLCreationInfo(BaseModel):
-    url_mappings: list[URLMapping]
-    outcome: URLStatus
-    annotation_info: Optional[AnnotationInfo] = None
-
-    @property
-    def url_ids(self) -> list[int]:
-        return [url_mapping.url_id for url_mapping in self.url_mappings]
-
-class BatchURLCreationInfoV2(BaseModel):
-    batch_id: int
-    url_creation_infos: dict[URLStatus, URLCreationInfo]
-
-    @property
-    def url_ids(self) -> list[int]:
-        url_creation_infos = self.url_creation_infos.values()
-        url_ids = []
-        for url_creation_info in url_creation_infos:
-            url_ids.extend(url_creation_info.url_ids)
-        return url_ids
-
-class BatchURLCreationInfo(BaseModel):
-    batch_id: int
-    url_ids: list[int]
-    urls: list[str]
 
 class DBDataCreator:
     """
@@ -92,18 +67,20 @@ class DBDataCreator:
         self,
         parameters: TestBatchCreationParameters
     ) -> BatchURLCreationInfoV2:
+        # Create batch
         batch_id = self.batch(
             strategy=parameters.strategy,
             batch_status=parameters.outcome,
             created_at=parameters.created_at
         )
+        # Return early if batch would not involve URL creation
         if parameters.outcome in (BatchStatus.ERROR, BatchStatus.ABORTED):
             return BatchURLCreationInfoV2(
                 batch_id=batch_id,
-                url_creation_infos={}
             )
 
-        d: dict[URLStatus, URLCreationInfo] = {}
+        urls_by_status: dict[URLStatus, URLCreationInfo] = {}
+        urls_by_order: list[URLCreationInfo] = []
         # Create urls
         for url_parameters in parameters.urls:
             iui: InsertURLsInfo = self.urls(
@@ -122,14 +99,17 @@ class DBDataCreator:
                         annotation_info=url_parameters.annotation_info
                     )
 
-            d[url_parameters.status] = URLCreationInfo(
+            creation_info = URLCreationInfo(
                 url_mappings=iui.url_mappings,
                 outcome=url_parameters.status,
                 annotation_info=url_parameters.annotation_info if url_parameters.annotation_info.has_annotations() else None
             )
+            urls_by_order.append(creation_info)
+            urls_by_status[url_parameters.status] = creation_info
+
         return BatchURLCreationInfoV2(
             batch_id=batch_id,
-            url_creation_infos=d
+            urls_by_status=urls_by_status,
         )
 
     async def batch_and_urls(

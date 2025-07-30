@@ -31,6 +31,7 @@ class AsyncScheduledTaskManager:
         self.populate_backlog_snapshot_job = None
         self.sync_agencies_job = None
         self.sync_data_sources_job = None
+        self.push_to_hugging_face_job = None
 
     async def setup(self):
         self.scheduler.start()
@@ -79,6 +80,17 @@ class AsyncScheduledTaskManager:
                 "operator": await self.loader.get_sync_data_sources_task_operator()
             }
         )
+        # TODO: enable once more URLs with HTML have been added to the database.
+        # self.push_to_hugging_face_job = self.scheduler.add_job(
+        #     self.run_task,
+        #     trigger=IntervalTrigger(
+        #         days=1,
+        #         start_date=datetime.now() + timedelta(minutes=4)
+        #     ),
+        #     kwargs={
+        #         "operator": await self.loader.get_push_to_hugging_face_task_operator()
+        #     }
+        # )
 
     def shutdown(self):
         if self.scheduler.running:

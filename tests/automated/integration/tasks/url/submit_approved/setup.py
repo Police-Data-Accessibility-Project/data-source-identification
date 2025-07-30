@@ -1,6 +1,7 @@
 from src.api.endpoints.review.approve.dto import FinalReviewApprovalInfo
 from src.core.enums import RecordType
-from tests.helpers.db_data_creator import DBDataCreator, BatchURLCreationInfo
+from tests.helpers.data_creator.core import DBDataCreator
+from tests.helpers.data_creator.models.creation_info.batch.v1 import BatchURLCreationInfo
 
 
 async def setup_validated_urls(db_data_creator: DBDataCreator) -> list[str]:
