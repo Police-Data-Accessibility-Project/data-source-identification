@@ -15,7 +15,11 @@ class GetPendingURLsWithoutAgencySuggestionsQueryBuilder(QueryBuilderBase):
     async def run(self, session: AsyncSession) -> list[AgencyIdentificationTDO]:
 
         statement = (
-            select(URL.id, URL.collector_metadata, Batch.strategy)
+            select(
+                URL.id,
+                URL.collector_metadata,
+                Batch.strategy
+            )
             .select_from(URL)
             .where(URL.outcome == URLStatus.PENDING.value)
             .join(LinkBatchURL)
