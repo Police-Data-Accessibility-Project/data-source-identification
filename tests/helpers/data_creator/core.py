@@ -117,9 +117,11 @@ class DBDataCreator:
                 await self.html_data(url_ids)
             if url_parameters.annotation_info.has_annotations():
                 for url_id in url_ids:
-                    await self.annotate(
-                        url_id=url_id,
-                        annotation_info=url_parameters.annotation_info
+                    await self.run_command(
+                        AnnotateCommand(
+                            url_id=url_id,
+                            annotation_info=url_parameters.annotation_info
+                        )
                     )
 
             creation_info = URLCreationInfo(
@@ -176,18 +178,6 @@ class DBDataCreator:
             AutoRelevantSuggestionCommand(
                 url_id=url_id,
                 relevant=relevant
-            )
-        )
-
-    async def annotate(
-        self,
-        url_id: int,
-        annotation_info: AnnotationInfo
-    ) -> None:
-        await self.run_command(
-            AnnotateCommand(
-                url_id=url_id,
-                annotation_info=annotation_info
             )
         )
 
