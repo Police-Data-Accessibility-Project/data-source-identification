@@ -25,8 +25,16 @@ from src.core.enums import BatchStatus, SuggestionType, RecordType, SuggestedSta
 from tests.helpers.batch_creation_parameters.annotation_info import AnnotationInfo
 from tests.helpers.batch_creation_parameters.core import TestBatchCreationParameters
 from tests.helpers.data_creator.commands.base import DBDataCreatorCommandBase
+from tests.helpers.data_creator.commands.impl.agency import AgencyCommand
 from tests.helpers.data_creator.commands.impl.batch import DBDataCreatorBatchCommand
 from tests.helpers.data_creator.commands.impl.html_data import HTMLDataCreatorCommand
+from tests.helpers.data_creator.commands.impl.suggestion.agency_confirmed import AgencyConfirmedSuggestionCommand
+from tests.helpers.data_creator.commands.impl.suggestion.auto.agency import AgencyAutoSuggestionsCommand
+from tests.helpers.data_creator.commands.impl.suggestion.auto.record_type import AutoRecordTypeSuggestionCommand
+from tests.helpers.data_creator.commands.impl.suggestion.auto.relevant import AutoRelevantSuggestionCommand
+from tests.helpers.data_creator.commands.impl.suggestion.user.agency import AgencyUserSuggestionsCommand
+from tests.helpers.data_creator.commands.impl.suggestion.user.record_type import UserRecordTypeSuggestionCommand
+from tests.helpers.data_creator.commands.impl.suggestion.user.relevant import UserRelevantSuggestionCommand
 from tests.helpers.data_creator.commands.impl.urls import URLsDBDataCreatorCommand
 from tests.helpers.data_creator.models.clients import DBDataCreatorClientContainer
 from tests.helpers.data_creator.models.creation_info.batch.v1 import BatchURLCreationInfo
@@ -160,29 +168,13 @@ class DBDataCreator:
         )
 
     async def agency(self) -> int:
-        agency_id = randint(1, 99999999)
-        await self.adb_client.upsert_new_agencies(
-            suggestions=[
-                URLAgencySuggestionInfo(
-                    url_id=-1,
-                    suggestion_type=SuggestionType.UNKNOWN,
-                    pdap_agency_id=agency_id,
-                    agency_name=f"Test Agency {agency_id}",
-                    state=f"Test State {agency_id}",
-                    county=f"Test County {agency_id}",
-                    locality=f"Test Locality {agency_id}"
-                )
-            ]
-        )
-        return agency_id
+        return await self.run_command(AgencyCommand())
 
     async def auto_relevant_suggestions(self, url_id: int, relevant: bool = True):
-        await self.adb_client.add_auto_relevant_suggestion(
-            input_=AutoRelevancyAnnotationInput(
+        await self.run_command(
+            AutoRelevantSuggestionCommand(
                 url_id=url_id,
-                is_relevant=relevant,
-                confidence=0.5,
-                model_name="test_model"
+                relevant=relevant
             )
         )
 
@@ -193,19 +185,56 @@ class DBDataCreator:
     ):
         info = annotation_info
         if info.user_relevant is not None:
-            await self.user_relevant_suggestion(url_id=url_id, suggested_status=info.user_relevant)
+            await self.run_command(
+                UserRelevantSuggestionCommand(
+                    url_id=url_id,
+                    suggested_status=info.user_relevant
+                )
+            )
         if info.auto_relevant is not None:
-            await self.auto_relevant_suggestions(url_id=url_id, relevant=info.auto_relevant)
+            await self.run_command(
+                AutoRelevantSuggestionCommand(
+                    url_id=url_id,
+                    relevant=info.auto_relevant
+                )
+            )
         if info.user_record_type is not None:
-            await self.user_record_type_suggestion(url_id=url_id, record_type=info.user_record_type)
+            await self.run_command(
+                UserRecordTypeSuggestionCommand(
+                    url_id=url_id,
+                    record_type=info.user_record_type,
+                )
+            )
         if info.auto_record_type is not None:
-            await self.auto_record_type_suggestions(url_id=url_id, record_type=info.auto_record_type)
+            await self.run_command(
+                AutoRecordTypeSuggestionCommand(
+                    url_id=url_id,
+                    record_type=info.auto_record_type
+                )
+            )
         if info.user_agency is not None:
-            await self.agency_user_suggestions(url_id=url_id, agency_annotation_info=info.user_agency)
+            await self.run_command(
+                AgencyUserSuggestionsCommand(
+                    url_id=url_id,
+                    agency_annotation_info=info.user_agency
+                )
+            )
         if info.auto_agency is not None:
-            await self.agency_auto_suggestions(url_id=url_id, count=1, suggestion_type=SuggestionType.AUTO_SUGGESTION)
+            await self.run_command(
+                AgencyAutoSuggestionsCommand(
+                    url_id=url_id,
+                    count=1,
+                    suggestion_type=SuggestionType.AUTO_SUGGESTION
+                )
+            )
         if info.confirmed_agency is not None:
-            await self.agency_auto_suggestions(url_id=url_id, count=1, suggestion_type=SuggestionType.CONFIRMED)
+            await self.run_command(
+                AgencyAutoSuggestionsCommand(
+                    url_id=url_id,
+                    count=1,
+                    suggestion_type=SuggestionType.CONFIRMED
+                )
+            )
         if info.final_review_approved is not None:
             if info.final_review_approved:
                 final_review_approval_info = FinalReviewApprovalInfo(
@@ -232,13 +261,13 @@ class DBDataCreator:
             url_id: int,
             user_id: int | None = None,
             suggested_status: SuggestedStatus = SuggestedStatus.RELEVANT
-    ):
-        if user_id is None:
-            user_id = randint(1, 99999999)
-        await self.adb_client.add_user_relevant_suggestion(
-            url_id=url_id,
-            user_id=user_id,
-            suggested_status=suggested_status
+    ) -> None:
+        await self.run_command(
+            UserRelevantSuggestionCommand(
+                url_id=url_id,
+                user_id=user_id,
+                suggested_status=suggested_status
+            )
         )
 
     async def user_record_type_suggestion(
@@ -246,13 +275,13 @@ class DBDataCreator:
             url_id: int,
             record_type: RecordType,
             user_id: Optional[int] = None,
-    ):
-        if user_id is None:
-            user_id = randint(1, 99999999)
-        await self.adb_client.add_user_record_type_suggestion(
-            url_id=url_id,
-            user_id=user_id,
-            record_type=record_type
+    ) -> None:
+        await self.run_command(
+            UserRecordTypeSuggestionCommand(
+                url_id=url_id,
+                record_type=record_type,
+                user_id=user_id
+            )
         )
 
     async def auto_record_type_suggestions(
@@ -260,11 +289,12 @@ class DBDataCreator:
         url_id: int,
         record_type: RecordType
     ):
-        await self.adb_client.add_auto_record_type_suggestion(
-            url_id=url_id,
-            record_type=record_type
+        await self.run_command(
+            AutoRecordTypeSuggestionCommand(
+                url_id=url_id,
+                record_type=record_type
+            )
         )
-
 
     async def auto_suggestions(
             self,
@@ -404,28 +434,13 @@ class DBDataCreator:
             url_id: int,
             count: int,
             suggestion_type: SuggestionType = SuggestionType.AUTO_SUGGESTION
-    ):
-        if suggestion_type == SuggestionType.UNKNOWN:
-            count = 1  # Can only be one auto suggestion if unknown
-
-        suggestions = []
-        for _ in range(count):
-            if suggestion_type == SuggestionType.UNKNOWN:
-                pdap_agency_id = None
-            else:
-                pdap_agency_id = await self.agency()
-            suggestion = URLAgencySuggestionInfo(
-                    url_id=url_id,
-                    suggestion_type=suggestion_type,
-                    pdap_agency_id=pdap_agency_id,
-                    state="Test State",
-                    county="Test County",
-                    locality="Test Locality"
+    ) -> None:
+        await self.run_command(
+            AgencyAutoSuggestionsCommand(
+                url_id=url_id,
+                count=count,
+                suggestion_type=suggestion_type
             )
-            suggestions.append(suggestion)
-
-        await self.adb_client.add_agency_auto_suggestions(
-            suggestions=suggestions
         )
 
     async def agency_confirmed_suggestion(
@@ -433,37 +448,22 @@ class DBDataCreator:
             url_id: int
     ) -> int:
         """
-        Creates a confirmed agency suggestion
-        and returns the auto-generated pdap_agency_id
+        Create a confirmed agency suggestion and return the auto-generated pdap_agency_id.
         """
-        agency_id = await self.agency()
-        await self.adb_client.add_confirmed_agency_url_links(
-            suggestions=[
-                URLAgencySuggestionInfo(
-                    url_id=url_id,
-                    suggestion_type=SuggestionType.CONFIRMED,
-                    pdap_agency_id=agency_id
-                )
-            ]
+        return await self.run_command(
+            AgencyConfirmedSuggestionCommand(url_id)
         )
-        return agency_id
 
     async def agency_user_suggestions(
             self,
             url_id: int,
-            user_id: Optional[int] = None,
-            agency_annotation_info: Optional[URLAgencyAnnotationPostInfo] = None
-    ):
-        if user_id is None:
-            user_id = randint(1, 99999999)
-
-        if agency_annotation_info is None:
-            agency_annotation_info = URLAgencyAnnotationPostInfo(
-                suggested_agency=await self.agency()
+            user_id: int | None = None,
+            agency_annotation_info: URLAgencyAnnotationPostInfo | None = None
+    ) -> None:
+        await self.run_command(
+            AgencyUserSuggestionsCommand(
+                url_id=url_id,
+                user_id=user_id,
+                agency_annotation_info=agency_annotation_info
             )
-        await self.adb_client.add_agency_manual_suggestion(
-            agency_id=agency_annotation_info.suggested_agency,
-            url_id=url_id,
-            user_id=user_id,
-            is_new=agency_annotation_info.is_new
         )
