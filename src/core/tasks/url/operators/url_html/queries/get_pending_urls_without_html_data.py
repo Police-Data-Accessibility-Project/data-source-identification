@@ -9,7 +9,7 @@ from src.db.statement_composer import StatementComposer
 class GetPendingURLsWithoutHTMLDataQueryBuilder(QueryBuilderBase):
 
     async def run(self, session: AsyncSession) -> list[URLInfo]:
-        statement = StatementComposer.pending_urls_without_html_data()
+        statement = StatementComposer.has_non_errored_urls_without_html_data()
         statement = statement.limit(100).order_by(URL.id)
         scalar_result = await session.scalars(statement)
         url_results: list[URL] = scalar_result.all()

@@ -478,8 +478,8 @@ class AsyncDatabaseClient:
         await self._add_models(session, URLHTMLContent, html_content_infos)
 
     @session_manager
-    async def has_pending_urls_without_html_data(self, session: AsyncSession) -> bool:
-        statement = self.statement_composer.pending_urls_without_html_data()
+    async def has_non_errored_urls_without_html_data(self, session: AsyncSession) -> bool:
+        statement = self.statement_composer.has_non_errored_urls_without_html_data()
         statement = statement.limit(1)
         scalar_result = await session.scalars(statement)
         return bool(scalar_result.first())
@@ -520,7 +520,7 @@ class AsyncDatabaseClient:
             )
             session.add(metadata_object)
 
-    async def get_pending_urls_without_html_data(self) -> list[URLInfo]:
+    async def get_non_errored_urls_without_html_data(self) -> list[URLInfo]:
         return await self.run_query_builder(GetPendingURLsWithoutHTMLDataQueryBuilder())
 
     async def get_urls_with_html_data_and_without_models(

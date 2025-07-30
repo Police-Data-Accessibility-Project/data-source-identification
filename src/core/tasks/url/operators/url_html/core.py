@@ -29,10 +29,10 @@ class URLHTMLTaskOperator(URLTaskOperatorBase):
         return TaskType.HTML
 
     async def meets_task_prerequisites(self):
-        return await self.adb_client.has_pending_urls_without_html_data()
+        return await self.adb_client.has_non_errored_urls_without_html_data()
 
     async def inner_task_logic(self):
-        tdos = await self.get_pending_urls_without_html_data()
+        tdos = await self.get_non_errored_urls_without_html_data()
         url_ids = [task_info.url_info.id for task_info in tdos]
         await self.link_urls_to_task(url_ids=url_ids)
         await self.get_raw_html_data_for_urls(tdos)
@@ -54,8 +54,8 @@ class URLHTMLTaskOperator(URLTaskOperatorBase):
     async def get_just_urls(self, tdos: list[UrlHtmlTDO]):
         return [task_info.url_info.url for task_info in tdos]
 
-    async def get_pending_urls_without_html_data(self):
-        pending_urls: list[URLInfo] = await self.adb_client.get_pending_urls_without_html_data()
+    async def get_non_errored_urls_without_html_data(self):
+        pending_urls: list[URLInfo] = await self.adb_client.get_non_errored_urls_without_html_data()
         tdos = [
             UrlHtmlTDO(
                 url_info=url_info,
