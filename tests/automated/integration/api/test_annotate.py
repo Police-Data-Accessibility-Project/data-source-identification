@@ -187,7 +187,7 @@ async def test_annotate_relevancy_already_annotated_by_different_user(
     await ath.db_data_creator.user_relevant_suggestion(
         url_id=creation_info.url_ids[0],
         user_id=2,
-        relevant=True
+        suggested_status=SuggestedStatus.RELEVANT
     )
 
     # Annotate with different user (default is 1) and get conflict error

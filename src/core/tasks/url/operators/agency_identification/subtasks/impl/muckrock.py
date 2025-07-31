@@ -1,4 +1,6 @@
-from typing import Optional
+from typing import final
+
+from typing_extensions import override
 
 from src.collectors.source_collectors.muckrock.api_interface.core import MuckrockAPIInterface
 from src.collectors.source_collectors.muckrock.api_interface.lookup_response import AgencyLookupResponse
@@ -6,11 +8,12 @@ from src.collectors.source_collectors.muckrock.enums import AgencyLookupResponse
 from src.core.exceptions import MuckrockAPIError
 from src.core.helpers import process_match_agency_response_to_suggestions
 from src.core.tasks.url.operators.agency_identification.dtos.suggestion import URLAgencySuggestionInfo
+from src.core.tasks.url.operators.agency_identification.subtasks.impl.base import AgencyIdentificationSubtaskBase
 from src.external.pdap.client import PDAPClient
 from src.external.pdap.dtos.match_agency.response import MatchAgencyResponse
 
-
-class MuckrockAgencyIdentificationSubtask:
+@final
+class MuckrockAgencyIdentificationSubtask(AgencyIdentificationSubtaskBase):
 
     def __init__(
             self,
@@ -20,10 +23,11 @@ class MuckrockAgencyIdentificationSubtask:
         self.muckrock_api_interface = muckrock_api_interface
         self.pdap_client = pdap_client
 
+    @override
     async def run(
             self,
             url_id: int,
-            collector_metadata: Optional[dict]
+            collector_metadata: dict | None = None
     ) -> list[URLAgencySuggestionInfo]:
         muckrock_agency_id = collector_metadata["agency"]
         agency_lookup_response: AgencyLookupResponse = await self.muckrock_api_interface.lookup_agency(

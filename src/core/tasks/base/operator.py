@@ -45,7 +45,7 @@ class TaskOperatorBase(ABC):
 
 
     @abstractmethod
-    async def inner_task_logic(self):
+    async def inner_task_logic(self) -> None:
         raise NotImplementedError
 
     async def handle_task_error(self, e):

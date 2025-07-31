@@ -11,6 +11,6 @@ class AgencyIdentificationSubtaskBase(ABC):
     async def run(
             self,
             url_id: int,
-            collector_metadata: Optional[dict] = None
+            collector_metadata: dict | None = None
     ) -> list[URLAgencySuggestionInfo]:
         raise NotImplementedError

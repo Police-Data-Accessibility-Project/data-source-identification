@@ -17,7 +17,7 @@ class URLTaskOperatorBase(TaskOperatorBase):
         self.linked_url_ids = []
 
     @abstractmethod
-    async def meets_task_prerequisites(self):
+    async def meets_task_prerequisites(self) -> bool:
         """
         A task should not be initiated unless certain
         conditions are met

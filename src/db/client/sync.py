@@ -127,11 +127,12 @@ class DatabaseClient:
         session.add(url_entry)
         session.commit()
         session.refresh(url_entry)
-        link = LinkBatchURL(
-            batch_id=url_info.batch_id,
-            url_id=url_entry.id
-        )
-        session.add(link)
+        if url_info.batch_id is not None:
+            link = LinkBatchURL(
+                batch_id=url_info.batch_id,
+                url_id=url_entry.id
+            )
+            session.add(link)
         return url_entry.id
 
     def insert_urls(self, url_infos: List[URLInfo], batch_id: int) -> InsertURLsInfo:

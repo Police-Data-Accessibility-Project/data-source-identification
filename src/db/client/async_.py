@@ -73,6 +73,8 @@ from src.core.tasks.url.operators.agency_identification.dtos.suggestion import U
 from src.core.tasks.url.operators.agency_identification.dtos.tdo import AgencyIdentificationTDO
 from src.core.tasks.url.operators.agency_identification.queries.get_pending_urls_without_agency_suggestions import \
     GetPendingURLsWithoutAgencySuggestionsQueryBuilder
+from src.core.tasks.url.operators.agency_identification.queries.has_urls_without_agency_suggestions import \
+    HasURLsWithoutAgencySuggestionsQueryBuilder
 from src.core.tasks.url.operators.auto_relevant.models.tdo import URLRelevantTDO
 from src.core.tasks.url.operators.auto_relevant.queries.get_tdos import GetAutoRelevantTDOsQueryBuilder
 from src.core.tasks.url.operators.submit_approved_url.queries.get import GetValidatedURLsQueryBuilder
@@ -721,23 +723,8 @@ class AsyncDatabaseClient:
             tasks=final_results
         )
 
-    @session_manager
-    async def has_urls_without_agency_suggestions(
-        self,
-        session: AsyncSession
-    ) -> bool:
-        statement = (
-            select(
-                URL.id
-            ).where(
-                URL.outcome == URLStatus.PENDING.value
-            )
-        )
-
-        statement = self.statement_composer.exclude_urls_with_agency_suggestions(statement)
-        raw_result = await session.execute(statement)
-        result = raw_result.all()
-        return len(result) != 0
+    async def has_urls_without_agency_suggestions(self) -> bool:
+        return await self.run_query_builder(HasURLsWithoutAgencySuggestionsQueryBuilder())
 
     async def get_urls_without_agency_suggestions(
         self
@@ -914,6 +901,7 @@ class AsyncDatabaseClient:
             batch_id=url_info.batch_id,
             url_id=url_entry.id
         )
+        session.add(link)
         return url_entry.id
 
     @session_manager
