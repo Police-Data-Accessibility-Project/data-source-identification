@@ -24,6 +24,7 @@ from src.core.tasks.url.operators.url_miscellaneous_metadata.tdo import URLMisce
 from src.core.enums import BatchStatus, SuggestionType, RecordType, SuggestedStatus
 from tests.helpers.batch_creation_parameters.annotation_info import AnnotationInfo
 from tests.helpers.batch_creation_parameters.core import TestBatchCreationParameters
+from tests.helpers.batch_creation_parameters.url_creation_parameters import TestURLCreationParameters
 from tests.helpers.data_creator.commands.base import DBDataCreatorCommandBase
 from tests.helpers.data_creator.commands.impl.agency import AgencyCommand
 from tests.helpers.data_creator.commands.impl.annotate import AnnotateCommand
@@ -38,6 +39,8 @@ from tests.helpers.data_creator.commands.impl.suggestion.user.agency import Agen
 from tests.helpers.data_creator.commands.impl.suggestion.user.record_type import UserRecordTypeSuggestionCommand
 from tests.helpers.data_creator.commands.impl.suggestion.user.relevant import UserRelevantSuggestionCommand
 from tests.helpers.data_creator.commands.impl.urls import URLsDBDataCreatorCommand
+from tests.helpers.data_creator.commands.impl.urls_v2.core import URLsV2Command
+from tests.helpers.data_creator.commands.impl.urls_v2.response import URLsV2Response
 from tests.helpers.data_creator.models.clients import DBDataCreatorClientContainer
 from tests.helpers.data_creator.models.creation_info.batch.v1 import BatchURLCreationInfo
 from tests.helpers.data_creator.models.creation_info.batch.v2 import BatchURLCreationInfoV2
@@ -92,6 +95,21 @@ class DBDataCreator:
         parameters: TestBatchCreationParameters
     ) -> BatchURLCreationInfoV2:
         return await self.run_command(BatchV2Command(parameters))
+
+    async def url_v2(
+        self,
+        parameters: list[TestURLCreationParameters],
+        batch_id: int | None = None,
+        created_at: datetime | None = None
+    ) -> URLsV2Response:
+        return await self.run_command(
+            URLsV2Command(
+                parameters=parameters,
+                batch_id=batch_id,
+                created_at=created_at
+            )
+        )
+
 
     async def batch_and_urls(
             self,

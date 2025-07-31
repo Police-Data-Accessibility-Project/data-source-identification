@@ -32,7 +32,7 @@ class GetPendingURLsWithoutAgencySuggestionsQueryBuilder(QueryBuilderBase):
             AgencyIdentificationTDO(
                 url_id=raw_result[0],
                 collector_metadata=raw_result[1],
-                collector_type=CollectorType(raw_result[2])
+                collector_type=CollectorType(raw_result[2]) if raw_result[2] is not None else None
             )
             for raw_result in raw_results
         ]

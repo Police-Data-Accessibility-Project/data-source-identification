@@ -12,7 +12,7 @@ class URLsDBDataCreatorCommand(DBDataCreatorCommandBase):
 
     def __init__(
         self,
-        batch_id: int,
+        batch_id: int | None,
         url_count: int,
         collector_metadata: dict | None = None,
         outcome: URLStatus = URLStatus.PENDING,

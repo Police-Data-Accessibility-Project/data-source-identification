@@ -68,7 +68,6 @@ async def test_agency_identification_task(
             CollectorType.MUCKROCK_SIMPLE_SEARCH,
             CollectorType.MUCKROCK_ALL_SEARCH,
             CollectorType.CKAN,
-            None
         ]:
             # Create two URLs for each, one pending and one errored
             creation_info: BatchURLCreationInfoV2 = await db_data_creator.batch_v2(
@@ -89,6 +88,16 @@ async def test_agency_identification_task(
                 )
             )
             collector_type_to_url_id[strategy] = creation_info.urls_by_status[URLStatus.PENDING].url_mappings[0].url_id
+        # TODO: Add a URL with no collector
+        response = await db_data_creator.url_v2(
+            parameters=[TestURLCreationParameters(
+                count=1,
+                status=URLStatus.PENDING,
+                with_html_content=True
+            )]
+        )
+        collector_type_to_url_id[None] = response.urls_by_status[URLStatus.PENDING].url_mappings[0].url_id
+
 
 
 
