@@ -1,75 +1,87 @@
-from src.collectors.source_collectors.muckrock.api_interface.core import MuckrockAPIInterface
+from src.collectors.enums import CollectorType
+from src.core.enums import SuggestionType
+from src.core.tasks.url.operators.agency_identification.dtos.output import GetAgencySuggestionsOutput
 from src.core.tasks.url.operators.agency_identification.dtos.suggestion import URLAgencySuggestionInfo
 from src.core.tasks.url.operators.agency_identification.dtos.tdo import AgencyIdentificationTDO
-from src.db.client.async_ import AsyncDatabaseClient
-from src.db.models.instantiations.url.error_info.pydantic import URLErrorPydanticInfo
-from src.db.enums import TaskType
-from src.collectors.enums import CollectorType
+from src.core.tasks.url.operators.agency_identification.subtasks.impl.base import AgencyIdentificationSubtaskBase
+from src.core.tasks.url.operators.agency_identification.subtasks.loader import AgencyIdentificationSubtaskLoader
 from src.core.tasks.url.operators.base import URLTaskOperatorBase
-from src.core.tasks.url.subtasks.agency_identification.auto_googler import AutoGooglerAgencyIdentificationSubtask
-from src.core.tasks.url.subtasks.agency_identification.ckan import CKANAgencyIdentificationSubtask
-from src.core.tasks.url.subtasks.agency_identification.common_crawler import CommonCrawlerAgencyIdentificationSubtask
-from src.core.tasks.url.subtasks.agency_identification.muckrock import MuckrockAgencyIdentificationSubtask
-from src.core.enums import SuggestionType
-from src.external.pdap.client import PDAPClient
+from src.db.client.async_ import AsyncDatabaseClient
+from src.db.enums import TaskType
+from src.db.models.instantiations.url.error_info.pydantic import URLErrorPydanticInfo
 
-
-# TODO: Validate with Manual Tests
 
 class AgencyIdentificationTaskOperator(URLTaskOperatorBase):
 
     def __init__(
             self,
             adb_client: AsyncDatabaseClient,
-            pdap_client: PDAPClient,
-            muckrock_api_interface: MuckrockAPIInterface,
+            loader: AgencyIdentificationSubtaskLoader,
     ):
         super().__init__(adb_client)
-        self.pdap_client = pdap_client
-        self.muckrock_api_interface = muckrock_api_interface
+        self.loader = loader
 
     @property
-    def task_type(self):
+    def task_type(self) -> TaskType:
         return TaskType.AGENCY_IDENTIFICATION
 
-    async def meets_task_prerequisites(self):
+    async def meets_task_prerequisites(self) -> bool:
         has_urls_without_agency_suggestions = await self.adb_client.has_urls_without_agency_suggestions()
         return has_urls_without_agency_suggestions
 
-    async def get_pending_urls_without_agency_identification(self):
+    async def get_pending_urls_without_agency_identification(self) -> list[AgencyIdentificationTDO]:
         return await self.adb_client.get_urls_without_agency_suggestions()
 
-    async def get_muckrock_subtask(self):
-        return MuckrockAgencyIdentificationSubtask(
-            muckrock_api_interface=self.muckrock_api_interface,
-            pdap_client=self.pdap_client
-        )
-
-    async def get_subtask(self, collector_type: CollectorType):
-        match collector_type:
-            case CollectorType.MUCKROCK_SIMPLE_SEARCH:
-                return await self.get_muckrock_subtask()
-            case CollectorType.MUCKROCK_COUNTY_SEARCH:
-                return await self.get_muckrock_subtask()
-            case CollectorType.MUCKROCK_ALL_SEARCH:
-                return await self.get_muckrock_subtask()
-            case CollectorType.AUTO_GOOGLER:
-                return AutoGooglerAgencyIdentificationSubtask()
-            case CollectorType.COMMON_CRAWLER:
-                return CommonCrawlerAgencyIdentificationSubtask()
-            case CollectorType.CKAN:
-                return CKANAgencyIdentificationSubtask(
-                    pdap_client=self.pdap_client
-                )
-        return None
+    async def get_subtask(
+        self,
+        collector_type: CollectorType
+    ) -> AgencyIdentificationSubtaskBase:
+        """Get subtask based on collector type."""
+        return await self.loader.load_subtask(collector_type)
 
     @staticmethod
-    async def run_subtask(subtask, url_id, collector_metadata) -> list[URLAgencySuggestionInfo]:
-        return await subtask.run(url_id=url_id, collector_metadata=collector_metadata)
+    async def run_subtask(
+        subtask: AgencyIdentificationSubtaskBase,
+        url_id: int,
+        collector_metadata: dict | None
+    ) -> list[URLAgencySuggestionInfo]:
+        return await subtask.run(
+            url_id=url_id,
+            collector_metadata=collector_metadata
+        )
 
-    async def inner_task_logic(self):
+    async def inner_task_logic(self) -> None:
         tdos: list[AgencyIdentificationTDO] = await self.get_pending_urls_without_agency_identification()
         await self.link_urls_to_task(url_ids=[tdo.url_id for tdo in tdos])
+        output = await self._get_agency_suggestions(tdos)
+
+        await self._process_agency_suggestions(output.agency_suggestions)
+        await self.adb_client.add_url_error_infos(output.error_infos)
+
+    async def _process_agency_suggestions(
+        self,
+        suggestions: list[URLAgencySuggestionInfo]
+    ) -> None:
+        non_unknown_agency_suggestions = [
+            suggestion for suggestion in suggestions
+            if suggestion.suggestion_type != SuggestionType.UNKNOWN
+        ]
+        await self.adb_client.upsert_new_agencies(non_unknown_agency_suggestions)
+        confirmed_suggestions = [
+            suggestion for suggestion in suggestions
+            if suggestion.suggestion_type == SuggestionType.CONFIRMED
+        ]
+        await self.adb_client.add_confirmed_agency_url_links(confirmed_suggestions)
+        non_confirmed_suggestions = [
+            suggestion for suggestion in suggestions
+            if suggestion.suggestion_type != SuggestionType.CONFIRMED
+        ]
+        await self.adb_client.add_agency_auto_suggestions(non_confirmed_suggestions)
+
+    async def _get_agency_suggestions(
+        self,
+        tdos: list[AgencyIdentificationTDO]
+    ) -> GetAgencySuggestionsOutput:
         error_infos = []
         all_agency_suggestions = []
         for tdo in tdos:
@@ -88,13 +100,10 @@ class AgencyIdentificationTaskOperator(URLTaskOperatorBase):
                     error=str(e),
                 )
                 error_infos.append(error_info)
-
-        non_unknown_agency_suggestions = [suggestion for suggestion in all_agency_suggestions if suggestion.suggestion_type != SuggestionType.UNKNOWN]
-        await self.adb_client.upsert_new_agencies(non_unknown_agency_suggestions)
-        confirmed_suggestions = [suggestion for suggestion in all_agency_suggestions if suggestion.suggestion_type == SuggestionType.CONFIRMED]
-        await self.adb_client.add_confirmed_agency_url_links(confirmed_suggestions)
-        non_confirmed_suggestions = [suggestion for suggestion in all_agency_suggestions if suggestion.suggestion_type != SuggestionType.CONFIRMED]
-        await self.adb_client.add_agency_auto_suggestions(non_confirmed_suggestions)
-        await self.adb_client.add_url_error_infos(error_infos)
+        output = GetAgencySuggestionsOutput(
+            agency_suggestions=all_agency_suggestions,
+            error_infos=error_infos
+        )
+        return output
 
 

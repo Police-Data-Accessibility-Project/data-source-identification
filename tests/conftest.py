@@ -1,9 +1,12 @@
 import logging
 from typing import Any, Generator, AsyncGenerator
+from unittest.mock import AsyncMock
 
 import pytest
 import pytest_asyncio
+from aiohttp import ClientSession
 from alembic.config import Config
+from pdap_access_manager import AccessManager
 from sqlalchemy import create_engine, inspect, MetaData
 from sqlalchemy.orm import scoped_session, sessionmaker
 
@@ -123,3 +126,8 @@ def db_data_creator(
 ):
     db_data_creator = DBDataCreator(db_client=db_client_test)
     yield db_data_creator
+
+@pytest.fixture
+async def test_client_session() -> AsyncGenerator[ClientSession, Any]:
+    async with ClientSession() as session:
+        yield session
