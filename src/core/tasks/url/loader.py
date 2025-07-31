@@ -4,6 +4,7 @@ The task loader loads task a task operator and all dependencies.
 
 from src.collectors.source_collectors.muckrock.api_interface.core import MuckrockAPIInterface
 from src.core.tasks.url.operators.agency_identification.core import AgencyIdentificationTaskOperator
+from src.core.tasks.url.operators.agency_identification.subtasks.loader import AgencyIdentificationSubtaskLoader
 from src.core.tasks.url.operators.auto_relevant.core import URLAutoRelevantTaskOperator
 from src.core.tasks.url.operators.base import URLTaskOperatorBase
 from src.core.tasks.url.operators.record_type.core import URLRecordTypeTaskOperator
@@ -59,8 +60,10 @@ class URLTaskOperatorLoader:
     async def get_agency_identification_task_operator(self):
         operator = AgencyIdentificationTaskOperator(
             adb_client=self.adb_client,
-            pdap_client=self.pdap_client,
-            muckrock_api_interface=self.muckrock_api_interface
+            loader=AgencyIdentificationSubtaskLoader(
+                pdap_client=self.pdap_client,
+                muckrock_api_interface=self.muckrock_api_interface
+            )
         )
         return operator
 
@@ -104,7 +107,7 @@ class URLTaskOperatorLoader:
             await self.get_url_duplicate_task_operator(),
             await self.get_url_404_probe_task_operator(),
             await self.get_url_record_type_task_operator(),
-            # await self.get_agency_identification_task_operator(),
+            await self.get_agency_identification_task_operator(),
             await self.get_url_miscellaneous_metadata_task_operator(),
             await self.get_submit_approved_url_task_operator(),
             await self.get_url_auto_relevance_task_operator()

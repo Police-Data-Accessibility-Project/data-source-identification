@@ -3,7 +3,7 @@ from unittest.mock import AsyncMock
 import pytest
 
 from src.external.pdap.enums import MatchAgencyResponseStatus
-from src.core.tasks.url.operators.agency_identification.subtasks.ckan import CKANAgencyIdentificationSubtask
+from src.core.tasks.url.operators.agency_identification.subtasks.impl.ckan import CKANAgencyIdentificationSubtask
 from src.core.enums import SuggestionType
 from src.external.pdap.dtos.match_agency.response import MatchAgencyResponse
 from src.external.pdap.dtos.match_agency.post import MatchAgencyInfo

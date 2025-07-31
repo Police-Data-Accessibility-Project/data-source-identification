@@ -1,14 +1,15 @@
-from typing import Optional, final
-
-from typing_extensions import override
+from typing_extensions import override, final
 
 from src.core.enums import SuggestionType
 from src.core.tasks.url.operators.agency_identification.dtos.suggestion import URLAgencySuggestionInfo
-from src.core.tasks.url.operators.agency_identification.subtasks.base import AgencyIdentificationSubtaskBase
-
+from src.core.tasks.url.operators.agency_identification.subtasks.impl.base import AgencyIdentificationSubtaskBase
 
 @final
-class CommonCrawlerAgencyIdentificationSubtask(AgencyIdentificationSubtaskBase):
+class UnknownAgencyIdentificationSubtask(AgencyIdentificationSubtaskBase):
+    """A subtask that returns an unknown suggestion.
+
+    Used in cases where the agency cannot be reliably inferred from the source.
+    """
 
     @override
     async def run(

@@ -1,21 +1,14 @@
-from src.collectors.source_collectors.muckrock.api_interface.core import MuckrockAPIInterface
+from src.collectors.enums import CollectorType
+from src.core.enums import SuggestionType
 from src.core.tasks.url.operators.agency_identification.dtos.output import GetAgencySuggestionsOutput
 from src.core.tasks.url.operators.agency_identification.dtos.suggestion import URLAgencySuggestionInfo
 from src.core.tasks.url.operators.agency_identification.dtos.tdo import AgencyIdentificationTDO
-from src.core.tasks.url.operators.agency_identification.subtasks.base import AgencyIdentificationSubtaskBase
-from src.core.tasks.url.operators.agency_identification.subtasks.no_collector import \
-    NoCollectorAgencyIdentificationSubtask
-from src.db.client.async_ import AsyncDatabaseClient
-from src.db.models.instantiations.url.error_info.pydantic import URLErrorPydanticInfo
-from src.db.enums import TaskType
-from src.collectors.enums import CollectorType
+from src.core.tasks.url.operators.agency_identification.subtasks.impl.base import AgencyIdentificationSubtaskBase
+from src.core.tasks.url.operators.agency_identification.subtasks.loader import AgencyIdentificationSubtaskLoader
 from src.core.tasks.url.operators.base import URLTaskOperatorBase
-from src.core.tasks.url.operators.agency_identification.subtasks.auto_googler import AutoGooglerAgencyIdentificationSubtask
-from src.core.tasks.url.operators.agency_identification.subtasks.ckan import CKANAgencyIdentificationSubtask
-from src.core.tasks.url.operators.agency_identification.subtasks.common_crawler import CommonCrawlerAgencyIdentificationSubtask
-from src.core.tasks.url.operators.agency_identification.subtasks.muckrock import MuckrockAgencyIdentificationSubtask
-from src.core.enums import SuggestionType
-from src.external.pdap.client import PDAPClient
+from src.db.client.async_ import AsyncDatabaseClient
+from src.db.enums import TaskType
+from src.db.models.instantiations.url.error_info.pydantic import URLErrorPydanticInfo
 
 
 class AgencyIdentificationTaskOperator(URLTaskOperatorBase):
@@ -23,12 +16,10 @@ class AgencyIdentificationTaskOperator(URLTaskOperatorBase):
     def __init__(
             self,
             adb_client: AsyncDatabaseClient,
-            pdap_client: PDAPClient,
-            muckrock_api_interface: MuckrockAPIInterface,
+            loader: AgencyIdentificationSubtaskLoader,
     ):
         super().__init__(adb_client)
-        self.pdap_client = pdap_client
-        self.muckrock_api_interface = muckrock_api_interface
+        self.loader = loader
 
     @property
     def task_type(self) -> TaskType:
@@ -41,33 +32,12 @@ class AgencyIdentificationTaskOperator(URLTaskOperatorBase):
     async def get_pending_urls_without_agency_identification(self) -> list[AgencyIdentificationTDO]:
         return await self.adb_client.get_urls_without_agency_suggestions()
 
-    async def get_muckrock_subtask(self) -> MuckrockAgencyIdentificationSubtask:
-        return MuckrockAgencyIdentificationSubtask(
-            muckrock_api_interface=self.muckrock_api_interface,
-            pdap_client=self.pdap_client
-        )
-
     async def get_subtask(
         self,
         collector_type: CollectorType
     ) -> AgencyIdentificationSubtaskBase:
         """Get subtask based on collector type."""
-        match collector_type:
-            case CollectorType.MUCKROCK_SIMPLE_SEARCH:
-                return await self.get_muckrock_subtask()
-            case CollectorType.MUCKROCK_COUNTY_SEARCH:
-                return await self.get_muckrock_subtask()
-            case CollectorType.MUCKROCK_ALL_SEARCH:
-                return await self.get_muckrock_subtask()
-            case CollectorType.AUTO_GOOGLER:
-                return AutoGooglerAgencyIdentificationSubtask()
-            case CollectorType.COMMON_CRAWLER:
-                return CommonCrawlerAgencyIdentificationSubtask()
-            case CollectorType.CKAN:
-                return CKANAgencyIdentificationSubtask(
-                    pdap_client=self.pdap_client
-                )
-        return NoCollectorAgencyIdentificationSubtask()
+        return await self.loader.load_subtask(collector_type)
 
     @staticmethod
     async def run_subtask(

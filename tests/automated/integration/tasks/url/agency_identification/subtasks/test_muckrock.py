@@ -7,7 +7,7 @@ from src.collectors.source_collectors.muckrock.api_interface.lookup_response imp
 from src.collectors.source_collectors.muckrock.enums import AgencyLookupResponseType
 from src.core.enums import SuggestionType
 from src.core.tasks.url.operators.agency_identification.dtos.suggestion import URLAgencySuggestionInfo
-from src.core.tasks.url.operators.agency_identification.subtasks.muckrock import MuckrockAgencyIdentificationSubtask
+from src.core.tasks.url.operators.agency_identification.subtasks.impl.muckrock import MuckrockAgencyIdentificationSubtask
 from src.external.pdap.client import PDAPClient
 from src.external.pdap.dtos.match_agency.post import MatchAgencyInfo
 from src.external.pdap.dtos.match_agency.response import MatchAgencyResponse
