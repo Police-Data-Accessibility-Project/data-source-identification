@@ -14,6 +14,13 @@ class URLRequestInterface:
 
     async def get_response(self, session: ClientSession, url: str) -> URLResponseInfo:
         try:
+            return await self._execute_get(session, url)
+        except Exception as e:
+            print(f"An error occurred while fetching {url}: {e}")
+            return URLResponseInfo(success=False, exception=str(e))
+
+    async def _execute_get(self, session, url):
+        try:
             async with session.get(url, timeout=20) as response:
                 response.raise_for_status()
                 text = await response.text()
@@ -25,9 +32,6 @@ class URLRequestInterface:
                 )
         except ClientResponseError as e:
             return URLResponseInfo(success=False, status=HTTPStatus(e.status), exception=str(e))
-        except Exception as e:
-            print(f"An error occurred while fetching {url}: {e}")
-            return URLResponseInfo(success=False, exception=str(e))
 
     async def fetch_and_render(self, rr: RequestResources, url: str) -> Optional[URLResponseInfo]:
         simple_response = await self.get_response(rr.session, url)
