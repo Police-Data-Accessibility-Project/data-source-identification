@@ -901,6 +901,7 @@ class AsyncDatabaseClient:
             batch_id=url_info.batch_id,
             url_id=url_entry.id
         )
+        session.add(link)
         return url_entry.id
 
     @session_manager
