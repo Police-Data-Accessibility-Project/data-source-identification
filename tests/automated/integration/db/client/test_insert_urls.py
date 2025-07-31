@@ -2,7 +2,9 @@ import pytest
 
 from src.core.enums import BatchStatus
 from src.db.models.instantiations.batch.pydantic import BatchInfo
+from src.db.models.instantiations.link.batch_url import LinkBatchURL
 from src.db.models.instantiations.url.core.pydantic import URLInfo
+from src.db.models.instantiations.url.core.sqlalchemy import URL
 
 
 @pytest.mark.asyncio
@@ -46,3 +48,11 @@ async def test_insert_urls(
 
     assert insert_urls_info.original_count == 2
     assert insert_urls_info.duplicate_count == 1
+
+    urls = await adb_client_test.get_all(URL)
+    assert len(urls) == 2
+
+    links: list[LinkBatchURL] = await adb_client_test.get_all(LinkBatchURL)
+    assert len(links) == 2
+    for link in links:
+        assert link.batch_id == batch_id
