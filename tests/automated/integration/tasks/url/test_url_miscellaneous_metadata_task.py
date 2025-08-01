@@ -2,7 +2,7 @@ from typing import Optional
 
 import pytest
 
-from src.core.tasks.url.operators.url_miscellaneous_metadata.core import URLMiscellaneousMetadataTaskOperator
+from src.core.tasks.url.operators.misc_metadata.core import URLMiscellaneousMetadataTaskOperator
 from src.db.models.instantiations.url.optional_data_source_metadata import URLOptionalDataSourceMetadata
 from src.db.models.instantiations.url.core.sqlalchemy import URL
 from src.collectors.enums import CollectorType

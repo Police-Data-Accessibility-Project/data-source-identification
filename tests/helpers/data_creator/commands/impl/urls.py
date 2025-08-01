@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from src.collectors.enums import URLStatus
-from src.core.tasks.url.operators.submit_approved_url.tdo import SubmittedURLInfo
+from src.core.tasks.url.operators.submit_approved.tdo import SubmittedURLInfo
 from src.db.dtos.url.insert import InsertURLsInfo
 from src.db.models.instantiations.url.core.pydantic import URLInfo
 from tests.helpers.data_creator.commands.base import DBDataCreatorCommandBase

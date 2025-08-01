@@ -5,8 +5,8 @@ from src.api.endpoints.annotate.relevance.get.dto import RelevanceAnnotationResp
 from src.api.endpoints.review.next.dto import FinalReviewAnnotationRelevantInfo, FinalReviewAnnotationRecordTypeInfo, \
     FinalReviewAnnotationAgencyAutoInfo, FinalReviewAnnotationAgencyInfo
 from src.core.enums import RecordType, SuggestionType
-from src.core.tasks.url.operators.url_html.scraper.parser.dtos.response_html import ResponseHTMLInfo
-from src.core.tasks.url.operators.url_html.scraper.parser.mapping import ENUM_TO_ATTRIBUTE_MAPPING
+from src.core.tasks.url.operators.html.scraper.parser.dtos.response_html import ResponseHTMLInfo
+from src.core.tasks.url.operators.html.scraper.parser.mapping import ENUM_TO_ATTRIBUTE_MAPPING
 from src.db.dtos.url.html_content import HTMLContentType, URLHTMLContentInfo
 from src.db.dtos.url.with_html import URLWithHTML
 from src.db.models.instantiations.link.url_agency.sqlalchemy import LinkURLAgency

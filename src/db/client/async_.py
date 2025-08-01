@@ -77,19 +77,21 @@ from src.core.tasks.url.operators.agency_identification.queries.has_urls_without
     HasURLsWithoutAgencySuggestionsQueryBuilder
 from src.core.tasks.url.operators.auto_relevant.models.tdo import URLRelevantTDO
 from src.core.tasks.url.operators.auto_relevant.queries.get_tdos import GetAutoRelevantTDOsQueryBuilder
-from src.core.tasks.url.operators.submit_approved_url.queries.get import GetValidatedURLsQueryBuilder
-from src.core.tasks.url.operators.submit_approved_url.queries.has_validated import HasValidatedURLsQueryBuilder
-from src.core.tasks.url.operators.submit_approved_url.queries.mark_submitted import MarkURLsAsSubmittedQueryBuilder
-from src.core.tasks.url.operators.submit_approved_url.tdo import SubmitApprovedURLTDO, SubmittedURLInfo
-from src.core.tasks.url.operators.url_404_probe.tdo import URL404ProbeTDO
-from src.core.tasks.url.operators.url_duplicate.tdo import URLDuplicateTDO
-from src.core.tasks.url.operators.url_html.queries.get_pending_urls_without_html_data import \
+from src.core.tasks.url.operators.probe.queries.get_urls import GetURLsWithoutProbeQueryBuilder
+from src.core.tasks.url.operators.probe.queries.has_urls import HasURLsWithoutProbeQueryBuilder
+from src.core.tasks.url.operators.probe_404.tdo import URL404ProbeTDO
+from src.core.tasks.url.operators.submit_approved.queries.get import GetValidatedURLsQueryBuilder
+from src.core.tasks.url.operators.submit_approved.queries.has_validated import HasValidatedURLsQueryBuilder
+from src.core.tasks.url.operators.submit_approved.queries.mark_submitted import MarkURLsAsSubmittedQueryBuilder
+from src.core.tasks.url.operators.submit_approved.tdo import SubmitApprovedURLTDO, SubmittedURLInfo
+from src.core.tasks.url.operators.duplicate.tdo import URLDuplicateTDO
+from src.core.tasks.url.operators.html.queries.get_pending_urls_without_html_data import \
     GetPendingURLsWithoutHTMLDataQueryBuilder
-from src.core.tasks.url.operators.url_miscellaneous_metadata.queries.get_pending_urls_missing_miscellaneous_data import \
+from src.core.tasks.url.operators.misc_metadata.queries.get_pending_urls_missing_miscellaneous_data import \
     GetPendingURLsMissingMiscellaneousDataQueryBuilder
-from src.core.tasks.url.operators.url_miscellaneous_metadata.queries.has_pending_urls_missing_miscellaneous_data import \
+from src.core.tasks.url.operators.misc_metadata.queries.has_pending_urls_missing_miscellaneous_data import \
     HasPendingURsMissingMiscellaneousDataQueryBuilder
-from src.core.tasks.url.operators.url_miscellaneous_metadata.tdo import URLMiscellaneousMetadataTDO
+from src.core.tasks.url.operators.misc_metadata.tdo import URLMiscellaneousMetadataTDO
 from src.db.client.helpers import add_standard_limit_and_offset
 from src.db.client.types import UserSuggestionModel
 from src.db.config_manager import ConfigManager
@@ -1571,3 +1573,13 @@ class AsyncDatabaseClient:
 
     async def get_current_database_time(self) -> datetime:
         return await self.scalar(select(func.now()))
+
+    async def has_urls_without_probe(self) -> bool:
+        return await self.run_query_builder(
+            HasURLsWithoutProbeQueryBuilder()
+        )
+
+    async def get_urls_without_probe(self) -> list[URLMapping]:
+        return await self.run_query_builder(
+            GetURLsWithoutProbeQueryBuilder()
+        )

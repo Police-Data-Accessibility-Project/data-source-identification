@@ -127,7 +127,7 @@ def db_data_creator(
     db_data_creator = DBDataCreator(db_client=db_client_test)
     yield db_data_creator
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def test_client_session() -> AsyncGenerator[ClientSession, Any]:
     async with ClientSession() as session:
         yield session

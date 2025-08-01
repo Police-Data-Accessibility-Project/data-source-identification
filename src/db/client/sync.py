@@ -20,7 +20,7 @@ from src.db.models.instantiations.log.sqlalchemy import Log
 from src.db.models.instantiations.url.data_source.sqlalchemy import URLDataSource
 from src.db.models.instantiations.url.core.sqlalchemy import URL
 from src.db.models.instantiations.batch.sqlalchemy import Batch
-from src.core.tasks.url.operators.submit_approved_url.tdo import SubmittedURLInfo
+from src.core.tasks.url.operators.submit_approved.tdo import SubmittedURLInfo
 from src.core.env_var_manager import EnvVarManager
 from src.core.enums import BatchStatus
 

@@ -4,7 +4,7 @@ from pdap_access_manager import AccessManager, DataSourcesNamespaces, RequestInf
 
 from src.core.tasks.scheduled.sync.agency.dtos.parameters import AgencySyncParameters
 from src.core.tasks.scheduled.sync.data_sources.params import DataSourcesSyncParameters
-from src.core.tasks.url.operators.submit_approved_url.tdo import SubmitApprovedURLTDO, SubmittedURLInfo
+from src.core.tasks.url.operators.submit_approved.tdo import SubmitApprovedURLTDO, SubmittedURLInfo
 from src.external.pdap.dtos.sync.agencies import AgenciesSyncResponseInnerInfo, AgenciesSyncResponseInfo
 from src.external.pdap.dtos.match_agency.post import MatchAgencyInfo
 from src.external.pdap.dtos.match_agency.response import MatchAgencyResponse

@@ -19,8 +19,8 @@ from src.db.client.sync import DatabaseClient
 from src.db.dtos.url.raw_html import RawHTMLInfo
 from src.db.enums import TaskType
 from src.collectors.enums import CollectorType, URLStatus
-from src.core.tasks.url.operators.submit_approved_url.tdo import SubmittedURLInfo
-from src.core.tasks.url.operators.url_miscellaneous_metadata.tdo import URLMiscellaneousMetadataTDO
+from src.core.tasks.url.operators.submit_approved.tdo import SubmittedURLInfo
+from src.core.tasks.url.operators.misc_metadata.tdo import URLMiscellaneousMetadataTDO
 from src.core.enums import BatchStatus, SuggestionType, RecordType, SuggestedStatus
 from tests.helpers.batch_creation_parameters.annotation_info import AnnotationInfo
 from tests.helpers.batch_creation_parameters.core import TestBatchCreationParameters
