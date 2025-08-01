@@ -144,6 +144,7 @@ from src.db.queries.implementations.core.metrics.urls.aggregated.pending import 
     GetMetricsURLSAggregatedPendingQueryBuilder
 from src.db.statement_composer import StatementComposer
 from src.db.templates.markers.bulk.delete import BulkDeletableModel
+from src.db.templates.markers.bulk.insert import BulkInsertableModel
 from src.db.templates.markers.bulk.upsert import BulkUpsertableModel
 from src.db.utils.compression import decompress_html, compress_html
 from src.external.pdap.dtos.sync.agencies import AgenciesSyncResponseInnerInfo
@@ -237,6 +238,14 @@ class AsyncDatabaseClient:
         models: list[BulkDeletableModel],
     ):
         return await sh.bulk_delete(session, models)
+
+    @session_manager
+    async def bulk_insert(
+        self,
+        session: AsyncSession,
+        models: list[BulkInsertableModel],
+    ):
+        return await sh.bulk_insert(session, models)
 
     @session_manager
     async def scalar(self, session: AsyncSession, statement):

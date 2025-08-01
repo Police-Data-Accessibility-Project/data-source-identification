@@ -19,7 +19,7 @@ class UrlWebMetadata(
     )
     status_code = Column(
         Integer(),
-        nullable=False
+        nullable=True
     )
     content_type = Column(
         Text(),

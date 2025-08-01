@@ -75,7 +75,7 @@ def _create_url_html_info_table() -> None:
         id_column(),
         url_id_column(),
         sa.Column('accessed', sa.Boolean(), nullable=False),
-        sa.Column('status_code', sa.Integer(), nullable=False),
+        sa.Column('status_code', sa.Integer(), nullable=True),
         sa.Column('content_type', sa.Text(), nullable=True),
         sa.Column('error_message', sa.Text(), nullable=True),
         created_at_column(),

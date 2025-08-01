@@ -3,6 +3,7 @@ from typing_extensions import override
 
 from src.core.tasks.url.operators.base import URLTaskOperatorBase
 from src.core.tasks.url.operators.probe.tdo import URLProbeTDO
+from src.db.models.instantiations.url.web_metadata.pydantic import URLWebMetadataPydantic
 from src.external.url_request.core import URLRequestInterface
 from src.db.client.async_ import AsyncDatabaseClient
 from src.db.dtos.url.mapping import URLMapping
@@ -22,7 +23,7 @@ class URLProbeTaskOperator(URLTaskOperatorBase):
 
     @property
     @override
-    def task_type(self):
+    def task_type(self) -> TaskType:
         return TaskType.PROBE_URL
 
     @override
@@ -34,15 +35,15 @@ class URLProbeTaskOperator(URLTaskOperatorBase):
         return [URLProbeTDO(url_mapping=url_mapping) for url_mapping in url_mappings]
 
     @override
-    async def inner_task_logic(self):
+    async def inner_task_logic(self) -> None:
         tdos = await self.get_urls_without_probe()
-        url_ids = [task_info.url_id for task_info in tdos]
-        await self.link_urls_to_task(url_ids=url_ids)
+        await self.link_urls_to_task(
+            url_ids=[tdo.url_mapping.url_id for tdo in tdos]
+        )
+        await self.probe_urls(tdos)
+        await self.update_database(tdos)
 
-        responses = await self.probe_urls(tdos)
-        await self.update_database(tdos, responses)
-
-    async def probe_urls(self, tdos: list[URLProbeTDO]):
+    async def probe_urls(self, tdos: list[URLProbeTDO]) -> None:
         """Probe URLs and add responses to URLProbeTDO
 
         Modifies:
@@ -58,5 +59,19 @@ class URLProbeTaskOperator(URLTaskOperatorBase):
         for response in responses:
             tdo = url_to_tdo[response.url]
             tdo.response = response
+
+    async def update_database(self, tdos: list[URLProbeTDO]) -> None:
+        web_metadata_objects: list[URLWebMetadataPydantic] = []
+        for tdo in tdos:
+            response = tdo.response
+            web_metadata_object = URLWebMetadataPydantic(
+                url_id=tdo.url_mapping.url_id,
+                accessed=response.status_code is not None,
+                status_code=response.status_code,
+                content_type=response.content_type,
+                error_message=response.error
+            )
+            web_metadata_objects.append(web_metadata_object)
+        await self.adb_client.bulk_insert(web_metadata_objects)
 
 
