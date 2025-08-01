@@ -121,7 +121,7 @@ from src.db.models.instantiations.task.core import Task
 from src.db.models.instantiations.task.error import TaskError
 from src.db.models.instantiations.url.checked_for_duplicate import URLCheckedForDuplicate
 from src.db.models.instantiations.url.compressed_html import URLCompressedHTML
-from src.db.models.instantiations.url.core.pydantic import URLInfo
+from src.db.models.instantiations.url.core.pydantic.info import URLInfo
 from src.db.models.instantiations.url.core.sqlalchemy import URL
 from src.db.models.instantiations.url.data_source.sqlalchemy import URLDataSource
 from src.db.models.instantiations.url.error_info.pydantic import URLErrorPydanticInfo
@@ -149,6 +149,7 @@ from src.db.templates.markers.bulk.upsert import BulkUpsertableModel
 from src.db.utils.compression import decompress_html, compress_html
 from src.external.pdap.dtos.sync.agencies import AgenciesSyncResponseInnerInfo
 from src.external.pdap.dtos.sync.data_sources import DataSourcesSyncResponseInnerInfo
+
 
 class AsyncDatabaseClient:
     def __init__(self, db_url: Optional[str] = None):
@@ -186,7 +187,6 @@ class AsyncDatabaseClient:
                         raise e
 
         return wrapper
-
 
     @session_manager
     async def execute(self, session: AsyncSession, statement):
@@ -565,7 +565,6 @@ class AsyncDatabaseClient:
             model=AutoRecordTypeSuggestion
         )
 
-
     async def has_urls_with_html_data_and_without_models(
         self,
         session: AsyncSession,
@@ -607,7 +606,6 @@ class AsyncDatabaseClient:
         """Get all records of a model. Used primarily in testing."""
         return await sh.get_all(session=session, model=model, order_by_attribute=order_by_attribute)
 
-
     @session_manager
     async def load_root_url_cache(self, session: AsyncSession) -> dict[str, str]:
         statement = select(RootURL)
@@ -630,7 +628,6 @@ class AsyncDatabaseClient:
         return await self.run_query_builder(GetURLsQueryBuilder(
             page=page, errors=errors
         ))
-
 
     @session_manager
     async def initiate_task(
@@ -743,7 +740,6 @@ class AsyncDatabaseClient:
         """Retrieve URLs without confirmed or suggested agencies."""
         return await self.run_query_builder(GetPendingURLsWithoutAgencySuggestionsQueryBuilder())
 
-
     async def get_next_url_agency_for_annotation(
         self,
         user_id: int,
@@ -753,7 +749,6 @@ class AsyncDatabaseClient:
             user_id=user_id,
             batch_id=batch_id
         ))
-
 
     @session_manager
     async def upsert_new_agencies(
@@ -775,7 +770,6 @@ class AsyncDatabaseClient:
             agency.county = suggestion.county
             agency.locality = suggestion.locality
             session.add(agency)
-
 
     @session_manager
     async def add_confirmed_agency_url_links(
@@ -876,7 +870,6 @@ class AsyncDatabaseClient:
             rejection_reason=rejection_reason
         ))
 
-
     @session_manager
     async def get_batch_by_id(self, session, batch_id: int) -> Optional[BatchSummary]:
         """Retrieve a batch by ID."""
@@ -897,7 +890,11 @@ class AsyncDatabaseClient:
         ))
 
     @session_manager
-    async def insert_url(self, session: AsyncSession, url_info: URLInfo) -> int:
+    async def insert_url(
+        self,
+        session: AsyncSession,
+        url_info: URLInfo
+    ) -> int:
         """Insert a new URL into the database."""
         url_entry = URL(
             url=url_info.url,
@@ -916,21 +913,33 @@ class AsyncDatabaseClient:
         return url_entry.id
 
     @session_manager
-    async def get_url_info_by_url(self, session: AsyncSession, url: str) -> Optional[URLInfo]:
+    async def get_url_info_by_url(
+        self,
+        session: AsyncSession,
+        url: str
+    ) -> URLInfo | None:
         query = Select(URL).where(URL.url == url)
         raw_result = await session.execute(query)
         url = raw_result.scalars().first()
         return URLInfo(**url.__dict__)
 
     @session_manager
-    async def get_url_info_by_id(self, session: AsyncSession, url_id: int) -> Optional[URLInfo]:
+    async def get_url_info_by_id(
+        self,
+        session: AsyncSession,
+        url_id: int
+    ) -> URLInfo | None:
         query = Select(URL).where(URL.id == url_id)
         raw_result = await session.execute(query)
         url = raw_result.scalars().first()
         return URLInfo(**url.__dict__)
 
     @session_manager
-    async def insert_logs(self, session, log_infos: List[LogInfo]):
+    async def insert_logs(
+        self,
+        session: AsyncSession,
+        log_infos: list[LogInfo]
+    ) -> None:
         for log_info in log_infos:
             log = Log(log=log_info.log, batch_id=log_info.batch_id)
             if log_info.created_at is not None:
@@ -938,7 +947,11 @@ class AsyncDatabaseClient:
             session.add(log)
 
     @session_manager
-    async def insert_duplicates(self, session, duplicate_infos: list[DuplicateInsertInfo]):
+    async def insert_duplicates(
+        self,
+        session: AsyncSession,
+        duplicate_infos: list[DuplicateInsertInfo]
+    ) -> None:
         for duplicate_info in duplicate_infos:
             duplicate = Duplicate(
                 batch_id=duplicate_info.duplicate_batch_id,
@@ -947,7 +960,11 @@ class AsyncDatabaseClient:
             session.add(duplicate)
 
     @session_manager
-    async def insert_batch(self, session: AsyncSession, batch_info: BatchInfo) -> int:
+    async def insert_batch(
+        self,
+        session: AsyncSession,
+        batch_info: BatchInfo
+    ) -> int:
         """Insert a new batch into the database and return its ID."""
         batch = Batch(
             strategy=batch_info.strategy,
@@ -967,7 +984,11 @@ class AsyncDatabaseClient:
         await session.flush()
         return batch.id
 
-    async def insert_urls(self, url_infos: List[URLInfo], batch_id: int) -> InsertURLsInfo:
+    async def insert_urls(
+        self,
+        url_infos: list[URLInfo],
+        batch_id: int
+    ) -> InsertURLsInfo:
         url_mappings = []
         duplicates = []
         for url_info in url_infos:
@@ -995,14 +1016,14 @@ class AsyncDatabaseClient:
     @session_manager
     async def update_batch_post_collection(
         self,
-        session,
+        session: AsyncSession,
         batch_id: int,
         total_url_count: int,
         original_url_count: int,
         duplicate_url_count: int,
         batch_status: BatchStatus,
         compute_time: float = None,
-    ):
+    ) -> None:
 
         query = Select(Batch).where(Batch.id == batch_id)
         result = await session.execute(query)
@@ -1068,7 +1089,7 @@ class AsyncDatabaseClient:
 
     async def get_next_url_for_all_annotations(
         self, batch_id: int | None = None
-        ) -> GetNextURLForAllAnnotationResponse:
+    ) -> GetNextURLForAllAnnotationResponse:
         return await self.run_query_builder(GetNextURLForAllAnnotationQueryBuilder(batch_id))
 
     @session_manager
@@ -1117,7 +1138,6 @@ class AsyncDatabaseClient:
             dto=dto
         ))
 
-
     @session_manager
     async def search_for_url(self, session: AsyncSession, url: str) -> SearchURLResponse:
         query = select(URL).where(URL.url == url)
@@ -1137,7 +1157,6 @@ class AsyncDatabaseClient:
         return await self.run_query_builder(
             GetBatchesAggregatedMetricsQueryBuilder()
         )
-
 
     async def get_batches_breakdown_metrics(
         self,

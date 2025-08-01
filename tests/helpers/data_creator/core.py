@@ -1,33 +1,21 @@
-from collections import defaultdict
 from datetime import datetime
-from random import randint
-from typing import List, Optional, Any
+from typing import Optional, Any
 
 from src.api.endpoints.annotate.agency.post.dto import URLAgencyAnnotationPostInfo
-from src.api.endpoints.review.approve.dto import FinalReviewApprovalInfo
-from src.api.endpoints.review.enums import RejectionReason
 from src.core.tasks.url.operators.agency_identification.dtos.suggestion import URLAgencySuggestionInfo
 from src.db.client.async_ import AsyncDatabaseClient
-from src.db.models.instantiations.batch.pydantic import BatchInfo
 from src.db.models.instantiations.duplicate.pydantic.insert import DuplicateInsertInfo
-from src.db.models.instantiations.url.suggestion.relevant.auto.pydantic.input import AutoRelevancyAnnotationInput
 from src.db.dtos.url.insert import InsertURLsInfo
 from src.db.models.instantiations.url.error_info.pydantic import URLErrorPydanticInfo
-from src.db.dtos.url.html_content import URLHTMLContentInfo, HTMLContentType
-from src.db.models.instantiations.url.core.pydantic import URLInfo
 from src.db.client.sync import DatabaseClient
-from src.db.dtos.url.raw_html import RawHTMLInfo
 from src.db.enums import TaskType
 from src.collectors.enums import CollectorType, URLStatus
-from src.core.tasks.url.operators.submit_approved.tdo import SubmittedURLInfo
 from src.core.tasks.url.operators.misc_metadata.tdo import URLMiscellaneousMetadataTDO
 from src.core.enums import BatchStatus, SuggestionType, RecordType, SuggestedStatus
-from tests.helpers.batch_creation_parameters.annotation_info import AnnotationInfo
 from tests.helpers.batch_creation_parameters.core import TestBatchCreationParameters
 from tests.helpers.batch_creation_parameters.url_creation_parameters import TestURLCreationParameters
 from tests.helpers.data_creator.commands.base import DBDataCreatorCommandBase
 from tests.helpers.data_creator.commands.impl.agency import AgencyCommand
-from tests.helpers.data_creator.commands.impl.annotate import AnnotateCommand
 from tests.helpers.data_creator.commands.impl.batch import DBDataCreatorBatchCommand
 from tests.helpers.data_creator.commands.impl.batch_v2 import BatchV2Command
 from tests.helpers.data_creator.commands.impl.html_data import HTMLDataCreatorCommand
@@ -44,8 +32,6 @@ from tests.helpers.data_creator.commands.impl.urls_v2.response import URLsV2Resp
 from tests.helpers.data_creator.models.clients import DBDataCreatorClientContainer
 from tests.helpers.data_creator.models.creation_info.batch.v1 import BatchURLCreationInfo
 from tests.helpers.data_creator.models.creation_info.batch.v2 import BatchURLCreationInfoV2
-from tests.helpers.data_creator.models.creation_info.url import URLCreationInfo
-from tests.helpers.simple_test_data_functions import generate_test_urls
 
 
 class DBDataCreator:

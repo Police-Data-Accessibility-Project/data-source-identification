@@ -8,8 +8,15 @@ class URLProbeResponse(BaseModel):
     error: str | None = None
 
     @model_validator(mode='after')
-    def check_error_mutually_exclusive_with_status_and_content(self):
-        if self.error is not None:
-            if self.status_code is not None or self.content_type is not None:
-                raise ValueError('Error is mutually exclusive with status code and content type')
+    def check_error_mutually_exclusive_with_content(self):
+        if self.error is None:
+            if self.content_type is None:
+                raise ValueError('Content type required if no error')
+            if self.status_code is None:
+                raise ValueError('Status code required if no error')
+            return self
+
+        if self.content_type is not None:
+            raise ValueError('Content type mutually exclusive with error')
+
         return self

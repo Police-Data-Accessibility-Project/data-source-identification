@@ -4,7 +4,7 @@ from typing_extensions import override, final
 
 from src.db.dtos.url.mapping import URLMapping
 from src.db.models.instantiations.url.core.sqlalchemy import URL
-from src.db.models.instantiations.url.web_metadata.sqlalchemy import UrlWebMetadata
+from src.db.models.instantiations.url.web_metadata.sqlalchemy import URLWebMetadata
 from src.db.helpers.session import session_helper as sh
 from src.db.queries.base.builder import QueryBuilderBase
 
@@ -20,11 +20,11 @@ class GetURLsWithoutProbeQueryBuilder(QueryBuilderBase):
                 URL.url
             )
             .outerjoin(
-                UrlWebMetadata,
-                URL.id == UrlWebMetadata.url_id
+                URLWebMetadata,
+                URL.id == URLWebMetadata.url_id
             )
             .where(
-                UrlWebMetadata.id.is_(None)
+                URLWebMetadata.id.is_(None)
             )
         )
         db_mappings = await sh.mappings(session, query=query)

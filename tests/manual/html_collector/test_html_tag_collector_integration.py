@@ -5,7 +5,7 @@ from src.core.tasks.url.operators.html.scraper.parser.core import HTMLResponsePa
 from src.external.url_request.core import URLRequestInterface
 from src.core.tasks.url.operators.html.scraper.root_url_cache.core import RootURLCache
 from src.db.client.async_ import AsyncDatabaseClient
-from src.db.models.instantiations.url.core.pydantic import URLInfo
+from src.db.models.instantiations.url.core.pydantic_.info import URLInfo
 from tests.helpers.data_creator.core import DBDataCreator
 
 URLS = [

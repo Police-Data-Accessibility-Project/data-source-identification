@@ -4,7 +4,7 @@ from src.db.models.mixins import URLDependentMixin, CreatedAtMixin, UpdatedAtMix
 from src.db.models.templates import StandardBase
 
 
-class UrlWebMetadata(
+class URLWebMetadata(
     StandardBase,
     URLDependentMixin,
     CreatedAtMixin,
