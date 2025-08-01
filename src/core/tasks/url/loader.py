@@ -7,6 +7,7 @@ from src.core.tasks.url.operators.agency_identification.core import AgencyIdenti
 from src.core.tasks.url.operators.agency_identification.subtasks.loader import AgencyIdentificationSubtaskLoader
 from src.core.tasks.url.operators.auto_relevant.core import URLAutoRelevantTaskOperator
 from src.core.tasks.url.operators.base import URLTaskOperatorBase
+from src.core.tasks.url.operators.probe.core import URLProbeTaskOperator
 from src.core.tasks.url.operators.probe_404.core import URL404ProbeTaskOperator
 from src.core.tasks.url.operators.record_type.core import URLRecordTypeTaskOperator
 from src.core.tasks.url.operators.record_type.llm_api.record_classifier.openai import OpenAIRecordClassifier
@@ -101,8 +102,16 @@ class URLTaskOperatorLoader:
         )
         return operator
 
+    async def get_url_probe_task_operator(self):
+        operator = URLProbeTaskOperator(
+            adb_client=self.adb_client,
+            url_request_interface=self.url_request_interface
+        )
+        return operator
+
     async def get_task_operators(self) -> list[URLTaskOperatorBase]:
         return [
+            await self.get_url_probe_task_operator(),
             await self.get_url_html_task_operator(),
             await self.get_url_duplicate_task_operator(),
             await self.get_url_404_probe_task_operator(),
