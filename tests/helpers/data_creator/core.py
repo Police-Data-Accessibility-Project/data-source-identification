@@ -26,6 +26,7 @@ from tests.helpers.data_creator.commands.impl.suggestion.auto.relevant import Au
 from tests.helpers.data_creator.commands.impl.suggestion.user.agency import AgencyUserSuggestionsCommand
 from tests.helpers.data_creator.commands.impl.suggestion.user.record_type import UserRecordTypeSuggestionCommand
 from tests.helpers.data_creator.commands.impl.suggestion.user.relevant import UserRelevantSuggestionCommand
+from tests.helpers.data_creator.commands.impl.url_metadata import URLMetadataCommand
 from tests.helpers.data_creator.commands.impl.urls import URLsDBDataCreatorCommand
 from tests.helpers.data_creator.commands.impl.urls_v2.core import URLsV2Command
 from tests.helpers.data_creator.commands.impl.urls_v2.response import URLsV2Response
@@ -350,5 +351,17 @@ class DBDataCreator:
                 url_id=url_id,
                 user_id=user_id,
                 agency_annotation_info=agency_annotation_info
+            )
+        )
+
+    async def url_metadata(
+            self,
+            url_ids: list[int],
+            content_type: str = "text/html"
+    ) -> None:
+        await self.run_command(
+            URLMetadataCommand(
+                url_ids=url_ids,
+                content_type=content_type
             )
         )

@@ -1,5 +1,5 @@
-from http import HTTPStatus
-
+from src.core.tasks.url.operators.html.filter import get_just_urls, separate_success_and_error_subsets, \
+    separate_404_and_non_404_subsets
 from src.db.client.async_ import AsyncDatabaseClient
 from src.db.models.instantiations.url.core.pydantic.info import URLInfo
 from src.db.models.instantiations.url.error_info.pydantic import URLErrorPydanticInfo
@@ -36,10 +36,14 @@ class URLHTMLTaskOperator(URLTaskOperatorBase):
         url_ids = [task_info.url_info.id for task_info in tdos]
         await self.link_urls_to_task(url_ids=url_ids)
         await self.get_raw_html_data_for_urls(tdos)
-        success_subset, error_subset = await self.separate_success_and_error_subsets(tdos)
-        non_404_error_subset, is_404_error_subset = await self.separate_error_and_404_subsets(error_subset)
-        await self.process_html_data(success_subset)
-        await self.update_database(is_404_error_subset, non_404_error_subset, success_subset)
+        se_subsets = await separate_success_and_error_subsets(tdos)
+        err_subsets = await separate_404_and_non_404_subsets(se_subsets.error)
+        await self.process_html_data(se_subsets.success)
+        await self.update_database(
+            is_404_error_subset=err_subsets.is_404,
+            non_404_error_subset=err_subsets.not_404,
+            success_subset=se_subsets.success
+        )
 
     async def update_database(
         self,
@@ -51,9 +55,6 @@ class URLHTMLTaskOperator(URLTaskOperatorBase):
         await self.update_404s_in_database(is_404_error_subset)
         await self.update_html_data_in_database(success_subset)
 
-    async def get_just_urls(self, tdos: list[UrlHtmlTDO]):
-        return [task_info.url_info.url for task_info in tdos]
-
     async def get_non_errored_urls_without_html_data(self):
         pending_urls: list[URLInfo] = await self.adb_client.get_non_errored_urls_without_html_data()
         tdos = [
@@ -64,45 +65,10 @@ class URLHTMLTaskOperator(URLTaskOperatorBase):
         return tdos
 
     async def get_raw_html_data_for_urls(self, tdos: list[UrlHtmlTDO]):
-        just_urls = await self.get_just_urls(tdos)
+        just_urls = await get_just_urls(tdos)
         url_response_infos = await self.url_request_interface.make_requests_with_html(just_urls)
         for tdto, url_response_info in zip(tdos, url_response_infos):
             tdto.url_response_info = url_response_info
-
-    async def separate_success_and_error_subsets(
-            self,
-            tdos: list[UrlHtmlTDO]
-    ) -> tuple[
-        list[UrlHtmlTDO], # Successful
-        list[UrlHtmlTDO]  # Error
-    ]:
-        errored_tdos = []
-        successful_tdos = []
-        for tdto in tdos:
-            if not tdto.url_response_info.success:
-                errored_tdos.append(tdto)
-            else:
-                successful_tdos.append(tdto)
-        return successful_tdos, errored_tdos
-
-    async def separate_error_and_404_subsets(
-        self,
-        tdos: list[UrlHtmlTDO]
-    ) -> tuple[
-        list[UrlHtmlTDO], # Error
-        list[UrlHtmlTDO]  # 404
-    ]:
-        tdos_error = []
-        tdos_404 = []
-        for tdo in tdos:
-            if tdo.url_response_info.status is None:
-                tdos_error.append(tdo)
-                continue
-            if tdo.url_response_info.status == HTTPStatus.NOT_FOUND:
-                tdos_404.append(tdo)
-            else:
-                tdos_error.append(tdo)
-        return tdos_error, tdos_404
 
     async def update_404s_in_database(self, tdos_404: list[UrlHtmlTDO]):
         url_ids = [tdo.url_info.id for tdo in tdos_404]
@@ -121,7 +87,6 @@ class URLHTMLTaskOperator(URLTaskOperatorBase):
 
     async def process_html_data(self, tdos: list[UrlHtmlTDO]):
         for tdto in tdos:
-
             html_tag_info = await self.html_parser.parse(
                 url=tdto.url_info.url,
                 html_content=tdto.url_response_info.html,
