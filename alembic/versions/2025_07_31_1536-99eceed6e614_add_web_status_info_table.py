@@ -91,9 +91,11 @@ def _drop_url_html_info_table() -> None:
 
 def upgrade() -> None:
     _create_url_html_info_table()
+    _add_url_probe_task_type_enum()
 
 
 def downgrade() -> None:
     _drop_url_html_info_table()
     # Drop Enums
     WEB_STATUS_ENUM.drop(op.get_bind(), checkfirst=True)
+    _drop_url_probe_task_type_enum()

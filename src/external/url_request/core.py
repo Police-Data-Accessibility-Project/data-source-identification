@@ -1,4 +1,4 @@
-from aiohttp import ClientSession
+from aiohttp import ClientSession, ClientTimeout
 
 from src.external.url_request.dtos.url_response import URLResponseInfo
 from src.external.url_request.probe.core import URLProbeManager
@@ -16,6 +16,6 @@ class URLRequestInterface:
 
     @staticmethod
     async def probe_urls(urls: list[str]) -> list[URLProbeResponse]:
-        async with ClientSession() as session:
+        async with ClientSession(timeout=ClientTimeout(total=30)) as session:
             manager = URLProbeManager(session=session)
             return await manager.probe_urls(urls=urls)
