@@ -1,6 +1,6 @@
 import pytest
 
-from src.external.url_request.probe import URLProbeManager
+from src.external.url_request.probe.core import URLProbeManager
 
 URLS = [
     "https://www.google.com",

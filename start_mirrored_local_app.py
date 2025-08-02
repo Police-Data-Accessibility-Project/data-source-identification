@@ -63,15 +63,15 @@ def _run_database_restore(data_dump_container) -> None:
 
 
 def _run_dump_if_longer_than_24_hours(
-    checker,
+    checker: TimestampChecker,
     data_dump_container
-):
+) -> None:
     if checker.last_run_within_24_hours():
         print("Last run within 24 hours, skipping dump...")
-    else:
-        data_dump_container.run_command(
-            DUMP_SH_DOCKER_PATH,
-        )
+        return
+    data_dump_container.run_command(
+        DUMP_SH_DOCKER_PATH,
+    )
 
 
 if __name__ == "__main__":
