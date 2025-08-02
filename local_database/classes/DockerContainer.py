@@ -11,19 +11,19 @@ class DockerContainer:
         self.dc = dc
         self.container = container
 
-    def run_command(self, command: str):
+    def run_command(self, command: str) -> None:
         self.dc.run_command(command, self.container.id)
 
-    def stop(self):
+    def stop(self) -> None:
         self.container.stop()
 
-    def log_to_file(self):
+    def log_to_file(self) -> None:
         logs = self.container.logs(stdout=True, stderr=True)
         container_name = self.container.name
         with open(f"{container_name}.log", "wb") as f:
             f.write(logs)
 
-    def wait_for_pg_to_be_ready(self):
+    def wait_for_pg_to_be_ready(self) -> None:
         for i in range(30):
             exit_code, output = self.container.exec_run("pg_isready")
             print(output)

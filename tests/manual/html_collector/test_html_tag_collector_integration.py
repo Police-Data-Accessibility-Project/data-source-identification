@@ -1,11 +1,11 @@
 import pytest
 
-from src.core.tasks.url.operators.url_html.core import URLHTMLTaskOperator
-from src.core.tasks.url.operators.url_html.scraper.parser.core import HTMLResponseParser
-from src.core.tasks.url.operators.url_html.scraper.request_interface.core import URLRequestInterface
-from src.core.tasks.url.operators.url_html.scraper.root_url_cache.core import RootURLCache
+from src.core.tasks.url.operators.html.core import URLHTMLTaskOperator
+from src.core.tasks.url.operators.html.scraper.parser.core import HTMLResponseParser
+from src.external.url_request.core import URLRequestInterface
+from src.core.tasks.url.operators.html.scraper.root_url_cache.core import RootURLCache
 from src.db.client.async_ import AsyncDatabaseClient
-from src.db.models.instantiations.url.core.pydantic import URLInfo
+from src.db.models.instantiations.url.core.pydantic_.info import URLInfo
 from tests.helpers.data_creator.core import DBDataCreator
 
 URLS = [

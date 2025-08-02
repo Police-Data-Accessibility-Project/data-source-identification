@@ -1,10 +1,10 @@
 import types
 
-from src.core.tasks.url.operators.url_html.core import URLHTMLTaskOperator
-from src.core.tasks.url.operators.url_html.scraper.parser.core import HTMLResponseParser
+from src.core.tasks.url.operators.html.core import URLHTMLTaskOperator
+from src.core.tasks.url.operators.html.scraper.parser.core import HTMLResponseParser
 
-from src.core.tasks.url.operators.url_html.scraper.request_interface.core import URLRequestInterface
-from src.core.tasks.url.operators.url_html.scraper.root_url_cache.core import RootURLCache
+from src.external.url_request.core import URLRequestInterface
+from src.core.tasks.url.operators.html.scraper.root_url_cache.core import RootURLCache
 from src.db.client.async_ import AsyncDatabaseClient
 from tests.automated.integration.tasks.url.html.mocks.methods import mock_make_requests, mock_get_from_cache, mock_parse
 

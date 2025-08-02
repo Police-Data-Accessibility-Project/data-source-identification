@@ -1,5 +1,7 @@
 import docker
 from docker.errors import NotFound, APIError
+from docker.models.containers import Container
+from docker.models.networks import Network
 
 from local_database.DTOs import DockerfileInfo, DockerInfo
 
@@ -9,7 +11,7 @@ class DockerClient:
     def __init__(self):
         self.client = docker.from_env()
 
-    def run_command(self, command: str, container_id: str):
+    def run_command(self, command: str, container_id: str) -> None:
         exec_id = self.client.api.exec_create(
             container_id,
             cmd=command,
@@ -20,7 +22,7 @@ class DockerClient:
         for line in output_stream:
             print(line.decode().rstrip())
 
-    def start_network(self, network_name):
+    def start_network(self, network_name) -> Network:
         try:
             self.client.networks.create(network_name, driver="bridge")
         except APIError as e:
@@ -30,14 +32,14 @@ class DockerClient:
             print("Network already exists")
         return self.client.networks.get(network_name)
 
-    def stop_network(self, network_name):
+    def stop_network(self, network_name) -> None:
         self.client.networks.get(network_name).remove()
 
     def get_image(
             self,
             dockerfile_info: DockerfileInfo,
             force_rebuild: bool = False
-    ):
+    ) -> None:
         if dockerfile_info.dockerfile_directory:
             # Build image from Dockerfile
             self.client.images.build(
@@ -58,7 +60,7 @@ class DockerClient:
         except NotFound:
             self.client.images.pull(dockerfile_info.image_tag)
 
-    def get_existing_container(self, docker_info_name: str):
+    def get_existing_container(self, docker_info_name: str) -> Container | None:
         try:
             return self.client.containers.get(docker_info_name)
         except NotFound:

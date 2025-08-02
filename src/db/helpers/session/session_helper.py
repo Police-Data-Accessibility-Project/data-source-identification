@@ -43,6 +43,10 @@ async def mappings(session: AsyncSession, query: sa.Select) -> Sequence[sa.RowMa
     raw_result = await session.execute(query)
     return raw_result.mappings().all()
 
+async def has_results(session: AsyncSession, query: sa.Select) -> bool:
+    raw_result = await session.execute(query)
+    return raw_result.first() is not None
+
 async def bulk_upsert(
     session: AsyncSession,
     models: list[BulkUpsertableModel],

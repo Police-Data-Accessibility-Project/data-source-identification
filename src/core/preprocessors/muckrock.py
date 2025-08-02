@@ -1,7 +1,7 @@
 from typing import List
 
-from src.db.models.instantiations.url.core.pydantic import URLInfo
 from src.core.preprocessors.base import PreprocessorBase
+from src.db.models.instantiations.url.core.pydantic.info import URLInfo
 
 
 class MuckrockPreprocessor(PreprocessorBase):

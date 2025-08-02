@@ -7,7 +7,7 @@ from sqlalchemy.orm import joinedload
 from src.api.endpoints.review.next.dto import FinalReviewOptionalMetadata, FinalReviewBatchInfo, \
     GetNextURLForFinalReviewOuterResponse, GetNextURLForFinalReviewResponse, FinalReviewAnnotationInfo
 from src.collectors.enums import URLStatus
-from src.core.tasks.url.operators.url_html.scraper.parser.util import convert_to_response_html_info
+from src.core.tasks.url.operators.html.scraper.parser.util import convert_to_response_html_info
 from src.db.constants import USER_ANNOTATION_MODELS
 from src.db.dto_converter import DTOConverter
 from src.db.dtos.url.html_content import URLHTMLContentInfo

@@ -26,7 +26,6 @@ async def test_agency_identification_task(
 ):
     """Test full flow of AgencyIdentificationTaskOperator"""
 
-
     # Confirm does not yet meet prerequisites
     assert not await operator.meets_task_prerequisites()
 

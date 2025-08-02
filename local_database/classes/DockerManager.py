@@ -4,6 +4,8 @@ import sys
 
 import docker
 from docker.errors import APIError
+from docker.models.containers import Container
+from docker.models.networks import Network
 
 from local_database.DTOs import DockerfileInfo, DockerInfo
 from local_database.classes.DockerClient import DockerClient
@@ -20,7 +22,7 @@ class DockerManager:
         self.network = self.start_network()
 
     @staticmethod
-    def start_docker_engine():
+    def start_docker_engine() -> None:
         system = platform.system()
 
         match system:
@@ -41,7 +43,7 @@ class DockerManager:
                 sys.exit(1)
 
     @staticmethod
-    def is_docker_running():
+    def is_docker_running() -> bool:
         try:
             client = docker.from_env()
             client.ping()
@@ -50,16 +52,23 @@ class DockerManager:
             print(f"Docker is not running: {e}")
             return False
 
-    def run_command(self, command: str, container_id: str):
+    def run_command(
+        self,
+        command: str,
+        container_id: str
+    ) -> None:
         self.client.run_command(command, container_id)
 
-    def start_network(self):
+    def start_network(self) -> Network:
         return self.client.start_network(self.network_name)
 
-    def stop_network(self):
+    def stop_network(self) -> None:
         self.client.stop_network(self.network_name)
 
-    def get_image(self, dockerfile_info: DockerfileInfo):
+    def get_image(
+        self,
+        dockerfile_info: DockerfileInfo
+    ) -> None:
         self.client.get_image(dockerfile_info)
 
     def run_container(
@@ -74,5 +83,5 @@ class DockerManager:
         )
         return DockerContainer(self.client, raw_container)
 
-    def get_containers(self):
+    def get_containers(self) -> list[Container]:
         return self.client.client.containers.list()

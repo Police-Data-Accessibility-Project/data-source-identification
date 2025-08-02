@@ -16,6 +16,7 @@ from src.db.models.instantiations.url.optional_data_source_metadata import URLOp
 from src.db.models.instantiations.url.core.sqlalchemy import URL
 from src.db.models.instantiations.batch.sqlalchemy import Batch
 from src.db.models.instantiations.url.suggestion.agency.auto import AutomatedUrlAgencySuggestion
+from src.db.models.instantiations.url.web_metadata.sqlalchemy import URLWebMetadata
 from src.db.types import UserSuggestionType
 
 
@@ -25,7 +26,7 @@ class StatementComposer:
     """
 
     @staticmethod
-    def pending_urls_without_html_data() -> Select:
+    def has_non_errored_urls_without_html_data() -> Select:
         exclude_subquery = (
             select(1).
             select_from(LinkTaskURL).
@@ -35,11 +36,21 @@ class StatementComposer:
             where(Task.task_status == BatchStatus.READY_TO_LABEL.value)
          )
         query = (
-            select(URL).
-            outerjoin(URLHTMLContent).
-            where(URLHTMLContent.id == None).
-            where(~exists(exclude_subquery)).
-            where(URL.outcome == URLStatus.PENDING.value)
+            select(URL)
+            .join(URLWebMetadata)
+            .outerjoin(URLHTMLContent)
+            .where(URLHTMLContent.id == None)
+            .where(~exists(exclude_subquery))
+            .where(URLWebMetadata.content_type.like("%html%"))
+            .where(URL.outcome.in_(
+                [
+                    URLStatus.PENDING,
+                    URLStatus.NOT_RELEVANT,
+                    URLStatus.INDIVIDUAL_RECORD,
+                    URLStatus.SUBMITTED,
+                    URLStatus.VALIDATED
+                ]
+            ))
             .options(
                 selectinload(URL.batch)
             )

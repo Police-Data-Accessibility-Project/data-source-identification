@@ -44,6 +44,7 @@ class TaskType(PyEnum):
     SYNC_AGENCIES = "Sync Agencies"
     SYNC_DATA_SOURCES = "Sync Data Sources"
     PUSH_TO_HUGGINGFACE = "Push to Hugging Face"
+    PROBE_URL = "URL Probe"
 
 class ChangeLogOperationType(PyEnum):
     INSERT = "INSERT"

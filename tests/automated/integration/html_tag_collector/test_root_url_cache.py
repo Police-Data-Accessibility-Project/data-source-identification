@@ -1,7 +1,7 @@
 import pytest
 
-from src.core.tasks.url.operators.url_html.scraper.root_url_cache.core import RootURLCache
-from src.core.tasks.url.operators.url_html.scraper.root_url_cache.dtos.response import RootURLCacheResponseInfo
+from src.core.tasks.url.operators.html.scraper.root_url_cache.core import RootURLCache
+from src.core.tasks.url.operators.html.scraper.root_url_cache.dtos.response import RootURLCacheResponseInfo
 
 
 async def mock_get_request(url: str) -> RootURLCacheResponseInfo:

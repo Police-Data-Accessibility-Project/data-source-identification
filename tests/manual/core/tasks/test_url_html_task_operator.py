@@ -1,12 +1,10 @@
-from unittest.mock import patch
-
 import pytest
 
 from src.api.endpoints.collector.dtos.manual_batch.post import ManualBatchInputDTO, ManualBatchInnerInputDTO
-from src.core.tasks.url.operators.url_html.core import URLHTMLTaskOperator
-from src.core.tasks.url.operators.url_html.scraper.parser.core import HTMLResponseParser
-from src.core.tasks.url.operators.url_html.scraper.request_interface.core import URLRequestInterface
-from src.core.tasks.url.operators.url_html.scraper.root_url_cache.core import RootURLCache
+from src.core.tasks.url.operators.html.core import URLHTMLTaskOperator
+from src.core.tasks.url.operators.html.scraper.parser.core import HTMLResponseParser
+from src.external.url_request.core import URLRequestInterface
+from src.core.tasks.url.operators.html.scraper.root_url_cache.core import RootURLCache
 
 
 @pytest.mark.asyncio

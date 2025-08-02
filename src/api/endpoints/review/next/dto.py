@@ -5,7 +5,7 @@ from pydantic import BaseModel, Field
 from src.api.endpoints.annotate.agency.get.dto import GetNextURLForAgencyAgencyInfo
 from src.api.endpoints.annotate.relevance.get.dto import RelevanceAnnotationResponseInfo
 from src.core.enums import RecordType, SuggestedStatus
-from src.core.tasks.url.operators.url_html.scraper.parser.dtos.response_html import ResponseHTMLInfo
+from src.core.tasks.url.operators.html.scraper.parser.dtos.response_html import ResponseHTMLInfo
 
 
 class FinalReviewAnnotationRelevantInfo(BaseModel):

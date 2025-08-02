@@ -3,8 +3,8 @@ from typing import Optional
 
 from aiohttp import ClientResponseError, RequestInfo
 
-from src.core.tasks.url.operators.url_html.scraper.parser.dtos.response_html import ResponseHTMLInfo
-from src.core.tasks.url.operators.url_html.scraper.request_interface.dtos.url_response import URLResponseInfo
+from src.core.tasks.url.operators.html.scraper.parser.dtos.response_html import ResponseHTMLInfo
+from src.external.url_request.dtos.url_response import URLResponseInfo
 from tests.automated.integration.tasks.url.html.mocks.constants import MOCK_CONTENT_TYPE, MOCK_HTML_CONTENT
 
 

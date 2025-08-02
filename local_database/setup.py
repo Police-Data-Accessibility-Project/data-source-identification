@@ -7,14 +7,19 @@ FOLLOWUP_SCRIPT = "py create_database.py"
 MAX_RETRIES = 20
 SLEEP_SECONDS = 1
 
-def run_command(cmd, check=True, capture_output=False, **kwargs):
+def run_command(
+    cmd: str,
+    check: bool = True,
+    capture_output: bool = False,
+    **kwargs: dict
+) -> subprocess.CompletedProcess:
     try:
         return subprocess.run(cmd, shell=True, check=check, capture_output=capture_output, text=True, **kwargs)
     except subprocess.CalledProcessError as e:
         print(f"Command '{cmd}' failed: {e}")
         sys.exit(1)
 
-def get_postgres_container_id():
+def get_postgres_container_id() -> str:
     result = run_command(f"docker-compose ps -q {POSTGRES_SERVICE_NAME}", capture_output=True)
     container_id = result.stdout.strip()
     if not container_id:
@@ -22,7 +27,7 @@ def get_postgres_container_id():
         sys.exit(1)
     return container_id
 
-def wait_for_postgres(container_id):
+def wait_for_postgres(container_id: str) -> None:
     print("Waiting for Postgres to be ready...")
     for i in range(MAX_RETRIES):
         try:
@@ -36,7 +41,7 @@ def wait_for_postgres(container_id):
     print("Postgres did not become ready in time.")
     sys.exit(1)
 
-def main():
+def main() -> None:
     print("Stopping Docker Compose...")
     run_command("docker-compose down")
 
