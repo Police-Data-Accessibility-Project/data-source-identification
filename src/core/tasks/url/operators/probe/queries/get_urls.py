@@ -26,6 +26,7 @@ class GetURLsWithoutProbeQueryBuilder(QueryBuilderBase):
             .where(
                 URLWebMetadata.id.is_(None)
             )
+            .limit(500)
         )
         db_mappings = await sh.mappings(session, query=query)
         return [URLMapping(**mapping) for mapping in db_mappings]
