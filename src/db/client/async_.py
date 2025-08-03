@@ -1446,7 +1446,7 @@ class AsyncDatabaseClient:
     async def mark_all_as_404(self, url_ids: List[int]):
         query = update(URL).where(URL.id.in_(url_ids)).values(outcome=URLStatus.NOT_FOUND.value)
         await self.execute(query)
-        query = update(URLWebMetadata).where(URLWebMetadata.id.in_(url_ids)).values(status_code=404)
+        query = update(URLWebMetadata).where(URLWebMetadata.url_id.in_(url_ids)).values(status_code=404)
         await self.execute(query)
 
     async def mark_all_as_recently_probed_for_404(
