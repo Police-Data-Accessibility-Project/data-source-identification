@@ -11,7 +11,8 @@ from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.db.helpers.session.parser import BulkActionParser
-from src.db.models.templates import Base, StandardBase
+from src.db.models.templates_.with_id import WithIDBase
+from src.db.models.templates_.base import Base
 from src.db.templates.markers.bulk.delete import BulkDeletableModel
 from src.db.templates.markers.bulk.insert import BulkInsertableModel
 from src.db.templates.markers.bulk.update import BulkUpdatableModel
@@ -42,6 +43,10 @@ async def mapping(session: AsyncSession, query: sa.Select) -> sa.RowMapping:
 async def mappings(session: AsyncSession, query: sa.Select) -> Sequence[sa.RowMapping]:
     raw_result = await session.execute(query)
     return raw_result.mappings().all()
+
+async def has_results(session: AsyncSession, query: sa.Select) -> bool:
+    raw_result = await session.execute(query)
+    return raw_result.first() is not None
 
 async def bulk_upsert(
     session: AsyncSession,
@@ -88,7 +93,7 @@ async def add(
 
 async def add_all(
     session: AsyncSession,
-    models: list[StandardBase],
+    models: list[WithIDBase],
     return_ids: bool = False
 ) -> list[int] | None:
     session.add_all(models)

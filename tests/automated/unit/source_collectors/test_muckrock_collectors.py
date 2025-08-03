@@ -6,11 +6,11 @@ import pytest
 from src.collectors.source_collectors.muckrock.collectors.county.core import MuckrockCountyLevelSearchCollector
 from src.collectors.source_collectors.muckrock.collectors.simple.core import MuckrockSimpleSearchCollector
 from src.db.client.async_ import AsyncDatabaseClient
-from src.db.models.instantiations.url.core.pydantic import URLInfo
 from src.core.logger import AsyncCoreLogger
 from src.collectors.source_collectors.muckrock.collectors.county.dto import MuckrockCountySearchCollectorInputDTO
 from src.collectors.source_collectors.muckrock.collectors.simple.dto import MuckrockSimpleSearchCollectorInputDTO
 from src.collectors.source_collectors.muckrock.fetch_requests.foia import FOIAFetchRequest
+from src.db.models.instantiations.url.core.pydantic.info import URLInfo
 
 PATCH_ROOT = "src.collectors.source_collectors.muckrock"
 

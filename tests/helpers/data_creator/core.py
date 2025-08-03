@@ -1,33 +1,22 @@
-from collections import defaultdict
 from datetime import datetime
-from random import randint
-from typing import List, Optional, Any
+from http import HTTPStatus
+from typing import Optional, Any
 
 from src.api.endpoints.annotate.agency.post.dto import URLAgencyAnnotationPostInfo
-from src.api.endpoints.review.approve.dto import FinalReviewApprovalInfo
-from src.api.endpoints.review.enums import RejectionReason
 from src.core.tasks.url.operators.agency_identification.dtos.suggestion import URLAgencySuggestionInfo
 from src.db.client.async_ import AsyncDatabaseClient
-from src.db.models.instantiations.batch.pydantic import BatchInfo
 from src.db.models.instantiations.duplicate.pydantic.insert import DuplicateInsertInfo
-from src.db.models.instantiations.url.suggestion.relevant.auto.pydantic.input import AutoRelevancyAnnotationInput
 from src.db.dtos.url.insert import InsertURLsInfo
 from src.db.models.instantiations.url.error_info.pydantic import URLErrorPydanticInfo
-from src.db.dtos.url.html_content import URLHTMLContentInfo, HTMLContentType
-from src.db.models.instantiations.url.core.pydantic import URLInfo
 from src.db.client.sync import DatabaseClient
-from src.db.dtos.url.raw_html import RawHTMLInfo
 from src.db.enums import TaskType
 from src.collectors.enums import CollectorType, URLStatus
-from src.core.tasks.url.operators.submit_approved_url.tdo import SubmittedURLInfo
-from src.core.tasks.url.operators.url_miscellaneous_metadata.tdo import URLMiscellaneousMetadataTDO
+from src.core.tasks.url.operators.misc_metadata.tdo import URLMiscellaneousMetadataTDO
 from src.core.enums import BatchStatus, SuggestionType, RecordType, SuggestedStatus
-from tests.helpers.batch_creation_parameters.annotation_info import AnnotationInfo
 from tests.helpers.batch_creation_parameters.core import TestBatchCreationParameters
 from tests.helpers.batch_creation_parameters.url_creation_parameters import TestURLCreationParameters
 from tests.helpers.data_creator.commands.base import DBDataCreatorCommandBase
 from tests.helpers.data_creator.commands.impl.agency import AgencyCommand
-from tests.helpers.data_creator.commands.impl.annotate import AnnotateCommand
 from tests.helpers.data_creator.commands.impl.batch import DBDataCreatorBatchCommand
 from tests.helpers.data_creator.commands.impl.batch_v2 import BatchV2Command
 from tests.helpers.data_creator.commands.impl.html_data import HTMLDataCreatorCommand
@@ -38,14 +27,13 @@ from tests.helpers.data_creator.commands.impl.suggestion.auto.relevant import Au
 from tests.helpers.data_creator.commands.impl.suggestion.user.agency import AgencyUserSuggestionsCommand
 from tests.helpers.data_creator.commands.impl.suggestion.user.record_type import UserRecordTypeSuggestionCommand
 from tests.helpers.data_creator.commands.impl.suggestion.user.relevant import UserRelevantSuggestionCommand
+from tests.helpers.data_creator.commands.impl.url_metadata import URLMetadataCommand
 from tests.helpers.data_creator.commands.impl.urls import URLsDBDataCreatorCommand
 from tests.helpers.data_creator.commands.impl.urls_v2.core import URLsV2Command
 from tests.helpers.data_creator.commands.impl.urls_v2.response import URLsV2Response
 from tests.helpers.data_creator.models.clients import DBDataCreatorClientContainer
 from tests.helpers.data_creator.models.creation_info.batch.v1 import BatchURLCreationInfo
 from tests.helpers.data_creator.models.creation_info.batch.v2 import BatchURLCreationInfoV2
-from tests.helpers.data_creator.models.creation_info.url import URLCreationInfo
-from tests.helpers.simple_test_data_functions import generate_test_urls
 
 
 class DBDataCreator:
@@ -364,5 +352,19 @@ class DBDataCreator:
                 url_id=url_id,
                 user_id=user_id,
                 agency_annotation_info=agency_annotation_info
+            )
+        )
+
+    async def url_metadata(
+            self,
+            url_ids: list[int],
+            content_type: str = "text/html",
+            status_code: int = HTTPStatus.OK.value
+    ) -> None:
+        await self.run_command(
+            URLMetadataCommand(
+                url_ids=url_ids,
+                content_type=content_type,
+                status_code=status_code
             )
         )

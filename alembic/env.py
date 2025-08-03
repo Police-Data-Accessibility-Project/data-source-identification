@@ -1,4 +1,3 @@
-import logging
 from datetime import datetime
 from logging.config import fileConfig
 
@@ -7,7 +6,7 @@ from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 
 from src.db.helpers.connect import get_postgres_connection_string
-from src.db.models.templates import Base
+from src.db.models.templates_.base import Base
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

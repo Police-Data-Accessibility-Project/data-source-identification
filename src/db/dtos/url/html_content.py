@@ -1,21 +1,15 @@
-from enum import Enum
-from typing import Optional
+from src.db.models.instantiations.url.html.content.enums import HTMLContentType
+from src.db.models.instantiations.url.html.content.sqlalchemy import URLHTMLContent
+from src.db.models.templates_.base import Base
+from src.db.templates.markers.bulk.insert import BulkInsertableModel
 
-from pydantic import BaseModel
 
-
-class HTMLContentType(Enum):
-    TITLE = "Title"
-    DESCRIPTION = "Description"
-    H1 = "H1"
-    H2 = "H2"
-    H3 = "H3"
-    H4 = "H4"
-    H5 = "H5"
-    H6 = "H6"
-    DIV = "Div"
-
-class URLHTMLContentInfo(BaseModel):
-    url_id: Optional[int] = None
+class URLHTMLContentInfo(BulkInsertableModel):
+    url_id: int | None = None
     content_type: HTMLContentType
     content: str | list[str]
+
+    @classmethod
+    def sa_model(cls) -> type[Base]:
+        """Defines the SQLAlchemy model."""
+        return URLHTMLContent

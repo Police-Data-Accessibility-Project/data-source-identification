@@ -4,7 +4,7 @@ Tracks the status of the agencies sync
 
 from sqlalchemy import DateTime, Date, Integer, Column
 
-from src.db.models.templates import Base
+from src.db.models.templates_.base import Base
 
 
 class AgenciesSyncState(Base):

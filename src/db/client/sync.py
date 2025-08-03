@@ -11,16 +11,16 @@ from src.db.models.instantiations.batch.pydantic import BatchInfo
 from src.db.models.instantiations.duplicate.pydantic.insert import DuplicateInsertInfo
 from src.db.dtos.url.insert import InsertURLsInfo
 from src.db.models.instantiations.log.pydantic.info import LogInfo
-from src.db.models.instantiations.url.core.pydantic import URLInfo
 from src.db.dtos.url.mapping import URLMapping
 from src.db.models.instantiations.link.batch_url import LinkBatchURL
-from src.db.models.templates import Base
+from src.db.models.instantiations.url.core.pydantic.info import URLInfo
+from src.db.models.templates_.base import Base
 from src.db.models.instantiations.duplicate.sqlalchemy import Duplicate
 from src.db.models.instantiations.log.sqlalchemy import Log
 from src.db.models.instantiations.url.data_source.sqlalchemy import URLDataSource
 from src.db.models.instantiations.url.core.sqlalchemy import URL
 from src.db.models.instantiations.batch.sqlalchemy import Batch
-from src.core.tasks.url.operators.submit_approved_url.tdo import SubmittedURLInfo
+from src.core.tasks.url.operators.submit_approved.tdo import SubmittedURLInfo
 from src.core.env_var_manager import EnvVarManager
 from src.core.enums import BatchStatus
 

@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from src.db.models.instantiations.agency.sqlalchemy import Agency
-from src.db.models.templates import Base
+from src.db.models.templates_.base import Base
 from src.db.templates.markers.bulk.upsert import BulkUpsertableModel
 
 

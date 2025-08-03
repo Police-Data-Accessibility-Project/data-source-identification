@@ -7,7 +7,7 @@ from src.api.endpoints.annotate.agency.get.dto import GetNextURLForAgencyAnnotat
 from src.api.endpoints.annotate.agency.get.queries.agency_suggestion import GetAgencySuggestionsQueryBuilder
 from src.collectors.enums import URLStatus
 from src.core.enums import SuggestedStatus
-from src.core.tasks.url.operators.url_html.scraper.parser.util import convert_to_response_html_info
+from src.core.tasks.url.operators.html.scraper.parser.util import convert_to_response_html_info
 from src.db.dtos.url.mapping import URLMapping
 from src.db.models.instantiations.link.batch_url import LinkBatchURL
 from src.db.models.instantiations.link.url_agency.sqlalchemy import LinkURLAgency

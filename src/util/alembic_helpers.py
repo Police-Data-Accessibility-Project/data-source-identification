@@ -61,7 +61,8 @@ def id_column() -> sa.Column:
         sa.Integer(),
         primary_key=True,
         autoincrement=True,
-        nullable=False
+        nullable=False,
+        comment='The primary identifier for the row.'
     )
 
 def created_at_column() -> sa.Column:
@@ -70,7 +71,8 @@ def created_at_column() -> sa.Column:
         'created_at',
         sa.DateTime(),
         server_default=sa.text('now()'),
-        nullable=False
+        nullable=False,
+        comment='The time the row was created.'
     )
 
 def updated_at_column() -> sa.Column:
@@ -80,7 +82,8 @@ def updated_at_column() -> sa.Column:
         sa.DateTime(),
         server_default=sa.text('now()'),
         server_onupdate=sa.text('now()'),
-        nullable=False
+        nullable=False,
+        comment='The last time the row was updated.'
     )
 
 def url_id_column() -> sa.Column:
@@ -91,7 +94,8 @@ def url_id_column() -> sa.Column:
             'urls.id',
             ondelete='CASCADE'
         ),
-        nullable=False
+        nullable=False,
+        comment='A foreign key to the `urls` table.'
     )
 
 def batch_id_column(nullable=False) -> sa.Column:
@@ -102,5 +106,6 @@ def batch_id_column(nullable=False) -> sa.Column:
             'batches.id',
             ondelete='CASCADE'
         ),
-        nullable=nullable
+        nullable=nullable,
+        comment='A foreign key to the `batches` table.'
     )

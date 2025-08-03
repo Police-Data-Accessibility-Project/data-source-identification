@@ -77,19 +77,21 @@ from src.core.tasks.url.operators.agency_identification.queries.has_urls_without
     HasURLsWithoutAgencySuggestionsQueryBuilder
 from src.core.tasks.url.operators.auto_relevant.models.tdo import URLRelevantTDO
 from src.core.tasks.url.operators.auto_relevant.queries.get_tdos import GetAutoRelevantTDOsQueryBuilder
-from src.core.tasks.url.operators.submit_approved_url.queries.get import GetValidatedURLsQueryBuilder
-from src.core.tasks.url.operators.submit_approved_url.queries.has_validated import HasValidatedURLsQueryBuilder
-from src.core.tasks.url.operators.submit_approved_url.queries.mark_submitted import MarkURLsAsSubmittedQueryBuilder
-from src.core.tasks.url.operators.submit_approved_url.tdo import SubmitApprovedURLTDO, SubmittedURLInfo
-from src.core.tasks.url.operators.url_404_probe.tdo import URL404ProbeTDO
-from src.core.tasks.url.operators.url_duplicate.tdo import URLDuplicateTDO
-from src.core.tasks.url.operators.url_html.queries.get_pending_urls_without_html_data import \
+from src.core.tasks.url.operators.probe.queries.get_urls import GetURLsWithoutProbeQueryBuilder
+from src.core.tasks.url.operators.probe.queries.has_urls import HasURLsWithoutProbeQueryBuilder
+from src.core.tasks.url.operators.probe_404.tdo import URL404ProbeTDO
+from src.core.tasks.url.operators.submit_approved.queries.get import GetValidatedURLsQueryBuilder
+from src.core.tasks.url.operators.submit_approved.queries.has_validated import HasValidatedURLsQueryBuilder
+from src.core.tasks.url.operators.submit_approved.queries.mark_submitted import MarkURLsAsSubmittedQueryBuilder
+from src.core.tasks.url.operators.submit_approved.tdo import SubmitApprovedURLTDO, SubmittedURLInfo
+from src.core.tasks.url.operators.duplicate.tdo import URLDuplicateTDO
+from src.core.tasks.url.operators.html.queries.get import \
     GetPendingURLsWithoutHTMLDataQueryBuilder
-from src.core.tasks.url.operators.url_miscellaneous_metadata.queries.get_pending_urls_missing_miscellaneous_data import \
+from src.core.tasks.url.operators.misc_metadata.queries.get_pending_urls_missing_miscellaneous_data import \
     GetPendingURLsMissingMiscellaneousDataQueryBuilder
-from src.core.tasks.url.operators.url_miscellaneous_metadata.queries.has_pending_urls_missing_miscellaneous_data import \
+from src.core.tasks.url.operators.misc_metadata.queries.has_pending_urls_missing_miscellaneous_data import \
     HasPendingURsMissingMiscellaneousDataQueryBuilder
-from src.core.tasks.url.operators.url_miscellaneous_metadata.tdo import URLMiscellaneousMetadataTDO
+from src.core.tasks.url.operators.misc_metadata.tdo import URLMiscellaneousMetadataTDO
 from src.db.client.helpers import add_standard_limit_and_offset
 from src.db.client.types import UserSuggestionModel
 from src.db.config_manager import ConfigManager
@@ -118,13 +120,13 @@ from src.db.models.instantiations.root_url_cache import RootURL
 from src.db.models.instantiations.task.core import Task
 from src.db.models.instantiations.task.error import TaskError
 from src.db.models.instantiations.url.checked_for_duplicate import URLCheckedForDuplicate
-from src.db.models.instantiations.url.compressed_html import URLCompressedHTML
-from src.db.models.instantiations.url.core.pydantic import URLInfo
+from src.db.models.instantiations.url.html.compressed.sqlalchemy import URLCompressedHTML
+from src.db.models.instantiations.url.core.pydantic.info import URLInfo
 from src.db.models.instantiations.url.core.sqlalchemy import URL
 from src.db.models.instantiations.url.data_source.sqlalchemy import URLDataSource
 from src.db.models.instantiations.url.error_info.pydantic import URLErrorPydanticInfo
 from src.db.models.instantiations.url.error_info.sqlalchemy import URLErrorInfo
-from src.db.models.instantiations.url.html_content import URLHTMLContent
+from src.db.models.instantiations.url.html.content.sqlalchemy import URLHTMLContent
 from src.db.models.instantiations.url.optional_data_source_metadata import URLOptionalDataSourceMetadata
 from src.db.models.instantiations.url.probed_for_404 import URLProbedFor404
 from src.db.models.instantiations.url.suggestion.agency.auto import AutomatedUrlAgencySuggestion
@@ -134,7 +136,8 @@ from src.db.models.instantiations.url.suggestion.record_type.user import UserRec
 from src.db.models.instantiations.url.suggestion.relevant.auto.pydantic.input import AutoRelevancyAnnotationInput
 from src.db.models.instantiations.url.suggestion.relevant.auto.sqlalchemy import AutoRelevantSuggestion
 from src.db.models.instantiations.url.suggestion.relevant.user import UserRelevantSuggestion
-from src.db.models.templates import Base
+from src.db.models.instantiations.url.web_metadata.sqlalchemy import URLWebMetadata
+from src.db.models.templates_.base import Base
 from src.db.queries.base.builder import QueryBuilderBase
 from src.db.queries.implementations.core.get.html_content_info import GetHTMLContentInfoQueryBuilder
 from src.db.queries.implementations.core.get.recent_batch_summaries.builder import GetRecentBatchSummariesQueryBuilder
@@ -142,10 +145,12 @@ from src.db.queries.implementations.core.metrics.urls.aggregated.pending import 
     GetMetricsURLSAggregatedPendingQueryBuilder
 from src.db.statement_composer import StatementComposer
 from src.db.templates.markers.bulk.delete import BulkDeletableModel
+from src.db.templates.markers.bulk.insert import BulkInsertableModel
 from src.db.templates.markers.bulk.upsert import BulkUpsertableModel
 from src.db.utils.compression import decompress_html, compress_html
 from src.external.pdap.dtos.sync.agencies import AgenciesSyncResponseInnerInfo
 from src.external.pdap.dtos.sync.data_sources import DataSourcesSyncResponseInnerInfo
+
 
 class AsyncDatabaseClient:
     def __init__(self, db_url: Optional[str] = None):
@@ -183,7 +188,6 @@ class AsyncDatabaseClient:
                         raise e
 
         return wrapper
-
 
     @session_manager
     async def execute(self, session: AsyncSession, statement):
@@ -235,6 +239,15 @@ class AsyncDatabaseClient:
         models: list[BulkDeletableModel],
     ):
         return await sh.bulk_delete(session, models)
+
+    @session_manager
+    async def bulk_insert(
+        self,
+        session: AsyncSession,
+        models: list[BulkInsertableModel],
+        return_ids: bool = False
+    ) -> list[int] | None:
+        return await sh.bulk_insert(session, models=models, return_ids=return_ids)
 
     @session_manager
     async def scalar(self, session: AsyncSession, statement):
@@ -480,8 +493,8 @@ class AsyncDatabaseClient:
         await self._add_models(session, URLHTMLContent, html_content_infos)
 
     @session_manager
-    async def has_pending_urls_without_html_data(self, session: AsyncSession) -> bool:
-        statement = self.statement_composer.pending_urls_without_html_data()
+    async def has_non_errored_urls_without_html_data(self, session: AsyncSession) -> bool:
+        statement = self.statement_composer.has_non_errored_urls_without_html_data()
         statement = statement.limit(1)
         scalar_result = await session.scalars(statement)
         return bool(scalar_result.first())
@@ -522,7 +535,7 @@ class AsyncDatabaseClient:
             )
             session.add(metadata_object)
 
-    async def get_pending_urls_without_html_data(self) -> list[URLInfo]:
+    async def get_non_errored_urls_without_html_data(self) -> list[URLInfo]:
         return await self.run_query_builder(GetPendingURLsWithoutHTMLDataQueryBuilder())
 
     async def get_urls_with_html_data_and_without_models(
@@ -553,7 +566,6 @@ class AsyncDatabaseClient:
             session=session,
             model=AutoRecordTypeSuggestion
         )
-
 
     async def has_urls_with_html_data_and_without_models(
         self,
@@ -596,7 +608,6 @@ class AsyncDatabaseClient:
         """Get all records of a model. Used primarily in testing."""
         return await sh.get_all(session=session, model=model, order_by_attribute=order_by_attribute)
 
-
     @session_manager
     async def load_root_url_cache(self, session: AsyncSession) -> dict[str, str]:
         statement = select(RootURL)
@@ -619,7 +630,6 @@ class AsyncDatabaseClient:
         return await self.run_query_builder(GetURLsQueryBuilder(
             page=page, errors=errors
         ))
-
 
     @session_manager
     async def initiate_task(
@@ -732,7 +742,6 @@ class AsyncDatabaseClient:
         """Retrieve URLs without confirmed or suggested agencies."""
         return await self.run_query_builder(GetPendingURLsWithoutAgencySuggestionsQueryBuilder())
 
-
     async def get_next_url_agency_for_annotation(
         self,
         user_id: int,
@@ -742,7 +751,6 @@ class AsyncDatabaseClient:
             user_id=user_id,
             batch_id=batch_id
         ))
-
 
     @session_manager
     async def upsert_new_agencies(
@@ -764,7 +772,6 @@ class AsyncDatabaseClient:
             agency.county = suggestion.county
             agency.locality = suggestion.locality
             session.add(agency)
-
 
     @session_manager
     async def add_confirmed_agency_url_links(
@@ -865,7 +872,6 @@ class AsyncDatabaseClient:
             rejection_reason=rejection_reason
         ))
 
-
     @session_manager
     async def get_batch_by_id(self, session, batch_id: int) -> Optional[BatchSummary]:
         """Retrieve a batch by ID."""
@@ -886,7 +892,11 @@ class AsyncDatabaseClient:
         ))
 
     @session_manager
-    async def insert_url(self, session: AsyncSession, url_info: URLInfo) -> int:
+    async def insert_url(
+        self,
+        session: AsyncSession,
+        url_info: URLInfo
+    ) -> int:
         """Insert a new URL into the database."""
         url_entry = URL(
             url=url_info.url,
@@ -905,21 +915,33 @@ class AsyncDatabaseClient:
         return url_entry.id
 
     @session_manager
-    async def get_url_info_by_url(self, session: AsyncSession, url: str) -> Optional[URLInfo]:
+    async def get_url_info_by_url(
+        self,
+        session: AsyncSession,
+        url: str
+    ) -> URLInfo | None:
         query = Select(URL).where(URL.url == url)
         raw_result = await session.execute(query)
         url = raw_result.scalars().first()
         return URLInfo(**url.__dict__)
 
     @session_manager
-    async def get_url_info_by_id(self, session: AsyncSession, url_id: int) -> Optional[URLInfo]:
+    async def get_url_info_by_id(
+        self,
+        session: AsyncSession,
+        url_id: int
+    ) -> URLInfo | None:
         query = Select(URL).where(URL.id == url_id)
         raw_result = await session.execute(query)
         url = raw_result.scalars().first()
         return URLInfo(**url.__dict__)
 
     @session_manager
-    async def insert_logs(self, session, log_infos: List[LogInfo]):
+    async def insert_logs(
+        self,
+        session: AsyncSession,
+        log_infos: list[LogInfo]
+    ) -> None:
         for log_info in log_infos:
             log = Log(log=log_info.log, batch_id=log_info.batch_id)
             if log_info.created_at is not None:
@@ -927,7 +949,11 @@ class AsyncDatabaseClient:
             session.add(log)
 
     @session_manager
-    async def insert_duplicates(self, session, duplicate_infos: list[DuplicateInsertInfo]):
+    async def insert_duplicates(
+        self,
+        session: AsyncSession,
+        duplicate_infos: list[DuplicateInsertInfo]
+    ) -> None:
         for duplicate_info in duplicate_infos:
             duplicate = Duplicate(
                 batch_id=duplicate_info.duplicate_batch_id,
@@ -936,7 +962,11 @@ class AsyncDatabaseClient:
             session.add(duplicate)
 
     @session_manager
-    async def insert_batch(self, session: AsyncSession, batch_info: BatchInfo) -> int:
+    async def insert_batch(
+        self,
+        session: AsyncSession,
+        batch_info: BatchInfo
+    ) -> int:
         """Insert a new batch into the database and return its ID."""
         batch = Batch(
             strategy=batch_info.strategy,
@@ -956,7 +986,11 @@ class AsyncDatabaseClient:
         await session.flush()
         return batch.id
 
-    async def insert_urls(self, url_infos: List[URLInfo], batch_id: int) -> InsertURLsInfo:
+    async def insert_urls(
+        self,
+        url_infos: list[URLInfo],
+        batch_id: int
+    ) -> InsertURLsInfo:
         url_mappings = []
         duplicates = []
         for url_info in url_infos:
@@ -984,14 +1018,14 @@ class AsyncDatabaseClient:
     @session_manager
     async def update_batch_post_collection(
         self,
-        session,
+        session: AsyncSession,
         batch_id: int,
         total_url_count: int,
         original_url_count: int,
         duplicate_url_count: int,
         batch_status: BatchStatus,
         compute_time: float = None,
-    ):
+    ) -> None:
 
         query = Select(Batch).where(Batch.id == batch_id)
         result = await session.execute(query)
@@ -1057,7 +1091,7 @@ class AsyncDatabaseClient:
 
     async def get_next_url_for_all_annotations(
         self, batch_id: int | None = None
-        ) -> GetNextURLForAllAnnotationResponse:
+    ) -> GetNextURLForAllAnnotationResponse:
         return await self.run_query_builder(GetNextURLForAllAnnotationQueryBuilder(batch_id))
 
     @session_manager
@@ -1106,7 +1140,6 @@ class AsyncDatabaseClient:
             dto=dto
         ))
 
-
     @session_manager
     async def search_for_url(self, session: AsyncSession, url: str) -> SearchURLResponse:
         query = select(URL).where(URL.url == url)
@@ -1126,7 +1159,6 @@ class AsyncDatabaseClient:
         return await self.run_query_builder(
             GetBatchesAggregatedMetricsQueryBuilder()
         )
-
 
     async def get_batches_breakdown_metrics(
         self,
@@ -1414,6 +1446,8 @@ class AsyncDatabaseClient:
     async def mark_all_as_404(self, url_ids: List[int]):
         query = update(URL).where(URL.id.in_(url_ids)).values(outcome=URLStatus.NOT_FOUND.value)
         await self.execute(query)
+        query = update(URLWebMetadata).where(URLWebMetadata.url_id.in_(url_ids)).values(status_code=404)
+        await self.execute(query)
 
     async def mark_all_as_recently_probed_for_404(
         self,
@@ -1571,3 +1605,13 @@ class AsyncDatabaseClient:
 
     async def get_current_database_time(self) -> datetime:
         return await self.scalar(select(func.now()))
+
+    async def has_urls_without_probe(self) -> bool:
+        return await self.run_query_builder(
+            HasURLsWithoutProbeQueryBuilder()
+        )
+
+    async def get_urls_without_probe(self) -> list[URLMapping]:
+        return await self.run_query_builder(
+            GetURLsWithoutProbeQueryBuilder()
+        )

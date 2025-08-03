@@ -3,7 +3,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from src.core.tasks.url.operators.url_duplicate.core import URLDuplicateTaskOperator
+from src.core.tasks.url.operators.duplicate.core import URLDuplicateTaskOperator
 from src.db.dtos.url.mapping import URLMapping
 from src.db.models.instantiations.url.checked_for_duplicate import URLCheckedForDuplicate
 from src.db.models.instantiations.url.core.sqlalchemy import URL

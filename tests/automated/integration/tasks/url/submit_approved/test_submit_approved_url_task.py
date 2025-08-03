@@ -1,7 +1,7 @@
 import pytest
 from deepdiff import DeepDiff
 
-from src.core.tasks.url.operators.submit_approved_url.core import SubmitApprovedURLTaskOperator
+from src.core.tasks.url.operators.submit_approved.core import SubmitApprovedURLTaskOperator
 from src.db.enums import TaskType
 from src.db.models.instantiations.url.error_info.sqlalchemy import URLErrorInfo
 from src.db.models.instantiations.url.data_source.sqlalchemy import URLDataSource

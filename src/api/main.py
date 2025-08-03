@@ -26,11 +26,11 @@ from src.core.tasks.scheduled.loader import ScheduledTaskOperatorLoader
 from src.core.tasks.scheduled.manager import AsyncScheduledTaskManager
 from src.core.tasks.url.loader import URLTaskOperatorLoader
 from src.core.tasks.url.manager import TaskManager
-from src.core.tasks.url.operators.url_html.scraper.parser.core import HTMLResponseParser
-from src.core.tasks.url.operators.url_html.scraper.request_interface.core import URLRequestInterface
+from src.core.tasks.url.operators.html.scraper.parser.core import HTMLResponseParser
+from src.external.url_request.core import URLRequestInterface
 from src.db.client.async_ import AsyncDatabaseClient
 from src.db.client.sync import DatabaseClient
-from src.core.tasks.url.operators.url_html.scraper.root_url_cache.core import RootURLCache
+from src.core.tasks.url.operators.html.scraper.root_url_cache.core import RootURLCache
 from src.external.huggingface.hub.client import HuggingFaceHubClient
 from src.external.huggingface.inference.client import HuggingFaceInferenceClient
 from src.external.pdap.client import PDAPClient

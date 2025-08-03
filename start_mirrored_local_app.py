@@ -27,15 +27,8 @@ def main():
     # Check cache if exists and
     checker = TimestampChecker()
     data_dump_container = docker_manager.run_container(data_dumper_docker_info)
-    if checker.last_run_within_24_hours():
-        print("Last run within 24 hours, skipping dump...")
-    else:
-        data_dump_container.run_command(
-            DUMP_SH_DOCKER_PATH,
-        )
-    data_dump_container.run_command(
-        RESTORE_SH_DOCKER_PATH,
-    )
+    _run_dump_if_longer_than_24_hours(checker, data_dump_container)
+    _run_database_restore(data_dump_container)
     print("Stopping datadumper container")
     data_dump_container.stop()
     checker.set_last_run_time()
@@ -44,6 +37,10 @@ def main():
     apply_migrations()
 
     # Run `fastapi dev main.py`
+    _run_fast_api(docker_manager)
+
+
+def _run_fast_api(docker_manager: DockerManager) -> None:
     try:
         uvicorn.run(
             "src.api.main:app",
@@ -59,8 +56,22 @@ def main():
         print("Containers stopped.")
 
 
+def _run_database_restore(data_dump_container) -> None:
+    data_dump_container.run_command(
+        RESTORE_SH_DOCKER_PATH,
+    )
 
 
+def _run_dump_if_longer_than_24_hours(
+    checker: TimestampChecker,
+    data_dump_container
+) -> None:
+    if checker.last_run_within_24_hours():
+        print("Last run within 24 hours, skipping dump...")
+        return
+    data_dump_container.run_command(
+        DUMP_SH_DOCKER_PATH,
+    )
 
 
 if __name__ == "__main__":

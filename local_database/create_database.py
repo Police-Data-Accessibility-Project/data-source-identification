@@ -15,7 +15,7 @@ POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD", "HanviliciousHamiltonHilltops
 
 
 # Connect to the default 'postgres' database to create other databases
-def connect(database="postgres", autocommit=True):
+def connect(database="postgres", autocommit=True) -> psycopg2.extensions.connection:
     conn = psycopg2.connect(
         dbname=database,
         user=POSTGRES_USER,
@@ -27,7 +27,7 @@ def connect(database="postgres", autocommit=True):
         conn.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
     return conn
 
-def create_database(db_name):
+def create_database(db_name: str) -> None:
     conn = connect("postgres")
     with conn.cursor() as cur:
         cur.execute(sql.SQL("""
@@ -48,7 +48,7 @@ def create_database(db_name):
         except Exception as e:
             print(f"❌ Failed to create {db_name}: {e}")
 
-def main():
+def main() -> None:
     print("Creating databases...")
     create_database(LOCAL_SOURCE_COLLECTOR_DB_NAME)
 

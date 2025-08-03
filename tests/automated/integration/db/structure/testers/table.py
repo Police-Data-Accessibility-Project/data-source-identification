@@ -7,7 +7,7 @@ from sqlalchemy.dialects import postgresql
 from sqlalchemy.exc import DataError
 
 from src.db.helpers.connect import get_postgres_connection_string
-from src.db.models.templates import Base
+from src.db.models.templates_.base import Base
 from tests.automated.integration.db.structure.testers.models.column import ColumnTester
 from tests.automated.integration.db.structure.types import ConstraintTester, SATypes
 

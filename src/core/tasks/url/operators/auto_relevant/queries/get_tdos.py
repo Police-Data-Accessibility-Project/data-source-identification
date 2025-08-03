@@ -6,7 +6,7 @@ from sqlalchemy.orm import selectinload
 
 from src.collectors.enums import URLStatus
 from src.core.tasks.url.operators.auto_relevant.models.tdo import URLRelevantTDO
-from src.db.models.instantiations.url.compressed_html import URLCompressedHTML
+from src.db.models.instantiations.url.html.compressed.sqlalchemy import URLCompressedHTML
 from src.db.models.instantiations.url.core.sqlalchemy import URL
 from src.db.models.instantiations.url.suggestion.relevant.auto.sqlalchemy import AutoRelevantSuggestion
 from src.db.queries.base.builder import QueryBuilderBase
