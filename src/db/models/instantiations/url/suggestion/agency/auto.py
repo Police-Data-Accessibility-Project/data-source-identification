@@ -3,10 +3,10 @@ from sqlalchemy.orm import relationship
 
 from src.db.models.helpers import get_agency_id_foreign_column
 from src.db.models.mixins import URLDependentMixin
-from src.db.models.templates import StandardBase
+from src.db.models.templates_.with_id import WithIDBase
 
 
-class AutomatedUrlAgencySuggestion(URLDependentMixin, StandardBase):
+class AutomatedUrlAgencySuggestion(URLDependentMixin, WithIDBase):
     __tablename__ = "automated_url_agency_suggestions"
 
     agency_id = get_agency_id_foreign_column(nullable=True)

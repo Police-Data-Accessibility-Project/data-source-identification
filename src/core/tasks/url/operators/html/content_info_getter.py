@@ -1,5 +1,6 @@
 from src.core.tasks.url.operators.html.scraper.parser.dtos.response_html import ResponseHTMLInfo
-from src.db.dtos.url.html_content import URLHTMLContentInfo, HTMLContentType
+from src.db.dtos.url.html_content import URLHTMLContentInfo
+from src.db.models.instantiations.url.html.content.enums import HTMLContentType
 
 
 class HTMLContentInfoGetter:

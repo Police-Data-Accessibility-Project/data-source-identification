@@ -1,5 +1,5 @@
 from src.db.helpers.session.types import BulkActionType
-from src.db.models.templates import Base
+from src.db.models.templates_.base import Base
 from src.db.templates.protocols.sa_correlated.core import SQLAlchemyCorrelatedProtocol
 from src.db.templates.protocols.sa_correlated.with_id import SQLAlchemyCorrelatedWithIDProtocol
 from src.db.utils.validate import validate_all_models_of_same_type

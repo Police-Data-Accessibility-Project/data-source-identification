@@ -25,8 +25,75 @@ WEB_STATUS_ENUM = sa.Enum(
     "404_not_found",
     name="web_status"
 )
+SCRAPE_STATUS_ENUM = sa.Enum(
+    "success",
+    "error",
+    name="scrape_status",
+)
 
-TABLE_NAME = 'url_web_metadata'
+URL_WEB_METADATA_TABLE_NAME = 'url_web_metadata'
+URL_SCRAPE_INFO = 'url_scrape_info'
+
+
+
+
+
+def upgrade() -> None:
+    _create_url_html_info_table()
+    _add_url_probe_task_type_enum()
+    _set_up_scrape_info_table()
+    _use_existing_html_data_to_add_scrape_info()
+
+def _use_existing_html_data_to_add_scrape_info():
+    op.execute(
+        f"""
+        INSERT INTO {URL_SCRAPE_INFO} (url_id, status)
+        SELECT url_id, 'success'::scrape_status
+        FROM url_compressed_html
+        """
+    )
+    op.execute(
+        f"""
+        INSERT INTO {URL_SCRAPE_INFO} (url_id, status)
+        SELECT distinct(url_id), 'success'::scrape_status
+        FROM url_html_content
+        LEFT JOIN URL_COMPRESSED_HTML USING (url_id)
+        WHERE URL_COMPRESSED_HTML.url_id IS NULL
+        """
+    )
+
+def downgrade() -> None:
+    _drop_scrape_info_table()
+    # Drop Enums
+    WEB_STATUS_ENUM.drop(op.get_bind(), checkfirst=True)
+    _drop_url_probe_task_type_enum()
+    _tear_down_scrape_info_table()
+
+
+def _set_up_scrape_info_table():
+    op.create_table(
+        URL_SCRAPE_INFO,
+        id_column(),
+        url_id_column(),
+        sa.Column(
+            'status',
+            SCRAPE_STATUS_ENUM,
+            nullable=False,
+            comment='The status of the most recent scrape attempt.'
+        ),
+        created_at_column(),
+        updated_at_column(),
+        sa.UniqueConstraint('url_id', name='uq_url_scrape_info_url_id')
+    )
+
+
+
+
+def _tear_down_scrape_info_table():
+    op.drop_table(URL_SCRAPE_INFO)
+    # Drop enum
+    SCRAPE_STATUS_ENUM.drop(op.get_bind(), checkfirst=True)
+
 
 def _add_url_probe_task_type_enum() -> None:
     switch_enum_type(
@@ -71,7 +138,7 @@ def _drop_url_probe_task_type_enum() -> None:
 
 def _create_url_html_info_table() -> None:
     op.create_table(
-        TABLE_NAME,
+        URL_WEB_METADATA_TABLE_NAME,
         id_column(),
         url_id_column(),
         sa.Column('accessed', sa.Boolean(), nullable=False),
@@ -85,17 +152,5 @@ def _create_url_html_info_table() -> None:
         sa.CheckConstraint('status_code <= 999', name='ck_url_web_status_info_status_code_max'),
     )
 
-def _drop_url_html_info_table() -> None:
-    op.drop_table(TABLE_NAME)
-
-
-def upgrade() -> None:
-    _create_url_html_info_table()
-    _add_url_probe_task_type_enum()
-
-
-def downgrade() -> None:
-    _drop_url_html_info_table()
-    # Drop Enums
-    WEB_STATUS_ENUM.drop(op.get_bind(), checkfirst=True)
-    _drop_url_probe_task_type_enum()
+def _drop_scrape_info_table() -> None:
+    op.drop_table(URL_WEB_METADATA_TABLE_NAME)

@@ -1,4 +1,5 @@
 from datetime import datetime
+from http import HTTPStatus
 from typing import Optional, Any
 
 from src.api.endpoints.annotate.agency.post.dto import URLAgencyAnnotationPostInfo
@@ -357,11 +358,13 @@ class DBDataCreator:
     async def url_metadata(
             self,
             url_ids: list[int],
-            content_type: str = "text/html"
+            content_type: str = "text/html",
+            status_code: int = HTTPStatus.OK.value
     ) -> None:
         await self.run_command(
             URLMetadataCommand(
                 url_ids=url_ids,
-                content_type=content_type
+                content_type=content_type,
+                status_code=status_code
             )
         )

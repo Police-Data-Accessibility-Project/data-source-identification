@@ -2,7 +2,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.db.dtos.url.html_content import URLHTMLContentInfo
-from src.db.models.instantiations.url.html_content import URLHTMLContent
+from src.db.models.instantiations.url.html.content.sqlalchemy import URLHTMLContent
 from src.db.queries.base.builder import QueryBuilderBase
 
 

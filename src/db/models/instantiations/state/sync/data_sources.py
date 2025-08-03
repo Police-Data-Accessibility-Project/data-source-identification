@@ -1,6 +1,6 @@
 from sqlalchemy import Integer, Column, DateTime, Date
 
-from src.db.models.templates import Base
+from src.db.models.templates_.base import Base
 
 
 class DataSourcesSyncState(Base):

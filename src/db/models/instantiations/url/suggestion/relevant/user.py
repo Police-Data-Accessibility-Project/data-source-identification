@@ -3,14 +3,14 @@ from sqlalchemy.dialects import postgresql
 from sqlalchemy.orm import relationship
 
 from src.db.models.mixins import UpdatedAtMixin, CreatedAtMixin, URLDependentMixin
-from src.db.models.templates import StandardBase
+from src.db.models.templates_.with_id import WithIDBase
 
 
 class UserRelevantSuggestion(
     UpdatedAtMixin,
     CreatedAtMixin,
     URLDependentMixin,
-    StandardBase
+    WithIDBase
 ):
     __tablename__ = "user_relevant_suggestions"
 

@@ -3,7 +3,7 @@ from sqlalchemy.orm import selectinload
 
 from src.collectors.enums import CollectorType
 from src.core.tasks.url.operators.misc_metadata.tdo import URLMiscellaneousMetadataTDO, URLHTMLMetadataInfo
-from src.db.dtos.url.html_content import HTMLContentType
+from src.db.models.instantiations.url.html.content.enums import HTMLContentType
 from src.db.models.instantiations.url.core.sqlalchemy import URL
 from src.db.queries.base.builder import QueryBuilderBase
 from src.db.statement_composer import StatementComposer

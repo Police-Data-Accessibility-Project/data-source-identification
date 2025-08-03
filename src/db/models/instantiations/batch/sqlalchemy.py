@@ -3,11 +3,11 @@ from sqlalchemy.dialects import postgresql
 from sqlalchemy.orm import relationship
 
 from src.db.models.helpers import CURRENT_TIME_SERVER_DEFAULT
-from src.db.models.templates import StandardBase
+from src.db.models.templates_.with_id import WithIDBase
 from src.db.models.types import batch_status_enum
 
 
-class Batch(StandardBase):
+class Batch(WithIDBase):
     __tablename__ = 'batches'
 
     strategy = Column(

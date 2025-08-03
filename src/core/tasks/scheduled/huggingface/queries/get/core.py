@@ -1,5 +1,3 @@
-from typing import Any
-
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -7,7 +5,7 @@ from src.collectors.enums import URLStatus
 from src.core.tasks.scheduled.huggingface.queries.get.convert import convert_url_status_to_relevant, \
     convert_fine_to_coarse_record_type
 from src.core.tasks.scheduled.huggingface.queries.get.model import GetForLoadingToHuggingFaceOutput
-from src.db.models.instantiations.url.compressed_html import URLCompressedHTML
+from src.db.models.instantiations.url.html.compressed.sqlalchemy import URLCompressedHTML
 from src.db.models.instantiations.url.core.sqlalchemy import URL
 from src.db.queries.base.builder import QueryBuilderBase
 from src.db.utils.compression import decompress_html

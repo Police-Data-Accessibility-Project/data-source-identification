@@ -6,13 +6,13 @@ from sqlalchemy import Column, Integer, String, DateTime
 from sqlalchemy.orm import relationship
 
 from src.db.models.mixins import UpdatedAtMixin, CreatedAtMixin
-from src.db.models.templates import Base, StandardBase
+from src.db.models.templates_.with_id import WithIDBase
 
 
 class Agency(
     CreatedAtMixin, # When agency was added to database
     UpdatedAtMixin, # When agency was last updated in database
-    StandardBase
+    WithIDBase
 ):
     __tablename__ = "agencies"
 

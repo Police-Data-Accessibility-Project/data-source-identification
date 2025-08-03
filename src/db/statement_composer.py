@@ -1,3 +1,4 @@
+from http import HTTPStatus
 from typing import Any
 
 from sqlalchemy import Select, select, exists, func, Subquery, and_, not_, ColumnElement
@@ -11,10 +12,11 @@ from src.db.models.instantiations.link.batch_url import LinkBatchURL
 from src.db.models.instantiations.link.task_url import LinkTaskURL
 from src.db.models.instantiations.link.url_agency.sqlalchemy import LinkURLAgency
 from src.db.models.instantiations.task.core import Task
-from src.db.models.instantiations.url.html_content import URLHTMLContent
+from src.db.models.instantiations.url.html.content.sqlalchemy import URLHTMLContent
 from src.db.models.instantiations.url.optional_data_source_metadata import URLOptionalDataSourceMetadata
 from src.db.models.instantiations.url.core.sqlalchemy import URL
 from src.db.models.instantiations.batch.sqlalchemy import Batch
+from src.db.models.instantiations.url.scrape_info.sqlalchemy import URLScrapeInfo
 from src.db.models.instantiations.url.suggestion.agency.auto import AutomatedUrlAgencySuggestion
 from src.db.models.instantiations.url.web_metadata.sqlalchemy import URLWebMetadata
 from src.db.types import UserSuggestionType
@@ -38,19 +40,13 @@ class StatementComposer:
         query = (
             select(URL)
             .join(URLWebMetadata)
-            .outerjoin(URLHTMLContent)
-            .where(URLHTMLContent.id == None)
-            .where(~exists(exclude_subquery))
-            .where(URLWebMetadata.content_type.like("%html%"))
-            .where(URL.outcome.in_(
-                [
-                    URLStatus.PENDING,
-                    URLStatus.NOT_RELEVANT,
-                    URLStatus.INDIVIDUAL_RECORD,
-                    URLStatus.SUBMITTED,
-                    URLStatus.VALIDATED
-                ]
-            ))
+            .outerjoin(URLScrapeInfo)
+            .where(
+                URLScrapeInfo.id == None,
+                ~exists(exclude_subquery),
+                URLWebMetadata.status_code == HTTPStatus.OK.value,
+                URLWebMetadata.content_type.like("%html%"),
+            )
             .options(
                 selectinload(URL.batch)
             )

@@ -1,5 +1,5 @@
 from src.db.models.instantiations.url.web_metadata.sqlalchemy import URLWebMetadata
-from src.db.models.templates import Base
+from src.db.models.templates_.base import Base
 from src.db.templates.markers.bulk.insert import BulkInsertableModel
 
 

@@ -5,10 +5,10 @@ from sqlalchemy.orm import Mapped
 
 from src.db.enums import ChangeLogOperationType
 from src.db.models.mixins import CreatedAtMixin
-from src.db.models.templates import StandardBase
+from src.db.models.templates_.with_id import WithIDBase
 
 
-class ChangeLog(CreatedAtMixin, StandardBase):
+class ChangeLog(CreatedAtMixin, WithIDBase):
 
     __tablename__ = "change_log"
 

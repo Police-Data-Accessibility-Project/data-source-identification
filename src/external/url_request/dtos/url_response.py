@@ -6,7 +6,7 @@ from pydantic import BaseModel
 
 class URLResponseInfo(BaseModel):
     success: bool
-    status: Optional[HTTPStatus] = None
-    html: Optional[str] = None
-    content_type: Optional[str] = None
-    exception: Optional[str] = None
+    status: HTTPStatus | None = None
+    html: str | None = None
+    content_type: str | None = None
+    exception: str | None = None

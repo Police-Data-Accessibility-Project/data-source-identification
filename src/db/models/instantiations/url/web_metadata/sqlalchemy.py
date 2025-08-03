@@ -1,11 +1,11 @@
 from sqlalchemy import Column, Text, Boolean, Integer
 
 from src.db.models.mixins import URLDependentMixin, CreatedAtMixin, UpdatedAtMixin
-from src.db.models.templates import StandardBase
+from src.db.models.templates_.with_id import WithIDBase
 
 
 class URLWebMetadata(
-    StandardBase,
+    WithIDBase,
     URLDependentMixin,
     CreatedAtMixin,
     UpdatedAtMixin

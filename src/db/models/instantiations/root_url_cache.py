@@ -1,10 +1,10 @@
 from sqlalchemy import UniqueConstraint, Column, String
 
 from src.db.models.mixins import UpdatedAtMixin
-from src.db.models.templates import StandardBase
+from src.db.models.templates_.with_id import WithIDBase
 
 
-class RootURL(UpdatedAtMixin, StandardBase):
+class RootURL(UpdatedAtMixin, WithIDBase):
     __tablename__ = 'root_url_cache'
     __table_args__ = (
         UniqueConstraint(

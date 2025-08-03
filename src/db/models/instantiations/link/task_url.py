@@ -1,6 +1,6 @@
 from sqlalchemy import UniqueConstraint, Column, Integer, ForeignKey
 
-from src.db.models.templates import Base
+from src.db.models.templates_.base import Base
 
 
 class LinkTaskURL(Base):

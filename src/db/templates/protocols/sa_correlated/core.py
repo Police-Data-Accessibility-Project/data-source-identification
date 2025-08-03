@@ -1,7 +1,7 @@
 from abc import abstractmethod
 from typing import Protocol, runtime_checkable
 
-from src.db.models.templates import Base
+from src.db.models.templates_.base import Base
 
 
 @runtime_checkable

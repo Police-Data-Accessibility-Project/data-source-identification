@@ -1,16 +1,14 @@
-from sqlalchemy import Column, Integer, ForeignKey, Text, String, JSON, Enum
-from sqlalchemy.dialects import postgresql
+from sqlalchemy import Column, Text, String, JSON
 from sqlalchemy.orm import relationship
 
 from src.collectors.enums import URLStatus
 from src.core.enums import RecordType
 from src.db.models.helpers import enum_column
 from src.db.models.mixins import UpdatedAtMixin, CreatedAtMixin
-from src.db.models.templates import StandardBase
-from src.db.models.types import record_type_values
+from src.db.models.templates_.with_id import WithIDBase
 
 
-class URL(UpdatedAtMixin, CreatedAtMixin, StandardBase):
+class URL(UpdatedAtMixin, CreatedAtMixin, WithIDBase):
     __tablename__ = 'urls'
 
     # The batch this URL is associated with
@@ -84,4 +82,12 @@ class URL(UpdatedAtMixin, CreatedAtMixin, StandardBase):
         "URLCompressedHTML",
         uselist=False,
         back_populates="url"
+    )
+    scrape_info = relationship(
+        "URLScrapeInfo",
+        uselist=False,
+    )
+    web_metadata = relationship(
+        "URLWebMetadata",
+        uselist=False,
     )

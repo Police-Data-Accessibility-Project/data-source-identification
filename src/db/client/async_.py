@@ -85,7 +85,7 @@ from src.core.tasks.url.operators.submit_approved.queries.has_validated import H
 from src.core.tasks.url.operators.submit_approved.queries.mark_submitted import MarkURLsAsSubmittedQueryBuilder
 from src.core.tasks.url.operators.submit_approved.tdo import SubmitApprovedURLTDO, SubmittedURLInfo
 from src.core.tasks.url.operators.duplicate.tdo import URLDuplicateTDO
-from src.core.tasks.url.operators.html.queries.get_pending_urls_without_html_data import \
+from src.core.tasks.url.operators.html.queries.get import \
     GetPendingURLsWithoutHTMLDataQueryBuilder
 from src.core.tasks.url.operators.misc_metadata.queries.get_pending_urls_missing_miscellaneous_data import \
     GetPendingURLsMissingMiscellaneousDataQueryBuilder
@@ -120,13 +120,13 @@ from src.db.models.instantiations.root_url_cache import RootURL
 from src.db.models.instantiations.task.core import Task
 from src.db.models.instantiations.task.error import TaskError
 from src.db.models.instantiations.url.checked_for_duplicate import URLCheckedForDuplicate
-from src.db.models.instantiations.url.compressed_html import URLCompressedHTML
+from src.db.models.instantiations.url.html.compressed.sqlalchemy import URLCompressedHTML
 from src.db.models.instantiations.url.core.pydantic.info import URLInfo
 from src.db.models.instantiations.url.core.sqlalchemy import URL
 from src.db.models.instantiations.url.data_source.sqlalchemy import URLDataSource
 from src.db.models.instantiations.url.error_info.pydantic import URLErrorPydanticInfo
 from src.db.models.instantiations.url.error_info.sqlalchemy import URLErrorInfo
-from src.db.models.instantiations.url.html_content import URLHTMLContent
+from src.db.models.instantiations.url.html.content.sqlalchemy import URLHTMLContent
 from src.db.models.instantiations.url.optional_data_source_metadata import URLOptionalDataSourceMetadata
 from src.db.models.instantiations.url.probed_for_404 import URLProbedFor404
 from src.db.models.instantiations.url.suggestion.agency.auto import AutomatedUrlAgencySuggestion
@@ -136,7 +136,8 @@ from src.db.models.instantiations.url.suggestion.record_type.user import UserRec
 from src.db.models.instantiations.url.suggestion.relevant.auto.pydantic.input import AutoRelevancyAnnotationInput
 from src.db.models.instantiations.url.suggestion.relevant.auto.sqlalchemy import AutoRelevantSuggestion
 from src.db.models.instantiations.url.suggestion.relevant.user import UserRelevantSuggestion
-from src.db.models.templates import Base
+from src.db.models.instantiations.url.web_metadata.sqlalchemy import URLWebMetadata
+from src.db.models.templates_.base import Base
 from src.db.queries.base.builder import QueryBuilderBase
 from src.db.queries.implementations.core.get.html_content_info import GetHTMLContentInfoQueryBuilder
 from src.db.queries.implementations.core.get.recent_batch_summaries.builder import GetRecentBatchSummariesQueryBuilder
@@ -244,8 +245,9 @@ class AsyncDatabaseClient:
         self,
         session: AsyncSession,
         models: list[BulkInsertableModel],
-    ):
-        return await sh.bulk_insert(session, models)
+        return_ids: bool = False
+    ) -> list[int] | None:
+        return await sh.bulk_insert(session, models=models, return_ids=return_ids)
 
     @session_manager
     async def scalar(self, session: AsyncSession, statement):
@@ -1443,6 +1445,8 @@ class AsyncDatabaseClient:
 
     async def mark_all_as_404(self, url_ids: List[int]):
         query = update(URL).where(URL.id.in_(url_ids)).values(outcome=URLStatus.NOT_FOUND.value)
+        await self.execute(query)
+        query = update(URLWebMetadata).where(URLWebMetadata.id.in_(url_ids)).values(status_code=404)
         await self.execute(query)
 
     async def mark_all_as_recently_probed_for_404(

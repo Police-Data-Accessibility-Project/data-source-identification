@@ -14,7 +14,7 @@ from src.db.models.instantiations.log.pydantic.info import LogInfo
 from src.db.dtos.url.mapping import URLMapping
 from src.db.models.instantiations.link.batch_url import LinkBatchURL
 from src.db.models.instantiations.url.core.pydantic.info import URLInfo
-from src.db.models.templates import Base
+from src.db.models.templates_.base import Base
 from src.db.models.instantiations.duplicate.sqlalchemy import Duplicate
 from src.db.models.instantiations.log.sqlalchemy import Log
 from src.db.models.instantiations.url.data_source.sqlalchemy import URLDataSource

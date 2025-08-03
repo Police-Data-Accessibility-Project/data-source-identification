@@ -1,7 +1,7 @@
 from src.collectors.enums import URLStatus
 from src.core.enums import RecordType
 from src.db.models.instantiations.url.core.sqlalchemy import URL
-from src.db.models.templates import Base
+from src.db.models.templates_.base import Base
 from src.db.templates.markers.bulk.insert import BulkInsertableModel
 
 

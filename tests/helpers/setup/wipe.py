@@ -1,6 +1,6 @@
 from sqlalchemy import create_engine
 
-from src.db.models.templates import Base
+from src.db.models.templates_.base import Base
 
 
 def wipe_database(connection_string: str) -> None:
