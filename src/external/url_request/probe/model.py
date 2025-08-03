@@ -1,9 +1,9 @@
-from pydantic import BaseModel, model_validator
+from pydantic import BaseModel, model_validator, Field
 
 
 class URLProbeResponse(BaseModel):
     url: str
-    status_code: int | None
+    status_code: int | None = Field(le=999, ge=100)
     content_type: str | None
     error: str | None = None
 
