@@ -111,7 +111,7 @@ class URLTaskOperatorLoader:
 
     async def get_task_operators(self) -> list[URLTaskOperatorBase]:
         return [
-            await self.get_url_probe_task_operator(),
+            # await self.get_url_probe_task_operator(),
             await self.get_url_html_task_operator(),
             await self.get_url_duplicate_task_operator(),
             await self.get_url_404_probe_task_operator(),
