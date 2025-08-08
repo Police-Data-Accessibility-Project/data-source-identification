@@ -1,6 +1,6 @@
 from aiohttp import ClientSession
 
-from src.external.url_request.probe.model import URLProbeResponse
+from src.external.url_request.probe.models.response import URLProbeResponse
 from tests.automated.integration.tasks.url.probe.setup.format import build_url_to_probe_response_map
 
 

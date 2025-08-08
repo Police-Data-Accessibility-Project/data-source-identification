@@ -1,10 +1,12 @@
-import asyncio
+from http import HTTPStatus
 
-from aiohttp import ClientSession, ClientResponseError
-
-from src.external.url_request.probe.format import format_client_response, format_client_response_error, format_error
-from src.external.url_request.probe.model import URLProbeResponse
+from aiohttp import ClientSession
 from tqdm.asyncio import tqdm_asyncio
+
+from src.external.url_request.probe.convert import convert_client_response_to_probe_response
+from src.external.url_request.probe.models.response import URLProbeResponse
+from src.external.url_request.probe.models.wrapper import URLProbeResponseOuterWrapper
+
 
 class URLProbeManager:
 
@@ -14,30 +16,28 @@ class URLProbeManager:
     ):
         self.session = session
 
-    async def probe_urls(self, urls: list[str]) -> list[URLProbeResponse]:
-        return await tqdm_asyncio.gather(*[self.probe_url(url) for url in urls])
+    async def probe_urls(self, urls: list[str]) -> list[URLProbeResponseOuterWrapper]:
+        return await tqdm_asyncio.gather(*[self._probe(url) for url in urls])
 
-    async def probe_url(self, url: str) -> URLProbeResponse:
-        result = await self.head(url)
-        if result.error is None:
-            return result
-        return await self.get(url)
+    async def _probe(self, url: str) -> URLProbeResponseOuterWrapper:
+        response = await self._head(url)
+        if not response.is_redirect and response.response.status_code == HTTPStatus.OK:
+            return response
+        # Fallback to GET if HEAD fails
+        return await self._get(url)
 
 
-    async def head(self, url: str) -> URLProbeResponse:
-        try:
-            async with self.session.head(url) as response:
-                return format_client_response(url, response=response)
-        except ClientResponseError as e:
-            return format_client_response_error(url, error=e)
-        except Exception as e:
-            return format_error(url, error=e)
 
-    async def get(self, url: str) -> URLProbeResponse:
-        try:
-            async with self.session.get(url) as response:
-                return format_client_response(url, response=response)
-        except ClientResponseError as e:
-            return format_client_response_error(url, error=e)
-        except Exception as e:
-            return format_error(url, error=e)
+    async def _head(self, url: str) -> URLProbeResponseOuterWrapper:
+        async with self.session.head(url, allow_redirects=True) as response:
+            return URLProbeResponseOuterWrapper(
+                original_url=url,
+                response=convert_client_response_to_probe_response(response)
+            )
+
+    async def _get(self, url: str) -> URLProbeResponseOuterWrapper:
+        async with self.session.get(url, allow_redirects=True) as response:
+            return URLProbeResponseOuterWrapper(
+                original_url=url,
+                response=convert_client_response_to_probe_response(response)
+            )

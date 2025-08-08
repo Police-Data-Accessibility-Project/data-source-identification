@@ -3,6 +3,7 @@ from datetime import datetime
 from src.collectors.enums import URLStatus
 from src.core.tasks.url.operators.submit_approved.tdo import SubmittedURLInfo
 from src.db.dtos.url.insert import InsertURLsInfo
+from src.db.models.instantiations.url.core.enums import URLSource
 from src.db.models.instantiations.url.core.pydantic.info import URLInfo
 from tests.helpers.data_creator.commands.base import DBDataCreatorCommandBase
 from tests.helpers.simple_test_data_functions import generate_test_urls
@@ -38,7 +39,8 @@ class URLsDBDataCreatorCommand(DBDataCreatorCommandBase):
                     outcome=self.outcome,
                     name="Test Name" if self.outcome == URLStatus.VALIDATED else None,
                     collector_metadata=self.collector_metadata,
-                    created_at=self.created_at
+                    created_at=self.created_at,
+                    source=URLSource.COLLECTOR
                 )
             )
 

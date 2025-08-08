@@ -1,4 +1,4 @@
-from src.external.url_request.probe.model import URLProbeResponse
+from src.external.url_request.probe.models.response import URLProbeResponse
 from tests.automated.integration.tasks.url.probe.setup.data import SETUP_ENTRIES
 from tests.automated.integration.tasks.url.probe.setup.models.entry import TestURLProbeTaskEntry
 

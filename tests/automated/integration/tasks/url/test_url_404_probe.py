@@ -18,7 +18,9 @@ from tests.helpers.batch_creation_parameters.core import TestBatchCreationParame
 
 
 @pytest.mark.asyncio
-async def test_url_404_probe_task(db_data_creator: DBDataCreator):
+async def test_url_404_probe_task(
+    db_data_creator: DBDataCreator
+):
 
     mock_html_content = "<html></html>"
     mock_content_type = "text/html"

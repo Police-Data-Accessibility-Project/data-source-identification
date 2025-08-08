@@ -2,6 +2,7 @@ from pendulum import today
 
 from src.db.client.async_ import AsyncDatabaseClient
 from src.db.models.instantiations.link.url_agency.sqlalchemy import LinkURLAgency
+from src.db.models.instantiations.url.core.enums import URLSource
 from src.db.models.instantiations.url.core.sqlalchemy import URL
 from src.external.pdap.dtos.sync.data_sources import DataSourcesSyncResponseInnerInfo
 from tests.automated.integration.tasks.scheduled.sync.data_sources.setup.enums import AgencyAssigned
@@ -67,6 +68,7 @@ class URLSetupFunctor:
             collector_metadata={},
             outcome=entry.url_status.value,
             record_type=entry.record_type.value if entry.record_type is not None else None,
+            source=URLSource.COLLECTOR
         )
         url_id = await self.adb_client.add(url, return_id=True)
         links = []

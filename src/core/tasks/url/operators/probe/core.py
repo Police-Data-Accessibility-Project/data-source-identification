@@ -2,8 +2,10 @@ from typing import final
 from typing_extensions import override
 
 from src.core.tasks.url.operators.base import URLTaskOperatorBase
+from src.core.tasks.url.operators.probe.convert import convert_tdo_to_web_metadata_list
+from src.core.tasks.url.operators.probe.filter import filter_non_redirect_tdos, filter_redirect_tdos
+from src.core.tasks.url.operators.probe.queries.insert_redirects.query import InsertRedirectsQueryBuilder
 from src.core.tasks.url.operators.probe.tdo import URLProbeTDO
-from src.db.models.instantiations.url.web_metadata.pydantic import URLWebMetadataPydantic
 from src.external.url_request.core import URLRequestInterface
 from src.db.client.async_ import AsyncDatabaseClient
 from src.db.dtos.url.mapping import URLMapping
@@ -57,21 +59,18 @@ class URLProbeTaskOperator(URLTaskOperatorBase):
         )
         # Re-associate the responses with the URL mappings
         for response in responses:
-            tdo = url_to_tdo[response.url]
+            tdo = url_to_tdo[response.original_url]
             tdo.response = response
 
     async def update_database(self, tdos: list[URLProbeTDO]) -> None:
-        web_metadata_objects: list[URLWebMetadataPydantic] = []
-        for tdo in tdos:
-            response = tdo.response
-            web_metadata_object = URLWebMetadataPydantic(
-                url_id=tdo.url_mapping.url_id,
-                accessed=response.status_code is not None,
-                status_code=response.status_code,
-                content_type=response.content_type,
-                error_message=response.error
-            )
-            web_metadata_objects.append(web_metadata_object)
+        non_redirect_tdos = filter_non_redirect_tdos(tdos)
+        web_metadata_objects = convert_tdo_to_web_metadata_list(non_redirect_tdos)
         await self.adb_client.bulk_insert(web_metadata_objects)
+
+        redirect_tdos = filter_redirect_tdos(tdos)
+
+        query_builder = InsertRedirectsQueryBuilder(tdos=redirect_tdos)
+        await self.adb_client.run_query_builder(query_builder)
+
 
 

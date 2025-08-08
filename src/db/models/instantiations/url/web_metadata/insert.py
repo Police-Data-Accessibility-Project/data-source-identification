@@ -3,15 +3,22 @@ from pydantic import Field
 from src.db.models.instantiations.url.web_metadata.sqlalchemy import URLWebMetadata
 from src.db.models.templates_.base import Base
 from src.db.templates.markers.bulk.insert import BulkInsertableModel
+from src.db.templates.markers.bulk.upsert import BulkUpsertableModel
 
 
-class URLWebMetadataPydantic(BulkInsertableModel):
+class URLWebMetadataPydantic(
+    BulkInsertableModel,
+    BulkUpsertableModel
+):
 
     @classmethod
     def sa_model(cls) -> type[Base]:
         """Defines the SQLAlchemy model."""
         return URLWebMetadata
 
+    @classmethod
+    def id_field(cls) -> str:
+        return "url_id"
 
     url_id: int
     accessed: bool
