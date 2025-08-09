@@ -3,14 +3,13 @@ from typing import cast, Literal
 from src.collectors.enums import URLStatus
 from src.core.tasks.url.operators.probe.core import URLProbeTaskOperator
 from src.db.client.async_ import AsyncDatabaseClient
-from src.db.models.instantiations.url.core.enums import URLSource
 from src.db.models.instantiations.url.core.pydantic.insert import URLInsertModel
 from src.external.url_request.core import URLRequestInterface
 from src.external.url_request.probe.models.redirect import URLProbeRedirectResponsePair
 from src.external.url_request.probe.models.response import URLProbeResponse
 from src.external.url_request.probe.models.wrapper import URLProbeResponseOuterWrapper
-from tests.automated.integration.tasks.url.probe.v2.constants import TEST_URL, TEST_SOURCE, TEST_DEST_URL
-from tests.automated.integration.tasks.url.probe.v2.mocks.url_request_interface import MockURLRequestInterface
+from tests.automated.integration.tasks.url.probe.constants import TEST_URL, TEST_DEST_URL, TEST_SOURCE
+from tests.automated.integration.tasks.url.probe.mocks.url_request_interface import MockURLRequestInterface
 
 
 class TestURLProbeSetupManager:

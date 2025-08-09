@@ -1,8 +1,9 @@
 import pytest
 
 from src.collectors.enums import URLStatus
-from tests.automated.integration.tasks.url.probe.v2.check.manager import TestURLProbeCheckManager
-from tests.automated.integration.tasks.url.probe.v2.setup.manager import TestURLProbeSetupManager
+from tests.automated.integration.tasks.asserts import assert_task_ran_without_error
+from tests.automated.integration.tasks.url.probe.check.manager import TestURLProbeCheckManager
+from tests.automated.integration.tasks.url.probe.setup.manager import TestURLProbeSetupManager
 
 
 @pytest.mark.asyncio
@@ -36,6 +37,7 @@ async def test_url_probe_task_redirect_two_urls_same_dest(
     source_url_id_1 = await setup_manager.setup_url(URLStatus.PENDING)
     source_url_id_2 = await setup_manager.setup_url(URLStatus.PENDING, url="https://example.com/2")
     run_info = await operator.run_task(1)
+    assert_task_ran_without_error(run_info)
     await check_manager.check_url(
         url_id=source_url_id_1,
         expected_status=URLStatus.PENDING

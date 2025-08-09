@@ -1,4 +1,5 @@
 from src.core.tasks.url.operators.probe.tdo import URLProbeTDO
+from src.db.dtos.url.mapping import URLMapping
 from src.external.url_request.probe.models.redirect import URLProbeRedirectResponsePair
 
 

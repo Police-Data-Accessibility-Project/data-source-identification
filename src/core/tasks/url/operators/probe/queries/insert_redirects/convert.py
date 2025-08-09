@@ -1,5 +1,6 @@
 from src.core.tasks.url.operators.probe.queries.insert_redirects.models.url_response_map import URLResponseMapping
 from src.core.tasks.url.operators.probe.queries.urls.exist.model import UrlExistsResult
+from src.core.tasks.url.operators.probe.tdo import URLProbeTDO
 from src.db.dtos.url.mapping import URLMapping
 from src.db.models.instantiations.url.core.enums import URLSource
 from src.db.models.instantiations.url.core.pydantic.insert import URLInsertModel
@@ -39,6 +40,17 @@ def convert_to_url_insert_models(urls: list[str]) -> list[URLInsertModel]:
             URLInsertModel(
                 url=url,
                 source=URLSource.REDIRECT
+            )
+        )
+    return results
+
+def convert_tdo_to_url_response_mappings(tdos: list[URLProbeTDO]) -> list[URLResponseMapping]:
+    results = []
+    for tdo in tdos:
+        results.append(
+            URLResponseMapping(
+                url_mapping=tdo.url_mapping,
+                response=tdo.response.response.source
             )
         )
     return results

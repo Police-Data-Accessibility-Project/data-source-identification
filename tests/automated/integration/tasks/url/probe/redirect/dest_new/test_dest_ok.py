@@ -2,8 +2,8 @@ import pytest
 
 from src.collectors.enums import URLStatus
 from tests.automated.integration.tasks.asserts import assert_task_ran_without_error
-from tests.automated.integration.tasks.url.probe.v2.check.manager import TestURLProbeCheckManager
-from tests.automated.integration.tasks.url.probe.v2.setup.manager import TestURLProbeSetupManager
+from tests.automated.integration.tasks.url.probe.check.manager import TestURLProbeCheckManager
+from tests.automated.integration.tasks.url.probe.setup.manager import TestURLProbeSetupManager
 
 
 @pytest.mark.asyncio
