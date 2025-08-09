@@ -2,6 +2,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing_extensions import override, final
 
+from src.core.tasks.url.operators.probe.queries.urls.not_probed.get.clean import clean_url
 from src.db.dtos.url.mapping import URLMapping
 from src.db.models.instantiations.url.core.sqlalchemy import URL
 from src.db.models.instantiations.url.web_metadata.sqlalchemy import URLWebMetadata
@@ -29,4 +30,9 @@ class GetURLsWithoutProbeQueryBuilder(QueryBuilderBase):
             .limit(500)
         )
         db_mappings = await sh.mappings(session, query=query)
-        return [URLMapping(**mapping) for mapping in db_mappings]
+        return [
+            URLMapping(
+                url_id=mapping["url_id"],
+                url=clean_url(mapping["url"])
+            ) for mapping in db_mappings
+        ]

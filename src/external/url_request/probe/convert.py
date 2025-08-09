@@ -5,6 +5,7 @@ from aiohttp import ClientResponse, ClientResponseError
 
 from src.external.url_request.probe.models.response import URLProbeResponse
 from src.external.url_request.probe.models.redirect import URLProbeRedirectResponsePair
+from src.external.url_request.probe.models.wrapper import URLProbeResponseOuterWrapper
 
 
 def _process_client_response_history(history: Sequence[ClientResponse]) -> list[str]:
@@ -95,4 +96,17 @@ def convert_client_response_to_probe_response(
         destination=destination_probe_response
     )
 
-
+def convert_to_error_response(
+    url: str,
+    error: str,
+    status_code: int | None = None
+) -> URLProbeResponseOuterWrapper:
+    return URLProbeResponseOuterWrapper(
+        original_url=url,
+        response=URLProbeResponse(
+            url=url,
+            status_code=status_code,
+            content_type=None,
+            error=error
+        )
+    )

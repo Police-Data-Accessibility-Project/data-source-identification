@@ -77,7 +77,7 @@ from src.core.tasks.url.operators.agency_identification.queries.has_urls_without
     HasURLsWithoutAgencySuggestionsQueryBuilder
 from src.core.tasks.url.operators.auto_relevant.models.tdo import URLRelevantTDO
 from src.core.tasks.url.operators.auto_relevant.queries.get_tdos import GetAutoRelevantTDOsQueryBuilder
-from src.core.tasks.url.operators.probe.queries.urls.not_probed.get import GetURLsWithoutProbeQueryBuilder
+from src.core.tasks.url.operators.probe.queries.urls.not_probed.get.query import GetURLsWithoutProbeQueryBuilder
 from src.core.tasks.url.operators.probe.queries.urls.not_probed.exists import HasURLsWithoutProbeQueryBuilder
 from src.core.tasks.url.operators.probe_404.tdo import URL404ProbeTDO
 from src.core.tasks.url.operators.submit_approved.queries.get import GetValidatedURLsQueryBuilder

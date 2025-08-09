@@ -5,8 +5,6 @@ from src.core.tasks.url.operators.probe.queries.insert_redirects.filter import f
 from src.core.tasks.url.operators.probe.queries.insert_redirects.request_manager import InsertRedirectsRequestManager
 from src.core.tasks.url.operators.probe.tdo import URLProbeTDO
 from src.db.dtos.url.mapping import URLMapping
-from src.db.helpers.session import session_helper as sh
-from src.db.models.instantiations.link.url_redirect_url.pydantic import LinkURLRedirectURLPydantic
 from src.db.queries.base.builder import QueryBuilderBase
 from src.external.url_request.probe.models.response import URLProbeResponse
 from src.util.url_mapper import URLMapper
