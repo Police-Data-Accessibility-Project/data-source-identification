@@ -6,6 +6,7 @@ from src.collectors.source_collectors.common_crawler.input import CommonCrawlerI
 from src.db.client.async_ import AsyncDatabaseClient
 from src.core.logger import AsyncCoreLogger
 from src.collectors.source_collectors.common_crawler.collector import CommonCrawlerCollector
+from src.db.models.instantiations.url.core.enums import URLSource
 from src.db.models.instantiations.url.core.pydantic.info import URLInfo
 
 
@@ -39,8 +40,8 @@ async def test_common_crawl_collector(mock_get_common_crawl_search_results):
 
     collector.adb_client.insert_urls.assert_called_once_with(
         url_infos=[
-            URLInfo(url="http://keyword.com"),
-            URLInfo(url="http://keyword.com/page3")
+            URLInfo(url="http://keyword.com", source=URLSource.COLLECTOR),
+            URLInfo(url="http://keyword.com/page3", source=URLSource.COLLECTOR),
         ],
         batch_id=1
     )

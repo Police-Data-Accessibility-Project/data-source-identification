@@ -7,6 +7,7 @@ from src.collectors.source_collectors.auto_googler.dtos.input import AutoGoogler
 from src.db.client.async_ import AsyncDatabaseClient
 from src.core.logger import AsyncCoreLogger
 from src.collectors.source_collectors.auto_googler.collector import AutoGooglerCollector
+from src.db.models.instantiations.url.core.enums import URLSource
 from src.db.models.instantiations.url.core.pydantic.info import URLInfo
 
 
@@ -37,6 +38,12 @@ async def test_auto_googler_collector(patch_get_query_results):
     mock.assert_called_once_with("keyword")
 
     collector.adb_client.insert_urls.assert_called_once_with(
-        url_infos=[URLInfo(url="https://include.com/1", collector_metadata={"query": "keyword", "title": "keyword", "snippet": "snippet 1"})],
+        url_infos=[
+            URLInfo(
+                url="https://include.com/1",
+                collector_metadata={"query": "keyword", "title": "keyword", "snippet": "snippet 1"},
+                source=URLSource.COLLECTOR
+            )
+        ],
         batch_id=1
     )

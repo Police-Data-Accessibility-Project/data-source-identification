@@ -10,6 +10,7 @@ from src.core.logger import AsyncCoreLogger
 from src.collectors.source_collectors.muckrock.collectors.county.dto import MuckrockCountySearchCollectorInputDTO
 from src.collectors.source_collectors.muckrock.collectors.simple.dto import MuckrockSimpleSearchCollectorInputDTO
 from src.collectors.source_collectors.muckrock.fetch_requests.foia import FOIAFetchRequest
+from src.db.models.instantiations.url.core.enums import URLSource
 from src.db.models.instantiations.url.core.pydantic.info import URLInfo
 
 PATCH_ROOT = "src.collectors.source_collectors.muckrock"
@@ -55,10 +56,12 @@ async def test_muckrock_simple_collector(patch_muckrock_fetcher):
             URLInfo(
                 url='https://include.com/1',
                 collector_metadata={'absolute_url': 'https://include.com/1', 'title': 'keyword'},
+                source=URLSource.COLLECTOR
             ),
             URLInfo(
                 url='https://include.com/2',
                 collector_metadata={'absolute_url': 'https://include.com/2', 'title': 'keyword'},
+                source=URLSource.COLLECTOR
             )
         ],
         batch_id=1
@@ -111,14 +114,17 @@ async def test_muckrock_county_search_collector(patch_muckrock_county_level_sear
             URLInfo(
                 url='https://include.com/1',
                 collector_metadata={'absolute_url': 'https://include.com/1', 'title': 'keyword'},
+                source=URLSource.COLLECTOR
             ),
             URLInfo(
                 url='https://include.com/2',
                 collector_metadata={'absolute_url': 'https://include.com/2', 'title': 'keyword'},
+                source=URLSource.COLLECTOR
             ),
             URLInfo(
                 url='https://include.com/3',
                 collector_metadata={'absolute_url': 'https://include.com/3', 'title': 'lemon'},
+                source=URLSource.COLLECTOR
             ),
         ],
         batch_id=1
