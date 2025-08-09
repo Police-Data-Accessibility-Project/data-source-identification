@@ -1,15 +1,23 @@
-import pytest_asyncio
+import pytest
 
-from src.core.tasks.url.operators.probe.core import URLProbeTaskOperator
-from src.external.url_request.core import URLRequestInterface
-from tests.automated.integration.tasks.url.probe.constants import PATCH_ROOT
-from tests.automated.integration.tasks.url.probe.setup.mocks.probe_manager import MockURLProbeManager
+from src.db.client.async_ import AsyncDatabaseClient
+from tests.automated.integration.tasks.url.probe.check.manager import TestURLProbeCheckManager
+from tests.automated.integration.tasks.url.probe.setup.manager import TestURLProbeSetupManager
 
 
-@pytest_asyncio.fixture
-async def operator(adb_client_test, monkeypatch):
-    monkeypatch.setattr(PATCH_ROOT, MockURLProbeManager)
-    yield URLProbeTaskOperator(
-        adb_client=adb_client_test,
-        url_request_interface=URLRequestInterface()
+@pytest.fixture
+def setup_manager(
+    adb_client_test: AsyncDatabaseClient
+) -> TestURLProbeSetupManager:
+    return TestURLProbeSetupManager(
+        adb_client=adb_client_test
+    )
+
+
+@pytest.fixture
+def check_manager(
+    adb_client_test: AsyncDatabaseClient
+) -> TestURLProbeCheckManager:
+    return TestURLProbeCheckManager(
+        adb_client=adb_client_test
     )

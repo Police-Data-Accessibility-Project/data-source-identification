@@ -1,0 +1,1 @@
+Tests for when the destination is a new URL not in the database.

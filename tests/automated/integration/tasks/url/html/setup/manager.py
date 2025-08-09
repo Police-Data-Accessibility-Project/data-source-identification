@@ -5,8 +5,9 @@ from src.core.tasks.url.operators.html.core import URLHTMLTaskOperator
 from src.core.tasks.url.operators.html.scraper.parser.core import HTMLResponseParser
 from src.core.tasks.url.operators.html.scraper.root_url_cache.core import RootURLCache
 from src.db.client.async_ import AsyncDatabaseClient
+from src.db.models.instantiations.url.core.enums import URLSource
 from src.db.models.instantiations.url.core.pydantic.insert import URLInsertModel
-from src.db.models.instantiations.url.web_metadata.pydantic import URLWebMetadataPydantic
+from src.db.models.instantiations.url.web_metadata.insert import URLWebMetadataPydantic
 from tests.automated.integration.tasks.url.html.mocks.methods import mock_get_from_cache, mock_parse
 from tests.automated.integration.tasks.url.html.mocks.url_request_interface.core import MockURLRequestInterface
 from tests.automated.integration.tasks.url.html.setup.data import TEST_ENTRIES
@@ -32,7 +33,8 @@ class TestURLHTMLTaskSetupManager:
                 outcome=entry.url_info.status,
                 url=entry.url_info.url,
                 name=f"Test for {entry.url_info.url}",
-                record_type=RecordType.RESOURCES
+                record_type=RecordType.RESOURCES,
+                source=URLSource.COLLECTOR
             )
             url_insert_models.append(url_insert_model)
         url_ids = await self.adb_client.bulk_insert(url_insert_models, return_ids=True)

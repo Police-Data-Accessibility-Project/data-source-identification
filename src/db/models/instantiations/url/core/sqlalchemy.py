@@ -4,6 +4,7 @@ from sqlalchemy.orm import relationship
 from src.collectors.enums import URLStatus
 from src.core.enums import RecordType
 from src.db.models.helpers import enum_column
+from src.db.models.instantiations.url.core.enums import URLSource
 from src.db.models.mixins import UpdatedAtMixin, CreatedAtMixin
 from src.db.models.templates_.with_id import WithIDBase
 
@@ -18,7 +19,7 @@ class URL(UpdatedAtMixin, CreatedAtMixin, WithIDBase):
     # The metadata from the collector
     collector_metadata = Column(JSON)
     # The outcome of the URL: submitted, human_labeling, rejected, duplicate, etc.
-    outcome: Column = enum_column(
+    outcome = enum_column(
             URLStatus,
             name='url_status',
             nullable=False
@@ -27,6 +28,11 @@ class URL(UpdatedAtMixin, CreatedAtMixin, WithIDBase):
         RecordType,
         name='record_type',
         nullable=True
+    )
+    source = enum_column(
+        URLSource,
+        name='url_source',
+        nullable=False
     )
 
     # Relationships

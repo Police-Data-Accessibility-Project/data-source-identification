@@ -1,7 +1,4 @@
 import datetime
-from typing import Optional
-
-from pydantic import BaseModel
 
 from src.db.models.instantiations.url.error_info.sqlalchemy import URLErrorInfo
 from src.db.models.templates_.base import Base

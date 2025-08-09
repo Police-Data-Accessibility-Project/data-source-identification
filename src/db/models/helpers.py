@@ -30,4 +30,11 @@ def enum_column(
         nullable=nullable
         )
 
+def url_id_column() -> Column[int]:
+    return Column(
+        Integer(),
+        ForeignKey('urls.id', ondelete='CASCADE'),
+        nullable=False
+    )
+
 CURRENT_TIME_SERVER_DEFAULT = func.now()

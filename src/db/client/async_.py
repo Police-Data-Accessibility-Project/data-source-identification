@@ -77,8 +77,8 @@ from src.core.tasks.url.operators.agency_identification.queries.has_urls_without
     HasURLsWithoutAgencySuggestionsQueryBuilder
 from src.core.tasks.url.operators.auto_relevant.models.tdo import URLRelevantTDO
 from src.core.tasks.url.operators.auto_relevant.queries.get_tdos import GetAutoRelevantTDOsQueryBuilder
-from src.core.tasks.url.operators.probe.queries.get_urls import GetURLsWithoutProbeQueryBuilder
-from src.core.tasks.url.operators.probe.queries.has_urls import HasURLsWithoutProbeQueryBuilder
+from src.core.tasks.url.operators.probe.queries.urls.not_probed.get.query import GetURLsWithoutProbeQueryBuilder
+from src.core.tasks.url.operators.probe.queries.urls.not_probed.exists import HasURLsWithoutProbeQueryBuilder
 from src.core.tasks.url.operators.probe_404.tdo import URL404ProbeTDO
 from src.core.tasks.url.operators.submit_approved.queries.get import GetValidatedURLsQueryBuilder
 from src.core.tasks.url.operators.submit_approved.queries.has_validated import HasValidatedURLsQueryBuilder
@@ -261,6 +261,10 @@ class AsyncDatabaseClient:
     @session_manager
     async def mapping(self, session: AsyncSession, statement):
         return await sh.mapping(session, statement)
+
+    @session_manager
+    async def one_or_none(self, session: AsyncSession, statement):
+        return await sh.one_or_none(session, statement)
 
     @session_manager
     async def run_query_builder(
@@ -901,7 +905,8 @@ class AsyncDatabaseClient:
         url_entry = URL(
             url=url_info.url,
             collector_metadata=url_info.collector_metadata,
-            outcome=url_info.outcome.value
+            outcome=url_info.outcome.value,
+            source=url_info.source
         )
         if url_info.created_at is not None:
             url_entry.created_at = url_info.created_at

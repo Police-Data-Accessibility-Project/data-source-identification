@@ -120,7 +120,8 @@ class DatabaseClient:
             url=url_info.url,
             collector_metadata=url_info.collector_metadata,
             outcome=url_info.outcome,
-            name=url_info.name
+            name=url_info.name,
+            source=url_info.source
         )
         if url_info.created_at is not None:
             url_entry.created_at = url_info.created_at
@@ -143,7 +144,7 @@ class DatabaseClient:
             try:
                 url_id = self.insert_url(url_info)
                 url_mappings.append(URLMapping(url_id=url_id, url=url_info.url))
-            except IntegrityError:
+            except IntegrityError as e:
                 orig_url_info = self.get_url_info_by_url(url_info.url)
                 duplicate_info = DuplicateInsertInfo(
                     duplicate_batch_id=batch_id,

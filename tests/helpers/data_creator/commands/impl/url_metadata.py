@@ -1,6 +1,6 @@
 from http import HTTPStatus
 
-from src.db.models.instantiations.url.web_metadata.pydantic import URLWebMetadataPydantic
+from src.db.models.instantiations.url.web_metadata.insert import URLWebMetadataPydantic
 from tests.helpers.data_creator.commands.base import DBDataCreatorCommandBase
 
 

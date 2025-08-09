@@ -1,5 +1,6 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.db.models.instantiations.url.core.enums import URLSource
 from src.db.models.instantiations.url.html.compressed.sqlalchemy import URLCompressedHTML
 from src.db.models.instantiations.url.core.sqlalchemy import URL
 from src.db.queries.base.builder import QueryBuilderBase
@@ -35,6 +36,7 @@ class SetupTestPushToHuggingFaceEntryQueryBuilder(QueryBuilderBase):
                 name=name,
                 description=description,
                 record_type=inp.record_type,
+                source=URLSource.COLLECTOR
             )
             session.add(url)
             await session.flush()

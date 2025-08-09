@@ -4,6 +4,7 @@ from typing import Optional
 from pydantic import BaseModel
 
 from src.collectors.enums import URLStatus
+from src.db.models.instantiations.url.core.enums import URLSource
 
 
 class URLInfo(BaseModel):
@@ -15,3 +16,4 @@ class URLInfo(BaseModel):
     updated_at: datetime.datetime | None = None
     created_at: datetime.datetime | None = None
     name: str | None = None
+    source: URLSource | None = None

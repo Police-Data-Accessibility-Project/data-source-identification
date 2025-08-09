@@ -1,6 +1,7 @@
 from typing import List
 
 from src.core.preprocessors.base import PreprocessorBase
+from src.db.models.instantiations.url.core.enums import URLSource
 from src.db.models.instantiations.url.core.pydantic.info import URLInfo
 
 
@@ -12,6 +13,7 @@ class CommonCrawlerPreprocessor(PreprocessorBase):
         for url in data["urls"]:
             url_info = URLInfo(
                 url=url,
+                source=URLSource.COLLECTOR
             )
             url_infos.append(url_info)
 

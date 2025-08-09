@@ -7,6 +7,7 @@ from src.collectors.enums import CollectorType, URLStatus
 from src.core.enums import BatchStatus
 from src.db.models.instantiations.batch.sqlalchemy import Batch
 from src.db.models.instantiations.link.batch_url import LinkBatchURL
+from src.db.models.instantiations.url.core.enums import URLSource
 from src.db.models.instantiations.url.core.sqlalchemy import URL
 from src.db.models.instantiations.url.optional_data_source_metadata import URLOptionalDataSourceMetadata
 from src.db.queries.base.builder import QueryBuilderBase
@@ -48,6 +49,7 @@ class UploadManualBatchQueryBuilder(QueryBuilderBase):
                 collector_metadata=entry.collector_metadata,
                 outcome=URLStatus.PENDING.value,
                 record_type=entry.record_type.value if entry.record_type is not None else None,
+                source=URLSource.MANUAL
             )
 
             async with session.begin_nested():

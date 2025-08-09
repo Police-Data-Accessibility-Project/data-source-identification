@@ -1,11 +1,15 @@
 from datetime import datetime, timedelta
 
+from apscheduler.job import Job
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 from src.core.core import AsyncCore
 from src.core.tasks.base.run_info import TaskOperatorRunInfo
 from src.core.tasks.handler import TaskHandler
+from src.core.tasks.scheduled.convert import convert_interval_enum_to_hours
+from src.core.tasks.scheduled.enums import IntervalEnum
 from src.core.tasks.scheduled.loader import ScheduledTaskOperatorLoader
+from src.core.tasks.scheduled.models.entry import ScheduledTaskEntry
 from src.core.tasks.scheduled.templates.operator import ScheduledTaskOperatorBase
 
 
@@ -26,71 +30,72 @@ class AsyncScheduledTaskManager:
         self.scheduler = AsyncIOScheduler()
 
         # Jobs
-        self.run_cycles_job = None
-        self.delete_logs_job = None
-        self.populate_backlog_snapshot_job = None
-        self.sync_agencies_job = None
-        self.sync_data_sources_job = None
-        self.push_to_hugging_face_job = None
+        self._jobs: dict[str, Job] = {}
+
 
     async def setup(self):
         self.scheduler.start()
         await self.add_scheduled_tasks()
 
+    async def _get_entries(self) -> list[ScheduledTaskEntry]:
+        return [
+            ScheduledTaskEntry(
+                name="Run Task Cycles",
+                function=self.async_core.run_tasks,
+                interval=IntervalEnum.HOURLY
+            ),
+            ScheduledTaskEntry(
+                name="Delete Old Logs",
+                function=self.async_core.adb_client.delete_old_logs,
+                interval=IntervalEnum.DAILY
+            ),
+            ScheduledTaskEntry(
+                name="Populate Backlog Snapshot",
+                function=self.async_core.adb_client.populate_backlog_snapshot,
+                interval=IntervalEnum.DAILY
+            ),
+            ScheduledTaskEntry(
+                name="Sync Agencies",
+                function=self.run_task,
+                interval=IntervalEnum.DAILY,
+                kwargs={
+                    "operator": await self.loader.get_sync_agencies_task_operator()
+                }
+            ),
+            ScheduledTaskEntry(
+                name="Sync Data Sources",
+                function=self.run_task,
+                interval=IntervalEnum.DAILY,
+                kwargs={
+                    "operator": await self.loader.get_sync_data_sources_task_operator()
+                }
+            ),
+            # ScheduledTaskEntry(
+            #     name="Push to Hugging Face",
+            #     function=self.run_task,
+            #     interval=IntervalEnum.DAILY,
+            #     kwargs={
+            #         "operator": await self.loader.get_push_to_hugging_face_task_operator()
+            #     }
+            # )
+        ]
+
     async def add_scheduled_tasks(self):
-        self.run_cycles_job = self.scheduler.add_job(
-            self.async_core.run_tasks,
-            trigger=IntervalTrigger(
-                hours=1,
-                start_date=datetime.now() + timedelta(minutes=1)
-            ),
-            misfire_grace_time=60
-        )
-        self.delete_logs_job = self.scheduler.add_job(
-            self.async_core.adb_client.delete_old_logs,
-            trigger=IntervalTrigger(
-                days=1,
-                start_date=datetime.now() + timedelta(minutes=10)
+        """
+        Modifies:
+            self._jobs
+        """
+        entries: list[ScheduledTaskEntry] = await self._get_entries()
+        for idx, entry in enumerate(entries):
+            self._jobs[entry.name] = self.scheduler.add_job(
+                entry.function,
+                trigger=IntervalTrigger(
+                    hours=convert_interval_enum_to_hours(entry.interval),
+                    start_date=datetime.now() + timedelta(minutes=idx + 1)
+                ),
+                misfire_grace_time=60,
+                kwargs=entry.kwargs
             )
-        )
-        self.populate_backlog_snapshot_job = self.scheduler.add_job(
-            self.async_core.adb_client.populate_backlog_snapshot,
-            trigger=IntervalTrigger(
-                days=1,
-                start_date=datetime.now() + timedelta(minutes=20)
-            )
-        )
-        self.sync_agencies_job = self.scheduler.add_job(
-            self.run_task,
-            trigger=IntervalTrigger(
-                days=1,
-                start_date=datetime.now() + timedelta(minutes=2)
-            ),
-            kwargs={
-                "operator": await self.loader.get_sync_agencies_task_operator()
-            }
-        )
-        self.sync_data_sources_job = self.scheduler.add_job(
-            self.run_task,
-            trigger=IntervalTrigger(
-                days=1,
-                start_date=datetime.now() + timedelta(minutes=3)
-            ),
-            kwargs={
-                "operator": await self.loader.get_sync_data_sources_task_operator()
-            }
-        )
-        # TODO: enable once more URLs with HTML have been added to the database.
-        # self.push_to_hugging_face_job = self.scheduler.add_job(
-        #     self.run_task,
-        #     trigger=IntervalTrigger(
-        #         days=1,
-        #         start_date=datetime.now() + timedelta(minutes=4)
-        #     ),
-        #     kwargs={
-        #         "operator": await self.loader.get_push_to_hugging_face_task_operator()
-        #     }
-        # )
 
     def shutdown(self):
         if self.scheduler.running:
