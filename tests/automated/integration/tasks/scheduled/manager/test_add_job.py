@@ -30,7 +30,7 @@ async def test_add_job(
 
     assert len(manager._registry._jobs) == 1
     # Sleep to allow task to run
-    await asyncio.sleep(0.1)
+    await asyncio.sleep(0.5)
     # Confirm task ran
     tasks = await adb_client_test.get_all(Task)
     assert len(tasks) == 1

@@ -7,5 +7,5 @@ from src.core.tasks.scheduled.manager import AsyncScheduledTaskManager
 async def test_add_scheduled_tasks(manager: AsyncScheduledTaskManager):
     await manager.setup()
 
-    assert len(manager._jobs) == 1
+    assert len(manager._registry._jobs) == 1
 
