@@ -3,7 +3,7 @@ from datasets import Dataset
 
 from src.external.huggingface.hub.constants import DATA_SOURCES_RAW_REPO_ID
 from src.external.huggingface.hub.format import format_as_huggingface_dataset
-from src.core.tasks.scheduled.huggingface.queries.get.model import GetForLoadingToHuggingFaceOutput
+from src.core.tasks.scheduled.impl.huggingface.queries.get.model import GetForLoadingToHuggingFaceOutput
 
 
 class HuggingFaceHubClient:

@@ -3,6 +3,7 @@ from typing import Any
 from pydantic import BaseModel
 
 from src.core.tasks.scheduled.enums import IntervalEnum
+from src.core.tasks.scheduled.templates.operator import ScheduledTaskOperatorBase
 
 
 class ScheduledTaskEntry(BaseModel):
@@ -10,7 +11,6 @@ class ScheduledTaskEntry(BaseModel):
     class Config:
         arbitrary_types_allowed = True
 
-    name: str
-    function: Any
+    operator: ScheduledTaskOperatorBase
     interval: IntervalEnum
-    kwargs: dict[str, Any] = {}
+    enabled: bool

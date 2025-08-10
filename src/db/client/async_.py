@@ -52,22 +52,22 @@ from src.api.endpoints.url.get.query import GetURLsQueryBuilder
 from src.collectors.enums import URLStatus, CollectorType
 from src.core.enums import BatchStatus, SuggestionType, RecordType, SuggestedStatus
 from src.core.env_var_manager import EnvVarManager
-from src.core.tasks.scheduled.huggingface.queries.check.core import CheckValidURLsUpdatedQueryBuilder
-from src.core.tasks.scheduled.huggingface.queries.get.core import GetForLoadingToHuggingFaceQueryBuilder
-from src.core.tasks.scheduled.huggingface.queries.get.model import GetForLoadingToHuggingFaceOutput
-from src.core.tasks.scheduled.huggingface.queries.state import SetHuggingFaceUploadStateQueryBuilder
-from src.core.tasks.scheduled.sync.agency.dtos.parameters import AgencySyncParameters
-from src.core.tasks.scheduled.sync.agency.queries.get_sync_params import GetAgenciesSyncParametersQueryBuilder
-from src.core.tasks.scheduled.sync.agency.queries.mark_full_sync import get_mark_full_agencies_sync_query
-from src.core.tasks.scheduled.sync.agency.queries.update_sync_progress import get_update_agencies_sync_progress_query
-from src.core.tasks.scheduled.sync.agency.queries.upsert import \
+from src.core.tasks.scheduled.impl.huggingface.queries.check.core import CheckValidURLsUpdatedQueryBuilder
+from src.core.tasks.scheduled.impl.huggingface.queries.get.core import GetForLoadingToHuggingFaceQueryBuilder
+from src.core.tasks.scheduled.impl.huggingface.queries.get.model import GetForLoadingToHuggingFaceOutput
+from src.core.tasks.scheduled.impl.huggingface.queries.state import SetHuggingFaceUploadStateQueryBuilder
+from src.core.tasks.scheduled.impl.sync.agency.dtos.parameters import AgencySyncParameters
+from src.core.tasks.scheduled.impl.sync.agency.queries.get_sync_params import GetAgenciesSyncParametersQueryBuilder
+from src.core.tasks.scheduled.impl.sync.agency.queries.mark_full_sync import get_mark_full_agencies_sync_query
+from src.core.tasks.scheduled.impl.sync.agency.queries.update_sync_progress import get_update_agencies_sync_progress_query
+from src.core.tasks.scheduled.impl.sync.agency.queries.upsert import \
     convert_agencies_sync_response_to_agencies_upsert
-from src.core.tasks.scheduled.sync.data_sources.params import DataSourcesSyncParameters
-from src.core.tasks.scheduled.sync.data_sources.queries.get_sync_params import GetDataSourcesSyncParametersQueryBuilder
-from src.core.tasks.scheduled.sync.data_sources.queries.mark_full_sync import get_mark_full_data_sources_sync_query
-from src.core.tasks.scheduled.sync.data_sources.queries.update_sync_progress import \
+from src.core.tasks.scheduled.impl.sync.data_sources.params import DataSourcesSyncParameters
+from src.core.tasks.scheduled.impl.sync.data_sources.queries.get_sync_params import GetDataSourcesSyncParametersQueryBuilder
+from src.core.tasks.scheduled.impl.sync.data_sources.queries.mark_full_sync import get_mark_full_data_sources_sync_query
+from src.core.tasks.scheduled.impl.sync.data_sources.queries.update_sync_progress import \
     get_update_data_sources_sync_progress_query
-from src.core.tasks.scheduled.sync.data_sources.queries.upsert.core import \
+from src.core.tasks.scheduled.impl.sync.data_sources.queries.upsert.core import \
     UpsertURLsFromDataSourcesQueryBuilder
 from src.core.tasks.url.operators.agency_identification.dtos.suggestion import URLAgencySuggestionInfo
 from src.core.tasks.url.operators.agency_identification.dtos.tdo import AgencyIdentificationTDO

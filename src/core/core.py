@@ -48,6 +48,9 @@ from src.security.dtos.access_info import AccessInfo
 
 
 class AsyncCore:
+    task_manager: TaskManager | None = None
+    adb_client: AsyncDatabaseClient | None = None
+    collector_manager: AsyncCollectorManager | None = None
 
     def __init__(
             self,
@@ -57,7 +60,6 @@ class AsyncCore:
     ):
         self.task_manager = task_manager
         self.adb_client = adb_client
-
         self.collector_manager = collector_manager
 
 

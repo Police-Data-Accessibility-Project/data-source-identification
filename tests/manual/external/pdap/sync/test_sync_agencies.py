@@ -3,7 +3,7 @@ import time
 
 from pendulum import tomorrow
 
-from src.core.tasks.scheduled.sync.agency.dtos.parameters import AgencySyncParameters
+from src.core.tasks.scheduled.impl.sync.agency.dtos.parameters import AgencySyncParameters
 
 
 @pytest.mark.asyncio

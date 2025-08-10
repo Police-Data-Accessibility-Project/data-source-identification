@@ -24,6 +24,7 @@ from src.core.env_var_manager import EnvVarManager
 from src.core.tasks.handler import TaskHandler
 from src.core.tasks.scheduled.loader import ScheduledTaskOperatorLoader
 from src.core.tasks.scheduled.manager import AsyncScheduledTaskManager
+from src.core.tasks.scheduled.registry.core import ScheduledJobRegistry
 from src.core.tasks.url.loader import URLTaskOperatorLoader
 from src.core.tasks.url.manager import TaskManager
 from src.core.tasks.url.operators.html.scraper.parser.core import HTMLResponseParser
@@ -98,15 +99,16 @@ async def lifespan(app: FastAPI):
         collector_manager=async_collector_manager
     )
     async_scheduled_task_manager = AsyncScheduledTaskManager(
-        async_core=async_core,
         handler=task_handler,
         loader=ScheduledTaskOperatorLoader(
             adb_client=adb_client,
             pdap_client=pdap_client,
             hf_client=HuggingFaceHubClient(
                 token=env_var_manager.hf_hub_token
-            )
-        )
+            ),
+            async_core=async_core,
+        ),
+        registry=ScheduledJobRegistry()
     )
     await async_scheduled_task_manager.setup()
 

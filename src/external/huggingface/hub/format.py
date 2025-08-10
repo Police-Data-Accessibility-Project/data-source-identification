@@ -1,6 +1,6 @@
 from datasets import Dataset
 
-from src.core.tasks.scheduled.huggingface.queries.get.model import GetForLoadingToHuggingFaceOutput
+from src.core.tasks.scheduled.impl.huggingface.queries.get.model import GetForLoadingToHuggingFaceOutput
 
 
 def format_as_huggingface_dataset(outputs: list[GetForLoadingToHuggingFaceOutput]) -> Dataset:
