@@ -28,7 +28,7 @@ def get_database_docker_info() -> DockerInfo:
 def get_source_collector_data_dumper_info() -> DockerInfo:
     return DockerInfo(
         dockerfile_info=DockerfileInfo(
-            image_tag="datadumper",
+            image_tag="datadumper_sc",
             dockerfile_directory=str(project_path(
                 "local_database",
                 "DataDumper"
@@ -42,7 +42,7 @@ def get_source_collector_data_dumper_info() -> DockerInfo:
             )),
             container_path="/dump"
         ),
-        name="datadumper",
+        name="datadumper_sc",
         environment={
             "DUMP_HOST": get_from_env("DUMP_HOST"),
             "DUMP_USER": get_from_env("DUMP_USER"),
