@@ -32,6 +32,8 @@ class URLHTMLContentType(PyEnum):
     DIV = "Div"
 
 class TaskType(PyEnum):
+
+    # URL Tasks
     HTML = "HTML"
     RELEVANCY = "Relevancy"
     RECORD_TYPE = "Record Type"
@@ -41,10 +43,15 @@ class TaskType(PyEnum):
     DUPLICATE_DETECTION = "Duplicate Detection"
     IDLE = "Idle"
     PROBE_404 = "404 Probe"
+    PROBE_URL = "URL Probe"
+
+    # Scheduled Tasks
+    PUSH_TO_HUGGINGFACE = "Push to Hugging Face"
     SYNC_AGENCIES = "Sync Agencies"
     SYNC_DATA_SOURCES = "Sync Data Sources"
-    PUSH_TO_HUGGINGFACE = "Push to Hugging Face"
-    PROBE_URL = "URL Probe"
+    POPULATE_BACKLOG_SNAPSHOT = "Populate Backlog Snapshot"
+    DELETE_OLD_LOGS = "Delete Old Logs"
+    RUN_URL_TASKS = "Run URL Task Cycles"
 
 class ChangeLogOperationType(PyEnum):
     INSERT = "INSERT"

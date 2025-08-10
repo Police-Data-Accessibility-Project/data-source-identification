@@ -166,7 +166,7 @@ class URLTaskOperatorLoader:
             )
         )
 
-    async def get_task_operators(self) -> list[URLTaskEntry]:
+    async def load_entries(self) -> list[URLTaskEntry]:
         return [
             await self._get_url_probe_task_operator(),
             await self._get_url_html_task_operator(),

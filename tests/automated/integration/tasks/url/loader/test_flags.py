@@ -1,6 +1,7 @@
 import pytest
 from pydantic import BaseModel
 
+from src.core.tasks.url.loader import URLTaskOperatorLoader
 from src.core.tasks.url.models.entry import URLTaskEntry
 from src.core.tasks.url.operators.agency_identification.core import AgencyIdentificationTaskOperator
 from src.core.tasks.url.operators.auto_relevant.core import URLAutoRelevantTaskOperator
@@ -66,10 +67,10 @@ params = [
 async def test_flag_enabled(
     flag_test_params: FlagTestParams,
     monkeypatch,
-    loader
+    loader: URLTaskOperatorLoader
 ):
     monkeypatch.setenv(flag_test_params.env_var, "0")
-    entries: list[URLTaskEntry] = await loader.get_task_operators()
+    entries: list[URLTaskEntry] = await loader.load_entries()
     for entry in entries:
         if isinstance(entry.operator, flag_test_params.operator):
             assert not entry.enabled, f"Flag associated with env_var {flag_test_params.env_var} should be disabled"

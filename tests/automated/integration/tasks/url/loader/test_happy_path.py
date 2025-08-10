@@ -11,5 +11,5 @@ async def test_happy_path(
     """
     Under normal circumstances, all task operators should be returned
     """
-    task_operators = await loader.get_task_operators()
+    task_operators = await loader.load_entries()
     assert len(task_operators) == NUMBER_OF_TASK_OPERATORS

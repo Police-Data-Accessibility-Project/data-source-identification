@@ -37,7 +37,7 @@ class TaskManager:
         self.manager_status = task_type
 
     async def run_tasks(self) -> None:
-        entries: list[URLTaskEntry] = await self.loader.get_task_operators()
+        entries: list[URLTaskEntry] = await self.loader.load_entries()
         for entry in entries:
             if not entry.enabled:
                 continue
