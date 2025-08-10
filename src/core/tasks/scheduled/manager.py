@@ -12,6 +12,8 @@ from src.core.tasks.scheduled.loader import ScheduledTaskOperatorLoader
 from src.core.tasks.scheduled.models.entry import ScheduledTaskEntry
 from src.core.tasks.scheduled.templates.operator import ScheduledTaskOperatorBase
 
+from environs import Env
+
 
 class AsyncScheduledTaskManager:
 
@@ -34,6 +36,14 @@ class AsyncScheduledTaskManager:
 
 
     async def setup(self):
+        env = Env()
+        env.read_env()
+
+        scheduled_task_flag = env.bool("SCHEDULED_TASKS_FLAG", default=True)
+        if not scheduled_task_flag:
+            print("Scheduled tasks are disabled.")
+            return
+
         self.scheduler.start()
         await self.add_scheduled_tasks()
 
