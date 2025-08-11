@@ -75,7 +75,7 @@ class URLCountsCTEQueryBuilder(QueryBuilderBase):
                 Select(URL).join(LinkBatchURL).where(
                     and_(
                         LinkBatchURL.batch_id == Batch.id,
-                        URL.outcome == URLStatus.PENDING.value
+                        URL.status == URLStatus.PENDING.value
                     )
                 )
             )
@@ -103,7 +103,7 @@ class URLCountsCTEQueryBuilder(QueryBuilderBase):
             coalesce(
                 count(
                     case(
-                        (URL.outcome == url_status.value, 1)
+                        (URL.status == url_status.value, 1)
                     )
                 )
             , 0).label(label)

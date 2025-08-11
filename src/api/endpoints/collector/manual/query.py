@@ -47,7 +47,7 @@ class UploadManualBatchQueryBuilder(QueryBuilderBase):
                 name=entry.name,
                 description=entry.description,
                 collector_metadata=entry.collector_metadata,
-                outcome=URLStatus.PENDING.value,
+                status=URLStatus.PENDING.value,
                 record_type=entry.record_type.value if entry.record_type is not None else None,
                 source=URLSource.MANUAL
             )

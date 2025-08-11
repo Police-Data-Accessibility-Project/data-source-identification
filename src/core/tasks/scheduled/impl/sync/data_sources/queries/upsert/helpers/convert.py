@@ -41,7 +41,7 @@ def convert_to_url_update_params(
         id=url_id,
         name=sync_info.name,
         description=sync_info.description,
-        outcome=convert_to_source_collector_url_status(
+        status=convert_to_source_collector_url_status(
             ds_url_status=sync_info.url_status,
             ds_approval_status=sync_info.approval_status
         ),
@@ -56,7 +56,7 @@ def convert_to_url_insert_params(
         url=url,
         name=sync_info.name,
         description=sync_info.description,
-        outcome=convert_to_source_collector_url_status(
+        status=convert_to_source_collector_url_status(
             ds_url_status=sync_info.url_status,
             ds_approval_status=sync_info.approval_status
         ),

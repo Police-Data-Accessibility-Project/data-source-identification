@@ -21,7 +21,7 @@ class GetPendingURLsWithoutAgencySuggestionsQueryBuilder(QueryBuilderBase):
                 Batch.strategy
             )
             .select_from(URL)
-            .where(URL.outcome == URLStatus.PENDING.value)
+            .where(URL.status == URLStatus.PENDING.value)
             .outerjoin(LinkBatchURL)
             .outerjoin(Batch)
         )

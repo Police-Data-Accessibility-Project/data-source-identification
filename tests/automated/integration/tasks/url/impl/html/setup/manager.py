@@ -30,7 +30,7 @@ class TestURLHTMLTaskSetupManager:
         url_insert_models: list[URLInsertModel] = []
         for entry in TEST_ENTRIES:
             url_insert_model = URLInsertModel(
-                outcome=entry.url_info.status,
+                status=entry.url_info.status,
                 url=entry.url_info.url,
                 name=f"Test for {entry.url_info.url}",
                 record_type=RecordType.RESOURCES,

@@ -35,11 +35,11 @@ class RejectURLQueryBuilder(QueryBuilderBase):
 
         match self.rejection_reason:
             case RejectionReason.INDIVIDUAL_RECORD:
-                url.outcome = URLStatus.INDIVIDUAL_RECORD.value
+                url.status = URLStatus.INDIVIDUAL_RECORD.value
             case RejectionReason.BROKEN_PAGE_404:
-                url.outcome = URLStatus.NOT_FOUND.value
+                url.status = URLStatus.NOT_FOUND.value
             case RejectionReason.NOT_RELEVANT:
-                url.outcome = URLStatus.NOT_RELEVANT.value
+                url.status = URLStatus.NOT_RELEVANT.value
             case _:
                 raise HTTPException(
                     status_code=HTTP_400_BAD_REQUEST,

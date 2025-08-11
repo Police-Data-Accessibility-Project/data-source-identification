@@ -467,7 +467,7 @@ class AsyncDatabaseClient:
             statement = select(URL).where(URL.id == url_error_info.url_id)
             scalar_result = await session.scalars(statement)
             url = scalar_result.first()
-            url.outcome = URLStatus.ERROR.value
+            url.status = URLStatus.ERROR.value
 
             url_error = URLErrorInfo(**url_error_info.model_dump())
             session.add(url_error)
@@ -476,7 +476,7 @@ class AsyncDatabaseClient:
     async def get_urls_with_errors(self, session: AsyncSession) -> list[URLErrorPydanticInfo]:
         statement = (select(URL, URLErrorInfo.error, URLErrorInfo.updated_at, URLErrorInfo.task_id)
                      .join(URLErrorInfo)
-                     .where(URL.outcome == URLStatus.ERROR.value)
+                     .where(URL.status == URLStatus.ERROR.value)
                      .order_by(URL.id))
         scalar_result = await session.execute(statement)
         results = scalar_result.all()
@@ -550,7 +550,7 @@ class AsyncDatabaseClient:
     ):
         statement = (select(URL)
                      .options(selectinload(URL.html_content))
-                     .where(URL.outcome == URLStatus.PENDING.value))
+                     .where(URL.status == URLStatus.PENDING.value))
         statement = self.statement_composer.exclude_urls_with_extant_model(
             statement=statement,
             model=model
@@ -579,7 +579,7 @@ class AsyncDatabaseClient:
     ) -> bool:
         statement = (select(URL)
                      .join(URLCompressedHTML)
-                     .where(URL.outcome == URLStatus.PENDING.value))
+                     .where(URL.status == URLStatus.PENDING.value))
         # Exclude URLs with auto suggested record types
         statement = self.statement_composer.exclude_urls_with_extant_model(
             statement=statement,
@@ -1143,7 +1143,7 @@ class AsyncDatabaseClient:
             URL.id,
             URL.created_at
         ).where(
-            URL.outcome == URLStatus.PENDING.value
+            URL.status == URLStatus.PENDING.value
         ).order_by(
             URL.created_at.asc()
         ).limit(1)
@@ -1161,7 +1161,7 @@ class AsyncDatabaseClient:
             return sc.count_distinct(
                 case(
                     (
-                        URL.outcome == status.value,
+                        URL.status == status.value,
                         URL.id
                     )
                 ),
@@ -1239,7 +1239,7 @@ class AsyncDatabaseClient:
                 ).label('user_agency_count'),
             )
             .outerjoin(flags, flags.c.url_id == URL.id)
-            .where(URL.outcome == URLStatus.PENDING.value)
+            .where(URL.status == URLStatus.PENDING.value)
             .group_by(month)
             .order_by(month.asc())
         )
@@ -1321,7 +1321,7 @@ class AsyncDatabaseClient:
         query = select(
             sc.count_distinct(URL.id, label="count")
         ).where(
-            URL.outcome == URLStatus.PENDING.value
+            URL.status == URLStatus.PENDING.value
         )
 
         raw_result = await session.execute(query)
@@ -1344,7 +1344,7 @@ class AsyncDatabaseClient:
             URLCheckedForDuplicate,
             URL.id == URLCheckedForDuplicate.url_id
         ).where(
-            URL.outcome == URLStatus.PENDING.value,
+            URL.status == URLStatus.PENDING.value,
             URLCheckedForDuplicate.id == None
         ).limit(1)
                  )
@@ -1361,7 +1361,7 @@ class AsyncDatabaseClient:
             URLCheckedForDuplicate,
             URL.id == URLCheckedForDuplicate.url_id
         ).where(
-            URL.outcome == URLStatus.PENDING.value,
+            URL.status == URLStatus.PENDING.value,
             URLCheckedForDuplicate.id == None
         ).limit(100)
                  )
@@ -1371,11 +1371,11 @@ class AsyncDatabaseClient:
         return [URLDuplicateTDO(url=url.url, url_id=url.id) for url in urls]
 
     async def mark_all_as_duplicates(self, url_ids: List[int]):
-        query = update(URL).where(URL.id.in_(url_ids)).values(outcome=URLStatus.DUPLICATE.value)
+        query = update(URL).where(URL.id.in_(url_ids)).values(status=URLStatus.DUPLICATE.value)
         await self.execute(query)
 
     async def mark_all_as_404(self, url_ids: List[int]):
-        query = update(URL).where(URL.id.in_(url_ids)).values(outcome=URLStatus.NOT_FOUND.value)
+        query = update(URL).where(URL.id.in_(url_ids)).values(status=URLStatus.NOT_FOUND.value)
         await self.execute(query)
         query = update(URLWebMetadata).where(URLWebMetadata.url_id.in_(url_ids)).values(status_code=404)
         await self.execute(query)
@@ -1411,7 +1411,7 @@ class AsyncDatabaseClient:
                 URLProbedFor404
             ).where(
                 and_(
-                    URL.outcome == URLStatus.PENDING.value,
+                    URL.status == URLStatus.PENDING.value,
                     or_(
                         URLProbedFor404.id == None,
                         URLProbedFor404.last_probed_at < month_ago
@@ -1434,7 +1434,7 @@ class AsyncDatabaseClient:
                 URLProbedFor404
             ).where(
                 and_(
-                    URL.outcome == URLStatus.PENDING.value,
+                    URL.status == URLStatus.PENDING.value,
                     or_(
                         URLProbedFor404.id == None,
                         URLProbedFor404.last_probed_at < month_ago

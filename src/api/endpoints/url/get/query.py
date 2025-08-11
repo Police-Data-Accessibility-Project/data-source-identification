@@ -51,7 +51,7 @@ class GetURLsQueryBuilder(QueryBuilderBase):
                     id=result.id,
                     batch_id=result.batch.id if result.batch is not None else None,
                     url=result.url,
-                    status=URLStatus(result.outcome),
+                    status=URLStatus(result.status),
                     collector_metadata=result.collector_metadata,
                     updated_at=result.updated_at,
                     created_at=result.created_at,

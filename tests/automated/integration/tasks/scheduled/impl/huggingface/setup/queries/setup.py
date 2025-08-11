@@ -32,7 +32,7 @@ class SetupTestPushToHuggingFaceEntryQueryBuilder(QueryBuilderBase):
             inp = entry.input
             url = URL(
                 url=f"www.testPushToHuggingFaceURLSetupEntry.com/{idx}",
-                outcome=inp.outcome,
+                status=inp.status,
                 name=name,
                 description=description,
                 record_type=inp.record_type,

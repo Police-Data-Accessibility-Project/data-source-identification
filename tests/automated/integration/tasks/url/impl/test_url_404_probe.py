@@ -128,10 +128,10 @@ async def test_url_404_probe_task(
                 return url
         raise Exception(f"URL with id {url_id} not found")
 
-    assert find_url(url_id_success).outcome == URLStatus.PENDING
-    assert find_url(url_id_404).outcome == URLStatus.NOT_FOUND
-    assert find_url(url_id_error).outcome == URLStatus.PENDING
-    assert find_url(url_id_initial_error).outcome == URLStatus.ERROR
+    assert find_url(url_id_success).status == URLStatus.PENDING
+    assert find_url(url_id_404).status == URLStatus.NOT_FOUND
+    assert find_url(url_id_error).status == URLStatus.PENDING
+    assert find_url(url_id_initial_error).status == URLStatus.ERROR
 
     # Check that meets_task_prerequisites now returns False
     meets_prereqs = await operator.meets_task_prerequisites()

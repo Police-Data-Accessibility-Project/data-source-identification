@@ -43,7 +43,7 @@ class GetBatchesAggregatedMetricsQueryBuilder(QueryBuilderBase):
             return sc.count_distinct(
                 case(
                     (
-                        URL.outcome == status.value,
+                        URL.status == status.value,
                         URL.id
                     )
                 ),

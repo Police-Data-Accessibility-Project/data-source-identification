@@ -27,7 +27,7 @@ class TestURLProbeSetupManager:
     ) -> int:
         url_insert_model = URLInsertModel(
             url=url,
-            outcome=url_status,
+            status=url_status,
             source=TEST_SOURCE
         )
         return (

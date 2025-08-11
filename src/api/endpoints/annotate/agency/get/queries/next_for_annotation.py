@@ -48,7 +48,7 @@ class GetNextURLAgencyForAnnotationQueryBuilder(QueryBuilderBase):
 
         # Must not have confirmed agencies
         query = query.where(
-            URL.outcome == URLStatus.PENDING.value
+            URL.status == URLStatus.PENDING.value
         )
 
 

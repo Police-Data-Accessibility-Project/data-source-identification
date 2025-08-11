@@ -9,7 +9,7 @@ class InsertURLForDataSourcesSyncParams(BulkInsertableModel):
     url: str
     name: str
     description: str | None
-    outcome: URLStatus
+    status: URLStatus
     record_type: RecordType
     source: URLSource = URLSource.DATA_SOURCES
 

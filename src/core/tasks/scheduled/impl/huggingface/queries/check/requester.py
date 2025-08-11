@@ -35,7 +35,7 @@ class CheckValidURLsUpdatedRequester:
                 URL.id == URLCompressedHTML.url_id
             )
             .where(
-                URL.outcome.in_(
+                URL.status.in_(
                     [
                         URLStatus.VALIDATED,
                         URLStatus.NOT_RELEVANT.value,

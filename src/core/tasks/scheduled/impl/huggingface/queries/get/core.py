@@ -26,7 +26,7 @@ class GetForLoadingToHuggingFaceQueryBuilder(QueryBuilderBase):
             select(
                 URL.id.label(label_url_id),
                 URL.url.label(label_url),
-                URL.outcome.label(label_url_status),
+                URL.status.label(label_url_status),
                 URL.record_type.label(label_record_type_fine),
                 URLCompressedHTML.compressed_html.label(label_html)
             )
@@ -35,7 +35,7 @@ class GetForLoadingToHuggingFaceQueryBuilder(QueryBuilderBase):
                 URL.id == URLCompressedHTML.url_id
             )
             .where(
-                URL.outcome.in_([
+                URL.status.in_([
                     URLStatus.VALIDATED,
                     URLStatus.NOT_RELEVANT,
                     URLStatus.SUBMITTED

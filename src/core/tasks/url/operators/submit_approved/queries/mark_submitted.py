@@ -23,7 +23,7 @@ class MarkURLsAsSubmittedQueryBuilder(QueryBuilderBase):
                 update(URL)
                 .where(URL.id == url_id)
                 .values(
-                    outcome=URLStatus.SUBMITTED.value
+                    status=URLStatus.SUBMITTED.value
                 )
             )
 

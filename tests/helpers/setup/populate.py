@@ -12,7 +12,7 @@ async def populate_database(adb_client: AsyncDatabaseClient) -> None:
         collector_metadata={
             "source_collector": "test-data",
         },
-        outcome='validated',
+        status='validated',
         record_type="Other"
     )
     await adb_client.add(url)

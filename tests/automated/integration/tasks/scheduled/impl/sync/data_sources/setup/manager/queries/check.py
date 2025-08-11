@@ -43,4 +43,4 @@ class CheckURLQueryBuilder(QueryBuilderBase):
         assert url.name == self.record.final_name
         agencies = [agency.agency_id for agency in url.confirmed_agencies]
         assert set(agencies) == set(self.record.final_agency_ids)
-        assert url.outcome == self.record.final_url_status
+        assert url.status == self.record.final_url_status

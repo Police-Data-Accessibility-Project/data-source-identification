@@ -95,7 +95,7 @@ class ApproveURLQueryBuilder(QueryBuilderBase):
 
         # If it does, do nothing
 
-        url.outcome = URLStatus.VALIDATED.value
+        url.status = URLStatus.VALIDATED.value
 
         update_if_not_none(url, "name", self.approval_info.name, required=True)
         update_if_not_none(url, "description", self.approval_info.description, required=False)

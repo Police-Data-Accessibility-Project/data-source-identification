@@ -67,6 +67,6 @@ class AnnotationExistsCTEQueryBuilder(QueryBuilderBase):
             *annotation_exists_cases_all
         )
         anno_exists_query = await self._outer_join_models(anno_exists_query)
-        anno_exists_query = anno_exists_query.where(URL.outcome == URLStatus.PENDING.value)
+        anno_exists_query = anno_exists_query.where(URL.status == URLStatus.PENDING.value)
         anno_exists_query = anno_exists_query.group_by(URL.id).cte("annotations_exist")
         self.query = anno_exists_query

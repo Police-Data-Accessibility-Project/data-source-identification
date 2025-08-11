@@ -246,7 +246,7 @@ class DBDataCreator:
             batch_id=batch_id,
             url_count=url_count,
             collector_metadata=collector_metadata,
-            outcome=outcome,
+            status=outcome,
             created_at=created_at
         )
         return self.run_command_sync(command)

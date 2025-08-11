@@ -29,7 +29,7 @@ class GetAutoRelevantTDOsQueryBuilder(QueryBuilderBase):
             )
             .join(URLCompressedHTML)
             .where(
-                URL.outcome == URLStatus.PENDING.value,
+                URL.status == URLStatus.PENDING.value,
             )
         )
         query = StatementComposer.exclude_urls_with_extant_model(
