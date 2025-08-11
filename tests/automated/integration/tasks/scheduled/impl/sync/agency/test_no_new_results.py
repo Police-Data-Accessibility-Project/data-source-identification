@@ -50,5 +50,4 @@ async def test_agency_sync_task_no_new_results(
     # Neither should be updated with new values
     checker = AgencyChecker()
     for agency in agencies:
-        with pytest.raises(AssertionError):
-            checker.check(agency)
+        checker.check(agency)

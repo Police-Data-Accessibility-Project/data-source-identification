@@ -20,4 +20,3 @@ class AgencyUpsertModel(BulkUpsertableModel):
     state: str | None
     county: str | None
     locality: str | None
-    ds_last_updated_at: datetime
