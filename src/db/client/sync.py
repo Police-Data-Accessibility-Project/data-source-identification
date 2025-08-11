@@ -99,7 +99,7 @@ class DatabaseClient:
     ):
         for duplicate_info in duplicate_infos:
             duplicate = Duplicate(
-                batch_id=duplicate_info.duplicate_batch_id,
+                batch_id=duplicate_info.batch_id,
                 original_url_id=duplicate_info.original_url_id,
             )
             session.add(duplicate)
@@ -147,7 +147,7 @@ class DatabaseClient:
             except IntegrityError as e:
                 orig_url_info = self.get_url_info_by_url(url_info.url)
                 duplicate_info = DuplicateInsertInfo(
-                    duplicate_batch_id=batch_id,
+                    batch_id=batch_id,
                     original_url_id=orig_url_info.id
                 )
                 duplicates.append(duplicate_info)

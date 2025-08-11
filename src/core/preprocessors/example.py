@@ -1,6 +1,6 @@
 from typing import List
 
-from src.collectors.source_collectors.example.dtos.output import ExampleOutputDTO
+from src.collectors.impl.example.dtos.output import ExampleOutputDTO
 from src.core.preprocessors.base import PreprocessorBase
 from src.db.models.instantiations.url.core.enums import URLSource
 from src.db.models.instantiations.url.core.pydantic.info import URLInfo

@@ -1,7 +1,11 @@
-from pydantic import BaseModel
+from src.db.models.instantiations.duplicate.sqlalchemy import Duplicate
+from src.db.templates.markers.bulk.insert import BulkInsertableModel
 
 
-class DuplicateInsertInfo(BaseModel):
+class DuplicateInsertInfo(BulkInsertableModel):
     original_url_id: int
-    duplicate_batch_id: int
+    batch_id: int
 
+    @classmethod
+    def sa_model(self) -> type[Duplicate]:
+        return Duplicate

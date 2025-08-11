@@ -2,9 +2,9 @@ from typing import final
 
 from typing_extensions import override
 
-from src.collectors.source_collectors.muckrock.api_interface.core import MuckrockAPIInterface
-from src.collectors.source_collectors.muckrock.api_interface.lookup_response import AgencyLookupResponse
-from src.collectors.source_collectors.muckrock.enums import AgencyLookupResponseType
+from src.collectors.impl.muckrock.api_interface.core import MuckrockAPIInterface
+from src.collectors.impl.muckrock.api_interface.lookup_response import AgencyLookupResponse
+from src.collectors.impl.muckrock.enums import AgencyLookupResponseType
 from src.core.exceptions import MuckrockAPIError
 from src.core.helpers import process_match_agency_response_to_suggestions
 from src.core.tasks.url.operators.agency_identification.dtos.suggestion import URLAgencySuggestionInfo

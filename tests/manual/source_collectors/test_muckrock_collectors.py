@@ -4,10 +4,10 @@ import pytest
 from marshmallow import Schema, fields
 
 from src.core.logger import AsyncCoreLogger
-from src.collectors.source_collectors.muckrock.collectors.all_foia.dto import MuckrockAllFOIARequestsCollectorInputDTO
-from src.collectors.source_collectors.muckrock.collectors.county.dto import MuckrockCountySearchCollectorInputDTO
-from src.collectors.source_collectors.muckrock.collectors.simple.dto import MuckrockSimpleSearchCollectorInputDTO
-from src.collectors.source_collectors import MuckrockSimpleSearchCollector, \
+from src.collectors.impl.muckrock.collectors.all_foia.dto import MuckrockAllFOIARequestsCollectorInputDTO
+from src.collectors.impl.muckrock.collectors.county.dto import MuckrockCountySearchCollectorInputDTO
+from src.collectors.impl.muckrock.collectors.simple.dto import MuckrockSimpleSearchCollectorInputDTO
+from src.collectors.impl import MuckrockSimpleSearchCollector, \
     MuckrockCountyLevelSearchCollector, MuckrockAllFOIARequestsCollector
 from src.db.client.async_ import AsyncDatabaseClient
 from tests.automated.integration.core.helpers.constants import ALLEGHENY_COUNTY_MUCKROCK_ID, \

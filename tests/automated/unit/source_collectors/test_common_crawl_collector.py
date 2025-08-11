@@ -2,10 +2,10 @@ from unittest import mock
 
 import pytest
 
-from src.collectors.source_collectors.common_crawler.input import CommonCrawlerInputDTO
+from src.collectors.impl.common_crawler.input import CommonCrawlerInputDTO
 from src.db.client.async_ import AsyncDatabaseClient
 from src.core.logger import AsyncCoreLogger
-from src.collectors.source_collectors.common_crawler.collector import CommonCrawlerCollector
+from src.collectors.impl.common_crawler.collector import CommonCrawlerCollector
 from src.db.models.instantiations.url.core.enums import URLSource
 from src.db.models.instantiations.url.core.pydantic.info import URLInfo
 

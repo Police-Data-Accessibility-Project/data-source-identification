@@ -1,7 +1,7 @@
 from src.db.models.instantiations.batch.pydantic import BatchInfo
 from src.collectors import CollectorType
 from src.core.enums import BatchStatus
-from src.collectors.source_collectors.ckan import group_search, package_search, organization_search
+from src.collectors.impl.ckan import group_search, package_search, organization_search
 from test_automated.integration.core.helpers.common_test_procedures import run_collector_and_wait_for_completion
 
 

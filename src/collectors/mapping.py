@@ -1,11 +1,11 @@
 from src.collectors.enums import CollectorType
-from src.collectors.source_collectors.auto_googler.collector import AutoGooglerCollector
-from src.collectors.source_collectors.ckan.collector import CKANCollector
-from src.collectors.source_collectors.common_crawler.collector import CommonCrawlerCollector
-from src.collectors.source_collectors.example.core import ExampleCollector
-from src.collectors.source_collectors.muckrock.collectors.all_foia.core import MuckrockAllFOIARequestsCollector
-from src.collectors.source_collectors.muckrock.collectors.county.core import MuckrockCountyLevelSearchCollector
-from src.collectors.source_collectors.muckrock.collectors.simple.core import MuckrockSimpleSearchCollector
+from src.collectors.impl.auto_googler.collector import AutoGooglerCollector
+from src.collectors.impl.ckan.collector import CKANCollector
+from src.collectors.impl.common_crawler.collector import CommonCrawlerCollector
+from src.collectors.impl.example.core import ExampleCollector
+from src.collectors.impl.muckrock.collectors.all_foia.core import MuckrockAllFOIARequestsCollector
+from src.collectors.impl.muckrock.collectors.county.core import MuckrockCountyLevelSearchCollector
+from src.collectors.impl.muckrock.collectors.simple.core import MuckrockSimpleSearchCollector
 
 COLLECTOR_MAPPING = {
     CollectorType.EXAMPLE: ExampleCollector,

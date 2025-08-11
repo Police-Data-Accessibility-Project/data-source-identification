@@ -285,7 +285,7 @@ class DBDataCreator:
         duplicate_infos = []
         for url_id in url_ids:
             dup_info = DuplicateInsertInfo(
-                duplicate_batch_id=duplicate_batch_id,
+                batch_id=duplicate_batch_id,
                 original_url_id=url_id
             )
             duplicate_infos.append(dup_info)
