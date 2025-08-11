@@ -26,13 +26,17 @@ class URL404ProbeTaskOperator(URLTaskOperatorBase):
         self.url_request_interface = url_request_interface
 
     @property
-    def task_type(self):
+    def task_type(self) -> TaskType:
         return TaskType.PROBE_404
 
-    async def meets_task_prerequisites(self):
+    async def meets_task_prerequisites(self) -> bool:
         return await self.adb_client.has_pending_urls_not_recently_probed_for_404()
 
-    async def probe_urls_for_404(self, tdos: list[URL404ProbeTDO]):
+    async def probe_urls_for_404(self, tdos: list[URL404ProbeTDO]) -> None:
+        """
+        Modifies:
+            URL404ProbeTDO.is_404
+        """
         responses = await self.url_request_interface.make_simple_requests(
             urls=[tdo.url for tdo in tdos]
         )
@@ -42,7 +46,7 @@ class URL404ProbeTaskOperator(URLTaskOperatorBase):
             tdo.is_404 = response.status == HTTPStatus.NOT_FOUND
 
 
-    async def inner_task_logic(self):
+    async def inner_task_logic(self) -> None:
         tdos = await self.get_pending_urls_not_recently_probed_for_404()
         url_ids = [task_info.url_id for task_info in tdos]
         await self.link_urls_to_task(url_ids=url_ids)
@@ -55,9 +59,17 @@ class URL404ProbeTaskOperator(URLTaskOperatorBase):
     async def get_pending_urls_not_recently_probed_for_404(self) -> list[URL404ProbeTDO]:
         return await self.adb_client.get_pending_urls_not_recently_probed_for_404()
 
-    async def update_404s_in_database(self, url_ids_404: list[int]):
+    async def update_404s_in_database(self, url_ids_404: list[int]) -> None:
+        """
+        Modifies:
+            URL data in DB
+        """
         await self.adb_client.mark_all_as_404(url_ids_404)
 
-    async def mark_as_recently_probed_for_404(self, url_ids: list[int]):
+    async def mark_as_recently_probed_for_404(self, url_ids: list[int]) -> None:
+        """
+        Modifies:
+            URL data in DB
+        """
         await self.adb_client.mark_all_as_recently_probed_for_404(url_ids)
 

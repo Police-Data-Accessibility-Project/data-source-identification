@@ -11,10 +11,21 @@ class HuggingFaceHubClient:
     def __init__(self, token: str):
         self.token = token
 
-    def _push_dataset_to_hub(self, repo_id: str, dataset: Dataset):
+    def _push_dataset_to_hub(self, repo_id: str, dataset: Dataset) -> None:
+        """
+        Modifies:
+            - repository on Hugging Face, identified by `repo_id`
+        """
         dataset.push_to_hub(repo_id=repo_id, token=self.token)
 
-    def push_data_sources_raw_to_hub(self, outputs: list[GetForLoadingToHuggingFaceOutput]):
+    def push_data_sources_raw_to_hub(
+        self,
+        outputs: list[GetForLoadingToHuggingFaceOutput]
+    ) -> None:
+        """
+        Modifies:
+            - repository on Hugging Face, identified by `DATA_SOURCES_RAW_REPO_ID`
+        """
         dataset = format_as_huggingface_dataset(outputs)
         print(dataset)
         self._push_dataset_to_hub(repo_id=DATA_SOURCES_RAW_REPO_ID, dataset=dataset)

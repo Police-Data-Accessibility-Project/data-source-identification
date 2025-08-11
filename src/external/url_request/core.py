@@ -2,7 +2,6 @@ from aiohttp import ClientSession, ClientTimeout
 
 from src.external.url_request.dtos.url_response import URLResponseInfo
 from src.external.url_request.probe.core import URLProbeManager
-from src.external.url_request.probe.models.response import URLProbeResponse
 from src.external.url_request.probe.models.wrapper import URLProbeResponseOuterWrapper
 from src.external.url_request.request import fetch_urls
 

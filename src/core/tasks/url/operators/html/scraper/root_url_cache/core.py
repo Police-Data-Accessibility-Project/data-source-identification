@@ -12,19 +12,19 @@ DEBUG = False
 
 
 class RootURLCache:
-    def __init__(self, adb_client: Optional[AsyncDatabaseClient] = None):
+    def __init__(self, adb_client: AsyncDatabaseClient | None = None):
         if adb_client is None:
             adb_client = AsyncDatabaseClient()
         self.adb_client = adb_client
         self.cache = None
 
-    async def save_to_cache(self, url: str, title: str):
+    async def save_to_cache(self, url: str, title: str) -> None:
         if url in self.cache:
             return
         self.cache[url] = title
         await self.adb_client.add_to_root_url_cache(url=url, page_title=title)
 
-    async def get_from_cache(self, url: str) -> Optional[str]:
+    async def get_from_cache(self, url: str) -> str | None:
         if self.cache is None:
             self.cache = await self.adb_client.load_root_url_cache()
 

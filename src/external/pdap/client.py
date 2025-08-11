@@ -192,14 +192,15 @@ class PDAPClient:
         )
         headers = await self.access_manager.jwt_header()
         headers['Content-Type'] = "application/json"
+        params_dict = {"page": params.page}
+        if params.cutoff_date is not None:
+            params_dict["updated_at"] = params.cutoff_date
+
         request_info = RequestInfo(
             type_=RequestType.GET,
             url=url,
             headers=headers,
-            params={
-                "page": params.page,
-                "updated_at": params.cutoff_date
-            }
+            params=params_dict
         )
         response_info = await self.access_manager.make_request(request_info)
         return DataSourcesSyncResponseInfo(

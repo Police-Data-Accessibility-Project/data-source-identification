@@ -35,7 +35,12 @@ class HTMLResponseParser:
             html_info: ResponseHTMLInfo,
             parser_type: ParserTypeEnum,
             html_content: str
-    ):
+    ) -> None:
+        """
+        Modifies:
+            html_info
+        """
+
         soup = BeautifulSoup(
             markup=html_content,
             features=parser_type.value,
@@ -48,7 +53,7 @@ class HTMLResponseParser:
         if soup.html is not None:
             soup.html.decompose()
 
-    def get_div_text(self, soup):
+    def get_div_text(self, soup: BeautifulSoup) -> str:
         div_text = ""
         MAX_WORDS = 500
         for div in soup.find_all("div"):
@@ -85,7 +90,7 @@ class HTMLResponseParser:
                 continue
             setattr(html_info, header_tag, tag_content)
 
-    def get_html_title(self, soup: BeautifulSoup) -> Optional[str]:
+    def get_html_title(self, soup: BeautifulSoup) -> str | None:
         if soup.title is None:
             return None
         if soup.title.string is None:
@@ -93,7 +98,17 @@ class HTMLResponseParser:
         return remove_excess_whitespace(soup.title.string)
 
 
-    def add_url_and_path(self, html_info: ResponseHTMLInfo, html_content: str, url: str):
+    def add_url_and_path(
+        self,
+        html_info: ResponseHTMLInfo,
+        html_content: str,
+        url: str
+    ) -> None:
+        """
+        Modifies:
+            html_info.url
+            html_info.url_path
+        """
         url = add_https(url)
         html_info.url = url
 
@@ -101,13 +116,17 @@ class HTMLResponseParser:
         url_path = remove_trailing_backslash(url_path)
         html_info.url_path = url_path
 
-    async def add_root_page_titles(self, html_info: ResponseHTMLInfo):
+    async def add_root_page_titles(self, html_info: ResponseHTMLInfo) -> None:
+        """
+        Modifies:
+            html_info.root_page_title
+        """
         root_page_title = await self.root_url_cache.get_title(html_info.url)
         html_info.root_page_title = remove_excess_whitespace(
             root_page_title
         )
 
-    def get_parser_type(self, content_type: str) -> ParserTypeEnum or None:
+    def get_parser_type(self, content_type: str) -> ParserTypeEnum | None:
         try:
             # If content type does not contain "html" or "xml" then we can assume that the content is unreadable
             if "html" in content_type:

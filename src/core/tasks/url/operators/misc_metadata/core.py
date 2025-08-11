@@ -22,16 +22,16 @@ class URLMiscellaneousMetadataTaskOperator(URLTaskOperatorBase):
         super().__init__(adb_client)
 
     @property
-    def task_type(self):
+    def task_type(self) -> TaskType:
         return TaskType.MISC_METADATA
 
-    async def meets_task_prerequisites(self):
+    async def meets_task_prerequisites(self) -> bool:
         return await self.adb_client.has_pending_urls_missing_miscellaneous_metadata()
 
     async def get_subtask(
             self,
             collector_type: CollectorType
-    ) -> Optional[MiscellaneousMetadataSubtaskBase]:
+    ) -> MiscellaneousMetadataSubtaskBase | None:
         match collector_type:
             case CollectorType.MUCKROCK_SIMPLE_SEARCH:
                 return MuckrockMiscMetadataSubtask()
@@ -47,12 +47,17 @@ class URLMiscellaneousMetadataTaskOperator(URLTaskOperatorBase):
                 return None
 
     async def html_default_logic(self, tdo: URLMiscellaneousMetadataTDO):
+        """
+        Modifies:
+            tdo.name
+            tdo.description
+        """
         if tdo.name is None:
             tdo.name = tdo.html_metadata_info.title
         if tdo.description is None:
             tdo.description = tdo.html_metadata_info.description
 
-    async def inner_task_logic(self):
+    async def inner_task_logic(self) -> None:
         tdos: list[URLMiscellaneousMetadataTDO] = await self.adb_client.get_pending_urls_missing_miscellaneous_metadata()
         await self.link_urls_to_task(url_ids=[tdo.url_id for tdo in tdos])
 

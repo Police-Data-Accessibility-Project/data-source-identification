@@ -16,7 +16,8 @@ class EnvVarManager:
         self.env = env
         self._load()
 
-    def _load(self):
+    def _load(self) -> None:
+        """Load environment variables from environment"""
 
         self.google_api_key = self.require_env("GOOGLE_API_KEY")
         self.google_cse_id = self.require_env("GOOGLE_CSE_ID")
