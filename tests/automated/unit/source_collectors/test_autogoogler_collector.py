@@ -13,7 +13,7 @@ from src.db.models.instantiations.url.core.pydantic.info import URLInfo
 
 @pytest.fixture
 def patch_get_query_results(monkeypatch):
-    patch_path = "src.collectors.source_collectors.auto_googler.searcher.GoogleSearcher.get_query_results"
+    patch_path = "src.collectors.impl.auto_googler.searcher.GoogleSearcher.get_query_results"
     mock = AsyncMock()
     mock.side_effect = [
         [GoogleSearchQueryResultsInnerDTO(url="https://include.com/1", title="keyword", snippet="snippet 1"),],

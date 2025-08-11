@@ -12,7 +12,7 @@ from src.db.models.instantiations.url.core.pydantic.info import URLInfo
 
 @pytest.fixture
 def mock_get_common_crawl_search_results():
-    mock_path = "src.collectors.source_collectors.common_crawler.crawler.get_common_crawl_search_results"
+    mock_path = "src.collectors.impl.common_crawler.crawler.get_common_crawl_search_results"
     # Results contain other keys, but those are not relevant and thus
     # can be ignored
     mock_results = [

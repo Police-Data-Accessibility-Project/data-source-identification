@@ -13,7 +13,7 @@ from src.collectors.impl.muckrock.fetch_requests.foia import FOIAFetchRequest
 from src.db.models.instantiations.url.core.enums import URLSource
 from src.db.models.instantiations.url.core.pydantic.info import URLInfo
 
-PATCH_ROOT = "src.collectors.source_collectors.muckrock"
+PATCH_ROOT = "src.collectors.impl.muckrock"
 
 @pytest.fixture
 def patch_muckrock_fetcher(monkeypatch):
