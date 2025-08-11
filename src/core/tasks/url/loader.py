@@ -4,7 +4,7 @@ The task loader loads task a task operator and all dependencies.
 
 from environs import Env
 
-from src.collectors.source_collectors.muckrock.api_interface.core import MuckrockAPIInterface
+from src.collectors.impl.muckrock.api_interface.core import MuckrockAPIInterface
 from src.core.tasks.url.models.entry import URLTaskEntry
 from src.core.tasks.url.operators.agency_identification.core import AgencyIdentificationTaskOperator
 from src.core.tasks.url.operators.agency_identification.subtasks.loader import AgencyIdentificationSubtaskLoader

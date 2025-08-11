@@ -4,8 +4,8 @@ import pytest
 from marshmallow import Schema, fields
 
 from src.core.logger import AsyncCoreLogger
-from src.collectors.source_collectors.common_crawler import collector
-from src.collectors.source_collectors.common_crawler import CommonCrawlerInputDTO
+from src.collectors.impl.common_crawler import collector
+from src.collectors.impl.common_crawler import CommonCrawlerInputDTO
 
 
 class CommonCrawlerSchema(Schema):

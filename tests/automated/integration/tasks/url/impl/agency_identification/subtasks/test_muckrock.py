@@ -2,9 +2,9 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from src.collectors.source_collectors.muckrock.api_interface.core import MuckrockAPIInterface
-from src.collectors.source_collectors.muckrock.api_interface.lookup_response import AgencyLookupResponse
-from src.collectors.source_collectors.muckrock.enums import AgencyLookupResponseType
+from src.collectors.impl.muckrock.api_interface.core import MuckrockAPIInterface
+from src.collectors.impl.muckrock.api_interface.lookup_response import AgencyLookupResponse
+from src.collectors.impl.muckrock.enums import AgencyLookupResponseType
 from src.core.enums import SuggestionType
 from src.core.tasks.url.operators.agency_identification.dtos.suggestion import URLAgencySuggestionInfo
 from src.core.tasks.url.operators.agency_identification.subtasks.impl.muckrock import MuckrockAgencyIdentificationSubtask

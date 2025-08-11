@@ -1,8 +1,8 @@
 from unittest.mock import AsyncMock
 
 from src.db.client.sync import DatabaseClient
-from src.collectors.source_collectors.example.dtos.input import ExampleInputDTO
-from src.collectors.source_collectors.example.core import ExampleCollector
+from src.collectors.impl.example.dtos.input import ExampleInputDTO
+from src.collectors.impl.example.core import ExampleCollector
 from src.core.logger import AsyncCoreLogger
 
 

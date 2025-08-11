@@ -6,7 +6,7 @@ from fastapi import HTTPException
 from pydantic import BaseModel
 
 from src.db.client.async_ import AsyncDatabaseClient
-from src.collectors.source_collectors.base import AsyncCollectorBase
+from src.collectors.impl.base import AsyncCollectorBase
 from src.collectors.exceptions import InvalidCollectorError
 from src.collectors.mapping import COLLECTOR_MAPPING
 from src.collectors.enums import CollectorType

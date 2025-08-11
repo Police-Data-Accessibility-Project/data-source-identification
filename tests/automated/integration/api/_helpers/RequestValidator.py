@@ -37,7 +37,7 @@ from src.api.endpoints.task.dtos.get.tasks import GetTasksResponse
 from src.api.endpoints.task.dtos.get.task_status import GetTaskStatusResponseInfo
 from src.api.endpoints.url.get.dto import GetURLsResponseInfo
 from src.db.enums import TaskType
-from src.collectors.source_collectors.example.dtos.input import ExampleInputDTO
+from src.collectors.impl.example.dtos.input import ExampleInputDTO
 from src.collectors.enums import CollectorType
 from src.core.enums import BatchStatus
 from src.util.helper_functions import update_if_not_none

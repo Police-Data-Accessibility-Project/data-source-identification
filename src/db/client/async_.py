@@ -50,6 +50,7 @@ from src.api.endpoints.task.dtos.get.tasks import GetTasksResponse, GetTasksResp
 from src.api.endpoints.url.get.dto import GetURLsResponseInfo
 from src.api.endpoints.url.get.query import GetURLsQueryBuilder
 from src.collectors.enums import URLStatus, CollectorType
+from src.collectors.queries.insert.urls.query import InsertURLsQueryBuilder
 from src.core.enums import BatchStatus, SuggestionType, RecordType, SuggestedStatus
 from src.core.env_var_manager import EnvVarManager
 from src.core.tasks.scheduled.impl.huggingface.queries.check.core import CheckValidURLsUpdatedQueryBuilder
@@ -896,52 +897,6 @@ class AsyncDatabaseClient:
         ))
 
     @session_manager
-    async def insert_url(
-        self,
-        session: AsyncSession,
-        url_info: URLInfo
-    ) -> int:
-        """Insert a new URL into the database."""
-        url_entry = URL(
-            url=url_info.url,
-            collector_metadata=url_info.collector_metadata,
-            outcome=url_info.outcome.value,
-            source=url_info.source
-        )
-        if url_info.created_at is not None:
-            url_entry.created_at = url_info.created_at
-        session.add(url_entry)
-        await session.flush()
-        link = LinkBatchURL(
-            batch_id=url_info.batch_id,
-            url_id=url_entry.id
-        )
-        session.add(link)
-        return url_entry.id
-
-    @session_manager
-    async def get_url_info_by_url(
-        self,
-        session: AsyncSession,
-        url: str
-    ) -> URLInfo | None:
-        query = Select(URL).where(URL.url == url)
-        raw_result = await session.execute(query)
-        url = raw_result.scalars().first()
-        return URLInfo(**url.__dict__)
-
-    @session_manager
-    async def get_url_info_by_id(
-        self,
-        session: AsyncSession,
-        url_id: int
-    ) -> URLInfo | None:
-        query = Select(URL).where(URL.id == url_id)
-        raw_result = await session.execute(query)
-        url = raw_result.scalars().first()
-        return URLInfo(**url.__dict__)
-
-    @session_manager
     async def insert_logs(
         self,
         session: AsyncSession,
@@ -952,19 +907,6 @@ class AsyncDatabaseClient:
             if log_info.created_at is not None:
                 log.created_at = log_info.created_at
             session.add(log)
-
-    @session_manager
-    async def insert_duplicates(
-        self,
-        session: AsyncSession,
-        duplicate_infos: list[DuplicateInsertInfo]
-    ) -> None:
-        for duplicate_info in duplicate_infos:
-            duplicate = Duplicate(
-                batch_id=duplicate_info.duplicate_batch_id,
-                original_url_id=duplicate_info.original_url_id,
-            )
-            session.add(duplicate)
 
     @session_manager
     async def insert_batch(
@@ -996,29 +938,13 @@ class AsyncDatabaseClient:
         url_infos: list[URLInfo],
         batch_id: int
     ) -> InsertURLsInfo:
-        url_mappings = []
-        duplicates = []
-        for url_info in url_infos:
-            url_info.batch_id = batch_id
-            try:
-                url_id = await self.insert_url(url_info)
-                url_mappings.append(URLMapping(url_id=url_id, url=url_info.url))
-            except IntegrityError:
-                orig_url_info = await self.get_url_info_by_url(url_info.url)
-                duplicate_info = DuplicateInsertInfo(
-                    duplicate_batch_id=batch_id,
-                    original_url_id=orig_url_info.id
-                )
-                duplicates.append(duplicate_info)
-        await self.insert_duplicates(duplicates)
-
-        return InsertURLsInfo(
-            url_mappings=url_mappings,
-            total_count=len(url_infos),
-            original_count=len(url_mappings),
-            duplicate_count=len(duplicates),
-            url_ids=[url_mapping.url_id for url_mapping in url_mappings]
+        builder = InsertURLsQueryBuilder(
+            url_infos=url_infos,
+            batch_id=batch_id
         )
+        return await self.run_query_builder(builder)
+
+
 
     @session_manager
     async def update_batch_post_collection(

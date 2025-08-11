@@ -50,7 +50,7 @@ class GetDuplicatesByBatchIDQueryBuilder(QueryBuilderBase):
             final_results.append(
                 DuplicateInfo(
                     source_url=result.source_url,
-                    duplicate_batch_id=result.duplicate_batch_id,
+                    batch_id=result.duplicate_batch_id,
                     duplicate_metadata=result.duplicate_batch_parameters,
                     original_batch_id=result.original_batch_id,
                     original_metadata=result.original_batch_parameters,
