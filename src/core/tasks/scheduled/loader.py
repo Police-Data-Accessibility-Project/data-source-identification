@@ -42,6 +42,11 @@ class ScheduledTaskOperatorLoader:
 
         return [
             ScheduledTaskEntry(
+                operator=DeleteOldLogsTaskOperator(adb_client=self.async_core.adb_client),
+                interval=IntervalEnum.DAILY,
+                enabled=self.env.bool("DELETE_OLD_LOGS_TASK_FLAG", default=True)
+            ),
+            ScheduledTaskEntry(
                 operator=SyncDataSourcesTaskOperator(
                     adb_client=self.async_core.adb_client,
                     pdap_client=self.pdap_client
@@ -54,11 +59,6 @@ class ScheduledTaskOperatorLoader:
                 interval=IntervalEnum.HOURLY,
                 enabled=self.env.bool("RUN_URL_TASKS_TASK_FLAG", default=True)
 
-            ),
-            ScheduledTaskEntry(
-                operator=DeleteOldLogsTaskOperator(adb_client=self.async_core.adb_client),
-                interval=IntervalEnum.DAILY,
-                enabled=self.env.bool("DELETE_OLD_LOGS_TASK_FLAG", default=True)
             ),
             ScheduledTaskEntry(
                 operator=PopulateBacklogSnapshotTaskOperator(adb_client=self.async_core.adb_client),
