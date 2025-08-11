@@ -39,7 +39,6 @@ The following flags are available:
 | `URL_RECORD_TYPE_TASK_FLAG`           | Automatically assigns Record Types to URLs.           |
 | `URL_AGENCY_IDENTIFICATION_TASK_FLAG` | Automatically assigns and suggests Agencies for URLs. |
 | `URL_SUBMIT_APPROVED_TASK_FLAG`       | Submits approved URLs to the Data Sources App.        |
-| `URL_DUPLICATE_TASK_FLAG`             | Identifies duplicate URLs.                            |
 | `URL_MISC_METADATA_TASK_FLAG`         | Adds misc metadata to URLs.                           |
 | `URL_404_PROBE_TASK_FLAG`             | Probes URLs for 404 errors.                           |
 | `URL_AUTO_RELEVANCE_TASK_FLAG`        | Automatically assigns Relevances to URLs.             |

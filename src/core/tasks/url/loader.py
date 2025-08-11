@@ -9,7 +9,6 @@ from src.core.tasks.url.models.entry import URLTaskEntry
 from src.core.tasks.url.operators.agency_identification.core import AgencyIdentificationTaskOperator
 from src.core.tasks.url.operators.agency_identification.subtasks.loader import AgencyIdentificationSubtaskLoader
 from src.core.tasks.url.operators.auto_relevant.core import URLAutoRelevantTaskOperator
-from src.core.tasks.url.operators.duplicate.core import URLDuplicateTaskOperator
 from src.core.tasks.url.operators.html.core import URLHTMLTaskOperator
 from src.core.tasks.url.operators.html.scraper.parser.core import HTMLResponseParser
 from src.core.tasks.url.operators.misc_metadata.core import URLMiscellaneousMetadataTaskOperator
@@ -114,19 +113,6 @@ class URLTaskOperatorLoader:
             )
         )
 
-    async def _get_url_duplicate_task_operator(self) -> URLTaskEntry:
-        operator = URLDuplicateTaskOperator(
-            adb_client=self.adb_client,
-            pdap_client=self.pdap_client
-        )
-        return URLTaskEntry(
-            operator=operator,
-            enabled=self.env.bool(
-                "URL_DUPLICATE_TASK_FLAG",
-                default=True
-            )
-        )
-
     async def _get_url_404_probe_task_operator(self) -> URLTaskEntry:
         operator = URL404ProbeTaskOperator(
             adb_client=self.adb_client,
@@ -170,7 +156,6 @@ class URLTaskOperatorLoader:
         return [
             await self._get_url_probe_task_operator(),
             await self._get_url_html_task_operator(),
-            await self._get_url_duplicate_task_operator(),
             await self._get_url_404_probe_task_operator(),
             await self._get_url_record_type_task_operator(),
             await self._get_agency_identification_task_operator(),

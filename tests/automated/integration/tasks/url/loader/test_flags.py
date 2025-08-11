@@ -6,7 +6,6 @@ from src.core.tasks.url.models.entry import URLTaskEntry
 from src.core.tasks.url.operators.agency_identification.core import AgencyIdentificationTaskOperator
 from src.core.tasks.url.operators.auto_relevant.core import URLAutoRelevantTaskOperator
 from src.core.tasks.url.operators.base import URLTaskOperatorBase
-from src.core.tasks.url.operators.duplicate.core import URLDuplicateTaskOperator
 from src.core.tasks.url.operators.html.core import URLHTMLTaskOperator
 from src.core.tasks.url.operators.misc_metadata.core import URLMiscellaneousMetadataTaskOperator
 from src.core.tasks.url.operators.probe.core import URLProbeTaskOperator
@@ -39,10 +38,6 @@ params = [
     FlagTestParams(
         env_var="URL_SUBMIT_APPROVED_TASK_FLAG",
         operator=SubmitApprovedURLTaskOperator
-    ),
-    FlagTestParams(
-        env_var="URL_DUPLICATE_TASK_FLAG",
-        operator=URLDuplicateTaskOperator
     ),
     FlagTestParams(
         env_var="URL_MISC_METADATA_TASK_FLAG",
