@@ -5,6 +5,6 @@ from src.core.enums import RecordType
 
 
 class TestPushToHuggingFaceURLSetupEntryInput(BaseModel):
-    outcome: URLStatus
+    status: URLStatus
     record_type: RecordType | None
     has_html_content: bool

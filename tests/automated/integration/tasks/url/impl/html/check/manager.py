@@ -56,7 +56,7 @@ class TestURLHTMLTaskCheckManager:
             entry = self._id_to_entry[url.id]
             if entry.expected_result.web_metadata_status_marked_404:
                 continue
-            assert url.outcome == entry.url_info.status, f"URL {url.url} has outcome {url.outcome} instead of {entry.url_info.status}"
+            assert url.status == entry.url_info.status, f"URL {url.url} has outcome {url.status} instead of {entry.url_info.status}"
 
     async def _check_marked_as_404(self):
         web_metadata_list: list[URLWebMetadata] = await self.adb_client.get_all(

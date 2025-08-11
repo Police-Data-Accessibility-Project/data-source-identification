@@ -119,7 +119,7 @@ class DatabaseClient:
         url_entry = URL(
             url=url_info.url,
             collector_metadata=url_info.collector_metadata,
-            outcome=url_info.outcome,
+            status=url_info.status,
             name=url_info.name,
             source=url_info.source
         )
@@ -225,7 +225,7 @@ class DatabaseClient:
                 update(URL)
                 .where(URL.id == url_id)
                 .values(
-                    outcome=URLStatus.SUBMITTED.value
+                    status=URLStatus.SUBMITTED.value
                 )
             )
 

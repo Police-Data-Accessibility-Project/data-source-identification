@@ -12,7 +12,7 @@ ENTRIES = [
         # Because pending, should not be picked up
         Entry(
             input=Input(
-                outcome=URLStatus.PENDING,
+                status=URLStatus.PENDING,
                 has_html_content=True,
                 record_type=RecordType.INCARCERATION_RECORDS
             ),
@@ -23,7 +23,7 @@ ENTRIES = [
         # Because no html content, should not be picked up
         Entry(
             input=Input(
-                outcome=URLStatus.SUBMITTED,
+                status=URLStatus.SUBMITTED,
                 has_html_content=False,
                 record_type=RecordType.RECORDS_REQUEST_INFO
             ),
@@ -34,7 +34,7 @@ ENTRIES = [
         # Remainder should be picked up
         Entry(
             input=Input(
-                outcome=URLStatus.VALIDATED,
+                status=URLStatus.VALIDATED,
                 has_html_content=True,
                 record_type=RecordType.RECORDS_REQUEST_INFO
             ),
@@ -46,7 +46,7 @@ ENTRIES = [
         ),
         Entry(
             input=Input(
-                outcome=URLStatus.SUBMITTED,
+                status=URLStatus.SUBMITTED,
                 has_html_content=True,
                 record_type=RecordType.INCARCERATION_RECORDS
             ),
@@ -58,7 +58,7 @@ ENTRIES = [
         ),
         Entry(
             input=Input(
-                outcome=URLStatus.NOT_RELEVANT,
+                status=URLStatus.NOT_RELEVANT,
                 has_html_content=True,
                 record_type=None
             ),

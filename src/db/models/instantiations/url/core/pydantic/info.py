@@ -12,7 +12,7 @@ class URLInfo(BaseModel):
     batch_id: int | None= None
     url: str
     collector_metadata: dict | None = None
-    outcome: URLStatus = URLStatus.PENDING
+    status: URLStatus = URLStatus.PENDING
     updated_at: datetime.datetime | None = None
     created_at: datetime.datetime | None = None
     name: str | None = None

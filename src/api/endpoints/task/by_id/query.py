@@ -43,7 +43,7 @@ class GetTaskInfoQueryBuilder(QueryBuilderBase):
                 batch_id=url.batch.id,
                 url=url.url,
                 collector_metadata=url.collector_metadata,
-                outcome=URLStatus(url.outcome),
+                status=URLStatus(url.status),
                 updated_at=url.updated_at
             )
             url_infos.append(url_info)

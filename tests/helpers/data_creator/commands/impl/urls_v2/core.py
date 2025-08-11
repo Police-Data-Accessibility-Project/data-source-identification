@@ -33,7 +33,7 @@ class URLsV2Command(DBDataCreatorCommandBase):
             command = URLsDBDataCreatorCommand(
                 batch_id=self.batch_id,
                 url_count=url_parameters.count,
-                outcome=url_parameters.status,
+                status=url_parameters.status,
                 created_at=self.created_at
             )
             iui: InsertURLsInfo = self.run_command_sync(command)

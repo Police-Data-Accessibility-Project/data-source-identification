@@ -9,6 +9,8 @@ from src.core.tasks.scheduled.impl.sync.data_sources.queries.upsert.mapper impor
 from src.core.tasks.scheduled.impl.sync.data_sources.queries.upsert.param_manager import \
     UpsertURLsFromDataSourcesParamManager
 from src.core.tasks.scheduled.impl.sync.data_sources.queries.upsert.requester import UpsertURLsFromDataSourcesDBRequester
+from src.core.tasks.scheduled.impl.sync.data_sources.queries.upsert.url.insert.params import \
+    InsertURLForDataSourcesSyncParams
 from src.core.tasks.scheduled.impl.sync.data_sources.queries.upsert.url.lookup.response import \
     LookupURLForDataSourcesSyncResponse
 from src.db.dtos.url.mapping import URLMapping
@@ -84,7 +86,7 @@ class UpsertURLsFromDataSourcesQueryBuilder(QueryBuilderBase):
         await self.requester.add_new_data_sources(url_ds_insert_params)
 
     async def _add_new_urls(self, urls: list[str]):
-        url_insert_params = self.param_manager.add_new_urls(urls)
+        url_insert_params: list[InsertURLForDataSourcesSyncParams] = self.param_manager.add_new_urls(urls)
         url_mappings = await self.requester.add_new_urls(url_insert_params)
         return url_mappings
 

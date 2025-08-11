@@ -68,7 +68,7 @@ async def test_url_duplicate_task(
     assert duplicate_url.url_id in url_ids
     for url in urls:
         if url.id == duplicate_url.url_id:
-            assert url.outcome == URLStatus.DUPLICATE
+            assert url.status == URLStatus.DUPLICATE
 
     checked_for_duplicates: list[URLCheckedForDuplicate] = await adb_client.get_all(URLCheckedForDuplicate)
     assert len(checked_for_duplicates) == 2

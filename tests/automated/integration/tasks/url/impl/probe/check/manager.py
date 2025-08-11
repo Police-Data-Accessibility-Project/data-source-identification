@@ -22,7 +22,7 @@ class TestURLProbeCheckManager:
     ):
         url: URL = await self.adb_client.one_or_none(select(URL).where(URL.id == url_id))
         assert url is not None
-        assert url.outcome == expected_status
+        assert url.status == expected_status
 
     async def check_web_metadata(
         self,

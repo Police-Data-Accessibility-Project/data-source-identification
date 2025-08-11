@@ -17,5 +17,5 @@ class UpdateURLForDataSourcesSyncParams(BulkUpdatableModel):
     id: int
     name: str
     description: str | None
-    outcome: URLStatus
+    status: URLStatus
     record_type: RecordType

@@ -43,7 +43,7 @@ class GetNextURLForUserAnnotationQueryBuilder(QueryBuilderBase):
 
         query = (
             query
-            .where(URL.outcome == URLStatus.PENDING.value)
+            .where(URL.status == URLStatus.PENDING.value)
             # URL must not have user suggestion
             .where(
                 StatementComposer.user_suggestion_not_exists(self.user_suggestion_model_to_exclude)

@@ -11,7 +11,7 @@ class HasValidatedURLsQueryBuilder(QueryBuilderBase):
     async def run(self, session: AsyncSession) -> bool:
         query = (
             select(URL)
-            .where(URL.outcome == URLStatus.VALIDATED.value)
+            .where(URL.status == URLStatus.VALIDATED.value)
         )
         urls = await session.execute(query)
         urls = urls.scalars().all()

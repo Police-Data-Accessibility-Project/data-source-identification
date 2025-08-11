@@ -29,7 +29,7 @@ class GetValidatedURLsQueryBuilder(QueryBuilderBase):
     async def _build_query():
         query = (
             select(URL)
-            .where(URL.outcome == URLStatus.VALIDATED.value)
+            .where(URL.status == URLStatus.VALIDATED.value)
             .options(
                 selectinload(URL.optional_data_source_metadata),
                 selectinload(URL.confirmed_agencies),

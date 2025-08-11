@@ -66,7 +66,7 @@ class URLSetupFunctor:
             name=entry.name,
             description=entry.description,
             collector_metadata={},
-            outcome=entry.url_status.value,
+            status=entry.url_status.value,
             record_type=entry.record_type.value if entry.record_type is not None else None,
             source=URLSource.COLLECTOR
         )

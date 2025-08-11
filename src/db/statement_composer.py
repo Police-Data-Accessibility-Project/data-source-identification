@@ -96,10 +96,10 @@ class StatementComposer:
     def pending_urls_missing_miscellaneous_metadata_query() -> Select:
         query = select(URL).where(
             and_(
-                    URL.outcome == URLStatus.PENDING.value,
-                    URL.name == None,
-                    URL.description == None,
-                    URLOptionalDataSourceMetadata.url_id == None
+                URL.status == URLStatus.PENDING.value,
+                URL.name == None,
+                URL.description == None,
+                URLOptionalDataSourceMetadata.url_id == None
                 )
             ).outerjoin(
                 URLOptionalDataSourceMetadata

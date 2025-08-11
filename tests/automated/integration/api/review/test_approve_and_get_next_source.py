@@ -50,12 +50,12 @@ async def test_approve_and_get_next_source_for_review(api_test_helper):
 
     adb_client = db_data_creator.adb_client
     # Confirm same agency id is listed as confirmed
-    urls = await adb_client.get_all(URL)
+    urls: list[URL] = await adb_client.get_all(URL)
     assert len(urls) == 1
     url = urls[0]
     assert url.id == url_mapping.url_id
     assert url.record_type == RecordType.ARREST_RECORDS
-    assert url.outcome == URLStatus.VALIDATED
+    assert url.status == URLStatus.VALIDATED
     assert url.name == "New Test Name"
     assert url.description == "New Test Description"
 

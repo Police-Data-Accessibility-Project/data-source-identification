@@ -39,7 +39,7 @@ class GetNextURLForAllAnnotationQueryBuilder(QueryBuilderBase):
             query
             .where(
                 and_(
-                    URL.outcome == URLStatus.PENDING.value,
+                    URL.status == URLStatus.PENDING.value,
                     StatementComposer.user_suggestion_not_exists(UserUrlAgencySuggestion),
                     StatementComposer.user_suggestion_not_exists(UserRecordTypeSuggestion),
                     StatementComposer.user_suggestion_not_exists(UserRelevantSuggestion),

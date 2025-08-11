@@ -16,14 +16,14 @@ class URLsDBDataCreatorCommand(DBDataCreatorCommandBase):
         batch_id: int | None,
         url_count: int,
         collector_metadata: dict | None = None,
-        outcome: URLStatus = URLStatus.PENDING,
+        status: URLStatus = URLStatus.PENDING,
         created_at: datetime | None = None
     ):
         super().__init__()
         self.batch_id = batch_id
         self.url_count = url_count
         self.collector_metadata = collector_metadata
-        self.outcome = outcome
+        self.status = status
         self.created_at = created_at
 
     async def run(self) -> InsertURLsInfo:
@@ -36,8 +36,8 @@ class URLsDBDataCreatorCommand(DBDataCreatorCommandBase):
             url_infos.append(
                 URLInfo(
                     url=url,
-                    outcome=self.outcome,
-                    name="Test Name" if self.outcome == URLStatus.VALIDATED else None,
+                    status=self.status,
+                    name="Test Name" if self.status == URLStatus.VALIDATED else None,
                     collector_metadata=self.collector_metadata,
                     created_at=self.created_at,
                     source=URLSource.COLLECTOR
@@ -50,7 +50,7 @@ class URLsDBDataCreatorCommand(DBDataCreatorCommandBase):
         )
 
         # If outcome is submitted, also add entry to DataSourceURL
-        if self.outcome == URLStatus.SUBMITTED:
+        if self.status == URLStatus.SUBMITTED:
             submitted_url_infos = []
             for url_id in url_insert_info.url_ids:
                 submitted_url_info = SubmittedURLInfo(

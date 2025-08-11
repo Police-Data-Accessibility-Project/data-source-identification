@@ -93,7 +93,7 @@ class GetNextURLForFinalReviewQueryBuilder(QueryBuilderBase):
         query = (
             query.where(
                 and_(
-                    URL.outcome == URLStatus.PENDING.value,
+                    URL.status == URLStatus.PENDING.value,
                     *where_exist_clauses
                 )
             )
@@ -189,7 +189,7 @@ class GetNextURLForFinalReviewQueryBuilder(QueryBuilderBase):
             )
             .where(
                 LinkBatchURL.batch_id == self.batch_id,
-                URL.outcome == URLStatus.PENDING.value,
+                URL.status == URLStatus.PENDING.value,
                 *self._get_where_exist_clauses(
                     builder.query
                 )
@@ -209,7 +209,7 @@ class GetNextURLForFinalReviewQueryBuilder(QueryBuilderBase):
             .join(LinkBatchURL)
             .outerjoin(URL, URL.id == LinkBatchURL.url_id)
             .where(
-                URL.outcome.in_(
+                URL.status.in_(
                     [
                         URLStatus.VALIDATED.value,
                         URLStatus.NOT_RELEVANT.value,

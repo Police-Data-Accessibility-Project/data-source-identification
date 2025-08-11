@@ -31,7 +31,7 @@ async def test_url_auto_relevant_task(db_data_creator):
     # Get URLs, confirm one is marked as error
     urls: list[URL] = await adb_client.get_all(URL)
     assert len(urls) == 3
-    counter = Counter([url.outcome for url in urls])
+    counter = Counter([url.status for url in urls])
     assert counter[URLStatus.ERROR] == 1
     assert counter[URLStatus.PENDING] == 2
 

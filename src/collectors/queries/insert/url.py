@@ -18,7 +18,7 @@ class InsertURLQueryBuilder(QueryBuilderBase):
         url_entry = URL(
             url=self.url_info.url,
             collector_metadata=self.url_info.collector_metadata,
-            outcome=self.url_info.outcome.value,
+            status=self.url_info.status.value,
             source=self.url_info.source
         )
         if self.url_info.created_at is not None:

@@ -21,7 +21,7 @@ class GetPendingURLsWithoutHTMLDataQueryBuilder(QueryBuilderBase):
                 batch_id=url.batch.id if url.batch is not None else None,
                 url=url.url,
                 collector_metadata=url.collector_metadata,
-                outcome=url.outcome,
+                status=url.status,
                 created_at=url.created_at,
                 updated_at=url.updated_at,
                 name=url.name
