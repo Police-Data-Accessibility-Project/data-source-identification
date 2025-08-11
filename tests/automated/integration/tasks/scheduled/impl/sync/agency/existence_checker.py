@@ -25,4 +25,3 @@ class AgencyChecker:
         assert info.state_name == agency.state
         assert info.county_name == agency.county
         assert info.locality_name == agency.locality
-        assert info.updated_at == agency.ds_last_updated_at

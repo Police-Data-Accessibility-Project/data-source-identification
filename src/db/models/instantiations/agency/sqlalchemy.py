@@ -23,11 +23,6 @@ class Agency(
     state = Column(String, nullable=True)
     county = Column(String, nullable=True)
     locality = Column(String, nullable=True)
-    ds_last_updated_at = Column(
-        DateTime,
-        nullable=True,
-        comment="The last time the agency was updated in the data sources database."
-    )
 
     # Relationships
     automated_suggestions = relationship("AutomatedUrlAgencySuggestion", back_populates="agency")
