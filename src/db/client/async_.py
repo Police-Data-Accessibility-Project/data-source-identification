@@ -5,7 +5,6 @@ from typing import Optional, Type, Any, List, Sequence
 
 from sqlalchemy import select, exists, func, case, Select, and_, update, delete, literal, Row
 from sqlalchemy.dialects.postgresql import insert as pg_insert
-from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.orm import selectinload, QueryableAttribute
 
@@ -60,11 +59,13 @@ from src.core.tasks.scheduled.impl.huggingface.queries.state import SetHuggingFa
 from src.core.tasks.scheduled.impl.sync.agency.dtos.parameters import AgencySyncParameters
 from src.core.tasks.scheduled.impl.sync.agency.queries.get_sync_params import GetAgenciesSyncParametersQueryBuilder
 from src.core.tasks.scheduled.impl.sync.agency.queries.mark_full_sync import get_mark_full_agencies_sync_query
-from src.core.tasks.scheduled.impl.sync.agency.queries.update_sync_progress import get_update_agencies_sync_progress_query
+from src.core.tasks.scheduled.impl.sync.agency.queries.update_sync_progress import \
+    get_update_agencies_sync_progress_query
 from src.core.tasks.scheduled.impl.sync.agency.queries.upsert import \
     convert_agencies_sync_response_to_agencies_upsert
 from src.core.tasks.scheduled.impl.sync.data_sources.params import DataSourcesSyncParameters
-from src.core.tasks.scheduled.impl.sync.data_sources.queries.get_sync_params import GetDataSourcesSyncParametersQueryBuilder
+from src.core.tasks.scheduled.impl.sync.data_sources.queries.get_sync_params import \
+    GetDataSourcesSyncParametersQueryBuilder
 from src.core.tasks.scheduled.impl.sync.data_sources.queries.mark_full_sync import get_mark_full_data_sources_sync_query
 from src.core.tasks.scheduled.impl.sync.data_sources.queries.update_sync_progress import \
     get_update_data_sources_sync_progress_query
@@ -78,14 +79,6 @@ from src.core.tasks.url.operators.agency_identification.queries.has_urls_without
     HasURLsWithoutAgencySuggestionsQueryBuilder
 from src.core.tasks.url.operators.auto_relevant.models.tdo import URLRelevantTDO
 from src.core.tasks.url.operators.auto_relevant.queries.get_tdos import GetAutoRelevantTDOsQueryBuilder
-from src.core.tasks.url.operators.probe.queries.urls.not_probed.get.query import GetURLsWithoutProbeQueryBuilder
-from src.core.tasks.url.operators.probe.queries.urls.not_probed.exists import HasURLsWithoutProbeQueryBuilder
-from src.core.tasks.url.operators.probe_404.tdo import URL404ProbeTDO
-from src.core.tasks.url.operators.submit_approved.queries.get import GetValidatedURLsQueryBuilder
-from src.core.tasks.url.operators.submit_approved.queries.has_validated import HasValidatedURLsQueryBuilder
-from src.core.tasks.url.operators.submit_approved.queries.mark_submitted import MarkURLsAsSubmittedQueryBuilder
-from src.core.tasks.url.operators.submit_approved.tdo import SubmitApprovedURLTDO, SubmittedURLInfo
-from src.core.tasks.url.operators.duplicate.tdo import URLDuplicateTDO
 from src.core.tasks.url.operators.html.queries.get import \
     GetPendingURLsWithoutHTMLDataQueryBuilder
 from src.core.tasks.url.operators.misc_metadata.queries.get_pending_urls_missing_miscellaneous_data import \
@@ -93,6 +86,13 @@ from src.core.tasks.url.operators.misc_metadata.queries.get_pending_urls_missing
 from src.core.tasks.url.operators.misc_metadata.queries.has_pending_urls_missing_miscellaneous_data import \
     HasPendingURsMissingMiscellaneousDataQueryBuilder
 from src.core.tasks.url.operators.misc_metadata.tdo import URLMiscellaneousMetadataTDO
+from src.core.tasks.url.operators.probe.queries.urls.not_probed.exists import HasURLsWithoutProbeQueryBuilder
+from src.core.tasks.url.operators.probe.queries.urls.not_probed.get.query import GetURLsWithoutProbeQueryBuilder
+from src.core.tasks.url.operators.probe_404.tdo import URL404ProbeTDO
+from src.core.tasks.url.operators.submit_approved.queries.get import GetValidatedURLsQueryBuilder
+from src.core.tasks.url.operators.submit_approved.queries.has_validated import HasValidatedURLsQueryBuilder
+from src.core.tasks.url.operators.submit_approved.queries.mark_submitted import MarkURLsAsSubmittedQueryBuilder
+from src.core.tasks.url.operators.submit_approved.tdo import SubmitApprovedURLTDO, SubmittedURLInfo
 from src.db.client.helpers import add_standard_limit_and_offset
 from src.db.client.types import UserSuggestionModel
 from src.db.config_manager import ConfigManager
@@ -109,9 +109,6 @@ from src.db.models.instantiations.backlog_snapshot import BacklogSnapshot
 from src.db.models.instantiations.batch.pydantic import BatchInfo
 from src.db.models.instantiations.batch.sqlalchemy import Batch
 from src.db.models.instantiations.duplicate.pydantic.info import DuplicateInfo
-from src.db.models.instantiations.duplicate.pydantic.insert import DuplicateInsertInfo
-from src.db.models.instantiations.duplicate.sqlalchemy import Duplicate
-from src.db.models.instantiations.link.batch_url import LinkBatchURL
 from src.db.models.instantiations.link.task_url import LinkTaskURL
 from src.db.models.instantiations.link.url_agency.sqlalchemy import LinkURLAgency
 from src.db.models.instantiations.log.pydantic.info import LogInfo
@@ -121,12 +118,12 @@ from src.db.models.instantiations.root_url_cache import RootURL
 from src.db.models.instantiations.task.core import Task
 from src.db.models.instantiations.task.error import TaskError
 from src.db.models.instantiations.url.checked_for_duplicate import URLCheckedForDuplicate
-from src.db.models.instantiations.url.html.compressed.sqlalchemy import URLCompressedHTML
 from src.db.models.instantiations.url.core.pydantic.info import URLInfo
 from src.db.models.instantiations.url.core.sqlalchemy import URL
 from src.db.models.instantiations.url.data_source.sqlalchemy import URLDataSource
 from src.db.models.instantiations.url.error_info.pydantic import URLErrorPydanticInfo
 from src.db.models.instantiations.url.error_info.sqlalchemy import URLErrorInfo
+from src.db.models.instantiations.url.html.compressed.sqlalchemy import URLCompressedHTML
 from src.db.models.instantiations.url.html.content.sqlalchemy import URLHTMLContent
 from src.db.models.instantiations.url.optional_data_source_metadata import URLOptionalDataSourceMetadata
 from src.db.models.instantiations.url.probed_for_404 import URLProbedFor404
@@ -1335,44 +1332,6 @@ class AsyncDatabaseClient:
             snapshot.created_at = dt
 
         session.add(snapshot)
-
-    @session_manager
-    async def has_pending_urls_not_checked_for_duplicates(self, session: AsyncSession) -> bool:
-        query = (select(
-            URL.id
-        ).outerjoin(
-            URLCheckedForDuplicate,
-            URL.id == URLCheckedForDuplicate.url_id
-        ).where(
-            URL.status == URLStatus.PENDING.value,
-            URLCheckedForDuplicate.id == None
-        ).limit(1)
-                 )
-
-        raw_result = await session.execute(query)
-        result = raw_result.one_or_none()
-        return result is not None
-
-    @session_manager
-    async def get_pending_urls_not_checked_for_duplicates(self, session: AsyncSession) -> List[URLDuplicateTDO]:
-        query = (select(
-            URL
-        ).outerjoin(
-            URLCheckedForDuplicate,
-            URL.id == URLCheckedForDuplicate.url_id
-        ).where(
-            URL.status == URLStatus.PENDING.value,
-            URLCheckedForDuplicate.id == None
-        ).limit(100)
-                 )
-
-        raw_result = await session.execute(query)
-        urls = raw_result.scalars().all()
-        return [URLDuplicateTDO(url=url.url, url_id=url.id) for url in urls]
-
-    async def mark_all_as_duplicates(self, url_ids: List[int]):
-        query = update(URL).where(URL.id.in_(url_ids)).values(status=URLStatus.DUPLICATE.value)
-        await self.execute(query)
 
     async def mark_all_as_404(self, url_ids: List[int]):
         query = update(URL).where(URL.id.in_(url_ids)).values(status=URLStatus.NOT_FOUND.value)
