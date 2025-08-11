@@ -14,8 +14,7 @@ def table_creation_check(
         tables: list[str],
         end_revision: str,
         start_revision: Optional[str] = None,
-
-):
+) -> None:
         if start_revision is not None:
                 alembic_runner.upgrade(start_revision)
         for table_name in tables:

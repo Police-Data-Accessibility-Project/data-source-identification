@@ -5,7 +5,9 @@ from src.core.tasks.url.operators.html.scraper.parser.mapping import ENUM_TO_ATT
 from src.core.tasks.url.operators.html.scraper.parser.dtos.response_html import ResponseHTMLInfo
 
 
-def convert_to_response_html_info(html_content_infos: list[URLHTMLContentInfo]):
+def convert_to_response_html_info(
+    html_content_infos: list[URLHTMLContentInfo]
+) -> ResponseHTMLInfo:
     response_html_info = ResponseHTMLInfo()
 
     for html_content_info in html_content_infos:
@@ -32,12 +34,12 @@ def add_https(url: str) -> str:
     return url
 
 
-def remove_trailing_backslash(url_path):
+def remove_trailing_backslash(url_path: str) -> str:
     if url_path and url_path[-1] == "/":
         url_path = url_path[:-1]
     return url_path
 
 
-def drop_hostname(new_url):
+def drop_hostname(new_url: str) -> str:
     url_path = urlparse(new_url).path[1:]
     return url_path

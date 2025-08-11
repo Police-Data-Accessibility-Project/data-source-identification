@@ -1,7 +1,7 @@
 from sqlalchemy import Column, TIMESTAMP, func, Integer, ForeignKey, Enum as SAEnum
 from enum import Enum as PyEnum
 
-def get_created_at_column():
+def get_created_at_column() -> Column:
     return Column(TIMESTAMP, nullable=False, server_default=CURRENT_TIME_SERVER_DEFAULT)
 
 

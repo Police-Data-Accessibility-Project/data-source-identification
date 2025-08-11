@@ -16,8 +16,8 @@ def create_directories_if_not_exist(file_path: str):
     Create directories if they don't exist
     Args:
         file_path:
-
-    Returns:
+    Modifies:
+        file_path
 
     """
     directory = os.path.dirname(file_path)

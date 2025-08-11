@@ -53,6 +53,7 @@ def _extract_destination_url(cr: ClientResponse) -> str:
     return str(cr.url)
 
 def convert_client_response_to_probe_response(
+    url: str,
     cr: ClientResponse
 ) -> URLProbeResponse | URLProbeRedirectResponsePair:
     error = _extract_error(cr)
@@ -69,13 +70,12 @@ def convert_client_response_to_probe_response(
     source_cr = cr.history[0]  # Source CR is the first in the history
     destination_cr = cr
 
-    source_url = str(source_cr.url)
     destination_url = str(destination_cr.url)
 
     source_error = _extract_error(source_cr)
     source_content_type = _extract_content_type(source_cr, error=source_error)
     source_probe_response = URLProbeResponse(
-        url=source_url,
+        url=url,
         status_code=source_cr.status,
         content_type=source_content_type,
         error=source_error,

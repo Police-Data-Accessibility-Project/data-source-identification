@@ -41,7 +41,7 @@ class AnnotationExistsCTEQueryBuilder(QueryBuilderBase):
 
     async def _annotation_exists_case(
         self,
-    ):
+    ) -> list[Any]:
         cases = []
         for model in ALL_ANNOTATION_MODELS:
             cases.append(

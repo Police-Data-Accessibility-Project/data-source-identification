@@ -16,9 +16,7 @@ from src.security.enums import Permissions
 class SecurityManager:
 
 
-    def __init__(
-            self
-    ):
+    def __init__(self):
         dotenv.load_dotenv()
         self.secret_key = os.getenv("DS_APP_SECRET_KEY")
 
