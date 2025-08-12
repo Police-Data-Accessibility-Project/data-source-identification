@@ -22,7 +22,7 @@ URLS_WITHOUT_ROOT_ID_QUERY = (
         LinkURLRootURL,
         URL.id == LinkURLRootURL.url_id
     ).where(
-        FlagRootURL.url_id.isnot(None),
-        LinkURLRootURL.url_id.isnot(None)
+        FlagRootURL.url_id.is_(None),
+        LinkURLRootURL.url_id.is_(None)
     )
 )

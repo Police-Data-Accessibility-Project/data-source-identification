@@ -1,4 +1,4 @@
-from typing import override
+from typing_extensions import override
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
