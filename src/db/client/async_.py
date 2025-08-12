@@ -1463,9 +1463,9 @@ class AsyncDatabaseClient:
             )
             session.add(compressed_html)
 
-    async def get_data_sources_raw_for_huggingface(self) -> list[GetForLoadingToHuggingFaceOutput]:
+    async def get_data_sources_raw_for_huggingface(self, page: int) -> list[GetForLoadingToHuggingFaceOutput]:
         return await self.run_query_builder(
-            GetForLoadingToHuggingFaceQueryBuilder()
+            GetForLoadingToHuggingFaceQueryBuilder(page)
         )
 
     async def set_hugging_face_upload_state(self, dt: datetime) -> None:
