@@ -21,21 +21,18 @@ class GetAutoRelevantTDOsQueryBuilder(QueryBuilderBase):
 
     async def run(self, session: AsyncSession) -> list[URLRelevantTDO]:
         query = (
-            select(
-                URL
-            )
+            select(URL)
             .options(
                 selectinload(URL.compressed_html)
             )
             .join(URLCompressedHTML)
+            .outerjoin(AutoRelevantSuggestion)
             .where(
                 URL.status == URLStatus.PENDING.value,
+                AutoRelevantSuggestion.id.is_(None),
             )
         )
-        query = StatementComposer.exclude_urls_with_extant_model(
-            query,
-            model=AutoRelevantSuggestion
-        )
+
         query = query.limit(100).order_by(URL.id)
         raw_result = await session.execute(query)
         urls: Sequence[Row[URL]] = raw_result.unique().scalars().all()
