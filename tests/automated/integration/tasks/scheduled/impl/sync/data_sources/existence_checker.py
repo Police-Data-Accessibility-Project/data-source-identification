@@ -1,8 +1,8 @@
 from collections import defaultdict
 
-from src.db.models.instantiations.link.url_agency_.sqlalchemy import LinkURLAgency
-from src.db.models.instantiations.url.core.sqlalchemy import URL
-from src.db.models.instantiations.url.data_source.sqlalchemy import URLDataSource
+from src.db.models.impl.link.url_agency_.sqlalchemy import LinkURLAgency
+from src.db.models.impl.url.core.sqlalchemy import URL
+from src.db.models.impl.url.data_source.sqlalchemy import URLDataSource
 from src.external.pdap.dtos.sync.data_sources import DataSourcesSyncResponseInfo, DataSourcesSyncResponseInnerInfo
 
 

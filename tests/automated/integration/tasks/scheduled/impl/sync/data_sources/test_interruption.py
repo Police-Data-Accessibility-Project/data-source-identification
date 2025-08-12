@@ -3,7 +3,7 @@ from sqlalchemy import select
 
 from src.core.tasks.scheduled.impl.sync.data_sources.operator import SyncDataSourcesTaskOperator
 from src.core.tasks.url.enums import TaskOperatorOutcome
-from src.db.models.instantiations.state.sync.data_sources import DataSourcesSyncState
+from src.db.models.impl.state.sync.data_sources import DataSourcesSyncState
 from tests.automated.integration.tasks.scheduled.impl.sync.data_sources.check import check_sync_concluded
 from tests.automated.integration.tasks.scheduled.impl.sync.data_sources.setup.core import patch_sync_data_sources
 from tests.automated.integration.tasks.scheduled.impl.sync.data_sources.setup.data import ENTRIES

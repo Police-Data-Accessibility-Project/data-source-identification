@@ -1,4 +1,4 @@
-from src.db.models.instantiations.agency.pydantic.upsert import AgencyUpsertModel
+from src.db.models.impl.agency.pydantic.upsert import AgencyUpsertModel
 from src.external.pdap.dtos.sync.agencies import AgenciesSyncResponseInnerInfo
 
 

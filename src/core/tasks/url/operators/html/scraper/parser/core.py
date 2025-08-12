@@ -1,25 +1,20 @@
 import json
-from typing import Optional
 
 from bs4 import BeautifulSoup
 
+from src.core.tasks.url.operators.html.scraper.parser.constants import HEADER_TAGS
 from src.core.tasks.url.operators.html.scraper.parser.dtos.response_html import ResponseHTMLInfo
 from src.core.tasks.url.operators.html.scraper.parser.enums import ParserTypeEnum
-from src.core.tasks.url.operators.html.scraper.parser.constants import HEADER_TAGS
-from src.core.tasks.url.operators.html.scraper.root_url_cache.core import RootURLCache
-from src.core.tasks.url.operators.html.scraper.parser.util import remove_excess_whitespace, add_https, remove_trailing_backslash, \
+from src.core.tasks.url.operators.html.scraper.parser.util import remove_excess_whitespace, add_https, \
+    remove_trailing_backslash, \
     drop_hostname
 
 
 class HTMLResponseParser:
 
-    def __init__(self, root_url_cache: RootURLCache):
-        self.root_url_cache = root_url_cache
-
     async def parse(self, url: str, html_content: str, content_type: str) -> ResponseHTMLInfo:
         html_info = ResponseHTMLInfo()
         self.add_url_and_path(html_info, html_content=html_content, url=url)
-        await self.add_root_page_titles(html_info)
         parser_type = self.get_parser_type(content_type)
         if parser_type is None:
             return html_info
@@ -115,16 +110,6 @@ class HTMLResponseParser:
         url_path = drop_hostname(url)
         url_path = remove_trailing_backslash(url_path)
         html_info.url_path = url_path
-
-    async def add_root_page_titles(self, html_info: ResponseHTMLInfo) -> None:
-        """
-        Modifies:
-            html_info.root_page_title
-        """
-        root_page_title = await self.root_url_cache.get_title(html_info.url)
-        html_info.root_page_title = remove_excess_whitespace(
-            root_page_title
-        )
 
     def get_parser_type(self, content_type: str) -> ParserTypeEnum | None:
         try:

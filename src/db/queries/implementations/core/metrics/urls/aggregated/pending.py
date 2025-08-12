@@ -5,10 +5,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.api.endpoints.metrics.dtos.get.urls.aggregated.pending import GetMetricsURLsAggregatedPendingResponseDTO
 from src.collectors.enums import URLStatus
-from src.db.models.instantiations.url.core.sqlalchemy import URL
-from src.db.models.instantiations.url.suggestion.agency.user import UserUrlAgencySuggestion
-from src.db.models.instantiations.url.suggestion.record_type.user import UserRecordTypeSuggestion
-from src.db.models.instantiations.url.suggestion.relevant.user import UserRelevantSuggestion
+from src.db.models.impl.url.core.sqlalchemy import URL
+from src.db.models.impl.url.suggestion.agency.user import UserUrlAgencySuggestion
+from src.db.models.impl.url.suggestion.record_type.user import UserRecordTypeSuggestion
+from src.db.models.impl.url.suggestion.relevant.user import UserRelevantSuggestion
 from src.db.models.mixins import URLDependentMixin
 from src.db.queries.base.builder import QueryBuilderBase
 from src.db.queries.implementations.core.common.annotation_exists import AnnotationExistsCTEQueryBuilder

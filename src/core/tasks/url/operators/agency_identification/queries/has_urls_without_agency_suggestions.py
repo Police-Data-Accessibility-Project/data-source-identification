@@ -2,7 +2,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.collectors.enums import URLStatus
-from src.db.models.instantiations.url.core.sqlalchemy import URL
+from src.db.models.impl.url.core.sqlalchemy import URL
 from src.db.queries.base.builder import QueryBuilderBase
 from src.db.statement_composer import StatementComposer
 

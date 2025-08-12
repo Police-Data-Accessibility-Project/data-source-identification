@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
-from src.db.models.instantiations.log.pydantic.output import LogOutputInfo
+from src.db.models.impl.log.pydantic.output import LogOutputInfo
 
 
 class GetBatchLogsResponse(BaseModel):

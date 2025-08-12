@@ -3,8 +3,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.collectors.enums import URLStatus
 from src.core.tasks.url.operators.submit_approved.tdo import SubmittedURLInfo
-from src.db.models.instantiations.url.core.sqlalchemy import URL
-from src.db.models.instantiations.url.data_source.sqlalchemy import URLDataSource
+from src.db.models.impl.url.core.sqlalchemy import URL
+from src.db.models.impl.url.data_source.sqlalchemy import URLDataSource
 from src.db.queries.base.builder import QueryBuilderBase
 
 

@@ -1,4 +1,4 @@
-from src.db.models.instantiations.link.url_agency.pydantic import LinkURLAgencyPydantic
+from src.db.models.impl.link.url_agency.pydantic import LinkURLAgencyPydantic
 
 
 def convert_to_link_url_agency_models(

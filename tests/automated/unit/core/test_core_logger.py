@@ -3,7 +3,7 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from src.db.models.instantiations.log.pydantic.info import LogInfo
+from src.db.models.impl.log.pydantic.info import LogInfo
 from src.core.logger import AsyncCoreLogger
 
 

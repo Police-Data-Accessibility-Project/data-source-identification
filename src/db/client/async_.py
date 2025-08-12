@@ -104,37 +104,36 @@ from src.db.dtos.url.mapping import URLMapping
 from src.db.dtos.url.raw_html import RawHTMLInfo
 from src.db.enums import TaskType
 from src.db.helpers.session import session_helper as sh
-from src.db.models.instantiations.agency.sqlalchemy import Agency
-from src.db.models.instantiations.backlog_snapshot import BacklogSnapshot
-from src.db.models.instantiations.batch.pydantic import BatchInfo
-from src.db.models.instantiations.batch.sqlalchemy import Batch
-from src.db.models.instantiations.duplicate.pydantic.info import DuplicateInfo
-from src.db.models.instantiations.link.task_url import LinkTaskURL
-from src.db.models.instantiations.link.url_agency.sqlalchemy import LinkURLAgency
-from src.db.models.instantiations.log.pydantic.info import LogInfo
-from src.db.models.instantiations.log.pydantic.output import LogOutputInfo
-from src.db.models.instantiations.log.sqlalchemy import Log
-from src.db.models.instantiations.root_url_cache import RootURL
-from src.db.models.instantiations.task.core import Task
-from src.db.models.instantiations.task.error import TaskError
-from src.db.models.instantiations.url.checked_for_duplicate import URLCheckedForDuplicate
-from src.db.models.instantiations.url.core.pydantic.info import URLInfo
-from src.db.models.instantiations.url.core.sqlalchemy import URL
-from src.db.models.instantiations.url.data_source.sqlalchemy import URLDataSource
-from src.db.models.instantiations.url.error_info.pydantic import URLErrorPydanticInfo
-from src.db.models.instantiations.url.error_info.sqlalchemy import URLErrorInfo
-from src.db.models.instantiations.url.html.compressed.sqlalchemy import URLCompressedHTML
-from src.db.models.instantiations.url.html.content.sqlalchemy import URLHTMLContent
-from src.db.models.instantiations.url.optional_data_source_metadata import URLOptionalDataSourceMetadata
-from src.db.models.instantiations.url.probed_for_404 import URLProbedFor404
-from src.db.models.instantiations.url.suggestion.agency.auto import AutomatedUrlAgencySuggestion
-from src.db.models.instantiations.url.suggestion.agency.user import UserUrlAgencySuggestion
-from src.db.models.instantiations.url.suggestion.record_type.auto import AutoRecordTypeSuggestion
-from src.db.models.instantiations.url.suggestion.record_type.user import UserRecordTypeSuggestion
-from src.db.models.instantiations.url.suggestion.relevant.auto.pydantic.input import AutoRelevancyAnnotationInput
-from src.db.models.instantiations.url.suggestion.relevant.auto.sqlalchemy import AutoRelevantSuggestion
-from src.db.models.instantiations.url.suggestion.relevant.user import UserRelevantSuggestion
-from src.db.models.instantiations.url.web_metadata.sqlalchemy import URLWebMetadata
+from src.db.models.impl.agency.sqlalchemy import Agency
+from src.db.models.impl.backlog_snapshot import BacklogSnapshot
+from src.db.models.impl.batch.pydantic import BatchInfo
+from src.db.models.impl.batch.sqlalchemy import Batch
+from src.db.models.impl.duplicate.pydantic.info import DuplicateInfo
+from src.db.models.impl.link.task_url import LinkTaskURL
+from src.db.models.impl.link.url_agency.sqlalchemy import LinkURLAgency
+from src.db.models.impl.log.pydantic.info import LogInfo
+from src.db.models.impl.log.pydantic.output import LogOutputInfo
+from src.db.models.impl.log.sqlalchemy import Log
+from src.db.models.impl.task.core import Task
+from src.db.models.impl.task.error import TaskError
+from src.db.models.impl.url.checked_for_duplicate import URLCheckedForDuplicate
+from src.db.models.impl.url.core.pydantic.info import URLInfo
+from src.db.models.impl.url.core.sqlalchemy import URL
+from src.db.models.impl.url.data_source.sqlalchemy import URLDataSource
+from src.db.models.impl.url.error_info.pydantic import URLErrorPydanticInfo
+from src.db.models.impl.url.error_info.sqlalchemy import URLErrorInfo
+from src.db.models.impl.url.html.compressed.sqlalchemy import URLCompressedHTML
+from src.db.models.impl.url.html.content.sqlalchemy import URLHTMLContent
+from src.db.models.impl.url.optional_data_source_metadata import URLOptionalDataSourceMetadata
+from src.db.models.impl.url.probed_for_404 import URLProbedFor404
+from src.db.models.impl.url.suggestion.agency.auto import AutomatedUrlAgencySuggestion
+from src.db.models.impl.url.suggestion.agency.user import UserUrlAgencySuggestion
+from src.db.models.impl.url.suggestion.record_type.auto import AutoRecordTypeSuggestion
+from src.db.models.impl.url.suggestion.record_type.user import UserRecordTypeSuggestion
+from src.db.models.impl.url.suggestion.relevant.auto.pydantic.input import AutoRelevancyAnnotationInput
+from src.db.models.impl.url.suggestion.relevant.auto.sqlalchemy import AutoRelevantSuggestion
+from src.db.models.impl.url.suggestion.relevant.user import UserRelevantSuggestion
+from src.db.models.impl.url.web_metadata.sqlalchemy import URLWebMetadata
 from src.db.models.templates_.base import Base
 from src.db.queries.base.builder import QueryBuilderBase
 from src.db.queries.implementations.core.get.html_content_info import GetHTMLContentInfoQueryBuilder
@@ -609,20 +608,6 @@ class AsyncDatabaseClient:
     ) -> list[Base]:
         """Get all records of a model. Used primarily in testing."""
         return await sh.get_all(session=session, model=model, order_by_attribute=order_by_attribute)
-
-    @session_manager
-    async def load_root_url_cache(self, session: AsyncSession) -> dict[str, str]:
-        statement = select(RootURL)
-        scalar_result = await session.scalars(statement)
-        model_result = scalar_result.all()
-        d = {}
-        for result in model_result:
-            d[result.url] = result.page_title
-        return d
-
-    async def add_to_root_url_cache(self, url: str, page_title: str) -> None:
-        cache = RootURL(url=url, page_title=page_title)
-        await self.add(cache)
 
     async def get_urls(
         self,

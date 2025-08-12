@@ -4,7 +4,7 @@ from http import HTTPStatus
 from pydantic import BaseModel
 
 from src.collectors.enums import URLStatus
-from src.db.models.instantiations.url.scrape_info.enums import ScrapeStatus
+from src.db.models.impl.url.scrape_info.enums import ScrapeStatus
 
 
 class TestErrorType(Enum):

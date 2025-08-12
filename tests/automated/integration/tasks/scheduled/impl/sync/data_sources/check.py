@@ -3,8 +3,8 @@ from datetime import timedelta
 from sqlalchemy import select, cast, func, TIMESTAMP
 
 from src.db.client.async_ import AsyncDatabaseClient
-from src.db.models.instantiations.state.sync.data_sources import DataSourcesSyncState
-from src.db.models.instantiations.url.core.sqlalchemy import URL
+from src.db.models.impl.state.sync.data_sources import DataSourcesSyncState
+from src.db.models.impl.url.core.sqlalchemy import URL
 
 
 async def check_sync_concluded(

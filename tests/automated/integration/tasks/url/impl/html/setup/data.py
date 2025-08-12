@@ -1,7 +1,7 @@
 from http import HTTPStatus
 
 from src.collectors.enums import URLStatus
-from src.db.models.instantiations.url.scrape_info.enums import ScrapeStatus
+from src.db.models.impl.url.scrape_info.enums import ScrapeStatus
 from tests.automated.integration.tasks.url.impl.html.setup.models.entry import TestURLHTMLTaskSetupEntry, TestURLInfo, \
     TestWebMetadataInfo, ExpectedResult, TestErrorType
 

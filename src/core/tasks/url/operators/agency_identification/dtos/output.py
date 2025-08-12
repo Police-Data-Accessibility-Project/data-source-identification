@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 
 from src.core.tasks.url.operators.agency_identification.dtos.suggestion import URLAgencySuggestionInfo
-from src.db.models.instantiations.url.error_info.pydantic import URLErrorPydanticInfo
+from src.db.models.impl.url.error_info.pydantic import URLErrorPydanticInfo
 
 
 class GetAgencySuggestionsOutput(BaseModel):

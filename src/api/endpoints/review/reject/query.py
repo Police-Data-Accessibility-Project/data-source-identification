@@ -5,8 +5,8 @@ from starlette.status import HTTP_400_BAD_REQUEST
 
 from src.api.endpoints.review.enums import RejectionReason
 from src.collectors.enums import URLStatus
-from src.db.models.instantiations.url.core.sqlalchemy import URL
-from src.db.models.instantiations.url.reviewing_user import ReviewingUserURL
+from src.db.models.impl.url.core.sqlalchemy import URL
+from src.db.models.impl.url.reviewing_user import ReviewingUserURL
 from src.db.queries.base.builder import QueryBuilderBase
 
 

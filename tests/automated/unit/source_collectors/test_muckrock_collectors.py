@@ -10,8 +10,8 @@ from src.core.logger import AsyncCoreLogger
 from src.collectors.impl.muckrock.collectors.county.dto import MuckrockCountySearchCollectorInputDTO
 from src.collectors.impl.muckrock.collectors.simple.dto import MuckrockSimpleSearchCollectorInputDTO
 from src.collectors.impl.muckrock.fetch_requests.foia import FOIAFetchRequest
-from src.db.models.instantiations.url.core.enums import URLSource
-from src.db.models.instantiations.url.core.pydantic.info import URLInfo
+from src.db.models.impl.url.core.enums import URLSource
+from src.db.models.impl.url.core.pydantic.info import URLInfo
 
 PATCH_ROOT = "src.collectors.impl.muckrock"
 

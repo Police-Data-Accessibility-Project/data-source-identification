@@ -5,7 +5,7 @@ from src.core.tasks.url.operators.html.scraper.parser.core import HTMLResponsePa
 from src.core.tasks.url.operators.html.tdo import UrlHtmlTDO
 from src.db.client.async_ import AsyncDatabaseClient
 from src.db.enums import TaskType
-from src.db.models.instantiations.url.core.pydantic.info import URLInfo
+from src.db.models.impl.url.core.pydantic.info import URLInfo
 from src.external.url_request.core import URLRequestInterface
 
 

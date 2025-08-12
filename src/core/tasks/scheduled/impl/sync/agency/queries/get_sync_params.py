@@ -3,7 +3,7 @@ from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.core.tasks.scheduled.impl.sync.agency.dtos.parameters import AgencySyncParameters
-from src.db.models.instantiations.state.sync.agencies import AgenciesSyncState
+from src.db.models.impl.state.sync.agencies import AgenciesSyncState
 from src.db.queries.base.builder import QueryBuilderBase
 
 

@@ -5,8 +5,8 @@ from unittest.mock import patch
 from sqlalchemy import select, func, TIMESTAMP, cast, update
 
 from src.db.client.async_ import AsyncDatabaseClient
-from src.db.models.instantiations.agency.sqlalchemy import Agency
-from src.db.models.instantiations.state.sync.agencies import AgenciesSyncState
+from src.db.models.impl.agency.sqlalchemy import Agency
+from src.db.models.impl.state.sync.agencies import AgenciesSyncState
 from src.external.pdap.client import PDAPClient
 from tests.automated.integration.tasks.scheduled.impl.sync.agency.data import PREEXISTING_AGENCIES
 

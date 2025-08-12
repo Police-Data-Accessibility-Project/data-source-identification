@@ -2,7 +2,7 @@ import abc
 from abc import ABC
 from typing import List
 
-from src.db.models.instantiations.url.core.pydantic.info import URLInfo
+from src.db.models.impl.url.core.pydantic.info import URLInfo
 
 
 class PreprocessorBase(ABC):

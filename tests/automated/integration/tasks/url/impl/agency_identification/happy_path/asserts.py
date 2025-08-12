@@ -1,6 +1,6 @@
 from src.db.client.async_ import AsyncDatabaseClient
-from src.db.models.instantiations.agency.sqlalchemy import Agency
-from src.db.models.instantiations.url.suggestion.agency.auto import AutomatedUrlAgencySuggestion
+from src.db.models.impl.agency.sqlalchemy import Agency
+from src.db.models.impl.url.suggestion.agency.auto import AutomatedUrlAgencySuggestion
 
 
 async def assert_expected_confirmed_and_auto_suggestions(adb_client: AsyncDatabaseClient):

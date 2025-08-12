@@ -1,8 +1,8 @@
 from src.db.client.async_ import AsyncDatabaseClient
-from src.db.models.instantiations.url.core.sqlalchemy import URL
-from src.db.models.instantiations.url.html.compressed.sqlalchemy import URLCompressedHTML
-from src.db.models.instantiations.url.scrape_info.sqlalchemy import URLScrapeInfo
-from src.db.models.instantiations.url.web_metadata.sqlalchemy import URLWebMetadata
+from src.db.models.impl.url.core.sqlalchemy import URL
+from src.db.models.impl.url.html.compressed.sqlalchemy import URLCompressedHTML
+from src.db.models.impl.url.scrape_info.sqlalchemy import URLScrapeInfo
+from src.db.models.impl.url.web_metadata.sqlalchemy import URLWebMetadata
 from tests.automated.integration.tasks.url.impl.html.setup.models.record import TestURLHTMLTaskSetupRecord
 
 

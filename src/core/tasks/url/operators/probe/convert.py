@@ -1,5 +1,5 @@
 from src.core.tasks.url.operators.probe.tdo import URLProbeTDO
-from src.db.models.instantiations.url.web_metadata.insert import URLWebMetadataPydantic
+from src.db.models.impl.url.web_metadata.insert import URLWebMetadataPydantic
 
 
 def convert_tdo_to_web_metadata_list(tdos: list[URLProbeTDO]) -> list[URLWebMetadataPydantic]:

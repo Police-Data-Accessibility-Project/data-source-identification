@@ -7,7 +7,6 @@ class ResponseHTMLInfo(BaseModel):
     url_path: str = ""
     title: str = ""
     description: str = ""
-    root_page_title: str = ""
     http_response: int = -1
     h1: str = ""
     h2: str = ""

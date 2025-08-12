@@ -6,7 +6,7 @@ from src.core.tasks.url.operators.record_type.llm_api.record_classifier.deepseek
 
 @pytest.mark.asyncio
 async def test_deepseek_record_classifier():
-    from src.db.models.instantiations.url.html.content.enums import HTMLContentType as hct
+    from src.db.models.impl.url.html.content.enums import HTMLContentType as hct
 
     d = {
         hct.TITLE: "Oath of Office for Newly Promoted Corporal Lumpkin with Acworth Police – City of Acworth, GA",

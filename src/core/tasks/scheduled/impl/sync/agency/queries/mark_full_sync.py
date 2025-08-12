@@ -1,6 +1,6 @@
 from sqlalchemy import update, func, text, Update
 
-from src.db.models.instantiations.state.sync.agencies import AgenciesSyncState
+from src.db.models.impl.state.sync.agencies import AgenciesSyncState
 
 
 def get_mark_full_agencies_sync_query() -> Update:

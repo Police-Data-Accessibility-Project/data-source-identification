@@ -3,9 +3,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.collectors.enums import URLStatus, CollectorType
 from src.core.tasks.url.operators.agency_identification.dtos.tdo import AgencyIdentificationTDO
-from src.db.models.instantiations.batch.sqlalchemy import Batch
-from src.db.models.instantiations.link.batch_url import LinkBatchURL
-from src.db.models.instantiations.url.core.sqlalchemy import URL
+from src.db.models.impl.batch.sqlalchemy import Batch
+from src.db.models.impl.link.batch_url import LinkBatchURL
+from src.db.models.impl.url.core.sqlalchemy import URL
 from src.db.queries.base.builder import QueryBuilderBase
 from src.db.statement_composer import StatementComposer
 

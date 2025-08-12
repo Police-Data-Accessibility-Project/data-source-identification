@@ -9,12 +9,12 @@ from src.collectors.enums import URLStatus
 from src.core.enums import SuggestedStatus
 from src.core.tasks.url.operators.html.scraper.parser.util import convert_to_response_html_info
 from src.db.dtos.url.mapping import URLMapping
-from src.db.models.instantiations.link.batch_url import LinkBatchURL
-from src.db.models.instantiations.link.url_agency.sqlalchemy import LinkURLAgency
-from src.db.models.instantiations.url.core.sqlalchemy import URL
-from src.db.models.instantiations.url.suggestion.agency.auto import AutomatedUrlAgencySuggestion
-from src.db.models.instantiations.url.suggestion.agency.user import UserUrlAgencySuggestion
-from src.db.models.instantiations.url.suggestion.relevant.user import UserRelevantSuggestion
+from src.db.models.impl.link.batch_url import LinkBatchURL
+from src.db.models.impl.link.url_agency.sqlalchemy import LinkURLAgency
+from src.db.models.impl.url.core.sqlalchemy import URL
+from src.db.models.impl.url.suggestion.agency.auto import AutomatedUrlAgencySuggestion
+from src.db.models.impl.url.suggestion.agency.user import UserUrlAgencySuggestion
+from src.db.models.impl.url.suggestion.relevant.user import UserRelevantSuggestion
 from src.db.queries.base.builder import QueryBuilderBase
 from src.db.queries.implementations.core.get.html_content_info import GetHTMLContentInfoQueryBuilder
 

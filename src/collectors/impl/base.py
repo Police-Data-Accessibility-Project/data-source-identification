@@ -8,13 +8,13 @@ from pydantic import BaseModel
 
 from src.db.client.async_ import AsyncDatabaseClient
 from src.db.dtos.url.insert import InsertURLsInfo
-from src.db.models.instantiations.log.pydantic.info import LogInfo
+from src.db.models.impl.log.pydantic.info import LogInfo
 from src.collectors.enums import CollectorType
 from src.core.logger import AsyncCoreLogger
 from src.core.function_trigger import FunctionTrigger
 from src.core.enums import BatchStatus
 from src.core.preprocessors.base import PreprocessorBase
-from src.db.models.instantiations.url.core.pydantic.info import URLInfo
+from src.db.models.impl.url.core.pydantic.info import URLInfo
 
 
 class AsyncCollectorBase(ABC):

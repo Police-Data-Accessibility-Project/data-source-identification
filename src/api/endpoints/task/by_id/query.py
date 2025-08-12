@@ -5,11 +5,11 @@ from sqlalchemy.orm import selectinload
 from src.api.endpoints.task.by_id.dto import TaskInfo
 from src.collectors.enums import URLStatus
 from src.core.enums import BatchStatus
-from src.db.models.instantiations.url.core.pydantic.info import URLInfo
-from src.db.models.instantiations.url.error_info.pydantic import URLErrorPydanticInfo
+from src.db.models.impl.url.core.pydantic.info import URLInfo
+from src.db.models.impl.url.error_info.pydantic import URLErrorPydanticInfo
 from src.db.enums import TaskType
-from src.db.models.instantiations.task.core import Task
-from src.db.models.instantiations.url.core.sqlalchemy import URL
+from src.db.models.impl.task.core import Task
+from src.db.models.impl.url.core.sqlalchemy import URL
 from src.db.queries.base.builder import QueryBuilderBase
 
 

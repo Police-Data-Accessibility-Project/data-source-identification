@@ -1,7 +1,7 @@
 import pytest
 
 from src.collectors.enums import URLStatus
-from src.db.models.instantiations.url.core.sqlalchemy import URL
+from src.db.models.impl.url.core.sqlalchemy import URL
 from tests.automated.integration.tasks.url.impl.asserts import assert_task_ran_without_error
 from tests.automated.integration.tasks.url.impl.probe.check.manager import TestURLProbeCheckManager
 from tests.automated.integration.tasks.url.impl.probe.setup.manager import TestURLProbeSetupManager

@@ -6,8 +6,8 @@ from sqlalchemy import select
 
 from src.core.tasks.scheduled.impl.sync.agency.dtos.parameters import AgencySyncParameters
 from src.core.tasks.scheduled.impl.sync.agency.operator import SyncAgenciesTaskOperator
-from src.db.models.instantiations.agency.sqlalchemy import Agency
-from src.db.models.instantiations.state.sync.agencies import AgenciesSyncState
+from src.db.models.impl.agency.sqlalchemy import Agency
+from src.db.models.impl.state.sync.agencies import AgenciesSyncState
 from tests.automated.integration.tasks.scheduled.impl.sync.agency.data import THIRD_CALL_RESPONSE
 from tests.automated.integration.tasks.scheduled.impl.sync.agency.existence_checker import AgencyChecker
 from tests.automated.integration.tasks.scheduled.impl.sync.agency.helpers import patch_sync_agencies, check_sync_concluded

@@ -2,8 +2,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.collectors.queries.get_url_info import GetURLInfoByURLQueryBuilder
 from src.collectors.queries.insert.url import InsertURLQueryBuilder
-from src.db.models.instantiations.duplicate.pydantic.insert import DuplicateInsertInfo
-from src.db.models.instantiations.url.core.pydantic.info import URLInfo
+from src.db.models.impl.duplicate.pydantic.insert import DuplicateInsertInfo
+from src.db.models.impl.url.core.pydantic.info import URLInfo
 
 from src.db.helpers.session import session_helper as sh
 

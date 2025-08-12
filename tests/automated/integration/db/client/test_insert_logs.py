@@ -1,6 +1,6 @@
 import pytest
 
-from src.db.models.instantiations.log.pydantic.info import LogInfo
+from src.db.models.impl.log.pydantic.info import LogInfo
 from tests.helpers.data_creator.core import DBDataCreator
 
 

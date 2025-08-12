@@ -3,7 +3,7 @@ from typing import cast, Literal
 from src.collectors.enums import URLStatus
 from src.core.tasks.url.operators.probe.core import URLProbeTaskOperator
 from src.db.client.async_ import AsyncDatabaseClient
-from src.db.models.instantiations.url.core.pydantic.insert import URLInsertModel
+from src.db.models.impl.url.core.pydantic.insert import URLInsertModel
 from src.external.url_request.core import URLRequestInterface
 from src.external.url_request.probe.models.redirect import URLProbeRedirectResponsePair
 from src.external.url_request.probe.models.response import URLProbeResponse

@@ -3,10 +3,10 @@ from http import HTTPStatus
 from src.core.tasks.url.operators.html.content_info_getter import HTMLContentInfoGetter
 from src.core.tasks.url.operators.html.tdo import UrlHtmlTDO
 from src.db.dtos.url.html_content import URLHTMLContentInfo
-from src.db.models.instantiations.url.error_info.pydantic import URLErrorPydanticInfo
-from src.db.models.instantiations.url.html.compressed.pydantic import URLCompressedHTMLPydantic
-from src.db.models.instantiations.url.scrape_info.enums import ScrapeStatus
-from src.db.models.instantiations.url.scrape_info.pydantic import URLScrapeInfoInsertModel
+from src.db.models.impl.url.error_info.pydantic import URLErrorPydanticInfo
+from src.db.models.impl.url.html.compressed.pydantic import URLCompressedHTMLPydantic
+from src.db.models.impl.url.scrape_info.enums import ScrapeStatus
+from src.db.models.impl.url.scrape_info.pydantic import URLScrapeInfoInsertModel
 from src.db.utils.compression import compress_html
 from src.external.url_request.dtos.url_response import URLResponseInfo
 

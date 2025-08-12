@@ -4,9 +4,9 @@ import pytest
 
 from src.collectors.enums import URLStatus
 from src.db.enums import TaskType
-from src.db.models.instantiations.url.core.sqlalchemy import URL
-from src.db.models.instantiations.url.error_info.sqlalchemy import URLErrorInfo
-from src.db.models.instantiations.url.suggestion.relevant.auto.sqlalchemy import AutoRelevantSuggestion
+from src.db.models.impl.url.core.sqlalchemy import URL
+from src.db.models.impl.url.error_info.sqlalchemy import URLErrorInfo
+from src.db.models.impl.url.suggestion.relevant.auto.sqlalchemy import AutoRelevantSuggestion
 from tests.automated.integration.tasks.url.impl.asserts import assert_prereqs_not_met, assert_url_task_has_expected_run_info, \
     assert_prereqs_met
 from tests.automated.integration.tasks.url.impl.auto_relevant.setup import setup_operator, setup_urls

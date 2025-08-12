@@ -3,7 +3,7 @@ from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.core.tasks.scheduled.impl.sync.data_sources.params import DataSourcesSyncParameters
-from src.db.models.instantiations.state.sync.data_sources import DataSourcesSyncState
+from src.db.models.impl.state.sync.data_sources import DataSourcesSyncState
 from src.db.queries.base.builder import QueryBuilderBase
 
 

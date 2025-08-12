@@ -1,11 +1,11 @@
 import pytest
 
 from src.core.enums import BatchStatus
-from src.db.models.instantiations.batch.pydantic import BatchInfo
-from src.db.models.instantiations.link.batch_url import LinkBatchURL
-from src.db.models.instantiations.url.core.enums import URLSource
-from src.db.models.instantiations.url.core.pydantic.info import URLInfo
-from src.db.models.instantiations.url.core.sqlalchemy import URL
+from src.db.models.impl.batch.pydantic import BatchInfo
+from src.db.models.impl.link.batch_url import LinkBatchURL
+from src.db.models.impl.url.core.enums import URLSource
+from src.db.models.impl.url.core.pydantic.info import URLInfo
+from src.db.models.impl.url.core.sqlalchemy import URL
 
 
 @pytest.mark.asyncio

@@ -2,8 +2,8 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from src.db.models.instantiations.url.core.sqlalchemy import URL
-from src.db.models.instantiations.url.data_source.sqlalchemy import URLDataSource
+from src.db.models.impl.url.core.sqlalchemy import URL
+from src.db.models.impl.url.data_source.sqlalchemy import URLDataSource
 from src.db.queries.base.builder import QueryBuilderBase
 from tests.automated.integration.tasks.scheduled.impl.sync.data_sources.setup.models.url.post import TestURLPostSetupRecord
 from src.db.helpers.session import session_helper as sh

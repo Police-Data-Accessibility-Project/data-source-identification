@@ -14,8 +14,8 @@ from src.core.tasks.scheduled.impl.sync.data_sources.queries.upsert.url.update.p
     UpdateURLForDataSourcesSyncParams
 from src.db.dtos.url.mapping import URLMapping
 from src.db.helpers.session import session_helper as sh
-from src.db.models.instantiations.link.url_agency.pydantic import LinkURLAgencyPydantic
-from src.db.models.instantiations.url.data_source.pydantic import URLDataSourcePydantic
+from src.db.models.impl.link.url_agency.pydantic import LinkURLAgencyPydantic
+from src.db.models.impl.url.data_source.pydantic import URLDataSourcePydantic
 
 
 class UpsertURLsFromDataSourcesDBRequester:
