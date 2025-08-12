@@ -7,11 +7,11 @@ from src.core.enums import BatchStatus
 
 
 class BatchInfo(BaseModel):
-    id: Optional[int] = None
+    id: int | None = None
     strategy: str
     status: BatchStatus
     parameters: dict
     user_id: int
-    total_url_count: Optional[int] = None
-    compute_time: Optional[float] = None
-    date_generated: Optional[datetime] = None
+    total_url_count: int | None = None
+    compute_time: float | None = None
+    date_generated: datetime | None = None

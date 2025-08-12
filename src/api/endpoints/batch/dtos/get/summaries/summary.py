@@ -13,6 +13,6 @@ class BatchSummary(BaseModel):
     status: BatchStatus
     parameters: dict
     user_id: int
-    compute_time: Optional[float]
+    compute_time: float | None
     date_generated: datetime.datetime
     url_counts: BatchSummaryURLCounts

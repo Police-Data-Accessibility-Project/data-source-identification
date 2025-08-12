@@ -13,7 +13,7 @@ def table_creation_check(
         alembic_runner: AlembicRunner,
         tables: list[str],
         end_revision: str,
-        start_revision: Optional[str] = None,
+        start_revision: str | None = None,
 ) -> None:
         if start_revision is not None:
                 alembic_runner.upgrade(start_revision)

@@ -27,7 +27,7 @@ from src.core.enums import BatchStatus
 
 # Database Client
 class DatabaseClient:
-    def __init__(self, db_url: Optional[str] = None):
+    def __init__(self, db_url: str | None = None):
         """Initialize the DatabaseClient."""
         if db_url is None:
             db_url = EnvVarManager.get().get_postgres_connection_string(is_async=True)

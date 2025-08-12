@@ -25,7 +25,7 @@ class GetURLsResponseInnerInfo(BaseModel):
     batch_id: int | None
     url: str
     status: URLStatus
-    collector_metadata: Optional[dict]
+    collector_metadata: dict | None
     updated_at: datetime.datetime
     created_at: datetime.datetime
     errors: list[GetURLsResponseErrorInfo]

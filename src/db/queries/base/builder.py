@@ -9,8 +9,8 @@ from src.db.types import LabelsType
 
 class QueryBuilderBase(Generic[LabelsType]):
 
-    def __init__(self, labels: Optional[LabelsType] = None):
-        self.query: Optional[FromClause] = None
+    def __init__(self, labels: LabelsType | None = None):
+        self.query: FromClause | None = None
         self.labels = labels
 
     def get(self, key: str) -> ColumnClause:

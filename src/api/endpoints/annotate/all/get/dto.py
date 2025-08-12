@@ -21,4 +21,4 @@ class GetNextURLForAllAnnotationInnerResponse(AnnotationInnerResponseInfoBase):
 
 
 class GetNextURLForAllAnnotationResponse(BaseModel):
-    next_annotation: Optional[GetNextURLForAllAnnotationInnerResponse]
+    next_annotation: GetNextURLForAllAnnotationInnerResponse | None

@@ -5,6 +5,6 @@ from pydantic import BaseModel
 
 
 class LogOutputInfo(BaseModel):
-    id: Optional[int] = None
+    id: int | None = None
     log: str
-    created_at: Optional[datetime] = None
+    created_at: datetime | None = None

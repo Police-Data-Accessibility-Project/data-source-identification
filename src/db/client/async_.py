@@ -150,7 +150,7 @@ from src.external.pdap.dtos.sync.data_sources import DataSourcesSyncResponseInne
 
 
 class AsyncDatabaseClient:
-    def __init__(self, db_url: Optional[str] = None):
+    def __init__(self, db_url: str | None = None):
         if db_url is None:
             db_url = EnvVarManager.get().get_postgres_connection_string(is_async=True)
         self.db_url = db_url
@@ -299,7 +299,7 @@ class AsyncDatabaseClient:
         model: UserSuggestionModel,
         user_id: int,
         url_id: int
-    ) -> Optional[UserSuggestionModel]:
+    ) -> UserSuggestionModel | None:
         statement = Select(model).where(
             and_(
                 model.url_id == url_id,
@@ -313,7 +313,7 @@ class AsyncDatabaseClient:
         self,
         user_suggestion_model_to_exclude: UserSuggestionModel,
         auto_suggestion_relationship: QueryableAttribute,
-        batch_id: Optional[int],
+        batch_id: int | None,
         check_if_annotated_not_relevant: bool = False
     ) -> URL:
         return await self.run_query_builder(
@@ -369,8 +369,8 @@ class AsyncDatabaseClient:
         self,
         session: AsyncSession,
         user_id: int,
-        batch_id: Optional[int]
-    ) -> Optional[GetNextRecordTypeAnnotationResponseInfo]:
+        batch_id: int | None
+    ) -> GetNextRecordTypeAnnotationResponseInfo | None:
 
         url = await GetNextURLForUserAnnotationQueryBuilder(
             user_suggestion_model_to_exclude=UserRecordTypeSuggestion,

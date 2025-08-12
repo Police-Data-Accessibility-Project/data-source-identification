@@ -9,16 +9,16 @@ from src.core.tasks.url.operators.html.scraper.parser.dtos.response_html import 
 
 
 class FinalReviewAnnotationRelevantInfo(BaseModel):
-    auto: Optional[RelevanceAnnotationResponseInfo] = Field(title="Whether the auto-labeler has marked the URL as relevant")
-    user: Optional[SuggestedStatus] = Field(
+    auto: RelevanceAnnotationResponseInfo | None = Field(title="Whether the auto-labeler has marked the URL as relevant")
+    user: SuggestedStatus | None = Field(
         title="The status marked by a user, if any",
     )
 
 class FinalReviewAnnotationRecordTypeInfo(BaseModel):
-    auto: Optional[RecordType] = Field(
+    auto: RecordType | None = Field(
         title="The record type suggested by the auto-labeler"
     )
-    user: Optional[RecordType] = Field(
+    user: RecordType | None = Field(
         title="The record type suggested by a user",
     )
 
@@ -26,17 +26,17 @@ class FinalReviewAnnotationRecordTypeInfo(BaseModel):
 
 class FinalReviewAnnotationAgencyAutoInfo(BaseModel):
     unknown: bool = Field(title="Whether the auto-labeler suggested the URL as unknown")
-    suggestions: Optional[list[GetNextURLForAgencyAgencyInfo]] = Field(
+    suggestions: list[GetNextURLForAgencyAgencyInfo] | None = Field(
         title="A list of agencies, if any, suggested by the auto-labeler",
     )
 
 class FinalReviewAnnotationAgencyInfo(BaseModel):
-    confirmed: Optional[list[GetNextURLForAgencyAgencyInfo]] = Field(
+    confirmed: list[GetNextURLForAgencyAgencyInfo] | None = Field(
         title="The confirmed agency for the URL",
     )
-    auto: Optional[FinalReviewAnnotationAgencyAutoInfo] = Field(
+    auto: FinalReviewAnnotationAgencyAutoInfo | None = Field(
         title="A single agency or a list of agencies suggested by the auto-labeler",)
-    user: Optional[GetNextURLForAgencyAgencyInfo] = Field(
+    user: GetNextURLForAgencyAgencyInfo | None = Field(
         title="A single agency suggested by a user",
     )
 # endregion
@@ -53,15 +53,15 @@ class FinalReviewAnnotationInfo(BaseModel):
     )
 
 class FinalReviewOptionalMetadata(BaseModel):
-    record_formats: Optional[list[str]] = Field(
+    record_formats: list[str] | None = Field(
         title="The record formats of the source",
         default=None
     )
-    data_portal_type: Optional[str] = Field(
+    data_portal_type: str | None = Field(
         title="The data portal type of the source",
         default=None
     )
-    supplying_entity: Optional[str] = Field(
+    supplying_entity: str | None = Field(
         title="The supplying entity of the source",
         default=None
     )
@@ -77,8 +77,8 @@ class FinalReviewBatchInfo(BaseModel):
 class GetNextURLForFinalReviewResponse(BaseModel):
     id: int = Field(title="The id of the URL")
     url: str = Field(title="The URL")
-    name: Optional[str] = Field(title="The name of the source")
-    description: Optional[str] = Field(title="The description of the source")
+    name: str | None = Field(title="The name of the source")
+    description: str | None = Field(title="The description of the source")
     html_info: ResponseHTMLInfo = Field(title="The HTML content of the URL")
     annotations: FinalReviewAnnotationInfo = Field(
         title="The annotations for the URL, from both users and the auto-labeler",
@@ -86,12 +86,12 @@ class GetNextURLForFinalReviewResponse(BaseModel):
     optional_metadata: FinalReviewOptionalMetadata = Field(
         title="Optional metadata for the source",
     )
-    batch_info: Optional[FinalReviewBatchInfo] = Field(
+    batch_info: FinalReviewBatchInfo | None = Field(
         title="Information about the batch",
     )
 
 class GetNextURLForFinalReviewOuterResponse(BaseModel):
-    next_source: Optional[GetNextURLForFinalReviewResponse] = Field(
+    next_source: GetNextURLForFinalReviewResponse | None = Field(
         title="The next source to be reviewed",
     )
     remaining: int = Field(

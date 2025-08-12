@@ -13,6 +13,6 @@ class TaskInfo(BaseModel):
     task_type: TaskType
     task_status: BatchStatus
     updated_at: datetime.datetime
-    error_info: Optional[str] = None
+    error_info: str | None = None
     urls: list[URLInfo]
     url_errors: list[URLErrorPydanticInfo]

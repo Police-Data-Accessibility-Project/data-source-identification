@@ -18,10 +18,10 @@ class URLCountsCTEQueryBuilder(QueryBuilderBase):
     def __init__(
         self,
         page: int = 1,
-        has_pending_urls: Optional[bool] = None,
-        collector_type: Optional[CollectorType] = None,
-        status: Optional[BatchStatus] = None,
-        batch_id: Optional[int] = None
+        has_pending_urls: bool | None = None,
+        collector_type: CollectorType | None = None,
+        status: BatchStatus | None = None,
+        batch_id: int | None = None
     ):
         super().__init__(URLCountsLabels())
         self.page = page

@@ -5,4 +5,4 @@ from pydantic import BaseModel
 
 class SearchURLResponse(BaseModel):
     found: bool
-    url_id: Optional[int] = None
+    url_id: int | None = None

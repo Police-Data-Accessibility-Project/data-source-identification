@@ -9,8 +9,8 @@ from src.core.exceptions import FailedValidationException
 
 class AllAnnotationPostInfo(BaseModel):
     suggested_status: SuggestedStatus
-    record_type: Optional[RecordType] = None
-    agency: Optional[URLAgencyAnnotationPostInfo] = None
+    record_type: RecordType | None = None
+    agency: URLAgencyAnnotationPostInfo | None = None
 
     @model_validator(mode="after")
     def allow_record_type_and_agency_only_if_relevant(self):

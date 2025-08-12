@@ -27,7 +27,7 @@ TOTAL_DISTINCT_ANNOTATION_COUNT_LABEL = "total_distinct_annotation_count"
 
 class GetNextURLForFinalReviewQueryBuilder(QueryBuilderBase):
 
-    def __init__(self, batch_id: Optional[int] = None):
+    def __init__(self, batch_id: int | None = None):
         super().__init__()
         self.batch_id = batch_id
         self.anno_exists_builder = AnnotationExistsCTEQueryBuilder()
@@ -107,7 +107,7 @@ class GetNextURLForFinalReviewQueryBuilder(QueryBuilderBase):
         ).label(TOTAL_DISTINCT_ANNOTATION_COUNT_LABEL)
 
 
-    async def _apply_batch_id_filter(self, url_query: Select, batch_id: Optional[int]):
+    async def _apply_batch_id_filter(self, url_query: Select, batch_id: int | None):
         if batch_id is None:
             return url_query
         return url_query.where(URL.batch_id == batch_id)
@@ -150,7 +150,7 @@ class GetNextURLForFinalReviewQueryBuilder(QueryBuilderBase):
             supplying_entity=url.optional_data_source_metadata.supplying_entity
         )
 
-    async def get_batch_info(self, session: AsyncSession) -> Optional[FinalReviewBatchInfo]:
+    async def get_batch_info(self, session: AsyncSession) -> FinalReviewBatchInfo | None:
         if self.batch_id is None:
             return None
 

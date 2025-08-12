@@ -109,7 +109,7 @@ class DTOConverter:
     @staticmethod
     def user_url_agency_suggestion_to_final_review_annotation_agency_user_info(
         user_url_agency_suggestion: UserUrlAgencySuggestion
-    ) -> Optional[GetNextURLForAgencyAgencyInfo]:
+    ) -> GetNextURLForAgencyAgencyInfo | None:
         suggestion = user_url_agency_suggestion
         if suggestion is None:
             return None

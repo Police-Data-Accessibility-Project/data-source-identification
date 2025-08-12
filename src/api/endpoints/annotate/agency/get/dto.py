@@ -7,11 +7,11 @@ from src.core.enums import SuggestionType
 
 class GetNextURLForAgencyAgencyInfo(BaseModel):
     suggestion_type: SuggestionType
-    pdap_agency_id: Optional[int] = None
-    agency_name: Optional[str] = None
-    state: Optional[str] = None
-    county: Optional[str] = None
-    locality: Optional[str] = None
+    pdap_agency_id: int | None = None
+    agency_name: str | None = None
+    state: str | None = None
+    county: str | None = None
+    locality: str | None = None
 
 class GetNextURLForAgencyAnnotationInnerResponse(AnnotationInnerResponseInfoBase):
     agency_suggestions: list[
@@ -19,5 +19,5 @@ class GetNextURLForAgencyAnnotationInnerResponse(AnnotationInnerResponseInfoBase
     ]
 
 class GetNextURLForAgencyAnnotationResponse(BaseModel):
-    next_annotation: Optional[GetNextURLForAgencyAnnotationInnerResponse]
+    next_annotation: GetNextURLForAgencyAnnotationInnerResponse | None
 

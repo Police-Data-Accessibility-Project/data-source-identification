@@ -7,13 +7,13 @@ from src.core.enums import RecordType
 
 class ManualBatchInnerInputDTO(BaseModel):
     url: str
-    name: Optional[str] = None
-    description: Optional[str] = None
-    collector_metadata: Optional[dict] = None
-    record_type: Optional[RecordType] = None
-    record_formats: Optional[list[str]] = None
-    data_portal_type: Optional[str] = None
-    supplying_entity: Optional[str] = None
+    name: str | None = None
+    description: str | None = None
+    collector_metadata: dict | None = None
+    record_type: RecordType | None = None
+    record_formats: list[str] | None = None
+    data_portal_type: str | None = None
+    supplying_entity: str | None = None
 
 
 class ManualBatchInputDTO(BaseModel):

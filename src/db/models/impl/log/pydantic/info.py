@@ -5,7 +5,7 @@ from pydantic import BaseModel
 
 
 class LogInfo(BaseModel):
-    id: Optional[int] = None
+    id: int | None = None
     log: str
     batch_id: int
-    created_at: Optional[datetime] = None
+    created_at: datetime | None = None

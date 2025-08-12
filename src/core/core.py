@@ -93,9 +93,9 @@ class AsyncCore:
 
     async def get_batch_statuses(
             self,
-            collector_type: Optional[CollectorType],
-            status: Optional[BatchStatus],
-            has_pending_urls: Optional[bool],
+            collector_type: CollectorType | None,
+            status: BatchStatus | None,
+            has_pending_urls: bool | None,
             page: int
     ) -> GetBatchSummariesResponse:
         results = await self.adb_client.get_batch_summaries(
@@ -117,7 +117,7 @@ class AsyncCore:
             self,
             collector_type: CollectorType,
             user_id: int,
-        dto: Optional[BaseModel] = None,
+        dto: BaseModel | None = None,
     ) -> CollectorStartInfo:
         """
         Reserves a batch ID from the database

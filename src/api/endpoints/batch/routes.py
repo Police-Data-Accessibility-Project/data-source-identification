@@ -25,15 +25,15 @@ batch_router = APIRouter(
 
 @batch_router.get("")
 async def get_batch_status(
-        collector_type: Optional[CollectorType] = Query(
+        collector_type: CollectorType | None = Query(
             description="Filter by collector type",
             default=None
         ),
-        status: Optional[BatchStatus] = Query(
+        status: BatchStatus | None = Query(
             description="Filter by status",
             default=None
         ),
-        has_pending_urls: Optional[bool] = Query(
+        has_pending_urls: bool | None = Query(
             description="Filter by whether the batch has pending URLs",
             default=None
         ),
