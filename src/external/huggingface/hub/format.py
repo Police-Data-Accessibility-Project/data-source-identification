@@ -16,8 +16,8 @@ def format_as_huggingface_dataset(outputs: list[GetForLoadingToHuggingFaceOutput
         d['url_id'].append(output.url_id)
         d['url'].append(output.url)
         d['relevant'].append(output.relevant)
-        d['record_type_fine'].append(output.record_type_fine)
-        d['record_type_coarse'].append(output.record_type_coarse)
+        d['record_type_fine'].append(output.record_type_fine.value)
+        d['record_type_coarse'].append(output.record_type_coarse.value)
         d['html'].append(output.html)
     return Dataset.from_dict(d)
 
