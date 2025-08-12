@@ -10,8 +10,8 @@ from src.core.tasks.url.operators.probe.queries.urls.exist.query import URLsExis
 from src.core.tasks.url.operators.probe.tdo import URLProbeTDO
 from src.db.dtos.url.mapping import URLMapping
 from src.db.helpers.session import session_helper as sh
-from src.db.models.instantiations.link.url_redirect_url.pydantic import LinkURLRedirectURLPydantic
-from src.db.models.instantiations.url.web_metadata.insert import URLWebMetadataPydantic
+from src.db.models.impl.link.url_redirect_url.pydantic import LinkURLRedirectURLPydantic
+from src.db.models.impl.url.web_metadata.insert import URLWebMetadataPydantic
 from src.external.url_request.probe.models.redirect import URLProbeRedirectResponsePair
 from src.external.url_request.probe.models.response import URLProbeResponse
 from src.util.url_mapper import URLMapper

@@ -6,9 +6,9 @@ from sqlalchemy.orm import selectinload
 
 from src.collectors.enums import URLStatus
 from src.core.tasks.url.operators.auto_relevant.models.tdo import URLRelevantTDO
-from src.db.models.instantiations.url.html.compressed.sqlalchemy import URLCompressedHTML
-from src.db.models.instantiations.url.core.sqlalchemy import URL
-from src.db.models.instantiations.url.suggestion.relevant.auto.sqlalchemy import AutoRelevantSuggestion
+from src.db.models.impl.url.html.compressed.sqlalchemy import URLCompressedHTML
+from src.db.models.impl.url.core.sqlalchemy import URL
+from src.db.models.impl.url.suggestion.relevant.auto.sqlalchemy import AutoRelevantSuggestion
 from src.db.queries.base.builder import QueryBuilderBase
 from src.db.statement_composer import StatementComposer
 from src.db.utils.compression import decompress_html

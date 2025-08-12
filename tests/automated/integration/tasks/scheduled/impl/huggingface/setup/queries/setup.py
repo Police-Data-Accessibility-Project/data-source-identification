@@ -1,8 +1,8 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.db.models.instantiations.url.core.enums import URLSource
-from src.db.models.instantiations.url.html.compressed.sqlalchemy import URLCompressedHTML
-from src.db.models.instantiations.url.core.sqlalchemy import URL
+from src.db.models.impl.url.core.enums import URLSource
+from src.db.models.impl.url.html.compressed.sqlalchemy import URLCompressedHTML
+from src.db.models.impl.url.core.sqlalchemy import URL
 from src.db.queries.base.builder import QueryBuilderBase
 from src.db.utils.compression import compress_html
 from tests.automated.integration.tasks.scheduled.impl.huggingface.setup.models.entry import \

@@ -24,9 +24,9 @@ class PDAPClient:
     async def match_agency(
         self,
         name: str,
-        state: Optional[str] = None,
-        county: Optional[str] = None,
-        locality: Optional[str] = None
+        state: str | None = None,
+        county: str | None = None,
+        locality: str | None = None
     ) -> MatchAgencyResponse:
         """
         Returns agencies, if any, that match or partially match the search criteria

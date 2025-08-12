@@ -9,7 +9,7 @@ from src.core.tasks.url.enums import TaskOperatorOutcome
 from src.core.tasks.url.models.entry import URLTaskEntry
 from src.core.tasks.url.operators.base import URLTaskOperatorBase
 from src.db.enums import TaskType
-from src.db.models.instantiations.task.core import Task
+from src.db.models.impl.task.core import Task
 from tests.automated.integration.core.async_.helpers import setup_async_core
 from tests.helpers.data_creator.core import DBDataCreator
 

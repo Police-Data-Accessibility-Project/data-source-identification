@@ -3,7 +3,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from src.db.enums import TaskType
-from src.db.models.instantiations.url.suggestion.record_type.auto import AutoRecordTypeSuggestion
+from src.db.models.impl.url.suggestion.record_type.auto import AutoRecordTypeSuggestion
 from src.core.tasks.url.enums import TaskOperatorOutcome
 from src.core.tasks.url.operators.record_type.core import URLRecordTypeTaskOperator
 from src.core.enums import RecordType

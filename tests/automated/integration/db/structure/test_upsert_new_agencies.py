@@ -2,7 +2,7 @@ import pytest
 
 from src.core.enums import SuggestionType
 from src.core.tasks.url.operators.agency_identification.dtos.suggestion import URLAgencySuggestionInfo
-from src.db.models.instantiations.agency.sqlalchemy import Agency
+from src.db.models.impl.agency.sqlalchemy import Agency
 from tests.helpers.data_creator.core import DBDataCreator
 
 

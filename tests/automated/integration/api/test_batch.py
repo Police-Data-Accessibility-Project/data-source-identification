@@ -1,6 +1,6 @@
 import pytest
 
-from src.db.models.instantiations.batch.pydantic import BatchInfo
+from src.db.models.impl.batch.pydantic import BatchInfo
 from src.db.dtos.url.insert import InsertURLsInfo
 from src.collectors.impl.example.dtos.input import ExampleInputDTO
 from src.collectors.enums import CollectorType, URLStatus

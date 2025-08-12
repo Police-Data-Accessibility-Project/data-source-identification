@@ -25,11 +25,11 @@ async def get_tasks(
             description="The page number",
             default=1
         ),
-        task_status: Optional[BatchStatus] = Query(
+        task_status: BatchStatus | None = Query(
             description="Filter by task status",
             default=None
         ),
-        task_type: Optional[TaskType] = Query(
+        task_type: TaskType | None = Query(
             description="Filter by task type",
             default=None
         ),

@@ -8,17 +8,17 @@ from src.core.enums import RecordType, SuggestionType
 from src.core.tasks.url.operators.html.scraper.parser.dtos.response_html import ResponseHTMLInfo
 from src.core.tasks.url.operators.html.scraper.parser.mapping import ENUM_TO_ATTRIBUTE_MAPPING
 from src.db.dtos.url.html_content import URLHTMLContentInfo
-from src.db.models.instantiations.url.html.content.enums import HTMLContentType
+from src.db.models.impl.url.html.content.enums import HTMLContentType
 from src.db.dtos.url.with_html import URLWithHTML
-from src.db.models.instantiations.link.url_agency.sqlalchemy import LinkURLAgency
-from src.db.models.instantiations.url.suggestion.agency.auto import AutomatedUrlAgencySuggestion
-from src.db.models.instantiations.url.suggestion.record_type.auto import AutoRecordTypeSuggestion
-from src.db.models.instantiations.url.suggestion.agency.user import UserUrlAgencySuggestion
-from src.db.models.instantiations.url.html.content.sqlalchemy import URLHTMLContent
-from src.db.models.instantiations.url.core.sqlalchemy import URL
-from src.db.models.instantiations.url.suggestion.record_type.user import UserRecordTypeSuggestion
-from src.db.models.instantiations.url.suggestion.relevant.auto.sqlalchemy import AutoRelevantSuggestion
-from src.db.models.instantiations.url.suggestion.relevant.user import UserRelevantSuggestion
+from src.db.models.impl.link.url_agency.sqlalchemy import LinkURLAgency
+from src.db.models.impl.url.suggestion.agency.auto import AutomatedUrlAgencySuggestion
+from src.db.models.impl.url.suggestion.record_type.auto import AutoRecordTypeSuggestion
+from src.db.models.impl.url.suggestion.agency.user import UserUrlAgencySuggestion
+from src.db.models.impl.url.html.content.sqlalchemy import URLHTMLContent
+from src.db.models.impl.url.core.sqlalchemy import URL
+from src.db.models.impl.url.suggestion.record_type.user import UserRecordTypeSuggestion
+from src.db.models.impl.url.suggestion.relevant.auto.sqlalchemy import AutoRelevantSuggestion
+from src.db.models.impl.url.suggestion.relevant.user import UserRelevantSuggestion
 
 
 class DTOConverter:
@@ -109,7 +109,7 @@ class DTOConverter:
     @staticmethod
     def user_url_agency_suggestion_to_final_review_annotation_agency_user_info(
         user_url_agency_suggestion: UserUrlAgencySuggestion
-    ) -> Optional[GetNextURLForAgencyAgencyInfo]:
+    ) -> GetNextURLForAgencyAgencyInfo | None:
         suggestion = user_url_agency_suggestion
         if suggestion is None:
             return None

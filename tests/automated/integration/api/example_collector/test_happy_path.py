@@ -6,7 +6,7 @@ from src.api.endpoints.batch.dtos.get.logs import GetBatchLogsResponse
 from src.api.endpoints.batch.dtos.get.summaries.response import GetBatchSummariesResponse
 from src.api.endpoints.batch.dtos.get.summaries.summary import BatchSummary
 from src.db.client.async_ import AsyncDatabaseClient
-from src.db.models.instantiations.batch.pydantic import BatchInfo
+from src.db.models.impl.batch.pydantic import BatchInfo
 from src.collectors.impl.example.dtos.input import ExampleInputDTO
 from src.collectors.enums import CollectorType
 from src.core.logger import AsyncCoreLogger

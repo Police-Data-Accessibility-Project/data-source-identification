@@ -5,9 +5,9 @@ from src.core.tasks.scheduled.impl.sync.data_sources.queries.upsert.url.lookup.f
 from src.db.helpers.session import session_helper as sh
 from src.core.tasks.scheduled.impl.sync.data_sources.queries.upsert.url.lookup.response import \
     LookupURLForDataSourcesSyncResponse, URLDataSyncInfo
-from src.db.models.instantiations.link.url_agency.sqlalchemy import LinkURLAgency
-from src.db.models.instantiations.url.core.sqlalchemy import URL
-from src.db.models.instantiations.url.data_source.sqlalchemy import URLDataSource
+from src.db.models.impl.link.url_agency.sqlalchemy import LinkURLAgency
+from src.db.models.impl.url.core.sqlalchemy import URL
+from src.db.models.impl.url.data_source.sqlalchemy import URLDataSource
 from src.db.queries.base.builder import QueryBuilderBase
 
 

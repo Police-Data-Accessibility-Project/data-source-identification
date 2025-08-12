@@ -3,8 +3,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from typing_extensions import override, final
 
 from src.db.helpers.session import session_helper as sh
-from src.db.models.instantiations.url.core.sqlalchemy import URL
-from src.db.models.instantiations.url.web_metadata.sqlalchemy import URLWebMetadata
+from src.db.models.impl.url.core.sqlalchemy import URL
+from src.db.models.impl.url.web_metadata.sqlalchemy import URLWebMetadata
 from src.db.queries.base.builder import QueryBuilderBase
 
 @final

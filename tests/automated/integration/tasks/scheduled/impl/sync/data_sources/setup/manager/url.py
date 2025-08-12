@@ -1,9 +1,9 @@
 from pendulum import today
 
 from src.db.client.async_ import AsyncDatabaseClient
-from src.db.models.instantiations.link.url_agency.sqlalchemy import LinkURLAgency
-from src.db.models.instantiations.url.core.enums import URLSource
-from src.db.models.instantiations.url.core.sqlalchemy import URL
+from src.db.models.impl.link.url_agency.sqlalchemy import LinkURLAgency
+from src.db.models.impl.url.core.enums import URLSource
+from src.db.models.impl.url.core.sqlalchemy import URL
 from src.external.pdap.dtos.sync.data_sources import DataSourcesSyncResponseInnerInfo
 from tests.automated.integration.tasks.scheduled.impl.sync.data_sources.setup.enums import AgencyAssigned
 from tests.automated.integration.tasks.scheduled.impl.sync.data_sources.setup.manager.agency import AgencyAssignmentManager

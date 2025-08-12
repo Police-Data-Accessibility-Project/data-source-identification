@@ -86,9 +86,9 @@ def updated_at_column() -> sa.Column:
         comment='The last time the row was updated.'
     )
 
-def url_id_column() -> sa.Column:
+def url_id_column(name: str = 'url_id') -> sa.Column:
     return sa.Column(
-        'url_id',
+        name,
         sa.Integer(),
         sa.ForeignKey(
             'urls.id',

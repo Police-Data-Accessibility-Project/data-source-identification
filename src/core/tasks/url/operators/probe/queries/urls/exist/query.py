@@ -2,7 +2,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.core.tasks.url.operators.probe.queries.urls.exist.model import UrlExistsResult
-from src.db.models.instantiations.url.core.sqlalchemy import URL
+from src.db.models.impl.url.core.sqlalchemy import URL
 from src.db.queries.base.builder import QueryBuilderBase
 from src.db.helpers.session import session_helper as sh
 

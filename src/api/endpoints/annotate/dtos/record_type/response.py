@@ -9,11 +9,11 @@ from src.core.enums import RecordType
 class GetNextRecordTypeAnnotationResponseInfo(
     AnnotationInnerResponseInfoBase
 ):
-    suggested_record_type: Optional[RecordType] = Field(
+    suggested_record_type: RecordType | None = Field(
         title="What record type, if any, the auto-labeler identified the URL as"
     )
 
 class GetNextRecordTypeAnnotationResponseOuterInfo(
     BaseModel
 ):
-    next_annotation: Optional[GetNextRecordTypeAnnotationResponseInfo]
+    next_annotation: GetNextRecordTypeAnnotationResponseInfo | None

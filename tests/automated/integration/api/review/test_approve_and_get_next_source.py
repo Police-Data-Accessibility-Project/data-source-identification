@@ -5,10 +5,10 @@ from src.api.endpoints.review.next.dto import GetNextURLForFinalReviewOuterRespo
 from src.collectors.enums import URLStatus
 from src.core.enums import RecordType
 from src.db.constants import PLACEHOLDER_AGENCY_NAME
-from src.db.models.instantiations.agency.sqlalchemy import Agency
-from src.db.models.instantiations.link.url_agency.sqlalchemy import LinkURLAgency
-from src.db.models.instantiations.url.core.sqlalchemy import URL
-from src.db.models.instantiations.url.optional_data_source_metadata import URLOptionalDataSourceMetadata
+from src.db.models.impl.agency.sqlalchemy import Agency
+from src.db.models.impl.link.url_agency.sqlalchemy import LinkURLAgency
+from src.db.models.impl.url.core.sqlalchemy import URL
+from src.db.models.impl.url.optional_data_source_metadata import URLOptionalDataSourceMetadata
 from tests.helpers.setup.final_review.core import setup_for_get_next_url_for_final_review
 
 

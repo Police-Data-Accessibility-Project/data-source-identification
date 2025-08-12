@@ -3,12 +3,11 @@ import types
 from src.core.enums import RecordType
 from src.core.tasks.url.operators.html.core import URLHTMLTaskOperator
 from src.core.tasks.url.operators.html.scraper.parser.core import HTMLResponseParser
-from src.core.tasks.url.operators.html.scraper.root_url_cache.core import RootURLCache
 from src.db.client.async_ import AsyncDatabaseClient
-from src.db.models.instantiations.url.core.enums import URLSource
-from src.db.models.instantiations.url.core.pydantic.insert import URLInsertModel
-from src.db.models.instantiations.url.web_metadata.insert import URLWebMetadataPydantic
-from tests.automated.integration.tasks.url.impl.html.mocks.methods import mock_get_from_cache, mock_parse
+from src.db.models.impl.url.core.enums import URLSource
+from src.db.models.impl.url.core.pydantic.insert import URLInsertModel
+from src.db.models.impl.url.web_metadata.insert import URLWebMetadataPydantic
+from tests.automated.integration.tasks.url.impl.html.mocks.methods import mock_parse
 from tests.automated.integration.tasks.url.impl.html.mocks.url_request_interface.core import MockURLRequestInterface
 from tests.automated.integration.tasks.url.impl.html.setup.data import TEST_ENTRIES
 from tests.automated.integration.tasks.url.impl.html.setup.models.record import TestURLHTMLTaskSetupRecord
@@ -68,18 +67,8 @@ class TestURLHTMLTaskSetupManager:
             models.append(model)
         await self.adb_client.bulk_insert(models)
 
-
-
-async def setup_mocked_root_url_cache() -> RootURLCache:
-    mock_root_url_cache = RootURLCache()
-    mock_root_url_cache.get_from_cache = types.MethodType(mock_get_from_cache, mock_root_url_cache)
-    return mock_root_url_cache
-
-
 async def setup_operator() -> URLHTMLTaskOperator:
-    html_parser = HTMLResponseParser(
-        root_url_cache=await setup_mocked_root_url_cache()
-    )
+    html_parser = HTMLResponseParser()
     html_parser.parse = types.MethodType(mock_parse, html_parser)
     operator = URLHTMLTaskOperator(
         adb_client=AsyncDatabaseClient(),

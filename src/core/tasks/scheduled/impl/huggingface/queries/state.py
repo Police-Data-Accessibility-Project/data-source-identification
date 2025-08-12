@@ -3,7 +3,7 @@ from datetime import datetime
 from sqlalchemy import delete, insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.db.models.instantiations.state.huggingface import HuggingFaceUploadState
+from src.db.models.impl.state.huggingface import HuggingFaceUploadState
 from src.db.queries.base.builder import QueryBuilderBase
 
 

@@ -1,7 +1,7 @@
 import pytest
 
 from src.collectors.enums import URLStatus
-from src.db.models.instantiations.url.web_metadata.insert import URLWebMetadataPydantic
+from src.db.models.impl.url.web_metadata.insert import URLWebMetadataPydantic
 from tests.automated.integration.tasks.url.impl.asserts import assert_task_ran_without_error
 from tests.automated.integration.tasks.url.impl.probe.check.manager import TestURLProbeCheckManager
 from tests.automated.integration.tasks.url.impl.probe.constants import TEST_DEST_URL

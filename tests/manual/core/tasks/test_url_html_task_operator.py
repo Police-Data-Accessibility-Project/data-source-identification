@@ -4,7 +4,6 @@ from src.api.endpoints.collector.dtos.manual_batch.post import ManualBatchInputD
 from src.core.tasks.url.operators.html.core import URLHTMLTaskOperator
 from src.core.tasks.url.operators.html.scraper.parser.core import HTMLResponseParser
 from src.external.url_request.core import URLRequestInterface
-from src.core.tasks.url.operators.html.scraper.root_url_cache.core import RootURLCache
 
 
 @pytest.mark.asyncio
@@ -24,11 +23,7 @@ async def test_url_html_task_operator(
         "https://www.albanyca.org/departments/police-department/policies-procedures-training-sb978",
         "https://www.yelp.com/biz/albany-police-department-albany-3",
     ]
-    parser = HTMLResponseParser(
-        root_url_cache=RootURLCache(
-            adb_client=adb_client_test
-        )
-    )
+    parser = HTMLResponseParser()
     manual_batch_dto = ManualBatchInputDTO(
         name="Test Batch",
         entries=[

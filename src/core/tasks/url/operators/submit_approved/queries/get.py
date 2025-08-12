@@ -4,7 +4,7 @@ from sqlalchemy.orm import selectinload
 
 from src.collectors.enums import URLStatus
 from src.core.tasks.url.operators.submit_approved.tdo import SubmitApprovedURLTDO
-from src.db.models.instantiations.url.core.sqlalchemy import URL
+from src.db.models.impl.url.core.sqlalchemy import URL
 from src.db.queries.base.builder import QueryBuilderBase
 from src.db.helpers.session import session_helper as sh
 

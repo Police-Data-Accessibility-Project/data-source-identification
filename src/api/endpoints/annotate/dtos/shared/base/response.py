@@ -14,6 +14,6 @@ class AnnotationInnerResponseInfoBase(BaseModel):
     html_info: ResponseHTMLInfo = Field(
         title="HTML information about the URL"
     )
-    batch_info: Optional[AnnotationBatchInfo] = Field(
+    batch_info: AnnotationBatchInfo | None = Field(
         title="Information about the annotation batch"
     )

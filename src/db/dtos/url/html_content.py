@@ -1,5 +1,5 @@
-from src.db.models.instantiations.url.html.content.enums import HTMLContentType
-from src.db.models.instantiations.url.html.content.sqlalchemy import URLHTMLContent
+from src.db.models.impl.url.html.content.enums import HTMLContentType
+from src.db.models.impl.url.html.content.sqlalchemy import URLHTMLContent
 from src.db.models.templates_.base import Base
 from src.db.templates.markers.bulk.insert import BulkInsertableModel
 

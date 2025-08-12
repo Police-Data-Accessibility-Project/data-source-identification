@@ -12,12 +12,12 @@ from src.api.endpoints.annotate.relevance.post.dto import RelevanceAnnotationPos
 from src.core.tasks.url.operators.html.scraper.parser.dtos.response_html import ResponseHTMLInfo
 from src.db.dtos.url.insert import InsertURLsInfo
 from src.db.dtos.url.mapping import URLMapping
-from src.db.models.instantiations.url.suggestion.agency.user import UserUrlAgencySuggestion
+from src.db.models.impl.url.suggestion.agency.user import UserUrlAgencySuggestion
 from src.core.error_manager.enums import ErrorTypes
 from src.core.enums import RecordType, SuggestionType, SuggestedStatus
 from src.core.exceptions import FailedValidationException
-from src.db.models.instantiations.url.suggestion.record_type.user import UserRecordTypeSuggestion
-from src.db.models.instantiations.url.suggestion.relevant.user import UserRelevantSuggestion
+from src.db.models.impl.url.suggestion.record_type.user import UserRecordTypeSuggestion
+from src.db.models.impl.url.suggestion.relevant.user import UserRelevantSuggestion
 from tests.helpers.setup.annotate_agency.model import AnnotateAgencySetupInfo
 from tests.helpers.setup.final_review.core import setup_for_get_next_url_for_final_review
 from tests.helpers.setup.annotate_agency.core import setup_for_annotate_agency

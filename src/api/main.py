@@ -16,11 +16,11 @@ from src.api.endpoints.root import root_router
 from src.api.endpoints.search.routes import search_router
 from src.api.endpoints.task.routes import task_router
 from src.api.endpoints.url.routes import url_router
-from src.collectors.manager import AsyncCollectorManager
 from src.collectors.impl.muckrock.api_interface.core import MuckrockAPIInterface
+from src.collectors.manager import AsyncCollectorManager
 from src.core.core import AsyncCore
-from src.core.logger import AsyncCoreLogger
 from src.core.env_var_manager import EnvVarManager
+from src.core.logger import AsyncCoreLogger
 from src.core.tasks.handler import TaskHandler
 from src.core.tasks.scheduled.loader import ScheduledTaskOperatorLoader
 from src.core.tasks.scheduled.manager import AsyncScheduledTaskManager
@@ -28,13 +28,12 @@ from src.core.tasks.scheduled.registry.core import ScheduledJobRegistry
 from src.core.tasks.url.loader import URLTaskOperatorLoader
 from src.core.tasks.url.manager import TaskManager
 from src.core.tasks.url.operators.html.scraper.parser.core import HTMLResponseParser
-from src.external.url_request.core import URLRequestInterface
 from src.db.client.async_ import AsyncDatabaseClient
 from src.db.client.sync import DatabaseClient
-from src.core.tasks.url.operators.html.scraper.root_url_cache.core import RootURLCache
 from src.external.huggingface.hub.client import HuggingFaceHubClient
 from src.external.huggingface.inference.client import HuggingFaceInferenceClient
 from src.external.pdap.client import PDAPClient
+from src.external.url_request.core import URLRequestInterface
 
 
 @asynccontextmanager
@@ -74,9 +73,7 @@ async def lifespan(app: FastAPI):
         loader=URLTaskOperatorLoader(
             adb_client=adb_client,
             url_request_interface=URLRequestInterface(),
-            html_parser=HTMLResponseParser(
-                root_url_cache=RootURLCache()
-            ),
+            html_parser=HTMLResponseParser(),
             pdap_client=pdap_client,
             muckrock_api_interface=MuckrockAPIInterface(
                 session=session

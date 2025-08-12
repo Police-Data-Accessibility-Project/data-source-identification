@@ -4,8 +4,8 @@ from typing_extensions import override, final
 
 from src.util.clean import clean_url
 from src.db.dtos.url.mapping import URLMapping
-from src.db.models.instantiations.url.core.sqlalchemy import URL
-from src.db.models.instantiations.url.web_metadata.sqlalchemy import URLWebMetadata
+from src.db.models.impl.url.core.sqlalchemy import URL
+from src.db.models.impl.url.web_metadata.sqlalchemy import URLWebMetadata
 from src.db.helpers.session import session_helper as sh
 from src.db.queries.base.builder import QueryBuilderBase
 

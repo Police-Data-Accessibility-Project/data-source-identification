@@ -6,9 +6,9 @@ from sqlalchemy.sql.functions import count
 
 from src.collectors.enums import URLStatus
 from src.db.helpers.session import session_helper as sh
-from src.db.models.instantiations.state.huggingface import HuggingFaceUploadState
-from src.db.models.instantiations.url.html.compressed.sqlalchemy import URLCompressedHTML
-from src.db.models.instantiations.url.core.sqlalchemy import URL
+from src.db.models.impl.state.huggingface import HuggingFaceUploadState
+from src.db.models.impl.url.html.compressed.sqlalchemy import URLCompressedHTML
+from src.db.models.impl.url.core.sqlalchemy import URL
 
 
 class CheckValidURLsUpdatedRequester:

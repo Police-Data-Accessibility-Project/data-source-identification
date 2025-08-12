@@ -6,4 +6,4 @@ from sqlalchemy import Select
 class HasQuery(Protocol):
 
     def __init__(self):
-        self.query: Optional[Select] = None
+        self.query: Select | None = None

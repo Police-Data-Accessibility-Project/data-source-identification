@@ -5,9 +5,9 @@ from sqlalchemy.sql.functions import count, coalesce
 
 from src.collectors.enums import URLStatus, CollectorType
 from src.core.enums import BatchStatus
-from src.db.models.instantiations.link.batch_url import LinkBatchURL
-from src.db.models.instantiations.url.core.sqlalchemy import URL
-from src.db.models.instantiations.batch.sqlalchemy import Batch
+from src.db.models.impl.link.batch_url import LinkBatchURL
+from src.db.models.impl.url.core.sqlalchemy import URL
+from src.db.models.impl.batch.sqlalchemy import Batch
 from src.db.queries.base.builder import QueryBuilderBase
 from src.db.queries.helpers import add_page_offset
 from src.db.queries.implementations.core.get.recent_batch_summaries.url_counts.labels import URLCountsLabels
@@ -18,10 +18,10 @@ class URLCountsCTEQueryBuilder(QueryBuilderBase):
     def __init__(
         self,
         page: int = 1,
-        has_pending_urls: Optional[bool] = None,
-        collector_type: Optional[CollectorType] = None,
-        status: Optional[BatchStatus] = None,
-        batch_id: Optional[int] = None
+        has_pending_urls: bool | None = None,
+        collector_type: CollectorType | None = None,
+        status: BatchStatus | None = None,
+        batch_id: int | None = None
     ):
         super().__init__(URLCountsLabels())
         self.page = page

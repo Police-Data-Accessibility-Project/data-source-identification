@@ -22,4 +22,4 @@ class GetNextRelevanceAnnotationResponseInfo(AnnotationInnerResponseInfoBase):
     )
 
 class GetNextRelevanceAnnotationResponseOuterInfo(BaseModel):
-    next_annotation: Optional[GetNextRelevanceAnnotationResponseInfo]
+    next_annotation: GetNextRelevanceAnnotationResponseInfo | None

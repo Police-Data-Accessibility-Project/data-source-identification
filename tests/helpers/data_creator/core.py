@@ -5,9 +5,9 @@ from typing import Optional, Any
 from src.api.endpoints.annotate.agency.post.dto import URLAgencyAnnotationPostInfo
 from src.core.tasks.url.operators.agency_identification.dtos.suggestion import URLAgencySuggestionInfo
 from src.db.client.async_ import AsyncDatabaseClient
-from src.db.models.instantiations.duplicate.pydantic.insert import DuplicateInsertInfo
+from src.db.models.impl.duplicate.pydantic.insert import DuplicateInsertInfo
 from src.db.dtos.url.insert import InsertURLsInfo
-from src.db.models.instantiations.url.error_info.pydantic import URLErrorPydanticInfo
+from src.db.models.impl.url.error_info.pydantic import URLErrorPydanticInfo
 from src.db.client.sync import DatabaseClient
 from src.db.enums import TaskType
 from src.collectors.enums import CollectorType, URLStatus

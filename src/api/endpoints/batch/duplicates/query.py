@@ -2,11 +2,11 @@ from sqlalchemy import Select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased
 
-from src.db.models.instantiations.duplicate.pydantic.info import DuplicateInfo
-from src.db.models.instantiations.batch.sqlalchemy import Batch
-from src.db.models.instantiations.duplicate.sqlalchemy import Duplicate
-from src.db.models.instantiations.link.batch_url import LinkBatchURL
-from src.db.models.instantiations.url.core.sqlalchemy import URL
+from src.db.models.impl.duplicate.pydantic.info import DuplicateInfo
+from src.db.models.impl.batch.sqlalchemy import Batch
+from src.db.models.impl.duplicate.sqlalchemy import Duplicate
+from src.db.models.impl.link.batch_url import LinkBatchURL
+from src.db.models.impl.url.core.sqlalchemy import URL
 from src.db.queries.base.builder import QueryBuilderBase
 
 

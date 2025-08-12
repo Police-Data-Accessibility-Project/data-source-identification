@@ -5,9 +5,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.core.tasks.scheduled.impl.sync.data_sources.queries.upsert.agency.convert import convert_to_link_url_agency_models
 from src.db.helpers.session import session_helper as sh
-from src.db.models.instantiations.link.url_agency.pydantic import LinkURLAgencyPydantic
+from src.db.models.impl.link.url_agency.pydantic import LinkURLAgencyPydantic
 from src.core.tasks.scheduled.impl.sync.data_sources.queries.upsert.agency.params import UpdateLinkURLAgencyForDataSourcesSyncParams
-from src.db.models.instantiations.link.url_agency.sqlalchemy import LinkURLAgency
+from src.db.models.impl.link.url_agency.sqlalchemy import LinkURLAgency
 from src.db.queries.base.builder import QueryBuilderBase
 
 

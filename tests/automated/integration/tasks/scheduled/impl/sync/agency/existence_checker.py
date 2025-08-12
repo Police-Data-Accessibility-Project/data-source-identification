@@ -1,4 +1,4 @@
-from src.db.models.instantiations.agency.sqlalchemy import Agency
+from src.db.models.impl.agency.sqlalchemy import Agency
 from src.external.pdap.dtos.sync.agencies import AgenciesSyncResponseInnerInfo
 from tests.automated.integration.tasks.scheduled.impl.sync.agency.data import FIRST_CALL_RESPONSE, SECOND_CALL_RESPONSE
 

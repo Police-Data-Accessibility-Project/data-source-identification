@@ -7,7 +7,7 @@ from src.api.endpoints.batch.dtos.get.summaries.counts import BatchSummaryURLCou
 from src.api.endpoints.batch.dtos.get.summaries.summary import BatchSummary
 from src.collectors.enums import CollectorType
 from src.core.enums import BatchStatus
-from src.db.models.instantiations.batch.sqlalchemy import Batch
+from src.db.models.impl.batch.sqlalchemy import Batch
 from src.db.queries.base.builder import QueryBuilderBase
 from src.db.queries.implementations.core.get.recent_batch_summaries.url_counts.builder import URLCountsCTEQueryBuilder
 from src.db.queries.implementations.core.get.recent_batch_summaries.url_counts.labels import URLCountsLabels
@@ -18,10 +18,10 @@ class GetRecentBatchSummariesQueryBuilder(QueryBuilderBase):
     def __init__(
         self,
         page: int = 1,
-        has_pending_urls: Optional[bool] = None,
-        collector_type: Optional[CollectorType] = None,
-        status: Optional[BatchStatus] = None,
-        batch_id: Optional[int] = None,
+        has_pending_urls: bool | None = None,
+        collector_type: CollectorType | None = None,
+        status: BatchStatus | None = None,
+        batch_id: int | None = None,
     ):
         super().__init__()
         self.url_counts_cte = URLCountsCTEQueryBuilder(

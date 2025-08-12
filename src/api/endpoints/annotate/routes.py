@@ -31,7 +31,7 @@ batch_query = Query(
 async def get_next_url_for_relevance_annotation(
         access_info: AccessInfo = Depends(get_access_info),
         async_core: AsyncCore = Depends(get_async_core),
-        batch_id: Optional[int] = Query(
+        batch_id: int | None = Query(
             description="The batch id of the next URL to get. "
                         "If not specified, defaults to first qualifying URL",
             default=None),
@@ -48,7 +48,7 @@ async def annotate_url_for_relevance_and_get_next_url(
         url_id: int = Path(description="The URL id to annotate"),
         async_core: AsyncCore = Depends(get_async_core),
         access_info: AccessInfo = Depends(get_access_info),
-        batch_id: Optional[int] = batch_query
+        batch_id: int | None = batch_query
 ) -> GetNextRelevanceAnnotationResponseOuterInfo:
     """
     Post URL annotation and get next URL to annotate
@@ -67,7 +67,7 @@ async def annotate_url_for_relevance_and_get_next_url(
 async def get_next_url_for_record_type_annotation(
         access_info: AccessInfo = Depends(get_access_info),
         async_core: AsyncCore = Depends(get_async_core),
-        batch_id: Optional[int] = batch_query
+        batch_id: int | None = batch_query
 ) -> GetNextRecordTypeAnnotationResponseOuterInfo:
     return await async_core.get_next_url_for_record_type_annotation(
         user_id=access_info.user_id,
@@ -80,7 +80,7 @@ async def annotate_url_for_record_type_and_get_next_url(
         url_id: int = Path(description="The URL id to annotate"),
         async_core: AsyncCore = Depends(get_async_core),
         access_info: AccessInfo = Depends(get_access_info),
-        batch_id: Optional[int] = batch_query
+        batch_id: int | None = batch_query
 ) -> GetNextRecordTypeAnnotationResponseOuterInfo:
     """
     Post URL annotation and get next URL to annotate
@@ -99,7 +99,7 @@ async def annotate_url_for_record_type_and_get_next_url(
 async def get_next_url_for_agency_annotation(
         access_info: AccessInfo = Depends(get_access_info),
         async_core: AsyncCore = Depends(get_async_core),
-        batch_id: Optional[int] = batch_query
+        batch_id: int | None = batch_query
 ) -> GetNextURLForAgencyAnnotationResponse:
     return await async_core.get_next_url_agency_for_annotation(
         user_id=access_info.user_id,
@@ -112,7 +112,7 @@ async def annotate_url_for_agency_and_get_next_url(
         agency_annotation_post_info: URLAgencyAnnotationPostInfo,
         async_core: AsyncCore = Depends(get_async_core),
         access_info: AccessInfo = Depends(get_access_info),
-        batch_id: Optional[int] = batch_query
+        batch_id: int | None = batch_query
 ) -> GetNextURLForAgencyAnnotationResponse:
     """
     Post URL annotation and get next URL to annotate
@@ -131,7 +131,7 @@ async def annotate_url_for_agency_and_get_next_url(
 async def get_next_url_for_all_annotations(
         access_info: AccessInfo = Depends(get_access_info),
         async_core: AsyncCore = Depends(get_async_core),
-        batch_id: Optional[int] = batch_query
+        batch_id: int | None = batch_query
 ) -> GetNextURLForAllAnnotationResponse:
     return await async_core.get_next_url_for_all_annotations(
         batch_id=batch_id
@@ -143,7 +143,7 @@ async def annotate_url_for_all_annotations_and_get_next_url(
         all_annotation_post_info: AllAnnotationPostInfo,
         async_core: AsyncCore = Depends(get_async_core),
         access_info: AccessInfo = Depends(get_access_info),
-        batch_id: Optional[int] = batch_query
+        batch_id: int | None = batch_query
 ) -> GetNextURLForAllAnnotationResponse:
     """
     Post URL annotation and get next URL to annotate

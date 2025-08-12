@@ -7,9 +7,9 @@ from src.api.endpoints.annotate.relevance.get.dto import GetNextRelevanceAnnotat
     RelevanceAnnotationResponseInfo
 from src.db.dto_converter import DTOConverter
 from src.db.dtos.url.mapping import URLMapping
-from src.db.models.instantiations.url.core.sqlalchemy import URL
-from src.db.models.instantiations.url.suggestion.agency.user import UserUrlAgencySuggestion
-from src.db.models.instantiations.url.suggestion.relevant.user import UserRelevantSuggestion
+from src.db.models.impl.url.core.sqlalchemy import URL
+from src.db.models.impl.url.suggestion.agency.user import UserUrlAgencySuggestion
+from src.db.models.impl.url.suggestion.relevant.user import UserRelevantSuggestion
 from src.db.queries.base.builder import QueryBuilderBase
 
 

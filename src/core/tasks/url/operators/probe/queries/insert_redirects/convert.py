@@ -2,9 +2,9 @@ from src.core.tasks.url.operators.probe.queries.insert_redirects.models.url_resp
 from src.core.tasks.url.operators.probe.queries.urls.exist.model import UrlExistsResult
 from src.core.tasks.url.operators.probe.tdo import URLProbeTDO
 from src.db.dtos.url.mapping import URLMapping
-from src.db.models.instantiations.url.core.enums import URLSource
-from src.db.models.instantiations.url.core.pydantic.insert import URLInsertModel
-from src.db.models.instantiations.url.web_metadata.insert import URLWebMetadataPydantic
+from src.db.models.impl.url.core.enums import URLSource
+from src.db.models.impl.url.core.pydantic.insert import URLInsertModel
+from src.db.models.impl.url.web_metadata.insert import URLWebMetadataPydantic
 
 
 def convert_url_response_mapping_to_web_metadata_list(

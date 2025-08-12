@@ -1,6 +1,6 @@
 from sqlalchemy import Update, update, func, text
 
-from src.db.models.instantiations.state.sync.data_sources import DataSourcesSyncState
+from src.db.models.impl.state.sync.data_sources import DataSourcesSyncState
 
 
 def get_mark_full_data_sources_sync_query() -> Update:

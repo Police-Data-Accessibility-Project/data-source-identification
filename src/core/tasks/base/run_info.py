@@ -7,7 +7,7 @@ from src.db.enums import TaskType
 
 
 class TaskOperatorRunInfo(BaseModel):
-    task_id: Optional[int]
+    task_id: int | None
     task_type: TaskType
     outcome: TaskOperatorOutcome
     message: str = ""

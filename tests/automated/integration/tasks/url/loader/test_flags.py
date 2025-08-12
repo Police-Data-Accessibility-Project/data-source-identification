@@ -11,6 +11,7 @@ from src.core.tasks.url.operators.misc_metadata.core import URLMiscellaneousMeta
 from src.core.tasks.url.operators.probe.core import URLProbeTaskOperator
 from src.core.tasks.url.operators.probe_404.core import URL404ProbeTaskOperator
 from src.core.tasks.url.operators.record_type.core import URLRecordTypeTaskOperator
+from src.core.tasks.url.operators.root_url.core import URLRootURLTaskOperator
 from src.core.tasks.url.operators.submit_approved.core import SubmitApprovedURLTaskOperator
 
 
@@ -55,6 +56,10 @@ params = [
         env_var="URL_PROBE_TASK_FLAG",
         operator=URLProbeTaskOperator
     ),
+    FlagTestParams(
+        env_var="URL_ROOT_URL_TASK_FLAG",
+        operator=URLRootURLTaskOperator
+    )
 ]
 
 @pytest.mark.asyncio

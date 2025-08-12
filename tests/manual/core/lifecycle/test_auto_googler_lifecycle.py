@@ -2,7 +2,7 @@ import os
 
 import dotenv
 
-from src.db.models.instantiations.batch.pydantic import BatchInfo
+from src.db.models.impl.batch.pydantic import BatchInfo
 from src.collectors import CollectorType
 from src.core.enums import BatchStatus
 from test_automated.integration.core.helpers.common_test_procedures import run_collector_and_wait_for_completion

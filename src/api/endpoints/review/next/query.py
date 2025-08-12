@@ -12,12 +12,12 @@ from src.db.constants import USER_ANNOTATION_MODELS
 from src.db.dto_converter import DTOConverter
 from src.db.dtos.url.html_content import URLHTMLContentInfo
 from src.db.exceptions import FailedQueryException
-from src.db.models.instantiations.batch.sqlalchemy import Batch
-from src.db.models.instantiations.link.batch_url import LinkBatchURL
-from src.db.models.instantiations.link.url_agency.sqlalchemy import LinkURLAgency
-from src.db.models.instantiations.url.core.sqlalchemy import URL
-from src.db.models.instantiations.url.suggestion.agency.auto import AutomatedUrlAgencySuggestion
-from src.db.models.instantiations.url.suggestion.agency.user import UserUrlAgencySuggestion
+from src.db.models.impl.batch.sqlalchemy import Batch
+from src.db.models.impl.link.batch_url import LinkBatchURL
+from src.db.models.impl.link.url_agency.sqlalchemy import LinkURLAgency
+from src.db.models.impl.url.core.sqlalchemy import URL
+from src.db.models.impl.url.suggestion.agency.auto import AutomatedUrlAgencySuggestion
+from src.db.models.impl.url.suggestion.agency.user import UserUrlAgencySuggestion
 from src.db.models.mixins import URLDependentMixin
 from src.db.queries.base.builder import QueryBuilderBase
 from src.db.queries.implementations.core.common.annotation_exists import AnnotationExistsCTEQueryBuilder
@@ -27,7 +27,7 @@ TOTAL_DISTINCT_ANNOTATION_COUNT_LABEL = "total_distinct_annotation_count"
 
 class GetNextURLForFinalReviewQueryBuilder(QueryBuilderBase):
 
-    def __init__(self, batch_id: Optional[int] = None):
+    def __init__(self, batch_id: int | None = None):
         super().__init__()
         self.batch_id = batch_id
         self.anno_exists_builder = AnnotationExistsCTEQueryBuilder()
@@ -107,7 +107,7 @@ class GetNextURLForFinalReviewQueryBuilder(QueryBuilderBase):
         ).label(TOTAL_DISTINCT_ANNOTATION_COUNT_LABEL)
 
 
-    async def _apply_batch_id_filter(self, url_query: Select, batch_id: Optional[int]):
+    async def _apply_batch_id_filter(self, url_query: Select, batch_id: int | None):
         if batch_id is None:
             return url_query
         return url_query.where(URL.batch_id == batch_id)
@@ -150,7 +150,7 @@ class GetNextURLForFinalReviewQueryBuilder(QueryBuilderBase):
             supplying_entity=url.optional_data_source_metadata.supplying_entity
         )
 
-    async def get_batch_info(self, session: AsyncSession) -> Optional[FinalReviewBatchInfo]:
+    async def get_batch_info(self, session: AsyncSession) -> FinalReviewBatchInfo | None:
         if self.batch_id is None:
             return None
 

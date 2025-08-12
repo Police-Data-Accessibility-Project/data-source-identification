@@ -3,7 +3,7 @@ from typing import Optional
 
 from src.collectors.enums import CollectorType
 from src.core.enums import BatchStatus
-from src.db.models.instantiations.batch.pydantic import BatchInfo
+from src.db.models.impl.batch.pydantic import BatchInfo
 from tests.helpers.data_creator.commands.base import DBDataCreatorCommandBase
 
 

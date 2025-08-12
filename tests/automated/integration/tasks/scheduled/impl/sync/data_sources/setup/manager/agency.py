@@ -1,7 +1,7 @@
 from sqlalchemy import select
 
 from src.db.client.async_ import AsyncDatabaseClient
-from src.db.models.instantiations.agency.sqlalchemy import Agency
+from src.db.models.impl.agency.sqlalchemy import Agency
 from tests.automated.integration.tasks.scheduled.impl.sync.data_sources.setup.enums import AgencyAssigned
 
 

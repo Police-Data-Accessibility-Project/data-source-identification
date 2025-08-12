@@ -7,8 +7,8 @@ from src.collectors.impl.auto_googler.dtos.input import AutoGooglerInputDTO
 from src.db.client.async_ import AsyncDatabaseClient
 from src.core.logger import AsyncCoreLogger
 from src.collectors.impl.auto_googler.collector import AutoGooglerCollector
-from src.db.models.instantiations.url.core.enums import URLSource
-from src.db.models.instantiations.url.core.pydantic.info import URLInfo
+from src.db.models.impl.url.core.enums import URLSource
+from src.db.models.impl.url.core.pydantic.info import URLInfo
 
 
 @pytest.fixture

@@ -43,9 +43,10 @@ The following flags are available:
 | `URL_404_PROBE_TASK_FLAG`             | Probes URLs for 404 errors.                           |
 | `URL_AUTO_RELEVANCE_TASK_FLAG`        | Automatically assigns Relevances to URLs.             |
 | `URL_PROBE_TASK_FLAG`                 | Probes URLs for web metadata.                         |
+| `URL_ROOT_URL_TASK_FLAG`              | Extracts and links Root URLs to URLs.                 |
 | `SYNC_AGENCIES_TASK_FLAG`              | Synchonize agencies from Data Sources App.            |
 | `SYNC_DATA_SOURCES_TASK_FLAG`          | Synchonize data sources from Data Sources App.        |
-| `PUSH_TO_HUGGING_FACE_TASK_FLAG`        | Pushes data to HuggingFace.                          |
+| `PUSH_TO_HUGGING_FACE_TASK_FLAG`        | Pushes data to HuggingFace.                           |
 | `POPULATE_BACKLOG_SNAPSHOT_TASK_FLAG`  | Populates the backlog snapshot.                       |
 | `DELETE_OLD_LOGS_TASK_FLAG`            | Deletes old logs.                                     |
 | `RUN_URL_TASKS_TASK_FLAG`              | Runs URL tasks.                                       |
