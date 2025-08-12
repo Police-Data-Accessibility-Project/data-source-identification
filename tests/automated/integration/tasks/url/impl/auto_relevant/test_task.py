@@ -27,6 +27,8 @@ async def test_url_auto_relevant_task(db_data_creator):
 
     assert_url_task_has_expected_run_info(run_info, url_ids)
 
+    assert not await operator.meets_task_prerequisites()
+
     adb_client = db_data_creator.adb_client
     # Get URLs, confirm one is marked as error
     urls: list[URL] = await adb_client.get_all(URL)
