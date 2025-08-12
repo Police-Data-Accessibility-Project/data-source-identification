@@ -5,6 +5,7 @@ from src.collectors.enums import URLStatus
 from src.core.tasks.scheduled.impl.huggingface.queries.get.convert import convert_url_status_to_relevant, \
     convert_fine_to_coarse_record_type
 from src.core.tasks.scheduled.impl.huggingface.queries.get.model import GetForLoadingToHuggingFaceOutput
+from src.db.client.helpers import add_standard_limit_and_offset
 from src.db.models.impl.url.html.compressed.sqlalchemy import URLCompressedHTML
 from src.db.models.impl.url.core.sqlalchemy import URL
 from src.db.queries.base.builder import QueryBuilderBase
@@ -12,6 +13,10 @@ from src.db.utils.compression import decompress_html
 from src.db.helpers.session import session_helper as sh
 
 class GetForLoadingToHuggingFaceQueryBuilder(QueryBuilderBase):
+
+    def __init__(self, page: int):
+        super().__init__()
+        self.page = page
 
 
     async def run(self, session: AsyncSession) -> list[GetForLoadingToHuggingFaceOutput]:
@@ -42,6 +47,7 @@ class GetForLoadingToHuggingFaceQueryBuilder(QueryBuilderBase):
                 ])
             )
         )
+        query = add_standard_limit_and_offset(page=self.page, statement=query)
         db_results = await sh.mappings(
             session=session,
             query=query

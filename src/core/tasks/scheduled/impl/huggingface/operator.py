@@ -1,3 +1,4 @@
+from itertools import count
 
 from src.core.tasks.scheduled.templates.operator import ScheduledTaskOperatorBase
 from src.db.client.async_ import AsyncDatabaseClient
@@ -30,7 +31,10 @@ class PushToHuggingFaceTaskOperator(ScheduledTaskOperatorBase):
 
         # Otherwise, push to huggingface
         run_dt = await self.adb_client.get_current_database_time()
-        outputs = await self.adb_client.get_data_sources_raw_for_huggingface()
-        self.hf_client.push_data_sources_raw_to_hub(outputs)
+        for idx in count(start=1):
+            outputs = await self.adb_client.get_data_sources_raw_for_huggingface(page=idx)
+            if len(outputs) == 0:
+                break
+            self.hf_client.push_data_sources_raw_to_hub(outputs, idx=idx)
 
         await self.adb_client.set_hugging_face_upload_state(run_dt.replace(tzinfo=None))
