@@ -16,8 +16,22 @@ class URLMapper:
     def get_id(self, url: str) -> int:
         return self._url_to_id[url]
 
+    def get_ids(self, urls: list[str]) -> list[int]:
+        return [
+            self._url_to_id[url]
+            for url in urls
+        ]
+
     def get_url(self, url_id: int) -> str:
         return self._id_to_url[url_id]
+
+    def get_mappings_by_url(self, urls: list[str]) -> list[URLMapping]:
+        return [
+            URLMapping(
+                url_id=self._url_to_id[url],
+                url=url
+            ) for url in urls
+        ]
 
     def add_mapping(self, mapping: URLMapping) -> None:
         self._url_to_id[mapping.url] = mapping.url_id

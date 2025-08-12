@@ -16,6 +16,7 @@ from src.core.tasks.url.operators.probe.core import URLProbeTaskOperator
 from src.core.tasks.url.operators.probe_404.core import URL404ProbeTaskOperator
 from src.core.tasks.url.operators.record_type.core import URLRecordTypeTaskOperator
 from src.core.tasks.url.operators.record_type.llm_api.record_classifier.openai import OpenAIRecordClassifier
+from src.core.tasks.url.operators.root_url.core import URLRootURLTaskOperator
 from src.core.tasks.url.operators.submit_approved.core import SubmitApprovedURLTaskOperator
 from src.db.client.async_ import AsyncDatabaseClient
 from src.external.huggingface.inference.client import HuggingFaceInferenceClient
@@ -148,6 +149,18 @@ class URLTaskOperatorLoader:
             operator=operator,
             enabled=self.env.bool(
                 "URL_PROBE_TASK_FLAG",
+                default=True
+            )
+        )
+
+    async def _get_url_root_url_task_operator(self) -> URLTaskEntry:
+        operator = URLRootURLTaskOperator(
+            adb_client=self.adb_client
+        )
+        return URLTaskEntry(
+            operator=operator,
+            enabled=self.env.bool(
+                "URL_ROOT_URL_TASK_FLAG",
                 default=True
             )
         )

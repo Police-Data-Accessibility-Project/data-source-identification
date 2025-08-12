@@ -2,10 +2,10 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.db.dtos.url.mapping import URLMapping
+from src.db.helpers.session import session_helper as sh
 from src.db.models.impl.flag.root_url.sqlalchemy import FlagRootURL
 from src.db.models.impl.url.core.sqlalchemy import URL
 from src.db.queries.base.builder import QueryBuilderBase
-from src.db.helpers.session import session_helper as sh
 
 
 class LookupRootURLsQueryBuilder(QueryBuilderBase):
@@ -23,12 +23,18 @@ class LookupRootURLsQueryBuilder(QueryBuilderBase):
             URL.url
         ).join(FlagRootURL).where(
             URL.url.in_(self.urls),
-            FlagRootURL.url_id.isnot(None)
         )
         mappings = await sh.mappings(session, query=query)
-        return [
+
+        root_urls_to_ids: dict[str, int] = {}
+        for mapping in mappings:
+            root_urls_to_ids[mapping["url"]] = mapping["id"]
+
+        results: list[URLMapping] = [
             URLMapping(
-                url_id=mapping["id"],
-                url=mapping["url"]
+                url=mapping["url"],
+                url_id=root_urls_to_ids.get(mapping["url"])
             ) for mapping in mappings
         ]
+
+        return results
