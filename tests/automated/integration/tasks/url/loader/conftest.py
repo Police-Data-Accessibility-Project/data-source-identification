@@ -7,6 +7,7 @@ from src.core.tasks.url.loader import URLTaskOperatorLoader
 from src.core.tasks.url.operators.html.scraper.parser.core import HTMLResponseParser
 from src.db.client.async_ import AsyncDatabaseClient
 from src.external.huggingface.inference.client import HuggingFaceInferenceClient
+from src.external.internet_archives.client import InternetArchivesClient
 from src.external.pdap.client import PDAPClient
 from src.external.url_request.core import URLRequestInterface
 
@@ -20,5 +21,6 @@ def loader() -> URLTaskOperatorLoader:
         html_parser=AsyncMock(spec=HTMLResponseParser),
         pdap_client=AsyncMock(spec=PDAPClient),
         muckrock_api_interface=AsyncMock(spec=MuckrockAPIInterface),
-        hf_inference_client=AsyncMock(spec=HuggingFaceInferenceClient)
+        hf_inference_client=AsyncMock(spec=HuggingFaceInferenceClient),
+        ia_client=AsyncMock(spec=InternetArchivesClient)
     )

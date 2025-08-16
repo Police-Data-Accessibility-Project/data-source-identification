@@ -11,6 +11,7 @@ from src.core.tasks.url.operators.agency_identification.subtasks.loader import A
 from src.core.tasks.url.operators.auto_relevant.core import URLAutoRelevantTaskOperator
 from src.core.tasks.url.operators.html.core import URLHTMLTaskOperator
 from src.core.tasks.url.operators.html.scraper.parser.core import HTMLResponseParser
+from src.core.tasks.url.operators.internet_archives.core import URLInternetArchivesTaskOperator
 from src.core.tasks.url.operators.misc_metadata.core import URLMiscellaneousMetadataTaskOperator
 from src.core.tasks.url.operators.probe.core import URLProbeTaskOperator
 from src.core.tasks.url.operators.probe_404.core import URL404ProbeTaskOperator
@@ -20,6 +21,7 @@ from src.core.tasks.url.operators.root_url.core import URLRootURLTaskOperator
 from src.core.tasks.url.operators.submit_approved.core import SubmitApprovedURLTaskOperator
 from src.db.client.async_ import AsyncDatabaseClient
 from src.external.huggingface.inference.client import HuggingFaceInferenceClient
+from src.external.internet_archives.client import InternetArchivesClient
 from src.external.pdap.client import PDAPClient
 from src.external.url_request.core import URLRequestInterface
 
@@ -33,7 +35,8 @@ class URLTaskOperatorLoader:
             html_parser: HTMLResponseParser,
             pdap_client: PDAPClient,
             muckrock_api_interface: MuckrockAPIInterface,
-            hf_inference_client: HuggingFaceInferenceClient
+            hf_inference_client: HuggingFaceInferenceClient,
+            ia_client: InternetArchivesClient
     ):
         # Dependencies
         self.adb_client = adb_client
@@ -45,6 +48,7 @@ class URLTaskOperatorLoader:
         self.pdap_client = pdap_client
         self.muckrock_api_interface = muckrock_api_interface
         self.hf_inference_client = hf_inference_client
+        self.ia_client = ia_client
 
     async def _get_url_html_task_operator(self) -> URLTaskEntry:
         operator = URLHTMLTaskOperator(
@@ -165,8 +169,22 @@ class URLTaskOperatorLoader:
             )
         )
 
+    async def _get_url_internet_archives_task_operator(self) -> URLTaskEntry:
+        operator = URLInternetArchivesTaskOperator(
+            adb_client=self.adb_client,
+            ia_client=self.ia_client
+        )
+        return URLTaskEntry(
+            operator=operator,
+            enabled=self.env.bool(
+                "URL_INTERNET_ARCHIVES_TASK_FLAG",
+                default=True
+            )
+        )
+
     async def load_entries(self) -> list[URLTaskEntry]:
         return [
+            await self._get_url_internet_archives_task_operator(),
             await self._get_url_root_url_task_operator(),
             await self._get_url_probe_task_operator(),
             await self._get_url_html_task_operator(),

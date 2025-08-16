@@ -3,10 +3,6 @@ from http import HTTPStatus
 from fastapi import HTTPException
 
 
-class InvalidPreprocessorError(Exception):
-    pass
-
-
 class MuckrockAPIError(Exception):
     pass
 

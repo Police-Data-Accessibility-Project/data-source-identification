@@ -1,6 +1,7 @@
 import traceback
 from abc import ABC, abstractmethod
 
+from src.core.enums import BatchStatus
 from src.core.tasks.base.run_info import TaskOperatorRunInfo
 from src.core.tasks.url.enums import TaskOperatorOutcome
 from src.db.client.async_ import AsyncDatabaseClient

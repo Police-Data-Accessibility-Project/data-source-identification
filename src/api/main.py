@@ -32,6 +32,7 @@ from src.db.client.async_ import AsyncDatabaseClient
 from src.db.client.sync import DatabaseClient
 from src.external.huggingface.hub.client import HuggingFaceHubClient
 from src.external.huggingface.inference.client import HuggingFaceInferenceClient
+from src.external.internet_archives.client import InternetArchivesClient
 from src.external.pdap.client import PDAPClient
 from src.external.url_request.core import URLRequestInterface
 
@@ -81,6 +82,9 @@ async def lifespan(app: FastAPI):
             hf_inference_client=HuggingFaceInferenceClient(
                 session=session,
                 token=env_var_manager.hf_inference_api_key
+            ),
+            ia_client=InternetArchivesClient(
+                session=session
             )
         ),
     )

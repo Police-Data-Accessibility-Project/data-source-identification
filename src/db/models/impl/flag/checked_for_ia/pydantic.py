@@ -4,6 +4,7 @@ from src.db.templates.markers.bulk.insert import BulkInsertableModel
 
 class FlagURLCheckedForInternetArchivesPydantic(BulkInsertableModel):
     url_id: int
+    success: bool
 
     @classmethod
     def sa_model(cls) -> type[FlagURLCheckedForInternetArchives]:

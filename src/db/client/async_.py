@@ -604,7 +604,7 @@ class AsyncDatabaseClient:
         self,
         session,
         model: Base,
-        order_by_attribute: Optional[str] = None
+        order_by_attribute: str | None = None
     ) -> list[Base]:
         """Get all records of a model. Used primarily in testing."""
         return await sh.get_all(session=session, model=model, order_by_attribute=order_by_attribute)

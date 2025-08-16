@@ -45,6 +45,7 @@ class TaskType(PyEnum):
     PROBE_404 = "404 Probe"
     PROBE_URL = "URL Probe"
     ROOT_URL = "Root URL"
+    INTERNET_ARCHIVES = "Internet Archives"
 
     # Scheduled Tasks
     PUSH_TO_HUGGINGFACE = "Push to Hugging Face"

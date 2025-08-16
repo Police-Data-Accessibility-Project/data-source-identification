@@ -22,6 +22,12 @@ class URLMapper:
             for url in urls
         ]
 
+    def get_all_ids(self) -> list[int]:
+        return list(self._url_to_id.values())
+
+    def get_all_urls(self) -> list[str]:
+        return list(self._url_to_id.keys())
+
     def get_url(self, url_id: int) -> str:
         return self._id_to_url[url_id]
 

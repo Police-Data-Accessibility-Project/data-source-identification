@@ -21,16 +21,16 @@ class URLAutoRelevantTaskOperator(URLTaskOperatorBase):
         self.hf_client = hf_client
 
     @property
-    def task_type(self):
+    def task_type(self) -> TaskType:
         return TaskType.RELEVANCY
 
-    async def meets_task_prerequisites(self):
+    async def meets_task_prerequisites(self) -> bool:
         return await self.adb_client.has_urls_with_html_data_and_without_auto_relevant_suggestion()
 
     async def get_tdos(self) -> list[URLRelevantTDO]:
         return await self.adb_client.get_tdos_for_auto_relevancy()
 
-    async def inner_task_logic(self):
+    async def inner_task_logic(self) -> None:
         tdos = await self.get_tdos()
         url_ids = [tdo.url_id for tdo in tdos]
         await self.link_urls_to_task(url_ids=url_ids)
@@ -41,7 +41,12 @@ class URLAutoRelevantTaskOperator(URLTaskOperatorBase):
         await self.put_results_into_database(subsets.success)
         await self.update_errors_in_database(subsets.error)
 
-    async def get_ml_classifications(self, tdos: list[URLRelevantTDO]):
+    async def get_ml_classifications(self, tdos: list[URLRelevantTDO]) -> None:
+        """
+        Modifies:
+            tdo.annotation
+            tdo.error
+        """
         for tdo in tdos:
             try:
                 input_ = BasicInput(
@@ -59,7 +64,7 @@ class URLAutoRelevantTaskOperator(URLTaskOperatorBase):
             )
             tdo.annotation = annotation_info
 
-    async def put_results_into_database(self, tdos: list[URLRelevantTDO]):
+    async def put_results_into_database(self, tdos: list[URLRelevantTDO]) -> None:
         inputs = []
         for tdo in tdos:
             input_ = AutoRelevancyAnnotationInput(
@@ -71,7 +76,7 @@ class URLAutoRelevantTaskOperator(URLTaskOperatorBase):
             inputs.append(input_)
         await self.adb_client.add_user_relevant_suggestions(inputs)
 
-    async def update_errors_in_database(self, tdos: list[URLRelevantTDO]):
+    async def update_errors_in_database(self, tdos: list[URLRelevantTDO]) -> None:
         error_infos = []
         for tdo in tdos:
             error_info = URLErrorPydanticInfo(

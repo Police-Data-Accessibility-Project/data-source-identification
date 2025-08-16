@@ -32,24 +32,25 @@ Task flags are used to enable/disable certain tasks. They are set to `1` to enab
 
 The following flags are available:
 
-| Flag                                  | Description                                           |
-|---------------------------------------|-------------------------------------------------------|
-| `SCHEDULED_TASKS_FLAG`                | All scheduled tasks.                                  |
-| `URL_HTML_TASK_FLAG`                  | URL HTML scraping task.                               |
-| `URL_RECORD_TYPE_TASK_FLAG`           | Automatically assigns Record Types to URLs.           |
-| `URL_AGENCY_IDENTIFICATION_TASK_FLAG` | Automatically assigns and suggests Agencies for URLs. |
-| `URL_SUBMIT_APPROVED_TASK_FLAG`       | Submits approved URLs to the Data Sources App.        |
-| `URL_MISC_METADATA_TASK_FLAG`         | Adds misc metadata to URLs.                           |
-| `URL_404_PROBE_TASK_FLAG`             | Probes URLs for 404 errors.                           |
-| `URL_AUTO_RELEVANCE_TASK_FLAG`        | Automatically assigns Relevances to URLs.             |
-| `URL_PROBE_TASK_FLAG`                 | Probes URLs for web metadata.                         |
-| `URL_ROOT_URL_TASK_FLAG`              | Extracts and links Root URLs to URLs.                 |
-| `SYNC_AGENCIES_TASK_FLAG`              | Synchonize agencies from Data Sources App.            |
-| `SYNC_DATA_SOURCES_TASK_FLAG`          | Synchonize data sources from Data Sources App.        |
-| `PUSH_TO_HUGGING_FACE_TASK_FLAG`        | Pushes data to HuggingFace.                           |
-| `POPULATE_BACKLOG_SNAPSHOT_TASK_FLAG`  | Populates the backlog snapshot.                       |
-| `DELETE_OLD_LOGS_TASK_FLAG`            | Deletes old logs.                                     |
-| `RUN_URL_TASKS_TASK_FLAG`              | Runs URL tasks.                                       |
+| Flag                                  | Description                                            |
+|---------------------------------------|--------------------------------------------------------|
+| `SCHEDULED_TASKS_FLAG`                | All scheduled tasks.                                   |
+| `URL_HTML_TASK_FLAG`                  | URL HTML scraping task.                                |
+| `URL_RECORD_TYPE_TASK_FLAG`           | Automatically assigns Record Types to URLs.            |
+| `URL_AGENCY_IDENTIFICATION_TASK_FLAG` | Automatically assigns and suggests Agencies for URLs.  |
+| `URL_SUBMIT_APPROVED_TASK_FLAG`       | Submits approved URLs to the Data Sources App.         |
+| `URL_MISC_METADATA_TASK_FLAG`         | Adds misc metadata to URLs.                            |
+| `URL_404_PROBE_TASK_FLAG`             | Probes URLs for 404 errors.                            |
+| `URL_AUTO_RELEVANCE_TASK_FLAG`        | Automatically assigns Relevances to URLs.              |
+| `URL_PROBE_TASK_FLAG`                 | Probes URLs for web metadata.                          |
+| `URL_ROOT_URL_TASK_FLAG`              | Extracts and links Root URLs to URLs.                  |
+| `SYNC_AGENCIES_TASK_FLAG`              | Synchonize agencies from Data Sources App.             |
+| `SYNC_DATA_SOURCES_TASK_FLAG`          | Synchonize data sources from Data Sources App.         |
+| `PUSH_TO_HUGGING_FACE_TASK_FLAG`        | Pushes data to HuggingFace.                            |
+| `POPULATE_BACKLOG_SNAPSHOT_TASK_FLAG`  | Populates the backlog snapshot.                        |
+| `DELETE_OLD_LOGS_TASK_FLAG`            | Deletes old logs.                                      |
+| `RUN_URL_TASKS_TASK_FLAG`              | Runs URL tasks.                                        |
+| `URL_INTERNET_ARCHIVES_TASK_FLAG`      | Extracts and links Internet Archives metadata to URLs. |
 
 
 ## Foreign Data Wrapper (FDW)
